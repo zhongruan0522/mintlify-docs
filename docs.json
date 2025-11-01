@@ -11,20 +11,88 @@
   "navigation": {
     "tabs": [
       {
-        "tab": "测试",
-        "groups": [
-          {
-            "group": "测试",
-            "pages": ["测试/index", "测试/quickstart", "测试/development"]
-          }
-        ]
-      },
-      {
         "tab": "AI编码教程",
         "groups": [
           {
             "group": "欢迎",
-            "pages": ["vibe-coding/欢迎"]
+            "pages": [
+              "vibe-coding/欢迎",
+              "vibe-coding/安装",
+              "vibe-coding/基础配置"
+            ]
+          },
+          {
+            "group": "疑难杂症",
+            "pages": ["vibe-coding/疑难杂症"]
+          },
+          {
+            "group": "理论知识",
+            "pages": [
+              "vibe-coding/优秀项目和文章/vibecoding(氛围编程)总是产出一坨垃圾你可能需要些技巧",
+              "vibe-coding/优秀项目和文章/AI代理的上下文工程：构建Manus的经验教训",
+              "vibe-coding/优秀项目和文章/私域知识工程实战：如何让 AI 一次性写出高质量代码？"
+            ]
+          },
+          {
+            "group": "AI工作流",
+            "pages": [
+              "vibe-coding/优秀项目和文章/6A工作流  AI + Figma 产品设计自动化解决方案",
+              "vibe-coding/优秀项目和文章/Claude Code Sub-Agents：从手工作坊到自动化工厂",
+              "vibe-coding/优秀项目和文章/Claude Code × Zen MCP：多AI协作编程革命",
+              "vibe-coding/优秀项目和文章/SuperClaude × Claude Code：MCP驱动的AI编程爆改指南"
+            ]
+          },
+          {
+            "group": "IDE插件",
+            "pages": [
+              "vibe-coding/优秀项目和文章/【Prometheus&Zeus v2.0】 RoocodeCursor + MCP + RIPER-5 优化网页+UI+软件等超强规则Rules合集",
+              "vibe-coding/优秀项目和文章/根据站内佬们的RIPER-5 终极协议调优的自创2.1版本（附提示词和mcp json"
+            ]
+          },
+          {
+            "group": "系统提示词",
+            "pages": [
+              "vibe-coding/优秀项目和文章/CC&Codex系统提示词推荐",
+              "vibe-coding/优秀项目和文章/CC-GLM-4.5系统提示词",
+              "vibe-coding/优秀项目和文章/CC-GLM-4.6系统提示词"
+            ]
+          },
+          {
+            "group": "协作开发",
+            "pages": [
+              "vibe-coding/优秀项目和文章/实验性：Claude Code + Codex 进行协作开发",
+              "vibe-coding/优秀项目和文章/Claude Code 调用 Codex：分工协作开发",
+              "vibe-coding/优秀项目和文章/Claude Code(规划、编写) + Codex(分析、审查) 进行协作开发"
+            ]
+          },
+          {
+            "group": "ClaudeCode",
+            "pages": [
+              "vibe-coding/优秀项目和文章/ClaudeCode小白指引贴",
+              "vibe-coding/优秀项目和文章/CC-动态生成Agents",
+              "vibe-coding/优秀项目和文章/CC-擅长调用子代理",
+              "vibe-coding/优秀项目和文章/Claude Code Spec Workflow"
+            ]
+          },
+          {
+            "group": "实践分享",
+            "pages": [
+              "vibe-coding/优秀项目和文章/【实事求是】CC+GLM4.5长期体验和方法分享",
+              "vibe-coding/优秀项目和文章/一次跑通！省钱又可靠的顾问式编码！",
+              "vibe-coding/优秀项目和文章/一键生成项目架构图",
+              "vibe-coding/优秀项目和文章/使用Claude Code Sub-Agent的最佳实践工作流"
+            ]
+          },
+          {
+            "group": "Codex实战",
+            "pages": [
+              "vibe-coding/优秀项目和文章/Codex全局AGENTS.MD指南",
+              "vibe-coding/优秀项目和文章/Codex全局AGENTS-88",
+              "vibe-coding/优秀项目和文章/Codex杂谈",
+              "vibe-coding/优秀项目和文章/后端Codex AGENTS",
+              "vibe-coding/优秀项目和文章/让 WSL 成功使用 Codex",
+              "vibe-coding/优秀项目和文章/向大家分享个自己平时使用的codex的AGENTS.md，抛砖引玉"
+            ]
           }
         ]
       }
@@ -32,18 +100,13 @@
     "global": {
       "anchors": [
         {
-          "anchor": "Documentation",
-          "href": "http://docs.zxiaoruan.cn/",
-          "icon": "book-open-cover"
-        },
-        {
-          "anchor": "API",
-          "href": "http://api.zxiaoruan.cn/",
+          "anchor": "智谱开发者平台",
+          "href": "https://www.bigmodel.cn/claude-code?cc=fission_glmcode_sub_v1&ic=J2QPQGUXXQ&n=199****3721",
           "icon": "zap"
         },
         {
-          "anchor": "TTS-API",
-          "href": "http://api.sylus-evolx.cn/",
+          "anchor": "公益API",
+          "href": "https://gyapi.zxiaoruan.cn/",
           "icon": "zap"
         }
       ]
@@ -57,7 +120,7 @@
     "links": [
       {
         "label": "Support",
-        "href": "mailto:hi@mintlify.com"
+        "href": "mailto:docs@zxiaoruan.cn"
       }
     ]
   },
