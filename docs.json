@@ -11,50 +11,20 @@
   "navigation": {
     "tabs": [
       {
-        "tab": "Guides",
+        "tab": "测试",
         "groups": [
           {
-            "group": "Getting started",
-            "pages": ["index", "quickstart", "development"]
-          },
-          {
-            "group": "Customization",
-            "pages": ["essentials/settings", "essentials/navigation"]
-          },
-          {
-            "group": "Writing content",
-            "pages": [
-              "essentials/markdown",
-              "essentials/code",
-              "essentials/images",
-              "essentials/reusable-snippets"
-            ]
-          },
-          {
-            "group": "AI tools",
-            "pages": [
-              "ai-tools/cursor",
-              "ai-tools/claude-code",
-              "ai-tools/windsurf"
-            ]
+            "group": "测试",
+            "pages": ["测试/index", "测试/quickstart", "测试/development"]
           }
         ]
       },
       {
-        "tab": "API reference",
+        "tab": "AI编码教程",
         "groups": [
           {
-            "group": "API documentation",
-            "pages": ["api-reference/introduction"]
-          },
-          {
-            "group": "Endpoint examples",
-            "pages": [
-              "api-reference/endpoint/get",
-              "api-reference/endpoint/create",
-              "api-reference/endpoint/delete",
-              "api-reference/endpoint/webhook"
-            ]
+            "group": "欢迎",
+            "pages": ["vibe-coding/欢迎"]
           }
         ]
       }
@@ -92,12 +62,7 @@
     ]
   },
   "contextual": {
-    "options": [
-      "copy",
-      "view",
-      "chatgpt",
-      "mcp"
-    ]
+    "options": ["copy", "view", "chatgpt", "mcp"]
   },
   "footer": {
     "socials": {
