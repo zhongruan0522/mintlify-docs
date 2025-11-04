@@ -97,15 +97,16 @@
         ]
       },
       {
-        "tab": "集训API文档",
+        "tab": "教育在线API文档",
         "groups": [
           {
-            "group": "API文档首页",
-            "pages": ["api-jyzx/introduction"]
+            "group": "试卷 && 说明",
+            "pages": ["api-jyzx/book"]
           },
           {
             "group": "教育在线",
             "pages": [
+              "api-jyzx/introduction",
               "api-jyzx/endpoint/banner",
               "api-jyzx/endpoint/banner_recommend",
               "api-jyzx/endpoint/banner1",
