@@ -137,6 +137,22 @@
             ]
           }
         ]
+      },
+      {
+        "tab": "集训样卷",
+        "groups": [
+          {
+            "group": "24-ZZ-YDYY",
+            "pages": [
+              "mobile-application-development/24中职/时代楷模",
+              "mobile-application-development/24中职/数字社区",
+              "mobile-application-development/24中职/数字生活",
+              "mobile-application-development/24中职/乡村民宿",
+              "mobile-application-development/24中职/智慧健康",
+              "mobile-application-development/24中职/智慧党建"
+            ]
+          }
+        ]
       }
     ],
     "global": {
