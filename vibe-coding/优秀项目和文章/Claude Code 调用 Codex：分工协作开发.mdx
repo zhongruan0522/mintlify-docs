@@ -262,7 +262,7 @@ fallback:
 **这个配置做了什么**：
 
 - Claude Code 看到代码任务 → 自动调 Codex
-- 只有拼写、注释、<20 行配置这种琐碎事才自己动手
+- 只有拼写、注释、小于 20 行配置这种琐碎事才自己动手
 - Codex 参与率从 0% 提升到 ~95%
 
 ##### 第四步（可选）：加载 Linus 人格
@@ -477,7 +477,7 @@ Good taste / So-so / Garbage
 
 ##### 坑1：Claude Code 还是自己写代码
 
-**原因**：CLAUDE.md 没配置好，或者任务太简单（<20 行）。
+**原因**：CLAUDE.md 没配置好，或者任务太简单（小于20 行）。
 
 **解决**：检查 `Codex Participation Priority` 部分，确保 Codex-First 策略生效。
 

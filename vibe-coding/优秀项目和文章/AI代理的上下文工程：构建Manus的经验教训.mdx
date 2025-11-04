@@ -48,11 +48,12 @@
 
 在实践中，大多数模型提供商和推理框架支持某种形式的响应预填充，这允许你在不修改工具定义的情况下约束动作空间。函数调用通常有三种模式（我们将使用 NousResearch 的 [Hermes 格式](https://github.com/NousResearch/Hermes-Function-Calling) 作为示例）：
 
-•自动 – 模型可以选择调用或不调用函数。通过仅预填充回复前缀实现：<|im_start|>assistant
+•自动 – 模型可以选择调用或不调用函数。通过仅预填充回复前缀实现：&lt;im_start&gt;assistant
 
-•必需 – 模型必须调用函数，但选择不受约束。通过预填充到工具调用令牌实现：<|im_start|>assistant<tool_call>
+•必需 – 模型必须调用函数，但选择不受约束。通过预填充到工具调用令牌实现：&lt;im_start&gt;assistant&lt;tool_call&gt;
 
-•指定 – 模型必须从特定子集中调用函数。通过预填充到函数名称的开头实现：<|im_start|>assistant<tool_call>{"name": "browser_ 通过这种方式，我们通过直接掩码token的logits来约束动作选择。例如，当用户提供新输入时，Manus必须立即回复而不是执行动作。我们还有意设计了具有一致前缀的动作名称——例如，所有与浏览器相关的工具都以browser_开头，命令行工具以shell_开头。这使我们能够轻松确保代理在给定状态下只从特定工具组中进行选择而无需使用有状态的logits处理器。
+•指定 – 模型必须从特定子集中调用函数。通过预填充到函数名称的开头实现：&lt;im_start&gt;assistant&lt;tool_call&gt;
+"name": "browser_ 通过这种方式，我们通过直接掩码token的logits来约束动作选择。例如，当用户提供新输入时，Manus必须立即回复而不是执行动作。我们还有意设计了具有一致前缀的动作名称——例如，所有与浏览器相关的工具都以browser_开头，命令行工具以shell_开头。这使我们能够轻松确保代理在给定状态下只从特定工具组中进行选择而无需使用有状态的logits处理器。
 
 这些设计有助于确保Manus代理循环保持稳定——即使在模型驱动的架构下。
 
