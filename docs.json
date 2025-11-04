@@ -95,6 +95,47 @@
             ]
           }
         ]
+      },
+      {
+        "tab": "集训API文档",
+        "groups": [
+          {
+            "group": "API文档首页",
+            "pages": ["api-jyzx/introduction"]
+          },
+          {
+            "group": "教育在线",
+            "pages": [
+              "api-jyzx/endpoint/banner",
+              "api-jyzx/endpoint/banner_recommend",
+              "api-jyzx/endpoint/banner1",
+              "api-jyzx/endpoint/banner2",
+              "api-jyzx/endpoint/bannerlogo",
+              "api-jyzx/endpoint/bannerzw",
+              "api-jyzx/endpoint/footerlogo1",
+              "api-jyzx/endpoint/footerlogo21",
+              "api-jyzx/endpoint/footerlogo22",
+              "api-jyzx/endpoint/footerlogo23",
+              "api-jyzx/endpoint/footerlogo3",
+              "api-jyzx/endpoint/fwlogo",
+              "api-jyzx/endpoint/header",
+              "api-jyzx/endpoint/header_df",
+              "api-jyzx/endpoint/headline",
+              "api-jyzx/endpoint/nav",
+              "api-jyzx/endpoint/nav2",
+              "api-jyzx/endpoint/news_group",
+              "api-jyzx/endpoint/oneandtwo",
+              "api-jyzx/endpoint/oneandtwo2",
+              "api-jyzx/endpoint/pormpt",
+              "api-jyzx/endpoint/postpf",
+              "api-jyzx/endpoint/postpf-1",
+              "api-jyzx/endpoint/postpf-2",
+              "api-jyzx/endpoint/postpf-3",
+              "api-jyzx/endpoint/quick_links",
+              "api-jyzx/endpoint/yqlj"
+            ]
+          }
+        ]
       }
     ],
     "global": {
