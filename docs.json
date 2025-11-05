@@ -153,6 +153,168 @@
             ]
           }
         ]
+      },
+      {
+        "tab": "API文档混杂",
+        "groups": [
+          {
+            "group": "登录与注册",
+            "pages": ["api-混杂/登录与注册/注册接口", "api-混杂/登录与注册/登录接口"]
+          },
+          {
+            "group": "24省职院赛-高Web-爱购网",
+            "pages": [
+              "api-混杂/24省职院赛-高web-爱购网/全部接口",
+              "api-混杂/24省职院赛-高web-爱购网/分类接口",
+              "api-混杂/24省职院赛-高web-爱购网/电脑接口",
+              "api-混杂/24省职院赛-高web-爱购网/皮鞋接口",
+              "api-混杂/24省职院赛-高web-爱购网/耳机接口",
+              "api-混杂/24省职院赛-高web-爱购网/电视机接口",
+              "api-混杂/24省职院赛-高web-爱购网/鞋子的质量问题接口",
+              "api-混杂/24省职院赛-高web-爱购网/手机商品接口"
+            ]
+          },
+          {
+            "group": "24省职院赛-高Web-金融网",
+            "pages": [
+              "api-混杂/24省职院赛-高web-金融网/全部接口",
+              "api-混杂/24省职院赛-高web-金融网/active接口",
+              "api-混杂/24省职院赛-高web-金融网/video接口",
+              "api-混杂/24省职院赛-高web-金融网/cn接口",
+              "api-混杂/24省职院赛-高web-金融网/lj接口",
+              "api-混杂/24省职院赛-高web-金融网/sz接口",
+              "api-混杂/24省职院赛-高web-金融网/detail接口",
+              "api-混杂/24省职院赛-高web-金融网/notice接口",
+              "api-混杂/24省职院赛-高web-金融网/journal接口",
+              "api-混杂/24省职院赛-高web-金融网/barone接口",
+              "api-混杂/24省职院赛-高web-金融网/bartwo接口",
+              "api-混杂/24省职院赛-高web-金融网/barthree接口",
+              "api-混杂/24省职院赛-高web-金融网/barfour接口",
+              "api-混杂/24省职院赛-高web-金融网/tips接口",
+              "api-混杂/24省职院赛-高web-金融网/personal接口",
+              "api-混杂/24省职院赛-高web-金融网/homepage接口",
+              "api-混杂/24省职院赛-高web-金融网/yiliao接口",
+              "api-混杂/24省职院赛-高web-金融网/homepagetwo接口",
+              "api-混杂/24省职院赛-高web-金融网/know接口",
+              "api-混杂/24省职院赛-高web-金融网/logo接口"
+            ]
+          },
+          {
+            "group": "24省职院赛-高Web-江西急速物流网",
+            "pages": [
+              "api-混杂/24省职院赛-高web-江西急速物流网/全部接口",
+              "api-混杂/24省职院赛-高web-江西急速物流网/homepage接口",
+              "api-混杂/24省职院赛-高web-江西急速物流网/homepagetwo接口",
+              "api-混杂/24省职院赛-高web-江西急速物流网/contend接口",
+              "api-混杂/24省职院赛-高web-江西急速物流网/location接口",  
+              "api-混杂/24省职院赛-高web-江西急速物流网/wuliu接口",
+              "api-混杂/24省职院赛-高web-江西急速物流网/tips接口",
+              "api-混杂/24省职院赛-高web-江西急速物流网/tips2接口", 
+              "api-混杂/24省职院赛-高web-江西急速物流网/tips3接口",
+              "api-混杂/24省职院赛-高web-江西急速物流网/list接口",
+              "api-混杂/24省职院赛-高web-江西急速物流网/tips5接口", 
+              "api-混杂/24省职院赛-高web-江西急速物流网/contend2接口",
+              "api-混杂/24省职院赛-高web-江西急速物流网/zylogo接口",
+              "api-混杂/24省职院赛-高web-江西急速物流网/search接口" 
+            ]
+          },
+          {
+            "group": "24省职院赛-高Web-青青旅行社",
+            "pages": [
+              "api-混杂/24省职院赛-高web-青青旅行社/全部接口",
+              "api-混杂/24省职院赛-高web-青青旅行社/view接口",
+              "api-混杂/24省职院赛-高web-青青旅行社/logo接口",
+              "api-混杂/24省职院赛-高web-青青旅行社/viewpoint接口",
+              "api-混杂/24省职院赛-高web-青青旅行社/travel接口",
+              "api-混杂/24省职院赛-高web-青青旅行社/story接口",
+              "api-混杂/24省职院赛-高web-青青旅行社/test接口",
+              "api-混杂/24省职院赛-高web-青青旅行社/logotwo接口",
+              "api-混杂/24省职院赛-高web-青青旅行社/travellist接口",
+              "api-混杂/24省职院赛-高web-青青旅行社/travellist2接口",
+              "api-混杂/24省职院赛-高web-青青旅行社/images1接口",
+              "api-混杂/24省职院赛-高web-青青旅行社/images2接口",
+              "api-混杂/24省职院赛-高web-青青旅行社/images3接口",
+              "api-混杂/24省职院赛-高web-青青旅行社/images4接口",
+              "api-混杂/24省职院赛-高web-青青旅行社/airplane接口",
+              "api-混杂/24省职院赛-高web-青青旅行社/sy接口",
+              "api-混杂/24省职院赛-高web-青青旅行社/sy2接口",
+              "api-混杂/24省职院赛-高web-青青旅行社/sy3接口",
+              "api-混杂/24省职院赛-高web-青青旅行社/sy4接口"
+            ]
+          },
+          {
+            "group": "24省职院赛-高Web-天天健身网",
+            "pages": [
+              "api-混杂/24省职院赛-高web-天天健身网/全部接口",
+              "api-混杂/24省职院赛-高web-天天健身网/logo接口",
+              "api-混杂/24省职院赛-高web-天天健身网/banner接口",
+              "api-混杂/24省职院赛-高web-天天健身网/js接口",
+              "api-混杂/24省职院赛-高web-天天健身网/question接口",
+              "api-混杂/24省职院赛-高web-天天健身网/imageslsit接口",
+              "api-混杂/24省职院赛-高web-天天健身网/logo2接口",
+              "api-混杂/24省职院赛-高web-天天健身网/imageslsit2接口",
+              "api-混杂/24省职院赛-高web-天天健身网/imageslist接口",
+              "api-混杂/24省职院赛-高web-天天健身网/question2接口",
+              "api-混杂/24省职院赛-高web-天天健身网/item接口",
+              "api-混杂/24省职院赛-高web-天天健身网/news接口",
+              "api-混杂/24省职院赛-高web-天天健身网/news2接口",
+              "api-混杂/24省职院赛-高web-天天健身网/update接口",
+              "api-混杂/24省职院赛-高web-天天健身网/lose接口",
+              "api-混杂/24省职院赛-高web-天天健身网/introduce接口",
+              "api-混杂/24省职院赛-高web-天天健身网/introduce2接口",
+              "api-混杂/24省职院赛-高web-天天健身网/tips接口",
+              "api-混杂/24省职院赛-高web-天天健身网/tips2接口",
+              "api-混杂/24省职院赛-高web-天天健身网/images接口",
+              "api-混杂/24省职院赛-高web-天天健身网/workout接口",
+              "api-混杂/24省职院赛-高web-天天健身网/guide接口",
+              "api-混杂/24省职院赛-高web-天天健身网/images2接口",
+              "api-混杂/24省职院赛-高web-天天健身网/suggest接口",
+              "api-混杂/24省职院赛-高web-天天健身网/course接口",
+              "api-混杂/24省职院赛-高web-天天健身网/ques接口",
+              "api-混杂/24省职院赛-高web-天天健身网/category接口",
+              "api-混杂/24省职院赛-高web-天天健身网/data接口",
+              "api-混杂/24省职院赛-高web-天天健身网/data2接口",
+              "api-混杂/24省职院赛-高web-天天健身网/data3接口",
+              "api-混杂/24省职院赛-高web-天天健身网/data4接口",
+              "api-混杂/24省职院赛-高web-天天健身网/data5接口"
+            ]
+          },
+          {
+            "group": "24省职院赛-中Web-江西第一学校",
+            "pages": [
+              "api-混杂/24省职院赛-中web-江西第一学校/全部接口",
+              "api-混杂/24省职院赛-中web-江西第一学校/logo接口",
+              "api-混杂/24省职院赛-中web-江西第一学校/banner接口",
+              "api-混杂/24省职院赛-中web-江西第一学校/currentleadership接口",
+              "api-混杂/24省职院赛-中web-江西第一学校/news接口",
+              "api-混杂/24省职院赛-中web-江西第一学校/subject接口",
+              "api-混杂/24省职院赛-中web-江西第一学校/indexcampusscenery接口",
+              "api-混杂/24省职院赛-中web-江西第一学校/campusscenery接口",
+              "api-混杂/24省职院赛-中web-江西第一学校/newsimg接口",
+              "api-混杂/24省职院赛-中web-江西第一学校/evaluate接口",
+              "api-混杂/24省职院赛-中web-江西第一学校/evaluateanswer接口"
+            ]
+          },
+          {
+            "group": "24省职院赛-中融媒体-消防安全",
+            "pages": [
+              "api-混杂/24省职院赛-中融媒体-消防安全/全部接口",
+              "api-混杂/24省职院赛-中融媒体-消防安全/drypowder接口",
+              "api-混杂/24省职院赛-中融媒体-消防安全/escape接口",
+              "api-混杂/24省职院赛-中融媒体-消防安全/origin接口",
+              "api-混杂/24省职院赛-中融媒体-消防安全/briefly接口",
+              "api-混杂/24省职院赛-中融媒体-消防安全/carbondioxide接口",
+              "api-混杂/24省职院赛-中融媒体-消防安全/firehydrant接口",
+              "api-混杂/24省职院赛-中融媒体-消防安全/fire接口",
+              "api-混杂/24省职院赛-中融媒体-消防安全/logo接口",
+              "api-混杂/24省职院赛-中融媒体-消防安全/escapelogo接口",
+              "api-混杂/24省职院赛-中融媒体-消防安全/alarm接口-get",
+              "api-混杂/24省职院赛-中融媒体-消防安全/alarm接口-post",
+              "api-混杂/24省职院赛-中融媒体-消防安全/book接口",
+              "api-混杂/24省职院赛-中融媒体-消防安全/news接口"
+            ]
+          }
+        ]
       }
     ],
     "global": {
