@@ -1,0 +1,35 @@
+# 部署教程
+
+## 编写`docker-compose.yml`文件
+
+> 文件内容如下
+> 1. 需要注意环境变量里面`PANEL_USER`、`PANEL_PASSWORD`、`API_KEY`为必须设置
+> 2. 如果需要用到图像生成，请设置`IMAGE_BASE_URL`
+
+~~~yml
+version: '3.8'
+services:
+  antigravity-api:
+    image: ghcr.io/zhongruan0522/antigravity2api-node-js:latest
+    container_name: antigravity-api
+    restart: unless-stopped
+    ports:
+      - "8045:8045"
+    environment:
+      - PANEL_USER=admin
+      - PANEL_PASSWORD=设置你的密码
+      - API_KEY=sk-text
+      - IMAGE_BASE_URL=设置图像访问地址，如果是服务器部署有域名写域名，无域名写IP:8045，本地不写
+    volumes:
+      - ./data:/app/data
+    healthcheck:
+      test: [ "CMD", "node", "-e", "require('http').get('http://localhost:' + process.env.PORT + '/healthz', (res) => { process.exit(res.statusCode === 200 ? 0 : 1) }).on('error', () => process.exit(1))" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+~~~
+
+## 启动程序
+
+输入`docker compose up -d`
