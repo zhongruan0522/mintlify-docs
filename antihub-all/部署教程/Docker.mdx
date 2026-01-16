@@ -1,0 +1,171 @@
+---
+title: "Docker 部署"
+description: "使用 Docker Compose 一键部署 AntiHub"
+icon: "docker"
+---
+
+## 前置要求
+
+<CardGroup cols={3}>
+  <Card title="Docker" icon="docker" href="https://docs.docker.com/get-docker/">
+    Docker 20.10+
+  </Card>
+  <Card title="Docker Compose" icon="layer-group" href="https://docs.docker.com/compose/install/">
+    Docker Compose V2+
+  </Card>
+  <Card title="Git" icon="git-alt" href="https://git-scm.com/">
+    用于克隆仓库
+  </Card>
+</CardGroup>
+
+## 快速开始
+
+<Steps>
+  <Step title="克隆仓库">
+    ```bash
+    git clone https://github.com/zhongruan0522/AntiHub-ALL.git
+    cd AntiHub
+    ```
+  </Step>
+
+  <Step title="配置环境变量">
+    复制示例配置文件并修改：
+    ```bash
+    cp .env.example .env
+    ```
+    
+    <Warning>
+      请务必修改所有 `please-change-me` 的默认值，尤其是密码和密钥！
+    </Warning>
+  </Step>
+
+  <Step title="生成加密密钥">
+    `PLUGIN_API_ENCRYPTION_KEY` 必须是有效的 Fernet Key：
+    ```bash
+    python AntiHub-Backend/generate_encryption_key.py
+    ```
+    将生成的密钥填入 `.env` 文件。
+  </Step>
+
+  <Step title="启动服务">
+    ```bash
+    docker compose up -d
+    ```
+    
+    首次启动会自动拉取镜像、初始化数据库并创建管理员账号。
+  </Step>
+
+  <Step title="访问服务">
+    | 服务 | 地址 |
+    |------|------|
+    | Web 前端 | `http://127.0.0.1:3000` |
+    | Backend API | `http://127.0.0.1:8000` |
+    
+    <Tip>
+      生产环境建议使用 Nginx/Caddy 反向代理并配置 HTTPS。
+    </Tip>
+  </Step>
+</Steps>
+
+## 环境变量说明
+
+<Accordion title="镜像配置">
+  | 变量 | 默认值 | 说明 |
+  |------|--------|------|
+  | `IMAGE_OWNER` | `zhongruan0522` | 镜像仓库 Owner |
+  | `IMAGE_TAG` | `latest` | 镜像标签 |
+</Accordion>
+
+<Accordion title="端口映射">
+  | 变量 | 默认值 | 说明 |
+  |------|--------|------|
+  | `WEB_PORT` | `3000` | Web 前端端口（请在这里修改端口） |
+  | `BACKEND_PORT` | `8000` | Backend API 端口（请在这里修改端口） |
+  | `POSTGRES_PORT` | `5432` | PostgreSQL 端口 |
+</Accordion>
+
+<Accordion title="数据库配置">
+  | 变量 | 默认值 | 说明 |
+  |------|--------|------|
+  | `POSTGRES_USER` | `antihub` | 主数据库用户名 |
+  | `POSTGRES_PASSWORD` | - | 主数据库密码 |
+  | `POSTGRES_DB` | `antihub` | 主数据库名 |
+  | `PLUGIN_DB_NAME` | `antigravity` | Plugin 数据库名 |
+  | `PLUGIN_DB_USER` | `antigravity` | Plugin 数据库用户 |
+  | `PLUGIN_DB_PASSWORD` | - | Plugin 数据库密码 |
+</Accordion>
+
+<Accordion title="安全密钥（必填）">
+  | 变量 | 说明 |
+  |------|------|
+  | `JWT_SECRET_KEY` | JWT 签名密钥，建议 32 位以上随机字符串 |
+  | `PLUGIN_ADMIN_API_KEY` | Plugin 管理 API 密钥 |
+  | `PLUGIN_API_ENCRYPTION_KEY` | Fernet 加密密钥（使用脚本生成） |
+</Accordion>
+
+<Accordion title="管理员账号">
+  | 变量 | 默认值 | 说明 |
+  |------|--------|------|
+  | `ADMIN_USERNAME` | `admin` | 管理员用户名 |
+  | `ADMIN_PASSWORD` | - | 管理员密码 |
+</Accordion>
+
+<Accordion title="Cookie 与协议">
+  | 变量 | 默认值 | 说明 |
+  |------|--------|------|
+  | `COOKIE_HTTP` | `HTTPS` | Cookie 协议模式 |
+  
+  <Warning>
+    使用 IP 直连（HTTP）时需改为 `HTTP`，否则浏览器无法保存 Cookie。
+  </Warning>
+</Accordion>
+
+## 常用命令
+
+<Tabs>
+  <Tab title="启动">
+    ```bash
+    docker compose up -d
+    ```
+  </Tab>
+  <Tab title="停止">
+    ```bash
+    docker compose down
+    ```
+  </Tab>
+  <Tab title="查看日志">
+    ```bash
+    docker compose logs -f
+    # 查看单个服务
+    docker compose logs -f backend
+    ```
+  </Tab>
+  <Tab title="更新镜像">
+    ```bash
+    docker compose pull
+    docker compose up -d
+    ```
+  </Tab>
+</Tabs>
+
+## 常见问题
+
+<AccordionGroup>
+  <Accordion title="Cookie 无法保存 / 登录后立即退出">
+    检查 `COOKIE_HTTP` 配置：
+    - 使用 HTTPS 访问 → 设为 `HTTPS`（默认）
+    - 使用 HTTP / IP 直连 → 设为 `HTTP`
+  </Accordion>
+
+  <Accordion title="数据库连接失败">
+    1. 确认 PostgreSQL 容器已启动：`docker compose ps`
+    2. 检查 `DATABASE_URL` 格式是否正确
+    3. 首次启动请等待数据库初始化完成（约 10-30 秒）
+  </Accordion>
+
+  <Accordion title="如何使用外部数据库/Redis？">
+    在 `.env` 中覆盖相应变量即可
+    
+    然后可以使用 `docker-compose.core.yml` 仅启动三件套（web/backend/plugin）。
+  </Accordion>
+</AccordionGroup>

@@ -99,13 +99,17 @@
         ]
       },
       {
-        "tab": "antigravity2api",
+        "tab": "antihub-all",
         "groups": [
           {
             "group": "部署教程",
             "pages": [
-              "antigravity2api/部署教程/docker",
-              "antigravity2api/部署教程/环境变量解析"
+              "antihub-all/部署教程/Docker"
+            ]
+          },{
+            "group": "功能介绍",
+            "pages": [
+              "antihub-all/功能介绍/Kiro按订阅层分流模型"
             ]
           }
         ]
