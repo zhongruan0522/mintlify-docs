@@ -1,7 +1,7 @@
 {
   "$schema": "https://mintlify.com/docs.json",
-  "theme": "mint",
   "name": "阮的文档",
+  "theme": "mint",
   "colors": {
     "primary": "#16A34A",
     "light": "#07C983",
@@ -9,150 +9,1262 @@
   },
   "favicon": "/favicon.svg",
   "navigation": {
-    "tabs": [
+    "languages": [
       {
-        "tab": "AI编码教程",
-        "groups": [
+        "language": "cn",
+        "default": true,
+        "tabs": [
           {
-            "group": "欢迎",
-            "pages": [
-              "vibe-coding/欢迎",
-              "vibe-coding/安装",
-              "vibe-coding/基础配置"
+            "tab": "AI编码教程",
+            "groups": [
+              {
+                "group": "欢迎",
+                "pages": [
+                  "vibe-coding/欢迎",
+                  "vibe-coding/安装",
+                  "vibe-coding/基础配置"
+                ]
+              },
+              {
+                "group": "疑难杂症",
+                "pages": [
+                  "vibe-coding/疑难杂症"
+                ]
+              },
+              {
+                "group": "理论知识",
+                "pages": [
+                  "vibe-coding/优秀项目和文章/vibecoding(氛围编程)总是产出一坨垃圾你可能需要些技巧",
+                  "vibe-coding/优秀项目和文章/AI代理的上下文工程：构建Manus的经验教训",
+                  "vibe-coding/优秀项目和文章/私域知识工程实战：如何让 AI 一次性写出高质量代码？"
+                ]
+              },
+              {
+                "group": "AI工作流",
+                "pages": [
+                  "vibe-coding/优秀项目和文章/6A工作流  AI + Figma 产品设计自动化解决方案",
+                  "vibe-coding/优秀项目和文章/Claude Code Sub-Agents：从手工作坊到自动化工厂",
+                  "vibe-coding/优秀项目和文章/Claude Code × Zen MCP：多AI协作编程革命",
+                  "vibe-coding/优秀项目和文章/SuperClaude × Claude Code：MCP驱动的AI编程爆改指南"
+                ]
+              },
+              {
+                "group": "IDE插件",
+                "pages": [
+                  "vibe-coding/优秀项目和文章/【Prometheus&Zeus v2.0】 RoocodeCursor + MCP + RIPER-5 优化网页+UI+软件等超强规则Rules合集",
+                  "vibe-coding/优秀项目和文章/根据站内佬们的RIPER-5 终极协议调优的自创2.1版本（附提示词和mcp json"
+                ]
+              },
+              {
+                "group": "系统提示词",
+                "pages": [
+                  "vibe-coding/优秀项目和文章/CC&Codex系统提示词推荐",
+                  "vibe-coding/优秀项目和文章/CC-GLM-4.5系统提示词",
+                  "vibe-coding/优秀项目和文章/CC-GLM-4.6系统提示词"
+                ]
+              },
+              {
+                "group": "协作开发",
+                "pages": [
+                  "vibe-coding/优秀项目和文章/实验性：Claude Code + Codex 进行协作开发",
+                  "vibe-coding/优秀项目和文章/Claude Code 调用 Codex：分工协作开发",
+                  "vibe-coding/优秀项目和文章/Claude Code(规划、编写) + Codex(分析、审查) 进行协作开发"
+                ]
+              },
+              {
+                "group": "ClaudeCode",
+                "pages": [
+                  "vibe-coding/优秀项目和文章/ClaudeCode小白指引贴",
+                  "vibe-coding/优秀项目和文章/CC-动态生成Agents",
+                  "vibe-coding/优秀项目和文章/CC-擅长调用子代理",
+                  "vibe-coding/优秀项目和文章/Claude Code Spec Workflow"
+                ]
+              },
+              {
+                "group": "实践分享",
+                "pages": [
+                  "vibe-coding/优秀项目和文章/【实事求是】CC+GLM4.5长期体验和方法分享",
+                  "vibe-coding/优秀项目和文章/一次跑通！省钱又可靠的顾问式编码！",
+                  "vibe-coding/优秀项目和文章/一键生成项目架构图",
+                  "vibe-coding/优秀项目和文章/使用Claude Code Sub-Agent的最佳实践工作流"
+                ]
+              },
+              {
+                "group": "Codex实战",
+                "pages": [
+                  "vibe-coding/优秀项目和文章/Codex全局AGENTS.MD指南",
+                  "vibe-coding/优秀项目和文章/Codex全局AGENTS-88",
+                  "vibe-coding/优秀项目和文章/Codex杂谈",
+                  "vibe-coding/优秀项目和文章/后端Codex AGENTS",
+                  "vibe-coding/优秀项目和文章/让 WSL 成功使用 Codex",
+                  "vibe-coding/优秀项目和文章/向大家分享个自己平时使用的codex的AGENTS.md，抛砖引玉"
+                ]
+              }
             ]
           },
           {
-            "group": "疑难杂症",
-            "pages": [
-              "vibe-coding/疑难杂症"
+            "tab": "antihub-all",
+            "groups": [
+              {
+                "group": "部署教程",
+                "pages": [
+                  "antihub-all/部署教程/Docker"
+                ]
+              },
+              {
+                "group": "功能介绍",
+                "pages": [
+                  "antihub-all/功能介绍/Kiro按订阅层分流模型"
+                ]
+              }
             ]
           },
           {
-            "group": "理论知识",
+            "tab": "使用指南",
+            "icon": "book-open",
             "pages": [
-              "vibe-coding/优秀项目和文章/vibecoding(氛围编程)总是产出一坨垃圾你可能需要些技巧",
-              "vibe-coding/优秀项目和文章/AI代理的上下文工程：构建Manus的经验教训",
-              "vibe-coding/优秀项目和文章/私域知识工程实战：如何让 AI 一次性写出高质量代码？"
+              {
+                "group": "介绍",
+                "pages": [
+                  "cn/nookmux/index",
+                  {
+                    "group": "基本概念",
+                    "pages": [
+                      "cn/nookmux/guide/wiki/basic-concepts/project-introduction",
+                      "cn/nookmux/guide/wiki/basic-concepts/features-introduction",
+                      "cn/nookmux/guide/wiki/basic-concepts/technical-architecture",
+                      "cn/nookmux/guide/wiki/basic-concepts/analytics-setup",
+                      "cn/nookmux/guide/wiki/basic-concepts/performance-analysis"
+                    ]
+                  },
+                  {
+                    "group": "项目记录",
+                    "pages": [
+                      "cn/nookmux/guide/wiki/project-records/changelog",
+                      "cn/nookmux/guide/wiki/project-records/special-thanks"
+                    ]
+                  },
+                  "cn/nookmux/guide/wiki/changelog",
+                  "cn/nookmux/guide/wiki/special-thanks"
+                ]
+              },
+              {
+                "group": "功能指南",
+                "pages": [
+                  "cn/nookmux/guide/home",
+                  {
+                    "group": "控制台",
+                    "pages": [
+                      "cn/nookmux/guide/console/dashboard",
+                      "cn/nookmux/guide/console/playground",
+                      "cn/nookmux/guide/console/chat",
+                      "cn/nookmux/guide/console/api-token",
+                      "cn/nookmux/guide/console/usage-log",
+                      "cn/nookmux/guide/console/multimodal-files",
+                      "cn/nookmux/guide/console/wallet",
+                      "cn/nookmux/guide/console/order-query",
+                      "cn/nookmux/guide/console/profile",
+                      "cn/nookmux/guide/console/ticket",
+                      "cn/nookmux/guide/console/channel-management",
+                      "cn/nookmux/guide/console/models",
+                      "cn/nookmux/guide/console/dynamic-ratio",
+                      "cn/nookmux/guide/console/user-management",
+                      "cn/nookmux/guide/console/redeem-code-management",
+                      "cn/nookmux/guide/console/audit-logs",
+                      "cn/nookmux/guide/console/voice-management",
+                      {
+                        "group": "设置",
+                        "pages": [
+                          "cn/nookmux/guide/console/settings/system-settings",
+                          "cn/nookmux/guide/console/settings/other-settings",
+                          "cn/nookmux/guide/console/settings/payment-settings",
+                          "cn/nookmux/guide/console/settings/rate-settings",
+                          "cn/nookmux/guide/console/settings/model-settings",
+                          "cn/nookmux/guide/console/settings/rate-limit-settings",
+                          "cn/nookmux/guide/console/settings/dashboard-settings",
+                          "cn/nookmux/guide/console/settings/operation-settings",
+                          "cn/nookmux/guide/console/settings/chat-settings",
+                          "cn/nookmux/guide/console/settings/drawing-settings"
+                        ]
+                      }
+                    ]
+                  },
+                  "cn/nookmux/guide/pricing",
+                  "cn/nookmux/guide/document",
+                  "cn/nookmux/guide/about"
+                ]
+              }
             ]
           },
           {
-            "group": "AI工作流",
+            "tab": "部署安装",
+            "icon": "wrench",
             "pages": [
-              "vibe-coding/优秀项目和文章/6A工作流  AI + Figma 产品设计自动化解决方案",
-              "vibe-coding/优秀项目和文章/Claude Code Sub-Agents：从手工作坊到自动化工厂",
-              "vibe-coding/优秀项目和文章/Claude Code × Zen MCP：多AI协作编程革命",
-              "vibe-coding/优秀项目和文章/SuperClaude × Claude Code：MCP驱动的AI编程爆改指南"
+              "cn/nookmux/installation/index",
+              {
+                "group": "部署方式",
+                "pages": [
+                  "cn/nookmux/installation/deployment-methods/docker-installation",
+                  "cn/nookmux/installation/deployment-methods/docker-compose-installation",
+                  "cn/nookmux/installation/deployment-methods/1panel-installation",
+                  "cn/nookmux/installation/deployment-methods/bt-docker-installation",
+                  "cn/nookmux/installation/deployment-methods/cluster-deployment",
+                  "cn/nookmux/installation/deployment-methods/local-development"
+                ]
+              },
+              {
+                "group": "配置与维护",
+                "pages": [
+                  "cn/nookmux/installation/config-maintenance/system-update",
+                  "cn/nookmux/installation/config-maintenance/environment-variables",
+                  "cn/nookmux/installation/config-maintenance/docker-compose-yml"
+                ]
+              }
             ]
           },
           {
-            "group": "IDE插件",
+            "tab": "API 参考",
+            "icon": "code",
             "pages": [
-              "vibe-coding/优秀项目和文章/【Prometheus&Zeus v2.0】 RoocodeCursor + MCP + RIPER-5 优化网页+UI+软件等超强规则Rules合集",
-              "vibe-coding/优秀项目和文章/根据站内佬们的RIPER-5 终极协议调优的自创2.1版本（附提示词和mcp json"
+              "cn/nookmux/api/index",
+              "cn/nookmux/api/current-contract",
+              {
+                "group": "AI 模型接口",
+                "pages": [
+                  {
+                    "group": "音频（Audio）",
+                    "pages": [
+                      "cn/nookmux/api/ai-model/audio/geminirelayv1beta-383836364",
+                      {
+                        "group": "原生OpenAI格式",
+                        "pages": [
+                          "cn/nookmux/api/ai-model/audio/openai/createspeech",
+                          "cn/nookmux/api/ai-model/audio/openai/createtranscription",
+                          "cn/nookmux/api/ai-model/audio/openai/createtranslation"
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "group": "聊天（Chat）",
+                    "pages": [
+                      "cn/nookmux/api/ai-model/chat/createmessage",
+                      {
+                        "group": "原生Gemini格式",
+                        "pages": [
+                          "cn/nookmux/api/ai-model/chat/gemini/geminirelayv1beta",
+                          "cn/nookmux/api/ai-model/chat/gemini/geminirelayv1beta-391536411"
+                        ]
+                      },
+                      {
+                        "group": "原生OpenAI格式",
+                        "pages": [
+                          "cn/nookmux/api/ai-model/chat/openai/createchatcompletion",
+                          "cn/nookmux/api/ai-model/chat/openai/createresponse"
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "group": "补全（Completions）",
+                    "pages": [
+                      "cn/nookmux/api/ai-model/completions/createcompletion"
+                    ]
+                  },
+                  {
+                    "group": "嵌入（Embeddings）",
+                    "pages": [
+                      "cn/nookmux/api/ai-model/embeddings/createembedding",
+                      "cn/nookmux/api/ai-model/embeddings/createengineembedding"
+                    ]
+                  },
+                  {
+                    "group": "图像（Images）",
+                    "pages": [
+                      {
+                        "group": "原生Gemini格式",
+                        "pages": [
+                          "cn/nookmux/api/ai-model/images/gemini/geminirelayv1beta-383837589",
+                          "cn/nookmux/api/ai-model/images/gemini/geminirelayv1beta-389846313"
+                        ]
+                      },
+                      {
+                        "group": "原生OpenAI格式",
+                        "pages": [
+                          "cn/nookmux/api/ai-model/images/openai/post-v1-images-edits",
+                          "cn/nookmux/api/ai-model/images/openai/post-v1-images-generations"
+                        ]
+                      },
+                      {
+                        "group": "通义千问OpenAI格式",
+                        "pages": [
+                          "cn/nookmux/api/ai-model/images/qwen/createimage",
+                          "cn/nookmux/api/ai-model/images/qwen/editimage"
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "group": "模型（Models）",
+                    "pages": [
+                      {
+                        "group": "列出模型",
+                        "pages": [
+                          "cn/nookmux/api/ai-model/models/list/listmodels",
+                          "cn/nookmux/api/ai-model/models/list/listmodelsgemini"
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "group": "审查（Moderations）",
+                    "pages": [
+                      "cn/nookmux/api/ai-model/moderations/createmoderation"
+                    ]
+                  },
+                  {
+                    "group": "实时语音（Realtime）",
+                    "pages": [
+                      "cn/nookmux/api/ai-model/realtime/createrealtimesession"
+                    ]
+                  },
+                  {
+                    "group": "重排序（Rerank）",
+                    "pages": [
+                      "cn/nookmux/api/ai-model/rerank/creatererank"
+                    ]
+                  },
+                  {
+                    "group": "未实现（Unimplemented）",
+                    "pages": [
+                      {
+                        "group": "文件（Files）",
+                        "pages": [
+                          "cn/nookmux/api/ai-model/unimplemented/files/createfile",
+                          "cn/nookmux/api/ai-model/unimplemented/files/deletefile",
+                          "cn/nookmux/api/ai-model/unimplemented/files/downloadfile",
+                          "cn/nookmux/api/ai-model/unimplemented/files/listfiles",
+                          "cn/nookmux/api/ai-model/unimplemented/files/retrievefile"
+                        ]
+                      },
+                      {
+                        "group": "微调（Fine-tuning）",
+                        "pages": [
+                          "cn/nookmux/api/ai-model/unimplemented/fine-tuning/cancelfinetune",
+                          "cn/nookmux/api/ai-model/unimplemented/fine-tuning/createfinetune",
+                          "cn/nookmux/api/ai-model/unimplemented/fine-tuning/listfinetuneevents",
+                          "cn/nookmux/api/ai-model/unimplemented/fine-tuning/listfinetunes",
+                          "cn/nookmux/api/ai-model/unimplemented/fine-tuning/retrievefinetune"
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "group": "管理接口",
+                "pages": [
+                  "cn/nookmux/api/management/auth",
+                  {
+                    "group": "渠道管理",
+                    "pages": [
+                      "cn/nookmux/api/management/channel-management/channel-batch-post",
+                      "cn/nookmux/api/management/channel-management/channel-batch-tag-post",
+                      "cn/nookmux/api/management/channel-management/channel-copy-id-post",
+                      "cn/nookmux/api/management/channel-management/channel-disabled-delete",
+                      "cn/nookmux/api/management/channel-management/channel-fetch_models-id-get",
+                      "cn/nookmux/api/management/channel-management/channel-fetch_models-post",
+                      "cn/nookmux/api/management/channel-management/channel-fix-post",
+                      "cn/nookmux/api/management/channel-management/channel-get",
+                      "cn/nookmux/api/management/channel-management/channel-id-delete",
+                      "cn/nookmux/api/management/channel-management/channel-id-get",
+                      "cn/nookmux/api/management/channel-management/channel-id-key-post",
+                      "cn/nookmux/api/management/channel-management/channel-models-get",
+                      "cn/nookmux/api/management/channel-management/channel-models_enabled-get",
+                      "cn/nookmux/api/management/channel-management/channel-multi_key-manage-post",
+                      "cn/nookmux/api/management/channel-management/channel-post",
+                      "cn/nookmux/api/management/channel-management/channel-put",
+                      "cn/nookmux/api/management/channel-management/channel-search-get",
+                      "cn/nookmux/api/management/channel-management/channel-tag-disabled-post",
+                      "cn/nookmux/api/management/channel-management/channel-tag-enabled-post",
+                      "cn/nookmux/api/management/channel-management/channel-tag-models-get",
+                      "cn/nookmux/api/management/channel-management/channel-tag-put",
+                      "cn/nookmux/api/management/channel-management/channel-test-get",
+                      "cn/nookmux/api/management/channel-management/channel-test-id-get",
+                      "cn/nookmux/api/management/channel-management/channel-update_balance-get",
+                      "cn/nookmux/api/management/channel-management/channel-update_balance-id-get"
+                    ]
+                  },
+                  {
+                    "group": "default",
+                    "pages": [
+                      "cn/nookmux/api/management/default/user-topup-post"
+                    ]
+                  },
+                  {
+                    "group": "分组",
+                    "pages": [
+                      "cn/nookmux/api/management/groups/group-get",
+                      "cn/nookmux/api/management/groups/prefill_group-get",
+                      "cn/nookmux/api/management/groups/prefill_group-id-delete",
+                      "cn/nookmux/api/management/groups/prefill_group-post",
+                      "cn/nookmux/api/management/groups/prefill_group-put"
+                    ]
+                  },
+                  {
+                    "group": "模型管理",
+                    "pages": [
+                      "cn/nookmux/api/management/model-management/models-get",
+                      "cn/nookmux/api/management/model-management/models-id-delete",
+                      "cn/nookmux/api/management/model-management/models-id-get",
+                      "cn/nookmux/api/management/model-management/models-missing-get",
+                      "cn/nookmux/api/management/model-management/models-post",
+                      "cn/nookmux/api/management/model-management/models-put",
+                      "cn/nookmux/api/management/model-management/models-search-get",
+                      "cn/nookmux/api/management/model-management/models-sync_upstream-post",
+                      "cn/nookmux/api/management/model-management/models-sync_upstream-preview-get"
+                    ]
+                  },
+                  {
+                    "group": "OAuth",
+                    "pages": [
+                      "cn/nookmux/api/management/oauth/oauth-email-bind-post",
+                      "cn/nookmux/api/management/oauth/oauth-github-get",
+                      "cn/nookmux/api/management/oauth/oauth-linuxdo-get",
+                      "cn/nookmux/api/management/oauth/oauth-state-get"
+                    ]
+                  },
+                  {
+                    "group": "充值",
+                    "pages": [
+                      "cn/nookmux/api/management/payment/stripe-webhook-post",
+                      "cn/nookmux/api/management/payment/user-amount-post",
+                      "cn/nookmux/api/management/payment/user-epay-notify-get",
+                      "cn/nookmux/api/management/payment/user-pay-post",
+                      "cn/nookmux/api/management/payment/user-stripe-amount-post",
+                      "cn/nookmux/api/management/payment/user-stripe-pay-post",
+                      "cn/nookmux/api/management/payment/user-topup-info-get",
+                      "cn/nookmux/api/management/payment/user-topup-self-get"
+                    ]
+                  },
+                  {
+                    "group": "兑换码",
+                    "pages": [
+                      "cn/nookmux/api/management/redemption/redemption-get",
+                      "cn/nookmux/api/management/redemption/redemption-id-delete",
+                      "cn/nookmux/api/management/redemption/redemption-id-get",
+                      "cn/nookmux/api/management/redemption/redemption-invalid-delete",
+                      "cn/nookmux/api/management/redemption/redemption-post",
+                      "cn/nookmux/api/management/redemption/redemption-put",
+                      "cn/nookmux/api/management/redemption/redemption-search-get"
+                    ]
+                  },
+                  {
+                    "group": "安全验证",
+                    "pages": [
+                      "cn/nookmux/api/management/security-verification/verify-post"
+                    ]
+                  },
+                  {
+                    "group": "数据统计",
+                    "pages": [
+                      "cn/nookmux/api/management/statistics/data-get",
+                      "cn/nookmux/api/management/statistics/data-self-get"
+                    ]
+                  },
+                  {
+                    "group": "系统设置",
+                    "pages": [
+                      "cn/nookmux/api/management/system-settings/option-get",
+                      "cn/nookmux/api/management/system-settings/option-migrate_console_setting-post",
+                      "cn/nookmux/api/management/system-settings/option-put",
+                      "cn/nookmux/api/management/system-settings/option-rest_model_ratio-post"
+                    ]
+                  },
+                  {
+                    "group": "系统",
+                    "pages": [
+                      "cn/nookmux/api/management/system/about-get",
+                      "cn/nookmux/api/management/system/home_page_content-get",
+                      "cn/nookmux/api/management/system/models-get",
+                      "cn/nookmux/api/management/system/notice-get",
+                      "cn/nookmux/api/management/system/pricing-get",
+                      "cn/nookmux/api/management/system/privacy-policy-get",
+                      "cn/nookmux/api/management/system/setup-get",
+                      "cn/nookmux/api/management/system/setup-post",
+                      "cn/nookmux/api/management/system/status-get",
+                      "cn/nookmux/api/management/system/status-test-get",
+                      "cn/nookmux/api/management/system/uptime-status-get",
+                      "cn/nookmux/api/management/system/user-agreement-get"
+                    ]
+                  },
+                  {
+                    "group": "令牌管理",
+                    "pages": [
+                      "cn/nookmux/api/management/token-management/token-batch-post",
+                      "cn/nookmux/api/management/token-management/token-get",
+                      "cn/nookmux/api/management/token-management/token-id-delete",
+                      "cn/nookmux/api/management/token-management/token-id-get",
+                      "cn/nookmux/api/management/token-management/token-post",
+                      "cn/nookmux/api/management/token-management/token-put",
+                      "cn/nookmux/api/management/token-management/token-search-get",
+                      "cn/nookmux/api/management/token-management/usage-token-get"
+                    ]
+                  },
+                  {
+                    "group": "两步验证",
+                    "pages": [
+                      "cn/nookmux/api/management/two-factor-auth/user-2fa-backup_codes-post",
+                      "cn/nookmux/api/management/two-factor-auth/user-2fa-disable-post",
+                      "cn/nookmux/api/management/two-factor-auth/user-2fa-enable-post",
+                      "cn/nookmux/api/management/two-factor-auth/user-2fa-setup-post",
+                      "cn/nookmux/api/management/two-factor-auth/user-2fa-stats-get",
+                      "cn/nookmux/api/management/two-factor-auth/user-2fa-status-get"
+                    ]
+                  },
+                  {
+                    "group": "用户登陆注册",
+                    "pages": [
+                      "cn/nookmux/api/management/user-auth/reset_password-get",
+                      "cn/nookmux/api/management/user-auth/user-groups-get",
+                      "cn/nookmux/api/management/user-auth/user-login-2fa-post",
+                      "cn/nookmux/api/management/user-auth/user-login-post",
+                      "cn/nookmux/api/management/user-auth/user-logout-get",
+                      "cn/nookmux/api/management/user-auth/user-passkey-login-begin-post",
+                      "cn/nookmux/api/management/user-auth/user-passkey-login-finish-post",
+                      "cn/nookmux/api/management/user-auth/user-register-post",
+                      "cn/nookmux/api/management/user-auth/user-reset-post",
+                      "cn/nookmux/api/management/user-auth/verification-get"
+                    ]
+                  },
+                  {
+                    "group": "用户管理",
+                    "pages": [
+                      "cn/nookmux/api/management/user-management/user-aff-get",
+                      "cn/nookmux/api/management/user-management/user-aff_transfer-post",
+                      "cn/nookmux/api/management/user-management/user-get",
+                      "cn/nookmux/api/management/user-management/user-id-2fa-delete",
+                      "cn/nookmux/api/management/user-management/user-id-delete",
+                      "cn/nookmux/api/management/user-management/user-id-get",
+                      "cn/nookmux/api/management/user-management/user-id-reset_passkey-delete",
+                      "cn/nookmux/api/management/user-management/user-manage-post",
+                      "cn/nookmux/api/management/user-management/user-models-get",
+                      "cn/nookmux/api/management/user-management/user-passkey-delete",
+                      "cn/nookmux/api/management/user-management/user-passkey-get",
+                      "cn/nookmux/api/management/user-management/user-passkey-register-begin-post",
+                      "cn/nookmux/api/management/user-management/user-passkey-register-finish-post",
+                      "cn/nookmux/api/management/user-management/user-passkey-verify-begin-post",
+                      "cn/nookmux/api/management/user-management/user-passkey-verify-finish-post",
+                      "cn/nookmux/api/management/user-management/user-post",
+                      "cn/nookmux/api/management/user-management/user-put",
+                      "cn/nookmux/api/management/user-management/user-search-get",
+                      "cn/nookmux/api/management/user-management/user-self-delete",
+                      "cn/nookmux/api/management/user-management/user-self-get",
+                      "cn/nookmux/api/management/user-management/user-self-groups-get",
+                      "cn/nookmux/api/management/user-management/user-self-put",
+                      "cn/nookmux/api/management/user-management/user-setting-put",
+                      "cn/nookmux/api/management/user-management/user-token-get",
+                      "cn/nookmux/api/management/user-management/user-topup-complete-post",
+                      "cn/nookmux/api/management/user-management/user-topup-get"
+                    ]
+                  },
+                  {
+                    "group": "供应商",
+                    "pages": [
+                      "cn/nookmux/api/management/vendors/vendors-get",
+                      "cn/nookmux/api/management/vendors/vendors-id-delete",
+                      "cn/nookmux/api/management/vendors/vendors-id-get",
+                      "cn/nookmux/api/management/vendors/vendors-post",
+                      "cn/nookmux/api/management/vendors/vendors-put",
+                      "cn/nookmux/api/management/vendors/vendors-search-get"
+                    ]
+                  }
+                ]
+              }
             ]
           },
           {
-            "group": "系统提示词",
+            "tab": "AI 应用",
+            "icon": "sparkles",
             "pages": [
-              "vibe-coding/优秀项目和文章/CC&Codex系统提示词推荐",
-              "vibe-coding/优秀项目和文章/CC-GLM-4.5系统提示词",
-              "vibe-coding/优秀项目和文章/CC-GLM-4.6系统提示词"
-            ]
-          },
-          {
-            "group": "协作开发",
-            "pages": [
-              "vibe-coding/优秀项目和文章/实验性：Claude Code + Codex 进行协作开发",
-              "vibe-coding/优秀项目和文章/Claude Code 调用 Codex：分工协作开发",
-              "vibe-coding/优秀项目和文章/Claude Code(规划、编写) + Codex(分析、审查) 进行协作开发"
-            ]
-          },
-          {
-            "group": "ClaudeCode",
-            "pages": [
-              "vibe-coding/优秀项目和文章/ClaudeCode小白指引贴",
-              "vibe-coding/优秀项目和文章/CC-动态生成Agents",
-              "vibe-coding/优秀项目和文章/CC-擅长调用子代理",
-              "vibe-coding/优秀项目和文章/Claude Code Spec Workflow"
-            ]
-          },
-          {
-            "group": "实践分享",
-            "pages": [
-              "vibe-coding/优秀项目和文章/【实事求是】CC+GLM4.5长期体验和方法分享",
-              "vibe-coding/优秀项目和文章/一次跑通！省钱又可靠的顾问式编码！",
-              "vibe-coding/优秀项目和文章/一键生成项目架构图",
-              "vibe-coding/优秀项目和文章/使用Claude Code Sub-Agent的最佳实践工作流"
-            ]
-          },
-          {
-            "group": "Codex实战",
-            "pages": [
-              "vibe-coding/优秀项目和文章/Codex全局AGENTS.MD指南",
-              "vibe-coding/优秀项目和文章/Codex全局AGENTS-88",
-              "vibe-coding/优秀项目和文章/Codex杂谈",
-              "vibe-coding/优秀项目和文章/后端Codex AGENTS",
-              "vibe-coding/优秀项目和文章/让 WSL 成功使用 Codex",
-              "vibe-coding/优秀项目和文章/向大家分享个自己平时使用的codex的AGENTS.md，抛砖引玉"
+              "cn/nookmux/apps/index",
+              "cn/nookmux/apps/aionui",
+              "cn/nookmux/apps/cherry-studio",
+              "cn/nookmux/apps/claude-code",
+              "cn/nookmux/apps/codex-cli",
+              "cn/nookmux/apps/factory-droid-cli",
+              "cn/nookmux/apps/fluent-read",
+              "cn/nookmux/apps/langbot",
+              "cn/nookmux/apps/luna-translator",
+              "cn/nookmux/apps/astrbot",
+              "cn/nookmux/apps/cc-switch"
             ]
           }
         ]
       },
       {
-        "tab": "antihub-all",
-        "groups": [
+        "language": "en",
+        "tabs": [
           {
-            "group": "部署教程",
+            "tab": "Guide",
+            "icon": "book-open",
             "pages": [
-              "antihub-all/部署教程/Docker"
+              {
+                "group": "Introduction",
+                "pages": [
+                  "nookmux/index",
+                  {
+                    "group": "Basic Concepts",
+                    "pages": [
+                      "nookmux/guide/wiki/basic-concepts/project-introduction",
+                      "nookmux/guide/wiki/basic-concepts/features-introduction",
+                      "nookmux/guide/wiki/basic-concepts/technical-architecture",
+                      "nookmux/guide/wiki/basic-concepts/analytics-setup",
+                      "nookmux/guide/wiki/basic-concepts/performance-analysis"
+                    ]
+                  },
+                  {
+                    "group": "Project Records",
+                    "pages": [
+                      "nookmux/guide/wiki/project-records/changelog",
+                      "nookmux/guide/wiki/project-records/special-thanks"
+                    ]
+                  },
+                  "nookmux/guide/wiki/changelog",
+                  "nookmux/guide/wiki/special-thanks"
+                ]
+              },
+              {
+                "group": "Feature Guide",
+                "pages": [
+                  "nookmux/guide/home",
+                  {
+                    "group": "Console",
+                    "pages": [
+                      "nookmux/guide/console/dashboard",
+                      "nookmux/guide/console/playground",
+                      "nookmux/guide/console/chat",
+                      "nookmux/guide/console/api-token",
+                      "nookmux/guide/console/usage-log",
+                      "nookmux/guide/console/multimodal-files",
+                      "nookmux/guide/console/wallet",
+                      "nookmux/guide/console/order-query",
+                      "nookmux/guide/console/profile",
+                      "nookmux/guide/console/ticket",
+                      "nookmux/guide/console/channel-management",
+                      "nookmux/guide/console/models",
+                      "nookmux/guide/console/dynamic-ratio",
+                      "nookmux/guide/console/user-management",
+                      "nookmux/guide/console/redeem-code-management",
+                      "nookmux/guide/console/audit-logs",
+                      "nookmux/guide/console/voice-management",
+                      {
+                        "group": "Settings",
+                        "pages": [
+                          "nookmux/guide/console/settings/system-settings",
+                          "nookmux/guide/console/settings/other-settings",
+                          "nookmux/guide/console/settings/payment-settings",
+                          "nookmux/guide/console/settings/rate-settings",
+                          "nookmux/guide/console/settings/model-settings",
+                          "nookmux/guide/console/settings/rate-limit-settings",
+                          "nookmux/guide/console/settings/dashboard-settings",
+                          "nookmux/guide/console/settings/operation-settings",
+                          "nookmux/guide/console/settings/chat-settings",
+                          "nookmux/guide/console/settings/drawing-settings"
+                        ]
+                      }
+                    ]
+                  },
+                  "nookmux/guide/pricing",
+                  "nookmux/guide/document",
+                  "nookmux/guide/about"
+                ]
+              }
             ]
-          },{
-            "group": "功能介绍",
+          },
+          {
+            "tab": "Installation",
+            "icon": "wrench",
             "pages": [
-              "antihub-all/功能介绍/Kiro按订阅层分流模型"
+              "nookmux/installation/index",
+              {
+                "group": "Deployment Methods",
+                "pages": [
+                  "nookmux/installation/deployment-methods/docker-installation",
+                  "nookmux/installation/deployment-methods/docker-compose-installation",
+                  "nookmux/installation/deployment-methods/1panel-installation",
+                  "nookmux/installation/deployment-methods/bt-docker-installation",
+                  "nookmux/installation/deployment-methods/cluster-deployment",
+                  "nookmux/installation/deployment-methods/local-development"
+                ]
+              },
+              {
+                "group": "Configuration & Maintenance",
+                "pages": [
+                  "nookmux/installation/config-maintenance/system-update",
+                  "nookmux/installation/config-maintenance/environment-variables",
+                  "nookmux/installation/config-maintenance/docker-compose-yml"
+                ]
+              }
+            ]
+          },
+          {
+            "tab": "API Reference",
+            "icon": "code",
+            "pages": [
+              "nookmux/api/index",
+              "nookmux/api/current-contract",
+              {
+                "group": "AI Model API",
+                "pages": [
+                  {
+                    "group": "Audio",
+                    "pages": [
+                      "nookmux/api/ai-model/audio/geminirelayv1beta-383836364",
+                      {
+                        "group": "OpenAI",
+                        "pages": [
+                          "nookmux/api/ai-model/audio/openai/createspeech",
+                          "nookmux/api/ai-model/audio/openai/createtranscription",
+                          "nookmux/api/ai-model/audio/openai/createtranslation"
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "group": "Chat",
+                    "pages": [
+                      "nookmux/api/ai-model/chat/createmessage",
+                      {
+                        "group": "Gemini",
+                        "pages": [
+                          "nookmux/api/ai-model/chat/gemini/geminirelayv1beta",
+                          "nookmux/api/ai-model/chat/gemini/geminirelayv1beta-391536411"
+                        ]
+                      },
+                      {
+                        "group": "OpenAI",
+                        "pages": [
+                          "nookmux/api/ai-model/chat/openai/createchatcompletion",
+                          "nookmux/api/ai-model/chat/openai/createresponse"
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "group": "Completions",
+                    "pages": [
+                      "nookmux/api/ai-model/completions/createcompletion"
+                    ]
+                  },
+                  {
+                    "group": "Embeddings",
+                    "pages": [
+                      "nookmux/api/ai-model/embeddings/createembedding",
+                      "nookmux/api/ai-model/embeddings/createengineembedding"
+                    ]
+                  },
+                  {
+                    "group": "Images",
+                    "pages": [
+                      {
+                        "group": "Gemini",
+                        "pages": [
+                          "nookmux/api/ai-model/images/gemini/geminirelayv1beta-383837589",
+                          "nookmux/api/ai-model/images/gemini/geminirelayv1beta-389846313"
+                        ]
+                      },
+                      {
+                        "group": "OpenAI",
+                        "pages": [
+                          "nookmux/api/ai-model/images/openai/post-v1-images-edits",
+                          "nookmux/api/ai-model/images/openai/post-v1-images-generations"
+                        ]
+                      },
+                      {
+                        "group": "Qwen",
+                        "pages": [
+                          "nookmux/api/ai-model/images/qwen/createimage",
+                          "nookmux/api/ai-model/images/qwen/editimage"
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "group": "Models",
+                    "pages": [
+                      {
+                        "group": "List",
+                        "pages": [
+                          "nookmux/api/ai-model/models/list/listmodels",
+                          "nookmux/api/ai-model/models/list/listmodelsgemini"
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "group": "Moderations",
+                    "pages": [
+                      "nookmux/api/ai-model/moderations/createmoderation"
+                    ]
+                  },
+                  {
+                    "group": "Realtime",
+                    "pages": [
+                      "nookmux/api/ai-model/realtime/createrealtimesession"
+                    ]
+                  },
+                  {
+                    "group": "Rerank",
+                    "pages": [
+                      "nookmux/api/ai-model/rerank/creatererank"
+                    ]
+                  },
+                  {
+                    "group": "Unimplemented",
+                    "pages": [
+                      {
+                        "group": "Files",
+                        "pages": [
+                          "nookmux/api/ai-model/unimplemented/files/createfile",
+                          "nookmux/api/ai-model/unimplemented/files/deletefile",
+                          "nookmux/api/ai-model/unimplemented/files/downloadfile",
+                          "nookmux/api/ai-model/unimplemented/files/listfiles",
+                          "nookmux/api/ai-model/unimplemented/files/retrievefile"
+                        ]
+                      },
+                      {
+                        "group": "Fine-tuning",
+                        "pages": [
+                          "nookmux/api/ai-model/unimplemented/fine-tuning/cancelfinetune",
+                          "nookmux/api/ai-model/unimplemented/fine-tuning/createfinetune",
+                          "nookmux/api/ai-model/unimplemented/fine-tuning/listfinetuneevents",
+                          "nookmux/api/ai-model/unimplemented/fine-tuning/listfinetunes",
+                          "nookmux/api/ai-model/unimplemented/fine-tuning/retrievefinetune"
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "group": "Management API",
+                "pages": [
+                  "nookmux/api/management/auth",
+                  {
+                    "group": "Channel Management",
+                    "pages": [
+                      "nookmux/api/management/channel-management/channel-batch-post",
+                      "nookmux/api/management/channel-management/channel-batch-tag-post",
+                      "nookmux/api/management/channel-management/channel-copy-id-post",
+                      "nookmux/api/management/channel-management/channel-disabled-delete",
+                      "nookmux/api/management/channel-management/channel-fetch_models-id-get",
+                      "nookmux/api/management/channel-management/channel-fetch_models-post",
+                      "nookmux/api/management/channel-management/channel-fix-post",
+                      "nookmux/api/management/channel-management/channel-get",
+                      "nookmux/api/management/channel-management/channel-id-delete",
+                      "nookmux/api/management/channel-management/channel-id-get",
+                      "nookmux/api/management/channel-management/channel-id-key-post",
+                      "nookmux/api/management/channel-management/channel-models-get",
+                      "nookmux/api/management/channel-management/channel-models_enabled-get",
+                      "nookmux/api/management/channel-management/channel-multi_key-manage-post",
+                      "nookmux/api/management/channel-management/channel-post",
+                      "nookmux/api/management/channel-management/channel-put",
+                      "nookmux/api/management/channel-management/channel-search-get",
+                      "nookmux/api/management/channel-management/channel-tag-disabled-post",
+                      "nookmux/api/management/channel-management/channel-tag-enabled-post",
+                      "nookmux/api/management/channel-management/channel-tag-models-get",
+                      "nookmux/api/management/channel-management/channel-tag-put",
+                      "nookmux/api/management/channel-management/channel-test-get",
+                      "nookmux/api/management/channel-management/channel-test-id-get",
+                      "nookmux/api/management/channel-management/channel-update_balance-get",
+                      "nookmux/api/management/channel-management/channel-update_balance-id-get"
+                    ]
+                  },
+                  {
+                    "group": "Default",
+                    "pages": [
+                      "nookmux/api/management/default/user-topup-post"
+                    ]
+                  },
+                  {
+                    "group": "Groups",
+                    "pages": [
+                      "nookmux/api/management/groups/group-get",
+                      "nookmux/api/management/groups/prefill_group-get",
+                      "nookmux/api/management/groups/prefill_group-id-delete",
+                      "nookmux/api/management/groups/prefill_group-post",
+                      "nookmux/api/management/groups/prefill_group-put"
+                    ]
+                  },
+                  {
+                    "group": "Model Management",
+                    "pages": [
+                      "nookmux/api/management/model-management/models-get",
+                      "nookmux/api/management/model-management/models-id-delete",
+                      "nookmux/api/management/model-management/models-id-get",
+                      "nookmux/api/management/model-management/models-missing-get",
+                      "nookmux/api/management/model-management/models-post",
+                      "nookmux/api/management/model-management/models-put",
+                      "nookmux/api/management/model-management/models-search-get",
+                      "nookmux/api/management/model-management/models-sync_upstream-post",
+                      "nookmux/api/management/model-management/models-sync_upstream-preview-get"
+                    ]
+                  },
+                  {
+                    "group": "OAuth",
+                    "pages": [
+                      "nookmux/api/management/oauth/oauth-email-bind-post",
+                      "nookmux/api/management/oauth/oauth-github-get",
+                      "nookmux/api/management/oauth/oauth-linuxdo-get",
+                      "nookmux/api/management/oauth/oauth-state-get"
+                    ]
+                  },
+                  {
+                    "group": "Payment",
+                    "pages": [
+                      "nookmux/api/management/payment/stripe-webhook-post",
+                      "nookmux/api/management/payment/user-amount-post",
+                      "nookmux/api/management/payment/user-epay-notify-get",
+                      "nookmux/api/management/payment/user-pay-post",
+                      "nookmux/api/management/payment/user-stripe-amount-post",
+                      "nookmux/api/management/payment/user-stripe-pay-post",
+                      "nookmux/api/management/payment/user-topup-info-get",
+                      "nookmux/api/management/payment/user-topup-self-get"
+                    ]
+                  },
+                  {
+                    "group": "Redemption",
+                    "pages": [
+                      "nookmux/api/management/redemption/redemption-get",
+                      "nookmux/api/management/redemption/redemption-id-delete",
+                      "nookmux/api/management/redemption/redemption-id-get",
+                      "nookmux/api/management/redemption/redemption-invalid-delete",
+                      "nookmux/api/management/redemption/redemption-post",
+                      "nookmux/api/management/redemption/redemption-put",
+                      "nookmux/api/management/redemption/redemption-search-get"
+                    ]
+                  },
+                  {
+                    "group": "Security Verification",
+                    "pages": [
+                      "nookmux/api/management/security-verification/verify-post"
+                    ]
+                  },
+                  {
+                    "group": "Statistics",
+                    "pages": [
+                      "nookmux/api/management/statistics/data-get",
+                      "nookmux/api/management/statistics/data-self-get"
+                    ]
+                  },
+                  {
+                    "group": "System Settings",
+                    "pages": [
+                      "nookmux/api/management/system-settings/option-get",
+                      "nookmux/api/management/system-settings/option-migrate_console_setting-post",
+                      "nookmux/api/management/system-settings/option-put",
+                      "nookmux/api/management/system-settings/option-rest_model_ratio-post"
+                    ]
+                  },
+                  {
+                    "group": "System",
+                    "pages": [
+                      "nookmux/api/management/system/about-get",
+                      "nookmux/api/management/system/home_page_content-get",
+                      "nookmux/api/management/system/models-get",
+                      "nookmux/api/management/system/notice-get",
+                      "nookmux/api/management/system/pricing-get",
+                      "nookmux/api/management/system/privacy-policy-get",
+                      "nookmux/api/management/system/setup-get",
+                      "nookmux/api/management/system/setup-post",
+                      "nookmux/api/management/system/status-get",
+                      "nookmux/api/management/system/status-test-get",
+                      "nookmux/api/management/system/uptime-status-get",
+                      "nookmux/api/management/system/user-agreement-get"
+                    ]
+                  },
+                  {
+                    "group": "Token Management",
+                    "pages": [
+                      "nookmux/api/management/token-management/token-batch-post",
+                      "nookmux/api/management/token-management/token-get",
+                      "nookmux/api/management/token-management/token-id-delete",
+                      "nookmux/api/management/token-management/token-id-get",
+                      "nookmux/api/management/token-management/token-post",
+                      "nookmux/api/management/token-management/token-put",
+                      "nookmux/api/management/token-management/token-search-get",
+                      "nookmux/api/management/token-management/usage-token-get"
+                    ]
+                  },
+                  {
+                    "group": "Two-Factor Authentication",
+                    "pages": [
+                      "nookmux/api/management/two-factor-auth/user-2fa-backup_codes-post",
+                      "nookmux/api/management/two-factor-auth/user-2fa-disable-post",
+                      "nookmux/api/management/two-factor-auth/user-2fa-enable-post",
+                      "nookmux/api/management/two-factor-auth/user-2fa-setup-post",
+                      "nookmux/api/management/two-factor-auth/user-2fa-stats-get",
+                      "nookmux/api/management/two-factor-auth/user-2fa-status-get"
+                    ]
+                  },
+                  {
+                    "group": "User Authentication",
+                    "pages": [
+                      "nookmux/api/management/user-auth/reset_password-get",
+                      "nookmux/api/management/user-auth/user-groups-get",
+                      "nookmux/api/management/user-auth/user-login-2fa-post",
+                      "nookmux/api/management/user-auth/user-login-post",
+                      "nookmux/api/management/user-auth/user-logout-get",
+                      "nookmux/api/management/user-auth/user-passkey-login-begin-post",
+                      "nookmux/api/management/user-auth/user-passkey-login-finish-post",
+                      "nookmux/api/management/user-auth/user-register-post",
+                      "nookmux/api/management/user-auth/user-reset-post",
+                      "nookmux/api/management/user-auth/verification-get"
+                    ]
+                  },
+                  {
+                    "group": "User Management",
+                    "pages": [
+                      "nookmux/api/management/user-management/user-aff-get",
+                      "nookmux/api/management/user-management/user-aff_transfer-post",
+                      "nookmux/api/management/user-management/user-get",
+                      "nookmux/api/management/user-management/user-id-2fa-delete",
+                      "nookmux/api/management/user-management/user-id-delete",
+                      "nookmux/api/management/user-management/user-id-get",
+                      "nookmux/api/management/user-management/user-id-reset_passkey-delete",
+                      "nookmux/api/management/user-management/user-manage-post",
+                      "nookmux/api/management/user-management/user-models-get",
+                      "nookmux/api/management/user-management/user-passkey-delete",
+                      "nookmux/api/management/user-management/user-passkey-get",
+                      "nookmux/api/management/user-management/user-passkey-register-begin-post",
+                      "nookmux/api/management/user-management/user-passkey-register-finish-post",
+                      "nookmux/api/management/user-management/user-passkey-verify-begin-post",
+                      "nookmux/api/management/user-management/user-passkey-verify-finish-post",
+                      "nookmux/api/management/user-management/user-post",
+                      "nookmux/api/management/user-management/user-put",
+                      "nookmux/api/management/user-management/user-search-get",
+                      "nookmux/api/management/user-management/user-self-delete",
+                      "nookmux/api/management/user-management/user-self-get",
+                      "nookmux/api/management/user-management/user-self-groups-get",
+                      "nookmux/api/management/user-management/user-self-put",
+                      "nookmux/api/management/user-management/user-setting-put",
+                      "nookmux/api/management/user-management/user-token-get",
+                      "nookmux/api/management/user-management/user-topup-complete-post",
+                      "nookmux/api/management/user-management/user-topup-get"
+                    ]
+                  },
+                  {
+                    "group": "Vendors",
+                    "pages": [
+                      "nookmux/api/management/vendors/vendors-get",
+                      "nookmux/api/management/vendors/vendors-id-delete",
+                      "nookmux/api/management/vendors/vendors-id-get",
+                      "nookmux/api/management/vendors/vendors-post",
+                      "nookmux/api/management/vendors/vendors-put",
+                      "nookmux/api/management/vendors/vendors-search-get"
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "tab": "AI Applications",
+            "icon": "sparkles",
+            "pages": [
+              "nookmux/apps/index",
+              "nookmux/apps/aionui",
+              "nookmux/apps/cherry-studio",
+              "nookmux/apps/claude-code",
+              "nookmux/apps/codex-cli",
+              "nookmux/apps/factory-droid-cli",
+              "nookmux/apps/fluent-read",
+              "nookmux/apps/langbot",
+              "nookmux/apps/luna-translator",
+              "nookmux/apps/astrbot",
+              "nookmux/apps/cc-switch"
             ]
           }
         ]
       }
-    ],
-    "global": {
-      "anchors": [
-        {
-          "anchor": "智谱开发者平台",
-          "href": "https://www.bigmodel.cn/claude-code?cc=fission_glmcode_sub_v1&ic=J2QPQGUXXQ&n=199****3721",
-          "icon": "zap"
-        },
-        {
-          "anchor": "公益API",
-          "href": "https://gyapi.zxiaoruan.cn/",
-          "icon": "zap"
-        }
-      ]
-    }
-  },
-  "logo": {
-    "light": "/logo/light.svg",
-    "dark": "/logo/dark.svg"
-  },
-  "navbar": {
-    "links": [
-      {
-        "label": "Support",
-        "href": "mailto:docs@zxiaoruan.cn"
-      }
     ]
   },
-  "contextual": {
-    "options": [
-      "copy",
-      "view",
-      "chatgpt",
-      "mcp"
-    ]
-  },
-  "footer": {
-    "socials": {
-      "github": "https://github.com/zhongruan0522"
+  "redirects": [
+    {
+      "source": "/vibe-coding/欢迎",
+      "destination": "/cn/vibe-coding/欢迎",
+      "permanent": false
+    },
+    {
+      "source": "/vibe-coding/安装",
+      "destination": "/cn/vibe-coding/安装",
+      "permanent": false
+    },
+    {
+      "source": "/vibe-coding/基础配置",
+      "destination": "/cn/vibe-coding/基础配置",
+      "permanent": false
+    },
+    {
+      "source": "/vibe-coding/疑难杂症",
+      "destination": "/cn/vibe-coding/疑难杂症",
+      "permanent": false
+    },
+    {
+      "source": "/vibe-coding/优秀项目和文章/vibecoding(氛围编程)总是产出一坨垃圾你可能需要些技巧",
+      "destination": "/cn/vibe-coding/优秀项目和文章/vibecoding(氛围编程)总是产出一坨垃圾你可能需要些技巧",
+      "permanent": false
+    },
+    {
+      "source": "/vibe-coding/优秀项目和文章/AI代理的上下文工程：构建Manus的经验教训",
+      "destination": "/cn/vibe-coding/优秀项目和文章/AI代理的上下文工程：构建Manus的经验教训",
+      "permanent": false
+    },
+    {
+      "source": "/vibe-coding/优秀项目和文章/私域知识工程实战：如何让 AI 一次性写出高质量代码？",
+      "destination": "/cn/vibe-coding/优秀项目和文章/私域知识工程实战：如何让 AI 一次性写出高质量代码？",
+      "permanent": false
+    },
+    {
+      "source": "/vibe-coding/优秀项目和文章/6A工作流  AI + Figma 产品设计自动化解决方案",
+      "destination": "/cn/vibe-coding/优秀项目和文章/6A工作流  AI + Figma 产品设计自动化解决方案",
+      "permanent": false
+    },
+    {
+      "source": "/vibe-coding/优秀项目和文章/Claude Code Sub-Agents：从手工作坊到自动化工厂",
+      "destination": "/cn/vibe-coding/优秀项目和文章/Claude Code Sub-Agents：从手工作坊到自动化工厂",
+      "permanent": false
+    },
+    {
+      "source": "/vibe-coding/优秀项目和文章/Claude Code × Zen MCP：多AI协作编程革命",
+      "destination": "/cn/vibe-coding/优秀项目和文章/Claude Code × Zen MCP：多AI协作编程革命",
+      "permanent": false
+    },
+    {
+      "source": "/vibe-coding/优秀项目和文章/SuperClaude × Claude Code：MCP驱动的AI编程爆改指南",
+      "destination": "/cn/vibe-coding/优秀项目和文章/SuperClaude × Claude Code：MCP驱动的AI编程爆改指南",
+      "permanent": false
+    },
+    {
+      "source": "/vibe-coding/优秀项目和文章/【Prometheus&Zeus v2.0】 RoocodeCursor + MCP + RIPER-5 优化网页+UI+软件等超强规则Rules合集",
+      "destination": "/cn/vibe-coding/优秀项目和文章/【Prometheus&Zeus v2.0】 RoocodeCursor + MCP + RIPER-5 优化网页+UI+软件等超强规则Rules合集",
+      "permanent": false
+    },
+    {
+      "source": "/vibe-coding/优秀项目和文章/根据站内佬们的RIPER-5 终极协议调优的自创2.1版本（附提示词和mcp json",
+      "destination": "/cn/vibe-coding/优秀项目和文章/根据站内佬们的RIPER-5 终极协议调优的自创2.1版本（附提示词和mcp json",
+      "permanent": false
+    },
+    {
+      "source": "/vibe-coding/优秀项目和文章/CC&Codex系统提示词推荐",
+      "destination": "/cn/vibe-coding/优秀项目和文章/CC&Codex系统提示词推荐",
+      "permanent": false
+    },
+    {
+      "source": "/vibe-coding/优秀项目和文章/CC-GLM-4.5系统提示词",
+      "destination": "/cn/vibe-coding/优秀项目和文章/CC-GLM-4.5系统提示词",
+      "permanent": false
+    },
+    {
+      "source": "/vibe-coding/优秀项目和文章/CC-GLM-4.6系统提示词",
+      "destination": "/cn/vibe-coding/优秀项目和文章/CC-GLM-4.6系统提示词",
+      "permanent": false
+    },
+    {
+      "source": "/vibe-coding/优秀项目和文章/实验性：Claude Code + Codex 进行协作开发",
+      "destination": "/cn/vibe-coding/优秀项目和文章/实验性：Claude Code + Codex 进行协作开发",
+      "permanent": false
+    },
+    {
+      "source": "/vibe-coding/优秀项目和文章/Claude Code 调用 Codex：分工协作开发",
+      "destination": "/cn/vibe-coding/优秀项目和文章/Claude Code 调用 Codex：分工协作开发",
+      "permanent": false
+    },
+    {
+      "source": "/vibe-coding/优秀项目和文章/Claude Code(规划、编写) + Codex(分析、审查) 进行协作开发",
+      "destination": "/cn/vibe-coding/优秀项目和文章/Claude Code(规划、编写) + Codex(分析、审查) 进行协作开发",
+      "permanent": false
+    },
+    {
+      "source": "/vibe-coding/优秀项目和文章/ClaudeCode小白指引贴",
+      "destination": "/cn/vibe-coding/优秀项目和文章/ClaudeCode小白指引贴",
+      "permanent": false
+    },
+    {
+      "source": "/vibe-coding/优秀项目和文章/CC-动态生成Agents",
+      "destination": "/cn/vibe-coding/优秀项目和文章/CC-动态生成Agents",
+      "permanent": false
+    },
+    {
+      "source": "/vibe-coding/优秀项目和文章/CC-擅长调用子代理",
+      "destination": "/cn/vibe-coding/优秀项目和文章/CC-擅长调用子代理",
+      "permanent": false
+    },
+    {
+      "source": "/vibe-coding/优秀项目和文章/Claude Code Spec Workflow",
+      "destination": "/cn/vibe-coding/优秀项目和文章/Claude Code Spec Workflow",
+      "permanent": false
+    },
+    {
+      "source": "/vibe-coding/优秀项目和文章/【实事求是】CC+GLM4.5长期体验和方法分享",
+      "destination": "/cn/vibe-coding/优秀项目和文章/【实事求是】CC+GLM4.5长期体验和方法分享",
+      "permanent": false
+    },
+    {
+      "source": "/vibe-coding/优秀项目和文章/一次跑通！省钱又可靠的顾问式编码！",
+      "destination": "/cn/vibe-coding/优秀项目和文章/一次跑通！省钱又可靠的顾问式编码！",
+      "permanent": false
+    },
+    {
+      "source": "/vibe-coding/优秀项目和文章/一键生成项目架构图",
+      "destination": "/cn/vibe-coding/优秀项目和文章/一键生成项目架构图",
+      "permanent": false
+    },
+    {
+      "source": "/vibe-coding/优秀项目和文章/使用Claude Code Sub-Agent的最佳实践工作流",
+      "destination": "/cn/vibe-coding/优秀项目和文章/使用Claude Code Sub-Agent的最佳实践工作流",
+      "permanent": false
+    },
+    {
+      "source": "/vibe-coding/优秀项目和文章/Codex全局AGENTS.MD指南",
+      "destination": "/cn/vibe-coding/优秀项目和文章/Codex全局AGENTS.MD指南",
+      "permanent": false
+    },
+    {
+      "source": "/vibe-coding/优秀项目和文章/Codex全局AGENTS-88",
+      "destination": "/cn/vibe-coding/优秀项目和文章/Codex全局AGENTS-88",
+      "permanent": false
+    },
+    {
+      "source": "/vibe-coding/优秀项目和文章/Codex杂谈",
+      "destination": "/cn/vibe-coding/优秀项目和文章/Codex杂谈",
+      "permanent": false
+    },
+    {
+      "source": "/vibe-coding/优秀项目和文章/后端Codex AGENTS",
+      "destination": "/cn/vibe-coding/优秀项目和文章/后端Codex AGENTS",
+      "permanent": false
+    },
+    {
+      "source": "/vibe-coding/优秀项目和文章/让 WSL 成功使用 Codex",
+      "destination": "/cn/vibe-coding/优秀项目和文章/让 WSL 成功使用 Codex",
+      "permanent": false
+    },
+    {
+      "source": "/vibe-coding/优秀项目和文章/向大家分享个自己平时使用的codex的AGENTS.md，抛砖引玉",
+      "destination": "/cn/vibe-coding/优秀项目和文章/向大家分享个自己平时使用的codex的AGENTS.md，抛砖引玉",
+      "permanent": false
+    },
+    {
+      "source": "/antihub-all/部署教程/Docker",
+      "destination": "/cn/antihub-all/部署教程/Docker",
+      "permanent": false
+    },
+    {
+      "source": "/antihub-all/功能介绍/Kiro按订阅层分流模型",
+      "destination": "/cn/antihub-all/功能介绍/Kiro按订阅层分流模型",
+      "permanent": false
     }
-  }
+  ]
 }
