@@ -86,7 +86,15 @@ environment:
   - SQL_DSN=opengauss://user:password@opengauss-host:5432/nookmux
 ```
 
-NookMux 后端需要兼容 SQLite、MySQL、PostgreSQL 和 openGauss（7.0，PG 兼容内核）。请确保数据库字符集和权限满足生产需求。
+### 外部达梦 DM8
+
+```yaml
+environment:
+  # 实例需以 CASE_SENSITIVE=N 初始化，账号需 SELECT ANY DICTIONARY 权限；口令按字面值写入，不得包含 : 和 ?
+  - SQL_DSN=dm://user:password@dm-host:5236?schema=NOOKMUX
+```
+
+NookMux 后端需要兼容 SQLite、MySQL、PostgreSQL、openGauss（7.0，PG 兼容内核）和达梦 DM8。请确保数据库字符集和权限满足生产需求。
 
 ## Redis 配置
 

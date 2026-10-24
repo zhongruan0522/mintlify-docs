@@ -28,7 +28,7 @@ title: 环境变量配置指南
 
 | 环境变量 | 说明 | 默认值 | 示例 |
 | --- | --- | --- | --- |
-| `SQL_DSN` | 数据库连接字符串，必须以 `mysql://`、`postgres://`、`postgresql://` 或 `opengauss://` 开头，其他前缀启动时报错；不设置使用 SQLite | SQLite（`data/one-api.db`） | MySQL: `SQL_DSN=mysql://user:password@127.0.0.1:3306/dbname`；PostgreSQL: `SQL_DSN=postgres://user:password@127.0.0.1:5432/dbname`；openGauss: `SQL_DSN=opengauss://user:password@127.0.0.1:5432/dbname`（库需以 `DBCOMPATIBILITY='PG'` 创建，口令按 URL 规则 percent-encode） |
+| `SQL_DSN` | 数据库连接字符串，必须以 `mysql://`、`postgres://`、`postgresql://`、`opengauss://` 或 `dm://` 开头，其他前缀启动时报错；不设置使用 SQLite | SQLite（`data/one-api.db`） | MySQL: `SQL_DSN=mysql://user:password@127.0.0.1:3306/dbname`；PostgreSQL: `SQL_DSN=postgres://user:password@127.0.0.1:5432/dbname`；openGauss: `SQL_DSN=opengauss://user:password@127.0.0.1:5432/dbname`（库需以 `DBCOMPATIBILITY='PG'` 创建，口令按 URL 规则 percent-encode）；达梦 DM8: `SQL_DSN=dm://user:password@127.0.0.1:5236?schema=NOOKMUX`（实例需以 `CASE_SENSITIVE=N` 初始化（`dminit` 参数），账号需 `SELECT ANY DICTIONARY` 权限；口令按字面值写入，不得包含 `:` 和 `?`） |
 | `LOG_SQL_DSN` | 日志表独立数据库连接字符串，留空与主库共用 | - | `LOG_SQL_DSN=mysql://user:password@127.0.0.1:3306/logs` |
 | `SQLITE_PATH` | SQLite 数据库文件路径 | `data/one-api.db` | `SQLITE_PATH=/var/lib/nookmux/nookmux.db` |
 | `SQL_MAX_IDLE_CONNS` | 空闲连接池最大连接数 | `20` | `SQL_MAX_IDLE_CONNS=50` |

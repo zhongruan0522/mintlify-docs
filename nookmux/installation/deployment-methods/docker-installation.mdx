@@ -67,6 +67,21 @@ docker run --name nookmux -d --restart always \
   ghcr.io/nookmux/nookmux:latest
 ```
 
+## Run with external Dameng DM8
+
+Switch `SQL_DSN` to the `dm://` prefix to connect Dameng DM8 (the instance must be initialized with `CASE_SENSITIVE=N`, and the account needs the `SELECT ANY DICTIONARY` privilege):
+
+```shell
+docker run --name nookmux -d --restart always \
+  -p 3000:3000 \
+  -e SQL_DSN="dm://user:password@db-host:5236?schema=NOOKMUX" \
+  -e TZ=Asia/Shanghai \
+  -e SESSION_SECRET=replace_with_a_random_string \
+  -e CRYPTO_SECRET=replace_with_another_random_string \
+  -v /your/data/path:/data \
+  ghcr.io/nookmux/nookmux:latest
+```
+
 ## Optional: connect Redis
 
 ```shell

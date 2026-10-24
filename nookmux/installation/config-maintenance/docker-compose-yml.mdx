@@ -86,7 +86,15 @@ environment:
   - SQL_DSN=opengauss://user:password@opengauss-host:5432/nookmux
 ```
 
-The NookMux backend must remain compatible with SQLite, MySQL, PostgreSQL, and openGauss (7.0, PostgreSQL-compatible kernel). Make sure the database character set and permissions meet production requirements.
+### External Dameng DM8
+
+```yaml
+environment:
+  # The instance must be initialized with CASE_SENSITIVE=N and the account needs the SELECT ANY DICTIONARY privilege; the password is written literally and must not contain : or ?
+  - SQL_DSN=dm://user:password@dm-host:5236?schema=NOOKMUX
+```
+
+The NookMux backend must remain compatible with SQLite, MySQL, PostgreSQL, openGauss (7.0, PostgreSQL-compatible kernel), and Dameng DM8. Make sure the database character set and permissions meet production requirements.
 
 ## Redis Configuration
 
