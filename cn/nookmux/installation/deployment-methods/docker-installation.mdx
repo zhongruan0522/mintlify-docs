@@ -52,6 +52,21 @@ docker run --name nookmux -d --restart always \
   ghcr.io/nookmux/nookmux:latest
 ```
 
+## 使用外部 openGauss
+
+将 `SQL_DSN` 换成 `opengauss://` 前缀即可连接 openGauss 7.0（目标库需以 `DBCOMPATIBILITY='PG'` 创建）：
+
+```shell
+docker run --name nookmux -d --restart always \
+  -p 3000:3000 \
+  -e SQL_DSN="opengauss://user:password@db-host:5432/nookmux" \
+  -e TZ=Asia/Shanghai \
+  -e SESSION_SECRET=replace_with_a_random_string \
+  -e CRYPTO_SECRET=replace_with_another_random_string \
+  -v /your/data/path:/data \
+  ghcr.io/nookmux/nookmux:latest
+```
+
 ## 可选：连接 Redis
 
 ```shell

@@ -78,7 +78,15 @@ environment:
   - SQL_DSN=postgres://user:password@postgres-host:5432/nookmux
 ```
 
-The NookMux backend must remain compatible with SQLite, MySQL, and PostgreSQL. Make sure the database character set and permissions meet production requirements.
+### External openGauss
+
+```yaml
+environment:
+  # The target database must be created with DBCOMPATIBILITY='PG'; percent-encode the password per URL rules
+  - SQL_DSN=opengauss://user:password@opengauss-host:5432/nookmux
+```
+
+The NookMux backend must remain compatible with SQLite, MySQL, PostgreSQL, and openGauss (7.0, PostgreSQL-compatible kernel). Make sure the database character set and permissions meet production requirements.
 
 ## Redis Configuration
 

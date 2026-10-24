@@ -52,6 +52,21 @@ docker run --name nookmux -d --restart always \
   ghcr.io/nookmux/nookmux:latest
 ```
 
+## Run with external openGauss
+
+Switch `SQL_DSN` to the `opengauss://` prefix to connect openGauss 7.0 (the target database must be created with `DBCOMPATIBILITY='PG'`):
+
+```shell
+docker run --name nookmux -d --restart always \
+  -p 3000:3000 \
+  -e SQL_DSN="opengauss://user:password@db-host:5432/nookmux" \
+  -e TZ=Asia/Shanghai \
+  -e SESSION_SECRET=replace_with_a_random_string \
+  -e CRYPTO_SECRET=replace_with_another_random_string \
+  -v /your/data/path:/data \
+  ghcr.io/nookmux/nookmux:latest
+```
+
 ## Optional: connect Redis
 
 ```shell

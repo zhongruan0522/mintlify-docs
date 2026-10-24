@@ -78,7 +78,15 @@ environment:
   - SQL_DSN=postgres://user:password@postgres-host:5432/nookmux
 ```
 
-NookMux 后端需要兼容 SQLite、MySQL 和 PostgreSQL。请确保数据库字符集和权限满足生产需求。
+### 外部 openGauss
+
+```yaml
+environment:
+  # 目标库需以 DBCOMPATIBILITY='PG' 创建；口令含特殊字符时按 URL 规则 percent-encode
+  - SQL_DSN=opengauss://user:password@opengauss-host:5432/nookmux
+```
+
+NookMux 后端需要兼容 SQLite、MySQL、PostgreSQL 和 openGauss（7.0，PG 兼容内核）。请确保数据库字符集和权限满足生产需求。
 
 ## Redis 配置
 
