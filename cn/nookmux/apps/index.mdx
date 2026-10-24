@@ -48,7 +48,7 @@ NookMux 对外提供 OpenAI、Claude、Gemini 等多种兼容 API，可直接接
 大多数应用只需要配置以下信息即可连接 NookMux：
 
 1. **API 地址**：您的 NookMux 服务地址。OpenAI 兼容接口地址通常为 `https://your-domain/v1`；Claude 兼容接口为站点根地址（网关自动处理 `/v1/messages`）；Gemini 兼容接口见具体应用文档。
-2. **API Key**：在 NookMux 控制台「密钥」页面创建并复制的令牌（`sk-` 开头）。
+2. **API Key**：在 NookMux 控制台「密钥」页面创建并复制的令牌，以站点密钥前缀开头（默认 `sk-`，管理员可在 系统设置 → 站点与品牌 → 系统信息 中自定义）。
 3. **模型名称**：选择渠道中已配置的模型。
 
 具体配置步骤请参考各应用的详细文档。

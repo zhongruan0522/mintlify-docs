@@ -48,7 +48,7 @@ NookMux provides OpenAI-, Claude-, and Gemini-compatible APIs that can plug dire
 Most apps only need the following to connect to NookMux:
 
 1. **API Address**: Your NookMux service address. OpenAI-compatible endpoints usually use `https://your-domain/v1`; Claude-compatible integrations use the site root, and the gateway handles `/v1/messages`; Gemini-compatible integrations are covered in the individual app docs.
-2. **API Key**: The token created on the NookMux console's "Keys" page, starting with `sk-`.
+2. **API Key**: The token created on the NookMux console's "Keys" page, starting with the site key prefix (default `sk-`; admins can customize it under System Settings → Site & Branding → System Information).
 3. **Model Name**: Choose a model that has been configured in the channel.
 
 For detailed setup steps, see the individual app pages.

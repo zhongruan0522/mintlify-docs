@@ -11,11 +11,14 @@ title: 站点与品牌
 - 系统名称 `SystemName`
 - 服务器地址 `ServerAddress`
 - 文档链接 `general_setting.docs_link`
+- 密钥前缀 `general_setting.token_key_prefix`
 - Logo URL
 - 页脚文本
 - 关于页内容
 - 首页内容
 - 用户协议和隐私政策
+
+密钥前缀用于新建 API 密钥，默认为 `sk-`，最长 16 个字符，必须以 `-` 结尾，仅对新建密钥生效；设置自定义前缀之前创建的历史密钥会在服务启动时自动迁移补齐 `sk-` 前缀。
 
 首页和关于页内容支持 Markdown/HTML；如果填写 URL，会以内嵌 iframe 加载。
 

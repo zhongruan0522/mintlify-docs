@@ -27,7 +27,7 @@ Claude Code uses environment variables to point at the gateway. NookMux provides
 | Environment Variable | Value |
 | --- | --- |
 | `ANTHROPIC_BASE_URL` | NookMux site root, for example `https://your-domain.com` (do not include `/v1/messages`) |
-| `ANTHROPIC_AUTH_TOKEN` | NookMux token (`sk-` prefix) |
+| `ANTHROPIC_AUTH_TOKEN` | NookMux token (starts with the site key prefix, default `sk-`) |
 
 ### macOS / Linux
 
@@ -64,7 +64,7 @@ To persist it, write the settings to `%USERPROFILE%\.claude\settings.json`:
 
 ### Get the Secret from NookMux
 
-1. Create or select a token on the console's "Keys" page and copy the full `sk-` secret.
+1. Create or select a token on the console's "Keys" page and copy the full secret. It starts with the site key prefix (default `sk-`; admins can customize it under System Settings → Site & Branding → System Information).
 2. Make sure the channel already has `claude-*` models configured.
 
 NookMux's Anthropic-compatible entry supports both authentication headers: `Authorization: Bearer <token>` (for `ANTHROPIC_AUTH_TOKEN`) and `x-api-key: <token>` (for `ANTHROPIC_API_KEY`). `ANTHROPIC_AUTH_TOKEN` is recommended.
@@ -100,7 +100,7 @@ After launch, use `/model` to select a model.
 
 ### 401 / Invalid Token
 
-- Make sure the token is the full NookMux token with the `sk-` prefix.
+- Make sure the token is the full NookMux token starting with the site key prefix (default `sk-`).
 - If you still have a claude.ai login session or both `ANTHROPIC_API_KEY` and `ANTHROPIC_AUTH_TOKEN` set, the credentials may conflict. Run `/logout` to clear the session and try again.
 
 ### Environment Variables Do Not Take Effect

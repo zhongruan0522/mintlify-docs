@@ -11,11 +11,14 @@ Configurable items include:
 - System name `SystemName`
 - Server address `ServerAddress`
 - Docs link `general_setting.docs_link`
+- Key prefix `general_setting.token_key_prefix`
 - Logo URL
 - Footer text
 - About page content
 - Home page content
 - Terms of Service and Privacy Policy
+
+The key prefix is used when creating API keys. It defaults to `sk-`, can be up to 16 characters, and must end with `-`. It only applies to newly created keys; existing keys created before a custom prefix was set are automatically migrated at startup to add the `sk-` prefix.
 
 Home and About content support Markdown and HTML. If a URL is entered, it is loaded in an iframe.
 

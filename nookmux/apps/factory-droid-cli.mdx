@@ -71,7 +71,7 @@ Anthropic model example:
 
 ## Usage
 
-1. Create a token on the NookMux console's "Keys" page and copy the full `sk-` secret.
+1. Create a token on the NookMux console's "Keys" page and copy the full secret, which starts with the site key prefix (default `sk-`).
 2. Export the environment variable:
 
    ```bash
@@ -97,7 +97,7 @@ Anthropic model example:
 ### Authentication Failed
 
 - Confirm the environment variable is exported and matches the `${...}` reference in `apiKey`.
-- Confirm the token is a full `sk-` NookMux secret and has not been disabled.
+- Confirm the token is a full NookMux secret starting with the site key prefix (default `sk-`) and has not been disabled.
 
 ### PowerShell Execution Policy Restriction
 

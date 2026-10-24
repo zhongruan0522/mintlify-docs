@@ -27,7 +27,7 @@ Claude Code 通过环境变量指向网关。NookMux 提供 Anthropic Messages �
 | 环境变量 | 值 |
 | --- | --- |
 | `ANTHROPIC_BASE_URL` | NookMux 站点根地址，例如 `https://your-domain.com`（不要带 `/v1/messages`） |
-| `ANTHROPIC_AUTH_TOKEN` | NookMux 令牌（`sk-` 开头） |
+| `ANTHROPIC_AUTH_TOKEN` | NookMux 令牌（以站点密钥前缀开头，默认 `sk-`） |
 
 ### macOS / Linux
 
@@ -64,7 +64,7 @@ claude
 
 ### 在 NookMux 侧获得密钥
 
-1. 控制台「密钥」页面创建或选择令牌，复制完整 `sk-` 密钥。
+1. 控制台「密钥」页面创建或选择令牌，复制完整密钥。密钥以站点密钥前缀开头（默认 `sk-`，管理员可在 系统设置 → 站点与品牌 → 系统信息 中自定义）。
 2. 确认渠道中已配置 `claude-*` 系列模型。
 
 NookMux 的 Anthropic 兼容入口支持两种认证头：`Authorization: Bearer <token>`（对应 `ANTHROPIC_AUTH_TOKEN`）和 `x-api-key: <token>`（对应 `ANTHROPIC_API_KEY`）。推荐使用 `ANTHROPIC_AUTH_TOKEN`。
@@ -100,7 +100,7 @@ claude
 
 ### 401 / 无效令牌
 
-- 确认使用的是完整 `sk-` 开头的 NookMux 令牌。
+- 确认使用的是以站点密钥前缀开头（默认 `sk-`）的完整 NookMux 令牌。
 - 若同时残留了 claude.ai 登录态或同时设置了 `ANTHROPIC_API_KEY` 与 `ANTHROPIC_AUTH_TOKEN`，可能产生凭据冲突，可运行 `/logout` 清理后重试。
 
 ### 环境变量不生效
