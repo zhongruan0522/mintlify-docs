@@ -69,6 +69,12 @@ KingbaseES example (Oracle-compatible mode; the instance must not enable `enable
 SQL_DSN=kingbase://user:password@db-host:54321/nookmux?sslmode=disable
 ```
 
+Production sizing notes:
+
+- KingbaseES defaults to `max_connections=100`. The main database and the log database each run an independent connection pool with a default cap of 1000 (`SQL_MAX_OPEN_CONNS`), so lower it well below the instance session limit (for example `SQL_MAX_OPEN_CONNS=50`); otherwise new connections fail with `FATAL 53300: sorry, too many clients already` at peak load.
+- Keep `sslmode=disable` in the DSN for instances without SSL: the Gokb driver defaults to `require` with no plaintext fallback.
+- The Gokb driver's default path costs two round trips per parameterized statement with no statement cache; `SQL_PREPARE_STMT=true` is recommended for production workloads.
+
 ## Access the System
 
 After the container starts, visit:

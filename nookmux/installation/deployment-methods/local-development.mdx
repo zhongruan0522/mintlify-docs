@@ -43,6 +43,8 @@ PORT=3000
 # REDIS_CONN_STRING=redis://:password@localhost:6379
 ```
 
+When connecting KingbaseES locally, keep `sslmode=disable` in the DSN for instances without SSL (the Gokb driver defaults to `require` with no plaintext fallback). For production connection-pool sizing (`SQL_MAX_OPEN_CONNS`) and the `SQL_PREPARE_STMT` recommendation, see the Environment variables page under Installation → Configuration & Maintenance.
+
 <Card type="info" title="Default database">
   SQLite is used when `SQL_DSN` is not set. The default database file is `data/one-api.db`. You can change it with `SQLITE_PATH`.
 </Card>

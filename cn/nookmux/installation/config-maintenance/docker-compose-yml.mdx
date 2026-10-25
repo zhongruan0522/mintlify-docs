@@ -100,7 +100,16 @@ environment:
 environment:
   # Oracle 兼容模式；实例不得开启 enable_ci（否则启动时被拒绝）；口令按 URL 规则 percent-encode
   - SQL_DSN=kingbase://user:password@kingbase-host:54321/nookmux?sslmode=disable
+  # 生产容量建议：连接池上限按实例会话上限显著调低
+  # - SQL_MAX_OPEN_CONNS=50
+  # - SQL_PREPARE_STMT=true
 ```
+
+生产环境容量建议：
+
+- 金仓默认 `max_connections=100`。主库与日志库各持有独立连接池、默认上限各为 1000（`SQL_MAX_OPEN_CONNS`），请按实例会话上限显著调低，否则高峰期新连接将以 `FATAL 53300: sorry, too many clients already` 失败。
+- 未开启 SSL 的实例须在 DSN 中保留 `sslmode=disable`：Gokb 驱动默认 `require` 且无明文回退。
+- Gokb 默认路径每条带参 SQL 需两次往返且无语句缓存，生产负载建议开启 `SQL_PREPARE_STMT=true`。
 
 NookMux 后端需要兼容 SQLite、MySQL、PostgreSQL、openGauss（7.0，PG 兼容内核）、达梦 DM8 和金仓 KingbaseES。请确保数据库字符集和权限满足生产需求。
 

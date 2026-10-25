@@ -100,7 +100,16 @@ environment:
 environment:
   # Oracle-compatible mode; the instance must not enable enable_ci (startup is rejected otherwise); percent-encode the password per URL rules
   - SQL_DSN=kingbase://user:password@kingbase-host:54321/nookmux?sslmode=disable
+  # Production sizing: lower the pool cap well below the instance session limit
+  # - SQL_MAX_OPEN_CONNS=50
+  # - SQL_PREPARE_STMT=true
 ```
+
+Production sizing notes:
+
+- KingbaseES defaults to `max_connections=100`. The main database and the log database each run an independent connection pool with a default cap of 1000 (`SQL_MAX_OPEN_CONNS`), so lower it well below the instance session limit; otherwise new connections fail with `FATAL 53300: sorry, too many clients already` at peak load.
+- Keep `sslmode=disable` in the DSN for instances without SSL: the Gokb driver defaults to `require` with no plaintext fallback.
+- The Gokb driver's default path costs two round trips per parameterized statement with no statement cache; `SQL_PREPARE_STMT=true` is recommended for production workloads.
 
 The NookMux backend must remain compatible with SQLite, MySQL, PostgreSQL, openGauss (7.0, PostgreSQL-compatible kernel), Dameng DM8, and KingbaseES. Make sure the database character set and permissions meet production requirements.
 

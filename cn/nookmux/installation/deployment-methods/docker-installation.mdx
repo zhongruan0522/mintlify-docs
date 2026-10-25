@@ -97,6 +97,12 @@ docker run --name nookmux -d --restart always \
   ghcr.io/nookmux/nookmux:latest
 ```
 
+生产环境容量建议：
+
+- 金仓默认 `max_connections=100`。主库与日志库各持有独立连接池、默认上限各为 1000（`SQL_MAX_OPEN_CONNS`），请按实例会话上限显著调低（如 `-e SQL_MAX_OPEN_CONNS=50`），否则高峰期新连接将以 `FATAL 53300: sorry, too many clients already` 失败。
+- 未开启 SSL 的实例须在 DSN 中保留 `sslmode=disable`：Gokb 驱动默认 `require` 且无明文回退。
+- Gokb 默认路径每条带参 SQL 需两次往返且无语句缓存，生产负载建议开启 `SQL_PREPARE_STMT=true`。
+
 ## 可选：连接 Redis
 
 ```shell
