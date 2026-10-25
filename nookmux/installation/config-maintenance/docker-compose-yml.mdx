@@ -90,7 +90,7 @@ environment:
 
 ```yaml
 environment:
-  # The instance must be initialized with CASE_SENSITIVE=N and the account needs the SELECT ANY DICTIONARY privilege; the password is written literally and must not contain : or ?
+  # The instance must be initialized with CASE_SENSITIVE=N and run in DM native mode (COMPATIBLE_MODE=0, a dm.ini parameter); the account needs the SELECT ANY DICTIONARY privilege; the password is written literally and must not contain ? (: and @ are allowed)
   - SQL_DSN=dm://user:password@dm-host:5236?schema=NOOKMUX
 ```
 

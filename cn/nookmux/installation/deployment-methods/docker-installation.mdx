@@ -69,7 +69,7 @@ docker run --name nookmux -d --restart always \
 
 ## 使用外部达梦 DM8
 
-将 `SQL_DSN` 换成 `dm://` 前缀即可连接达梦 DM8（实例需以 `CASE_SENSITIVE=N` 初始化，账号需 `SELECT ANY DICTIONARY` 权限）：
+将 `SQL_DSN` 换成 `dm://` 前缀即可连接达梦 DM8（实例需以 `CASE_SENSITIVE=N` 初始化、运行于 DM 原生模式（`COMPATIBLE_MODE=0`，dm.ini 参数），账号需 `SELECT ANY DICTIONARY` 权限）：
 
 ```shell
 docker run --name nookmux -d --restart always \

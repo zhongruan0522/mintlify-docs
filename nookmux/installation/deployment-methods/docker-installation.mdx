@@ -69,7 +69,7 @@ docker run --name nookmux -d --restart always \
 
 ## Run with external Dameng DM8
 
-Switch `SQL_DSN` to the `dm://` prefix to connect Dameng DM8 (the instance must be initialized with `CASE_SENSITIVE=N`, and the account needs the `SELECT ANY DICTIONARY` privilege):
+Switch `SQL_DSN` to the `dm://` prefix to connect Dameng DM8 (the instance must be initialized with `CASE_SENSITIVE=N`, run in DM native mode (`COMPATIBLE_MODE=0`, a dm.ini parameter), and the account needs the `SELECT ANY DICTIONARY` privilege):
 
 ```shell
 docker run --name nookmux -d --restart always \
