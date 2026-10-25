@@ -8,12 +8,12 @@ This document provides the configuration steps and best practices for NookMux mu
 
 - Multiple servers, with at least two nodes in a master-slave architecture.
 - Docker and Docker Compose installed.
-- A shared MySQL, PostgreSQL, openGauss, or Dameng DM8 database that all nodes can access.
+- A shared MySQL, PostgreSQL, openGauss, Dameng DM8, or KingbaseES database that all nodes can access.
 - A shared Redis service for data synchronization and caching between nodes.
 - Optional: a load balancer such as Nginx, HAProxy, or a cloud load-balancing service.
 
 <Card type="info" title="Database selection">
-  Do not use SQLite in multi-node scenarios. Use an external database (MySQL, PostgreSQL, openGauss, or Dameng DM8) and make sure all nodes use the same `SQL_DSN`.
+  Do not use SQLite in multi-node scenarios. Use an external database (MySQL, PostgreSQL, openGauss, Dameng DM8, or KingbaseES) and make sure all nodes use the same `SQL_DSN`.
 </Card>
 
 ## Cluster Architecture Overview
@@ -39,7 +39,7 @@ All nodes in a cluster must:
 
 ### Step One: Prepare Shared Database and Redis
 
-Prepare external MySQL/PostgreSQL/openGauss/DM8 and Redis services. These can be:
+Prepare external MySQL/PostgreSQL/openGauss/DM8/KingbaseES and Redis services. These can be:
 
 - Separately deployed highly available database and Redis services
 - Managed services provided by a cloud vendor

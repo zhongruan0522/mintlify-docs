@@ -63,6 +63,12 @@ Dameng DM8 example (the instance must be initialized with `CASE_SENSITIVE=N`, th
 SQL_DSN=dm://user:password@db-host:5236?schema=NOOKMUX
 ```
 
+KingbaseES example (Oracle-compatible mode; the instance must not enable `enable_ci`, otherwise startup is rejected; percent-encode the password per URL rules):
+
+```text
+SQL_DSN=kingbase://user:password@db-host:54321/nookmux?sslmode=disable
+```
+
 ## Access the System
 
 After the container starts, visit:

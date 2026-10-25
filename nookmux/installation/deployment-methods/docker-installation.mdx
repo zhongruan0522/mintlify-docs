@@ -82,6 +82,21 @@ docker run --name nookmux -d --restart always \
   ghcr.io/nookmux/nookmux:latest
 ```
 
+## Run with external KingbaseES
+
+Switch `SQL_DSN` to the `kingbase://` prefix to connect KingbaseES in Oracle-compatible mode (the instance must not enable `enable_ci`, otherwise startup is rejected; percent-encode the password per URL rules):
+
+```shell
+docker run --name nookmux -d --restart always \
+  -p 3000:3000 \
+  -e SQL_DSN="kingbase://user:password@db-host:54321/nookmux?sslmode=disable" \
+  -e TZ=Asia/Shanghai \
+  -e SESSION_SECRET=replace_with_a_random_string \
+  -e CRYPTO_SECRET=replace_with_another_random_string \
+  -v /your/data/path:/data \
+  ghcr.io/nookmux/nookmux:latest
+```
+
 ## Optional: connect Redis
 
 ```shell

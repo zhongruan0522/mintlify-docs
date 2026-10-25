@@ -9,7 +9,7 @@ title: 本地开发部署
 - **Go**：以 `go.mod` 为准，当前为 `1.26.2`。
 - **Bun**：用于安装和构建前端依赖。
 - **Git**：用于拉取源码。
-- **MySQL / PostgreSQL / openGauss / 达梦 DM8 / Redis**：可选。默认不设置 `SQL_DSN` 时使用 SQLite。
+- **MySQL / PostgreSQL / openGauss / 达梦 DM8 / 金仓 KingbaseES / Redis**：可选。默认不设置 `SQL_DSN` 时使用 SQLite。
 
 ## 克隆项目
 
@@ -39,6 +39,7 @@ PORT=3000
 # SQL_DSN=mysql://user:password@localhost:3306/nookmux
 # SQL_DSN=opengauss://user:password@localhost:5432/nookmux
 # SQL_DSN=dm://user:password@localhost:5236?schema=NOOKMUX
+# SQL_DSN=kingbase://user:password@localhost:54321/nookmux?sslmode=disable
 # REDIS_CONN_STRING=redis://:password@localhost:6379
 ```
 

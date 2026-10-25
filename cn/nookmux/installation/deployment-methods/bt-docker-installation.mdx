@@ -63,6 +63,12 @@ SQL_DSN=opengauss://user:password@db-host:5432/nookmux
 SQL_DSN=dm://user:password@db-host:5236?schema=NOOKMUX
 ```
 
+金仓 KingbaseES 示例（Oracle 兼容模式；实例不得开启 `enable_ci`，否则启动时被拒绝；口令按 URL 规则 percent-encode）：
+
+```text
+SQL_DSN=kingbase://user:password@db-host:54321/nookmux?sslmode=disable
+```
+
 ## 访问系统
 
 容器启动后访问：

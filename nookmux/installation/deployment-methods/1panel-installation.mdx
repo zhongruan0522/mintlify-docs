@@ -36,7 +36,7 @@ If no ready-made app is available, create a normal container in 1Panel:
 | Startup Command | `--log-dir /app/logs` |
 | Environment Variables | `TZ=Asia/Shanghai`, `SESSION_SECRET=...`, `CRYPTO_SECRET=...` |
 
-If you need an external database or Redis, add (supported databases: MySQL, PostgreSQL, openGauss, and Dameng DM8 — the openGauss target database must be created with `DBCOMPATIBILITY='PG'`; the DM8 instance must be initialized with `CASE_SENSITIVE=N`):
+If you need an external database or Redis, add (supported databases: MySQL, PostgreSQL, openGauss, Dameng DM8, and KingbaseES — the openGauss target database must be created with `DBCOMPATIBILITY='PG'`; the DM8 instance must be initialized with `CASE_SENSITIVE=N`; the KingbaseES instance must not enable `enable_ci`):
 
 ```text
 SQL_DSN=mysql://user:password@db-host:3306/nookmux

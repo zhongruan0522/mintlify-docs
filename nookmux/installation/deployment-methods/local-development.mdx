@@ -9,7 +9,7 @@ This document explains how to run and develop NookMux locally. The backend is Go
 - **Go**: follow `go.mod`; the current version is `1.26.2`.
 - **Bun**: used to install and build frontend dependencies.
 - **Git**: used to fetch the source code.
-- **MySQL / PostgreSQL / openGauss / Dameng DM8 / Redis**: optional. SQLite is used by default when `SQL_DSN` is not set.
+- **MySQL / PostgreSQL / openGauss / Dameng DM8 / KingbaseES / Redis**: optional. SQLite is used by default when `SQL_DSN` is not set.
 
 ## Clone the Project
 
@@ -39,6 +39,7 @@ PORT=3000
 # SQL_DSN=mysql://user:password@localhost:3306/nookmux
 # SQL_DSN=opengauss://user:password@localhost:5432/nookmux
 # SQL_DSN=dm://user:password@localhost:5236?schema=NOOKMUX
+# SQL_DSN=kingbase://user:password@localhost:54321/nookmux?sslmode=disable
 # REDIS_CONN_STRING=redis://:password@localhost:6379
 ```
 
