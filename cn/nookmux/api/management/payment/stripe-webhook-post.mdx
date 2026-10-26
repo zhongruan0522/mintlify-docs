@@ -4,7 +4,7 @@ description: 接收 Stripe Webhook 事件，验签后对 Stripe Checkout 充值�
 api: "POST /api/stripe/webhook"
 ---
 
-接收 Stripe Checkout 充值的 Webhook 通知。接口读取原始请求体，用配置的 Stripe Webhook Secret 校验 `Stripe-Signature` 请求头，并按事件类型分发处理：支付完成的会话为用户入账额度，过期的会话将订单标记为过期，异步支付失败的会话将订单标记为失败。
+接收 Stripe Checkout 充值的 Webhook 通知。接口读取原始请求体，用配置的 Stripe Webhook Secret 校验 `Stripe-Signature` 请求头，校验事件投递所用的 API 版本为 `2026-09-30.endive`，并按事件类型分发处理：支付完成的会话为用户入账额度，过期的会话将订单标记为过期，异步支付失败的会话将订单标记为失败。
 
 该接口为**公开（Public）**接口——无需鉴权。它由 Stripe 服务器调用，请求通过 `Stripe-Signature` 请求头验签。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
 
@@ -23,6 +23,7 @@ curl --request POST \
   --header 'Stripe-Signature: t=1730000000,v1=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx' \
   --data '{
   "id": "evt_1QExampleWebhook",
+  "api_version": "2026-09-30.endive",
   "type": "checkout.session.completed",
   "data": {
     "object": {
@@ -46,6 +47,10 @@ curl --request POST \
 
 <ParamField path="body.type" type="string" required>
 事件类型。支持处理：`checkout.session.completed`、`checkout.session.expired`、`checkout.session.async_payment_succeeded`、`checkout.session.async_payment_failed`。其他事件类型仅记录日志并直接确认，不做处理。
+</ParamField>
+
+<ParamField path="body.api_version" type="string">
+事件投递所用的 API 版本，由创建 webhook 端点时选择的版本决定。必须为 `2026-09-30.endive`；其他版本投递的事件返回 400 拒绝。
 </ParamField>
 
 <ParamField path="body.data.object" type="object" required>
@@ -91,7 +96,7 @@ curl --request POST \
 | HTTP 状态码 | 条件 |
 | --- | --- |
 | 200 | 事件已处理；不支持的事件类型被忽略；或属终态直接确认（重复投递且订单此前已入账、本地不存在该订单号） |
-| 400 | `Stripe-Signature` 请求头缺失或验签失败 |
+| 400 | `Stripe-Signature` 请求头缺失、验签失败，或事件 API 版本不是 `2026-09-30.endive` |
 | 403 | 服务端未配置 Stripe Webhook Secret |
 | 500 | 事件处理失败（数据库错误、实付金额与配置单价不一致）；Stripe 会重新投递 |
 | 503 | 请求体读取失败 |

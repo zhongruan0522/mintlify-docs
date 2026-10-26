@@ -57,6 +57,11 @@ events:
 - `checkout.session.async_payment_failed`
 - `checkout.session.expired`
 
+**API version requirement**: when creating the endpoint, select API version
+`2026-09-30.endive`. Events delivered with any other API version are rejected
+with HTTP 400; if every delivery fails with 400, recreate the endpoint with
+this version.
+
 **Amount consistency requirement**: `StripeUnitPrice` must equal the unit price
 of the Price referenced by `StripePriceId` (in the same currency's major unit).
 Before crediting an order, the webhook verifies

@@ -56,6 +56,9 @@ Developers → Webhooks 中添加端点 `https://<你的域名>/api/stripe/webho
 - `checkout.session.async_payment_failed`
 - `checkout.session.expired`
 
+**API 版本要求**：创建端点时必须选择 API 版本 `2026-09-30.endive`，其他版本
+投递的事件一律返回 400 拒绝；若所有投递均以 400 失败，请以该版本重建端点。
+
 **金额一致性要求**：`StripeUnitPrice` 必须与 `StripePriceId` 对应 Price 的单价
 （同一币种的主单位数值）保持一致。Webhook 入账前会核对
 `实付金额 + 促销折扣 = 数量 × StripeUnitPrice`（零小数币种按主单位核对），

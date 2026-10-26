@@ -4,7 +4,7 @@ description: Receive Stripe webhook events, verify the signature, and credit, ex
 api: "POST /api/stripe/webhook"
 ---
 
-Receives Stripe webhook notifications for Stripe Checkout top-ups. The endpoint reads the raw request body, verifies the `Stripe-Signature` header against the configured Stripe webhook secret, and dispatches the event by type: completed sessions credit the user's quota, expired sessions mark the order as expired, and failed asynchronous payments mark the order as failed.
+Receives Stripe webhook notifications for Stripe Checkout top-ups. The endpoint reads the raw request body, verifies the `Stripe-Signature` header against the configured Stripe webhook secret, checks that the event was delivered with API version `2026-09-30.endive`, and dispatches the event by type: completed sessions credit the user's quota, expired sessions mark the order as expired, and failed asynchronous payments mark the order as failed.
 
 This endpoint is **Public** — no authentication. It is called by Stripe's servers; requests are authenticated through the `Stripe-Signature` header. See [Authentication](/nookmux/api/management/auth) for how management API requests are authenticated.
 
@@ -23,6 +23,7 @@ curl --request POST \
   --header 'Stripe-Signature: t=1730000000,v1=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx' \
   --data '{
   "id": "evt_1QExampleWebhook",
+  "api_version": "2026-09-30.endive",
   "type": "checkout.session.completed",
   "data": {
     "object": {
@@ -46,6 +47,10 @@ The body is a standard Stripe `Event` object. Only the fields below are read by 
 
 <ParamField path="body.type" type="string" required>
 Event type. Handled types: `checkout.session.completed`, `checkout.session.expired`, `checkout.session.async_payment_succeeded`, `checkout.session.async_payment_failed`. Other event types are logged and acknowledged without processing.
+</ParamField>
+
+<ParamField path="body.api_version" type="string">
+API version the event was delivered with, determined by the version selected when the webhook endpoint was created. Must be `2026-09-30.endive`; events delivered with any other version are rejected with 400.
 </ParamField>
 
 <ParamField path="body.data.object" type="object" required>
@@ -91,7 +96,7 @@ The response body is always empty; the outcome is signaled by the HTTP status co
 | HTTP status | Condition |
 | --- | --- |
 | 200 | Event accepted, unsupported event type ignored, or terminal situation acknowledged (duplicate delivery of an already-processed order, order number unknown locally) |
-| 400 | `Stripe-Signature` header missing or signature verification failed |
+| 400 | `Stripe-Signature` header missing, signature verification failed, or event API version is not `2026-09-30.endive` |
 | 403 | Stripe webhook secret is not configured on the server |
 | 500 | Event handling failed (database error, paid amount inconsistent with the configured unit price); Stripe retries the delivery |
 | 503 | The request body could not be read |
