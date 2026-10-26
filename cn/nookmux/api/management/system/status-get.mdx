@@ -43,9 +43,8 @@ curl --request GET \
     "docs_link": "https://docs.example.com",
     "quota_per_unit": 500000,
     "enable_batch_update": false,
-    "enable_data_export": true,
-    "data_export_interval": 5,
-    "data_export_default_time": "hour",
+    "dashboard_refresh_interval": 3600,
+    "dashboard_default_time_range_days": 7,
     "default_collapse_sidebar": false,
     "default_use_auto_group": false,
     "price": 7.3,
@@ -153,14 +152,11 @@ curl --request GET \
     <ParamField path="enable_batch_update" type="boolean" required>
       是否启用用量计数器的聚合批量更新模式。
     </ParamField>
-    <ParamField path="enable_data_export" type="boolean" required>
-      是否启用数据看板的用量数据导出。
+    <ParamField path="dashboard_refresh_interval" type="integer" required>
+      数据看板刷新间隔，单位秒，取自仪表台配置的 `quota_data_refresh_interval`（默认 `3600`）。
     </ParamField>
-    <ParamField path="data_export_interval" type="integer" required>
-      数据聚合间隔，单位分钟（默认 `5`）。
-    </ParamField>
-    <ParamField path="data_export_default_time" type="string" required>
-      数据看板默认时间分桶，例如 `hour`。
+    <ParamField path="dashboard_default_time_range_days" type="integer" required>
+      数据看板默认查询窗口（天），取自仪表台配置的 `default_time_range_days`（默认 `7`）。
     </ParamField>
     <ParamField path="default_collapse_sidebar" type="boolean" required>
       控制台侧栏是否默认折叠。

@@ -4,7 +4,7 @@ description: Query the pre-aggregated usage dashboard (quota data) scoped to the
 api: "GET /api/data/self"
 ---
 
-Returns the pre-aggregated dashboard dataset for the current user, used by the personal quota charts. Rows are aggregated per model name and hourly time bucket, restricted to the calling account. The underlying `quota_data` table is flushed periodically from request logs, so recent usage may lag by the configured export interval.
+Returns the pre-aggregated dashboard dataset for the current user, used by the personal quota charts. Rows are aggregated per model name and hourly time bucket, restricted to the calling account. The underlying `quota_data` table is flushed periodically from request logs, so recent usage may lag by the quota data refresh interval configured in Dashboard Configuration.
 
 Requires **User** permissions. See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
 
