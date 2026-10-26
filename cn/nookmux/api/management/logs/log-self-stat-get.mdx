@@ -1,0 +1,150 @@
+---
+title: 获取我的日志统计
+description: 汇总当前用户自己的额度消耗、实时 RPM/TPM 与成功/失败次数。
+api: "GET /api/log/self/stat"
+---
+
+返回当前用户自身日志的聚合统计：消耗额度总量、每分钟实时请求数与 token 数、成功与失败次数。用户名维度强制取会话用户；额度数据聚合按用户 id 维度执行。
+
+需要登录用户（**User**）权限。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
+
+## 请求
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url 'https://your-nookmux-domain/api/log/self/stat?start_timestamp=1748000000&end_timestamp=1748600000&model_name=gpt-4o' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1'
+```
+
+</RequestExample>
+
+### 查询参数
+
+<ParamField path="query.type" type="integer">
+  日志类型：`1` 充值、`2` 消费、`3` 管理、`4` 系统、`5` 错误、`6` 退款。缺省或 `0` 时额度与成功次数默认统计消费日志（类型 `2`）；失败次数始终统计错误日志。
+</ParamField>
+
+<ParamField path="query.start_timestamp" type="integer">
+  Unix 时间戳（秒）；只统计 `created_at` 大于等于该值的日志。`0`（默认）表示不限下界。不影响 `rpm` 与 `tpm`。
+</ParamField>
+
+<ParamField path="query.end_timestamp" type="integer">
+  Unix 时间戳（秒）；只统计 `created_at` 小于等于该值的日志。`0`（默认）表示不限上界。不影响 `rpm` 与 `tpm`。
+</ParamField>
+
+<ParamField path="query.token_name" type="string">
+  按令牌名称精确匹配。
+</ParamField>
+
+<ParamField path="query.model_name" type="string">
+  模型名匹配模式；允许 `%` 通配符（最多两个、不得连续、去掉 `%` 后关键词至少 2 个字符），`_` 与 `!` 按字面匹配。不含 `%` 时按模型名精确匹配。
+</ParamField>
+
+<ParamField path="query.group" type="string">
+  按请求使用的分组精确匹配。
+</ParamField>
+
+<ParamField path="query.request_id" type="string">
+  按 NookMux 请求 id 精确匹配。仅当 `request_id` 详情字段对普通用户可见时可用，否则请求被拒绝。
+</ParamField>
+
+<ParamField path="query.upstream_request_id" type="string">
+  按上游供应商请求 id 精确匹配。仅当 `upstream_request_id` 详情字段对普通用户可见时可用，否则请求被拒绝。
+</ParamField>
+
+<ParamField path="query.ip" type="string">
+  按客户端 IP 子串匹配。仅当 IP 地址详情字段对普通用户可见时可用，否则请求被拒绝。
+</ParamField>
+
+<ParamField path="query.ua" type="string">
+  按存储的 User-Agent 请求头子串匹配。仅当客户端请求头详情字段对普通用户可见时可用，否则请求被拒绝。
+</ParamField>
+
+<ParamField path="query.x_title" type="string">
+  按存储的 X-Title 请求头子串匹配。仅当客户端请求头详情字段对普通用户可见时可用，否则请求被拒绝。
+</ParamField>
+
+<ParamField path="query.http_referer" type="string">
+  按存储的 Referer 请求头子串匹配。仅当客户端请求头详情字段对普通用户可见时可用，否则请求被拒绝。
+</ParamField>
+
+<Note>
+本接口没有 `channel` 与 `username` 过滤：`username` 恒为会话用户，普通用户按渠道过滤会被直接拒绝。这些限制用于封堵通过统计结果变化对隐藏字段做侧信道探测。
+</Note>
+
+## 响应
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": {
+    "quota": 5000,
+    "rpm": 3,
+    "tpm": 900,
+    "success_count": 320,
+    "fail_count": 2
+  }
+}
+```
+
+</ResponseExample>
+
+### 响应字段
+
+<ResponseField name="success" type="boolean" required>
+  请求是否成功。
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  `success` 为 `false` 时的错误描述；成功时为空字符串。
+</ResponseField>
+
+<ResponseField name="data.quota" type="integer" required>
+  时间范围内该用户所选类型（默认消费）日志的 `quota` 字段之和。
+</ResponseField>
+
+<ResponseField name="data.rpm" type="integer" required>
+  每分钟请求数：最近 60 秒内该用户消费日志的数量，不受所传时间范围影响。
+</ResponseField>
+
+<ResponseField name="data.tpm" type="integer" required>
+  每分钟 token 数：最近 60 秒内该用户消费日志的 prompt 与 completion token 之和，不受所传时间范围影响。
+</ResponseField>
+
+<ResponseField name="data.success_count" type="integer" required>
+  时间范围内该用户所选类型（默认消费）的日志条数。
+</ResponseField>
+
+<ResponseField name="data.fail_count" type="integer" required>
+  时间范围内该用户错误日志（类型 `5`）的条数，与所选类型无关。
+</ResponseField>
+
+<Note>
+当额度数据（quota_data）写入开启，且未设置 `token_name`、`channel`、`group`、`model_name` 及仅日志表可用的过滤条件（`request_id`、`upstream_request_id`、`ip`、`ua`、`x_title`、`http_referer`）、`type` 缺省或为 `0` 时，`quota`、`success_count`、`fail_count` 按会话用户 id 从预聚合的 `quota_data` 表汇总；`rpm` 与 `tpm` 始终从 `logs` 表实时查询。
+</Note>
+
+<Note>
+管理接口在业务失败时同样返回 HTTP `200`，必须以 `success` 字段判断结果。
+</Note>
+
+## 错误说明
+
+| 条件 | 说明 |
+| --- | --- |
+| 使用日志详情已禁用，不支持按详情字段过滤 | 普通用户侧使用日志详情总开关关闭时使用了详情独有字段过滤 |
+| 无权使用此过滤条件: channel | 普通用户按渠道过滤始终被拒绝 |
+| 无权使用此过滤条件: request_id | `request_id` 字段对普通用户隐藏时按其过滤 |
+| 无权使用此过滤条件: upstream_request_id | `upstream_request_id` 字段对普通用户隐藏时按其过滤 |
+| 无权使用此过滤条件: ip | IP 地址字段对普通用户隐藏时按其过滤 |
+| 无权使用此过滤条件: ua / x_title / http_referer | 客户端请求头字段对普通用户隐藏时按其过滤 |
+| 数据库错误，请稍后重试 | 统计聚合失败，详见服务端日志 |
+
+<Note>
+过滤条件被拒绝时的文案为服务端固定返回的中文字符串，不随调用者语言本地化。
+</Note>

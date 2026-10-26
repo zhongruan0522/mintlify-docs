@@ -1,0 +1,253 @@
+---
+title: Get My Logs
+description: List the current user's own usage logs with pagination, filters and privacy sanitization.
+api: "GET /api/log/self"
+---
+
+List the logs produced by the current user, ordered newest first and paginated. The username dimension is forced to the session user, and entries are sanitized for a regular user: channel names are removed, `admin_info` details are stripped, and detail-dialog-only fields are blanked according to the usage-log field visibility configuration.
+
+Requires a logged-in user (**User** permissions). See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url 'https://your-nookmux-domain/api/log/self?p=1&page_size=10&type=2&model_name=gpt-4o' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1'
+```
+
+</RequestExample>
+
+### Query parameters
+
+<ParamField path="query.p" type="integer" default="1">
+  Page number.
+</ParamField>
+
+<ParamField path="query.page_size" type="integer" default="10">
+  Items per page, capped at 100. The pagination helper also accepts the legacy aliases `ps` and `size`.
+</ParamField>
+
+<ParamField path="query.type" type="integer">
+  Log type: `1` top-up, `2` consumption, `3` manage, `4` system, `5` error, `6` refund. Omitted or `0` matches all types.
+</ParamField>
+
+<ParamField path="query.start_timestamp" type="integer">
+  Unix timestamp (seconds); only logs with `created_at` greater than or equal to this value are returned. `0` (default) means no lower bound.
+</ParamField>
+
+<ParamField path="query.end_timestamp" type="integer">
+  Unix timestamp (seconds); only logs with `created_at` less than or equal to this value are returned. `0` (default) means no upper bound.
+</ParamField>
+
+<ParamField path="query.token_name" type="string">
+  Exact match on the token name.
+</ParamField>
+
+<ParamField path="query.model_name" type="string">
+  Model name pattern; `%` wildcards are allowed (at most two, not consecutive, and the keyword without `%` must be at least 2 characters), `_` and `!` are matched literally. Without `%` the model name must match exactly.
+</ParamField>
+
+<ParamField path="query.group" type="string">
+  Exact match on the group used for the request.
+</ParamField>
+
+<ParamField path="query.request_id" type="string">
+  Exact match on the NookMux request id. Only accepted when the `request_id` detail field is visible to regular users; otherwise the request is rejected.
+</ParamField>
+
+<ParamField path="query.upstream_request_id" type="string">
+  Exact match on the upstream provider request id. Only accepted when the `upstream_request_id` detail field is visible to regular users; otherwise the request is rejected.
+</ParamField>
+
+<ParamField path="query.ip" type="string">
+  Substring match on the client IP. Only accepted when the IP address detail field is visible to regular users; otherwise the request is rejected.
+</ParamField>
+
+<ParamField path="query.ua" type="string">
+  Substring match on the stored User-Agent header. Only accepted when the client headers detail field is visible to regular users; otherwise the request is rejected.
+</ParamField>
+
+<ParamField path="query.x_title" type="string">
+  Substring match on the stored X-Title header. Only accepted when the client headers detail field is visible to regular users; otherwise the request is rejected.
+</ParamField>
+
+<ParamField path="query.http_referer" type="string">
+  Substring match on the stored Referer header. Only accepted when the client headers detail field is visible to regular users; otherwise the request is rejected.
+</ParamField>
+
+<Note>
+There is no `channel` or `username` filter on this endpoint: `username` is always the session user, and filtering by channel is rejected for regular users. These restrictions prevent side-channel probing of hidden fields through changes in `total`, `items` or statistics.
+</Note>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": {
+    "page": 1,
+    "page_size": 10,
+    "total": 1,
+    "items": [
+      {
+        "id": 1,
+        "user_id": 2,
+        "created_at": 1748086400,
+        "type": 2,
+        "content": "gpt-4o, prompt 100 tokens, completion 50 tokens",
+        "username": "alice",
+        "token_name": "my-token",
+        "model_name": "gpt-4o",
+        "quota": 150,
+        "prompt_tokens": 100,
+        "completion_tokens": 50,
+        "use_time": 1234,
+        "is_stream": false,
+        "channel": 1,
+        "channel_name": "",
+        "token_id": 3,
+        "group": "default",
+        "ip": "203.0.113.10",
+        "ua": "OpenAI/NodeJS",
+        "x_title": "-",
+        "http_referer": "-",
+        "request_id": "chatcmpl-xxxxxxxxxxxxxxxxxxxx",
+        "other": "{}"
+      }
+    ]
+  }
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+  Whether the request succeeded.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  Error description when `success` is `false`; empty otherwise.
+</ResponseField>
+
+<ResponseField name="data.page" type="integer" required>
+  Current page number.
+</ResponseField>
+
+<ResponseField name="data.page_size" type="integer" required>
+  Items per page actually applied.
+</ResponseField>
+
+<ResponseField name="data.total" type="integer" required>
+  Total number of matching logs, capped at 10000.
+</ResponseField>
+
+<ResponseField name="data.items" type="array" required>
+  Log objects on the current page, ordered by `created_at` descending, then by `id` descending.
+
+  <Expandable title="log structure">
+    <ResponseField name="id" type="integer" required>
+      Sequence number within the result (page start index plus position), not the database row id.
+    </ResponseField>
+    <ResponseField name="user_id" type="integer" required>
+      Id of the user who produced the log.
+    </ResponseField>
+    <ResponseField name="created_at" type="integer" required>
+      Unix timestamp (seconds) when the log was recorded.
+    </ResponseField>
+    <ResponseField name="type" type="integer" required>
+      Log type: `1` top-up, `2` consumption, `3` manage, `4` system, `5` error, `6` refund.
+    </ResponseField>
+    <ResponseField name="content" type="string" required>
+      Human-readable summary of the log entry.
+    </ResponseField>
+    <ResponseField name="username" type="string" required>
+      Username that produced the log.
+    </ResponseField>
+    <ResponseField name="token_name" type="string" required>
+      Name of the API token used for the request.
+    </ResponseField>
+    <ResponseField name="model_name" type="string" required>
+      Model name requested by the client.
+    </ResponseField>
+    <ResponseField name="quota" type="integer" required>
+      Quota consumed by the request.
+    </ResponseField>
+    <ResponseField name="prompt_tokens" type="integer" required>
+      Number of prompt (input) tokens.
+    </ResponseField>
+    <ResponseField name="completion_tokens" type="integer" required>
+      Number of completion (output) tokens.
+    </ResponseField>
+    <ResponseField name="use_time" type="integer" required>
+      Request duration in milliseconds.
+    </ResponseField>
+    <ResponseField name="is_stream" type="boolean" required>
+      Whether the response was streamed.
+    </ResponseField>
+    <ResponseField name="channel" type="integer" required>
+      Id of the channel that served the request.
+    </ResponseField>
+    <ResponseField name="channel_name" type="string" required>
+      Always empty on this endpoint.
+    </ResponseField>
+    <ResponseField name="token_id" type="integer" required>
+      Id of the API token used for the request.
+    </ResponseField>
+    <ResponseField name="group" type="string" required>
+      Group used for channel selection.
+    </ResponseField>
+    <ResponseField name="ip" type="string" required>
+      Client IP; blanked when the IP address field is hidden from regular users.
+    </ResponseField>
+    <ResponseField name="ua" type="string" required>
+      User-Agent header; blanked when the client headers field is hidden from regular users.
+    </ResponseField>
+    <ResponseField name="x_title" type="string" required>
+      X-Title header; blanked when the client headers field is hidden from regular users.
+    </ResponseField>
+    <ResponseField name="http_referer" type="string" required>
+      Referer header; blanked when the client headers field is hidden from regular users.
+    </ResponseField>
+    <ResponseField name="request_id" type="string">
+      NookMux request id; blanked when the `request_id` field is hidden from regular users. Omitted when empty.
+    </ResponseField>
+    <ResponseField name="upstream_request_id" type="string">
+      Upstream provider request id; blanked when the `upstream_request_id` field is hidden from regular users. Omitted when empty.
+    </ResponseField>
+    <ResponseField name="other" type="string" required>
+      JSON object string with supplementary details. `admin_info` and `reject_reason` are always removed; detail-dialog-only keys (billing source, token breakdown, request conversion, subscription billing, and so on) are removed when hidden from regular users.
+    </ResponseField>
+    <ResponseField name="model_icon" type="string">
+      Icon of the model resolved from model or vendor metadata. Omitted when no icon is configured.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<Note>
+Management endpoints return HTTP `200` even on business failures; always check the `success` field.
+</Note>
+
+## Error messages
+
+| Condition | Description |
+| --- | --- |
+| 使用日志详情已禁用，不支持按详情字段过滤 | A detail-only filter was used while the usage-log details switch is off for regular users |
+| 无权使用此过滤条件: channel | Filtering by `channel` is never allowed for regular users |
+| 无权使用此过滤条件: request_id | Filtering by `request_id` while the field is hidden from regular users |
+| 无权使用此过滤条件: upstream_request_id | Filtering by `upstream_request_id` while the field is hidden from regular users |
+| 无权使用此过滤条件: ip | Filtering by `ip` while the IP address field is hidden from regular users |
+| 无权使用此过滤条件: ua / x_title / http_referer | Filtering by a client header while the client headers field is hidden from regular users |
+| Database error, please try again later | Querying or counting the logs failed; see server logs |
+
+<Note>
+The filter rejection messages are fixed Chinese strings returned verbatim by the server; they are not localized by the caller's language.
+</Note>

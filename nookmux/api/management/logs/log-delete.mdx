@@ -1,0 +1,105 @@
+---
+title: Delete History Logs
+description: Batch-delete historical logs, stored media and audit records inside a time range.
+api: "DELETE /api/log/"
+---
+
+Delete historical data inside a `created_at` time range, choosing which data types to clean: usage logs, stored images, stored videos and audit logs. Each requested type reports the number of rows actually deleted.
+
+Requires **Admin** permissions. See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request DELETE \
+  --url 'https://your-nookmux-domain/api/log/?start_timestamp=1740000000&end_timestamp=1748000000&clean_logs=true' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1'
+```
+
+</RequestExample>
+
+### Query parameters
+
+<ParamField path="query.start_timestamp" type="integer" default="0">
+  Unix timestamp (seconds); only rows with `created_at` greater than or equal to this value are deleted. `0` means no lower bound (delete everything up to `end_timestamp`).
+</ParamField>
+
+<ParamField path="query.end_timestamp" type="integer" required>
+  Unix timestamp (seconds); only rows with `created_at` less than or equal to this value are deleted. Must be non-zero, otherwise the request is rejected as invalid parameters.
+</ParamField>
+
+<ParamField path="query.clean_logs" type="string">
+  Set to `true` or `1` to delete usage log rows (`logs` table).
+</ParamField>
+
+<ParamField path="query.clean_stored_images" type="string">
+  Set to `true` or `1` to delete stored image media inside the range.
+</ParamField>
+
+<ParamField path="query.clean_stored_videos" type="string">
+  Set to `true` or `1` to delete stored video media inside the range.
+</ParamField>
+
+<ParamField path="query.clean_audit_logs" type="string">
+  Set to `true` or `1` to delete audit log rows inside the range.
+</ParamField>
+
+<Note>
+At least one of the four `clean_*` flags must be set; a request without any of them is rejected as invalid parameters. The flags can be combined in one call, and every requested type reports its own deleted count.
+</Note>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": {
+    "logs": 128
+  }
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+  Whether the deletion succeeded.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  Error description when `success` is `false`; empty otherwise.
+</ResponseField>
+
+<ResponseField name="data.logs" type="integer">
+  Number of usage log rows deleted. Present only when `clean_logs` was requested.
+</ResponseField>
+
+<ResponseField name="data.stored_images" type="integer">
+  Number of stored image records deleted. Present only when `clean_stored_images` was requested.
+</ResponseField>
+
+<ResponseField name="data.stored_videos" type="integer">
+  Number of stored video records deleted. Present only when `clean_stored_videos` was requested.
+</ResponseField>
+
+<ResponseField name="data.audit_logs" type="integer">
+  Number of audit log rows deleted. Present only when `clean_audit_logs` was requested.
+</ResponseField>
+
+<Note>
+Management endpoints return HTTP `200` even on business failures; always check the `success` field. Deletion runs in batches to keep transactions small, and the operation is recorded in the audit log (forced, even when the audit switch is disabled). If one data type fails, the remaining types are still cleaned, the audit record is kept, and the request returns a database error.
+</Note>
+
+## Error messages
+
+| Condition | Description |
+| --- | --- |
+| Invalid parameters | `end_timestamp` is missing or `0`, or none of the `clean_*` flags is set |
+| Database error, please try again later | At least one deletion failed; see server logs |

@@ -1,0 +1,248 @@
+---
+title: 获取全部日志
+description: 分页列出全部用户的用量与系统日志，支持丰富的过滤条件。
+api: "GET /api/log/"
+---
+
+列出 NookMux 记录的全部日志——消费、充值、错误、退款、管理与系统条目——按时间倒序分页返回，并解析渠道名称与模型图标用于展示。
+
+需要**管理员**权限。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
+
+## 请求
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url 'https://your-nookmux-domain/api/log/?p=1&page_size=10&type=2&model_name=gpt-4o%25' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1'
+```
+
+</RequestExample>
+
+### 查询参数
+
+<ParamField path="query.p" type="integer" default="1">
+  页码。
+</ParamField>
+
+<ParamField path="query.page_size" type="integer" default="10">
+  每页条数，上限 100。分页助手同时兼容旧别名 `ps` 与 `size`。
+</ParamField>
+
+<ParamField path="query.type" type="integer">
+  日志类型：`1` 充值、`2` 消费、`3` 管理、`4` 系统、`5` 错误、`6` 退款。缺省或 `0` 匹配全部类型。
+</ParamField>
+
+<ParamField path="query.start_timestamp" type="integer">
+  Unix 时间戳（秒）；只返回 `created_at` 大于等于该值的日志。`0`（默认）表示不限下界。
+</ParamField>
+
+<ParamField path="query.end_timestamp" type="integer">
+  Unix 时间戳（秒）；只返回 `created_at` 小于等于该值的日志。`0`（默认）表示不限上界。
+</ParamField>
+
+<ParamField path="query.username" type="string">
+  按产生日志的用户名精确匹配。
+</ParamField>
+
+<ParamField path="query.token_name" type="string">
+  按令牌名称精确匹配。
+</ParamField>
+
+<ParamField path="query.model_name" type="string">
+  模型名的 SQL `LIKE` 模式；`%` 与 `_` 通配符原样透传，例如 `gpt-4o%` 匹配以 `gpt-4o` 开头的模型名。
+</ParamField>
+
+<ParamField path="query.channel" type="integer">
+  渠道 id。`0`（默认）匹配全部渠道。
+</ParamField>
+
+<ParamField path="query.group" type="string">
+  按请求使用的分组精确匹配。
+</ParamField>
+
+<ParamField path="query.request_id" type="string">
+  按 NookMux 请求 id 精确匹配。
+</ParamField>
+
+<ParamField path="query.upstream_request_id" type="string">
+  按上游供应商请求 id 精确匹配。
+</ParamField>
+
+<ParamField path="query.ip" type="string">
+  按客户端 IP 子串匹配；值中的 `%` 与 `_` 按字面匹配。
+</ParamField>
+
+<ParamField path="query.ua" type="string">
+  按存储的 User-Agent 请求头子串匹配。
+</ParamField>
+
+<ParamField path="query.x_title" type="string">
+  按存储的 X-Title 请求头子串匹配。
+</ParamField>
+
+<ParamField path="query.http_referer" type="string">
+  按存储的 Referer 请求头子串匹配。
+</ParamField>
+
+## 响应
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": {
+    "page": 1,
+    "page_size": 10,
+    "total": 1,
+    "items": [
+      {
+        "id": 1024,
+        "user_id": 1,
+        "created_at": 1748086400,
+        "type": 2,
+        "content": "gpt-4o, prompt 100 tokens, completion 50 tokens",
+        "username": "admin",
+        "token_name": "my-token",
+        "model_name": "gpt-4o",
+        "quota": 150,
+        "prompt_tokens": 100,
+        "completion_tokens": 50,
+        "use_time": 1234,
+        "is_stream": false,
+        "channel": 1,
+        "channel_name": "my-openai",
+        "token_id": 3,
+        "group": "default",
+        "ip": "203.0.113.10",
+        "ua": "OpenAI/NodeJS",
+        "x_title": "-",
+        "http_referer": "-",
+        "request_id": "chatcmpl-xxxxxxxxxxxxxxxxxxxx",
+        "upstream_request_id": "req-8f3a2b",
+        "other": "{\"billing_source\":\"local\"}"
+      }
+    ]
+  }
+}
+```
+
+</ResponseExample>
+
+### 响应字段
+
+<ResponseField name="success" type="boolean" required>
+  请求是否成功。
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  `success` 为 `false` 时的错误描述；成功时为空字符串。
+</ResponseField>
+
+<ResponseField name="data.page" type="integer" required>
+  当前页码。
+</ResponseField>
+
+<ResponseField name="data.page_size" type="integer" required>
+  实际生效的每页条数。
+</ResponseField>
+
+<ResponseField name="data.total" type="integer" required>
+  匹配过滤条件的日志总数。
+</ResponseField>
+
+<ResponseField name="data.items" type="array" required>
+  当前页的日志对象，按 `created_at` 倒序、再按 `id` 倒序排列。
+
+  <Expandable title="log 结构">
+    <ResponseField name="id" type="integer" required>
+      日志行的数据库 id。
+    </ResponseField>
+    <ResponseField name="user_id" type="integer" required>
+      产生该日志的用户 id。
+    </ResponseField>
+    <ResponseField name="created_at" type="integer" required>
+      日志记录的 Unix 时间戳（秒）。
+    </ResponseField>
+    <ResponseField name="type" type="integer" required>
+      日志类型：`1` 充值、`2` 消费、`3` 管理、`4` 系统、`5` 错误、`6` 退款。
+    </ResponseField>
+    <ResponseField name="content" type="string" required>
+      日志条目的可读摘要。
+    </ResponseField>
+    <ResponseField name="username" type="string" required>
+      产生该日志的用户名。
+    </ResponseField>
+    <ResponseField name="token_name" type="string" required>
+      请求所用的 API 令牌名称。
+    </ResponseField>
+    <ResponseField name="model_name" type="string" required>
+      客户端请求的模型名。
+    </ResponseField>
+    <ResponseField name="quota" type="integer" required>
+      请求消耗的额度。
+    </ResponseField>
+    <ResponseField name="prompt_tokens" type="integer" required>
+      输入（prompt）token 数。
+    </ResponseField>
+    <ResponseField name="completion_tokens" type="integer" required>
+      输出（completion）token 数。
+    </ResponseField>
+    <ResponseField name="use_time" type="integer" required>
+      请求耗时，毫秒。
+    </ResponseField>
+    <ResponseField name="is_stream" type="boolean" required>
+      响应是否为流式。
+    </ResponseField>
+    <ResponseField name="channel" type="integer" required>
+      承接该请求的渠道 id。
+    </ResponseField>
+    <ResponseField name="channel_name" type="string" required>
+      承接该请求的渠道名称，从 channels 表解析；未涉及渠道时为空字符串。
+    </ResponseField>
+    <ResponseField name="token_id" type="integer" required>
+      请求所用的 API 令牌 id。
+    </ResponseField>
+    <ResponseField name="group" type="string" required>
+      渠道选择所用的分组。
+    </ResponseField>
+    <ResponseField name="ip" type="string" required>
+      请求的客户端 IP。
+    </ResponseField>
+    <ResponseField name="ua" type="string" required>
+      请求的 User-Agent 请求头；客户端未携带时为 `-`。
+    </ResponseField>
+    <ResponseField name="x_title" type="string" required>
+      请求的 X-Title 请求头；客户端未携带时为 `-`。
+    </ResponseField>
+    <ResponseField name="http_referer" type="string" required>
+      请求的 Referer 请求头；客户端未携带时为 `-`。
+    </ResponseField>
+    <ResponseField name="request_id" type="string">
+      NookMux 请求 id。为空时省略。
+    </ResponseField>
+    <ResponseField name="upstream_request_id" type="string">
+      上游供应商返回的请求 id。为空时省略。
+    </ResponseField>
+    <ResponseField name="other" type="string" required>
+      补充详情的 JSON 对象字符串，如计费来源、token 明细、流式状态，以及（面向管理员的）`admin_info` 内的重试链路；键集合随日志类型变化。
+    </ResponseField>
+    <ResponseField name="model_icon" type="string">
+      从模型或供应商元数据解析的模型图标。未配置时省略。
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<Note>
+管理接口在业务失败时同样返回 HTTP `200`，必须以 `success` 字段判断结果。
+</Note>
+
+## 错误说明
+
+| 条件 | 说明 |
+| --- | --- |
+| 数据库错误，请稍后重试 | 查询或统计日志失败，详见服务端日志 |

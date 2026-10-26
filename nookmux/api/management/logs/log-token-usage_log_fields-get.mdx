@@ -1,0 +1,85 @@
+---
+title: Get Visible Usage Log Fields
+description: Return the usage-log detail field keys visible to the token key presented in the Authorization header.
+api: "GET /api/log/token/usage_log_fields"
+---
+
+Return the usage-log detail dialog field visibility for the token key presented in the request: whether the details dialog is enabled at all, and which field keys are visible. Clients use this to decide whether to show the details dialog and which fields to render.
+
+This endpoint is authenticated by the token key itself — the `Authorization` header must carry the token key (for example `sk-xxxx`), not a management access token. The token is resolved by the read-only token authentication middleware, which only checks that the key exists: disabled, expired or exhausted tokens are still accepted; banned users are rejected. See [Authentication](/nookmux/api/management/auth) for the general authentication model of the management API.
+
+<Note>
+This route is protected by the strict critical rate limit and allows cross-origin requests (CORS). Visibility is always evaluated with the regular-user role, even when the token belongs to an administrator, because the token authentication middleware does not carry a role.
+</Note>
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url 'https://your-nookmux-domain/api/log/token/usage_log_fields' \
+  --header 'Authorization: Bearer sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
+```
+
+</RequestExample>
+
+### Headers
+
+<ParamField path="header.Authorization" type="string" required>
+  The API token key, in the form `Bearer sk-xxxx`.
+</ParamField>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": {
+    "enabled": true,
+    "fields": [
+      "request_id",
+      "upstream_request_id",
+      "ip_address",
+      "client_headers"
+    ]
+  }
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+  Whether the request succeeded.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  Error description when `success` is `false`; empty otherwise.
+</ResponseField>
+
+<ResponseField name="data.enabled" type="boolean" required>
+  Whether the usage-log details dialog is enabled for regular users. When `false`, `fields` is an empty array and the details dialog should be hidden entirely.
+</ResponseField>
+
+<ResponseField name="data.fields" type="array" required>
+  Keys of the usage-log detail fields visible to regular users, for example `request_id`, `upstream_request_id`, `ip_address` or `client_headers`; the exact set depends on the console usage-log field visibility configuration. Empty when `enabled` is `false`.
+</ResponseField>
+
+<Note>
+Management endpoints return HTTP `200` even on business failures; authentication failures on this route return HTTP `401` / `403` / `500` instead.
+</Note>
+
+## Error messages
+
+| Condition | Status | Description |
+| --- | --- | --- |
+| No Authorization header | `401` | The `Authorization` header is missing |
+| Invalid token | `401` | The key does not match any token |
+| User has been banned | `403` | The token owner is disabled |
+| Database error, please try again later | `500` | Loading the token owner's user cache failed |
+| Failed to parse usage log field configuration | `200` | The console usage-log field visibility setting is malformed; see server logs |

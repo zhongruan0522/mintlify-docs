@@ -1,0 +1,144 @@
+---
+title: 获取日志统计
+description: 汇总全部日志的额度消耗、实时 RPM/TPM 与成功/失败次数。
+api: "GET /api/log/stat"
+---
+
+返回给定过滤条件下全部日志的聚合统计：消耗额度总量、每分钟实时请求数与 token 数、成功与失败次数。当预聚合额度数据开启且未设置仅日志表可用的过滤条件时，额度与次数来自 `quota_data` 表，无需扫描 `logs` 表。
+
+需要**管理员**权限。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
+
+## 请求
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url 'https://your-nookmux-domain/api/log/stat?start_timestamp=1748000000&end_timestamp=1748600000&type=2&model_name=gpt-4o' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1'
+```
+
+</RequestExample>
+
+### 查询参数
+
+<ParamField path="query.type" type="integer">
+  日志类型：`1` 充值、`2` 消费、`3` 管理、`4` 系统、`5` 错误、`6` 退款。缺省或 `0` 时额度与成功次数默认统计消费日志（类型 `2`）；失败次数始终统计错误日志。
+</ParamField>
+
+<ParamField path="query.start_timestamp" type="integer">
+  Unix 时间戳（秒）；只统计 `created_at` 大于等于该值的日志。`0`（默认）表示不限下界。不影响 `rpm` 与 `tpm`。
+</ParamField>
+
+<ParamField path="query.end_timestamp" type="integer">
+  Unix 时间戳（秒）；只统计 `created_at` 小于等于该值的日志。`0`（默认）表示不限上界。不影响 `rpm` 与 `tpm`。
+</ParamField>
+
+<ParamField path="query.username" type="string">
+  按用户名精确匹配。
+</ParamField>
+
+<ParamField path="query.token_name" type="string">
+  按令牌名称精确匹配。
+</ParamField>
+
+<ParamField path="query.model_name" type="string">
+  模型名匹配模式；允许 `%` 通配符（最多两个、不得连续、去掉 `%` 后关键词至少 2 个字符），`_` 与 `!` 按字面匹配。不含 `%` 时按模型名精确匹配。
+</ParamField>
+
+<ParamField path="query.channel" type="integer">
+  渠道 id。`0`（默认）匹配全部渠道。
+</ParamField>
+
+<ParamField path="query.group" type="string">
+  按请求使用的分组精确匹配。
+</ParamField>
+
+<ParamField path="query.request_id" type="string">
+  按 NookMux 请求 id 精确匹配。
+</ParamField>
+
+<ParamField path="query.upstream_request_id" type="string">
+  按上游供应商请求 id 精确匹配。
+</ParamField>
+
+<ParamField path="query.ip" type="string">
+  按客户端 IP 子串匹配；值中的 `%` 与 `_` 按字面匹配。
+</ParamField>
+
+<ParamField path="query.ua" type="string">
+  按存储的 User-Agent 请求头子串匹配。
+</ParamField>
+
+<ParamField path="query.x_title" type="string">
+  按存储的 X-Title 请求头子串匹配。
+</ParamField>
+
+<ParamField path="query.http_referer" type="string">
+  按存储的 Referer 请求头子串匹配。
+</ParamField>
+
+## 响应
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": {
+    "quota": 15000,
+    "rpm": 12,
+    "tpm": 3600,
+    "success_count": 850,
+    "fail_count": 25
+  }
+}
+```
+
+</ResponseExample>
+
+### 响应字段
+
+<ResponseField name="success" type="boolean" required>
+  请求是否成功。
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  `success` 为 `false` 时的错误描述；成功时为空字符串。
+</ResponseField>
+
+<ResponseField name="data.quota" type="integer" required>
+  时间范围内所选类型（默认消费）日志的 `quota` 字段之和。
+</ResponseField>
+
+<ResponseField name="data.rpm" type="integer" required>
+  每分钟请求数：最近 60 秒内消费日志的数量，不受所传时间范围影响。
+</ResponseField>
+
+<ResponseField name="data.tpm" type="integer" required>
+  每分钟 token 数：最近 60 秒内消费日志的 prompt 与 completion token 之和，不受所传时间范围影响。
+</ResponseField>
+
+<ResponseField name="data.success_count" type="integer" required>
+  时间范围内所选类型（默认消费）的日志条数。
+</ResponseField>
+
+<ResponseField name="data.fail_count" type="integer" required>
+  时间范围内错误日志（类型 `5`）的条数，与所选类型无关。
+</ResponseField>
+
+<Note>
+当额度数据（quota_data）写入开启，且未设置 `token_name`、`channel`、`group`、`model_name` 及仅日志表可用的过滤条件（`request_id`、`upstream_request_id`、`ip`、`ua`、`x_title`、`http_referer`）、`type` 缺省或为 `0` 时，`quota`、`success_count`、`fail_count` 从预聚合的 `quota_data` 表汇总（仍允许 `username` 过滤）；`rpm` 与 `tpm` 始终从 `logs` 表实时查询。
+</Note>
+
+<Note>
+管理接口在业务失败时同样返回 HTTP `200`，必须以 `success` 字段判断结果。
+</Note>
+
+## 错误说明
+
+| 条件 | 说明 |
+| --- | --- |
+| 数据库错误，请稍后重试 | 统计聚合失败，详见服务端日志 |

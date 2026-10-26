@@ -1,0 +1,224 @@
+---
+title: Get Logs by Token Key
+description: Query the usage logs of the token key presented in the Authorization header, with a paginated and a legacy array mode.
+api: "GET /api/log/token"
+---
+
+Return the usage logs of the API token whose key is presented in the request. The token id is forced from the authenticated token, so a caller can never read the logs of another token. This endpoint is authenticated by the token key itself — the `Authorization` header must carry the token key (for example `sk-xxxx`), not a management access token.
+
+The token is resolved by the read-only token authentication middleware, which only checks that the key exists: disabled, expired or exhausted tokens are still accepted; banned users are rejected. See [Authentication](/nookmux/api/management/auth) for the general authentication model of the management API.
+
+<Note>
+This route is protected by the strict critical rate limit and allows cross-origin requests (CORS). Passing either `p` or `page_size` switches the endpoint to the paginated response; when both are absent, the legacy response of a plain recent-logs array is kept.
+</Note>
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url 'https://your-nookmux-domain/api/log/token?p=1&page_size=10&type=2&model_name=gpt-4o' \
+  --header 'Authorization: Bearer sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
+```
+
+</RequestExample>
+
+### Headers
+
+<ParamField path="header.Authorization" type="string" required>
+  The API token key, in the form `Bearer sk-xxxx`.
+</ParamField>
+
+### Query parameters
+
+<ParamField path="query.p" type="integer" default="1">
+  Page number. Passing `p` or `page_size` switches the endpoint to the paginated response.
+</ParamField>
+
+<ParamField path="query.page_size" type="integer" default="10">
+  Items per page, capped at 100. The pagination helper also accepts the legacy aliases `ps` and `size`.
+</ParamField>
+
+<ParamField path="query.type" type="integer">
+  Log type: `1` top-up, `2` consumption, `3` manage, `4` system, `5` error, `6` refund. Omitted or `0` matches all types. Only applied in paginated mode.
+</ParamField>
+
+<ParamField path="query.start_timestamp" type="integer">
+  Unix timestamp (seconds); only logs with `created_at` greater than or equal to this value are returned. `0` (default) means no lower bound. Only applied in paginated mode.
+</ParamField>
+
+<ParamField path="query.end_timestamp" type="integer">
+  Unix timestamp (seconds); only logs with `created_at` less than or equal to this value are returned. `0` (default) means no upper bound. Only applied in paginated mode.
+</ParamField>
+
+<ParamField path="query.model_name" type="string">
+  Model name pattern; `%` wildcards are allowed (at most two, not consecutive, and the keyword without `%` must be at least 2 characters), `_` and `!` are matched literally. Without `%` the model name must match exactly. Only applied in paginated mode.
+</ParamField>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": {
+    "page": 1,
+    "page_size": 10,
+    "total": 1,
+    "items": [
+      {
+        "id": 1,
+        "user_id": 2,
+        "created_at": 1748086400,
+        "type": 2,
+        "content": "gpt-4o, prompt 100 tokens, completion 50 tokens",
+        "username": "alice",
+        "token_name": "my-token",
+        "model_name": "gpt-4o",
+        "quota": 150,
+        "prompt_tokens": 100,
+        "completion_tokens": 50,
+        "use_time": 1234,
+        "is_stream": false,
+        "channel": 1,
+        "channel_name": "",
+        "token_id": 3,
+        "group": "default",
+        "ip": "203.0.113.10",
+        "ua": "OpenAI/NodeJS",
+        "x_title": "-",
+        "http_referer": "-",
+        "request_id": "chatcmpl-xxxxxxxxxxxxxxxxxxxx",
+        "other": "{}"
+      }
+    ]
+  }
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+  Whether the request succeeded.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  Error description when `success` is `false`; empty otherwise.
+</ResponseField>
+
+<ResponseField name="data.page" type="integer" required>
+  Current page number. Paginated mode only.
+</ResponseField>
+
+<ResponseField name="data.page_size" type="integer" required>
+  Items per page actually applied. Paginated mode only.
+</ResponseField>
+
+<ResponseField name="data.total" type="integer" required>
+  Total number of matching logs, capped at 10000. Paginated mode only.
+</ResponseField>
+
+<ResponseField name="data.items" type="array" required>
+  Log objects on the current page, ordered by `created_at` descending, then by `id` descending. Sanitized for a regular user: `channel_name` is empty, `id` is a sequence number within the result (page start index plus position), `admin_info` and `reject_reason` are removed from `other`, and detail-dialog-only fields are blanked according to the usage-log field visibility configuration.
+
+  <Expandable title="log structure">
+    <ResponseField name="id" type="integer" required>
+      Sequence number within the result (page start index plus position), not the database row id.
+    </ResponseField>
+    <ResponseField name="user_id" type="integer" required>
+      Id of the user who owns the token.
+    </ResponseField>
+    <ResponseField name="created_at" type="integer" required>
+      Unix timestamp (seconds) when the log was recorded.
+    </ResponseField>
+    <ResponseField name="type" type="integer" required>
+      Log type: `1` top-up, `2` consumption, `3` manage, `4` system, `5` error, `6` refund.
+    </ResponseField>
+    <ResponseField name="content" type="string" required>
+      Human-readable summary of the log entry.
+    </ResponseField>
+    <ResponseField name="username" type="string" required>
+      Username that owns the token.
+    </ResponseField>
+    <ResponseField name="token_name" type="string" required>
+      Name of the API token.
+    </ResponseField>
+    <ResponseField name="model_name" type="string" required>
+      Model name requested by the client.
+    </ResponseField>
+    <ResponseField name="quota" type="integer" required>
+      Quota consumed by the request.
+    </ResponseField>
+    <ResponseField name="prompt_tokens" type="integer" required>
+      Number of prompt (input) tokens.
+    </ResponseField>
+    <ResponseField name="completion_tokens" type="integer" required>
+      Number of completion (output) tokens.
+    </ResponseField>
+    <ResponseField name="use_time" type="integer" required>
+      Request duration in milliseconds.
+    </ResponseField>
+    <ResponseField name="is_stream" type="boolean" required>
+      Whether the response was streamed.
+    </ResponseField>
+    <ResponseField name="channel" type="integer" required>
+      Id of the channel that served the request.
+    </ResponseField>
+    <ResponseField name="channel_name" type="string" required>
+      Always empty on this endpoint.
+    </ResponseField>
+    <ResponseField name="token_id" type="integer" required>
+      Id of the API token.
+    </ResponseField>
+    <ResponseField name="group" type="string" required>
+      Group used for channel selection.
+    </ResponseField>
+    <ResponseField name="ip" type="string" required>
+      Client IP; blanked when the IP address field is hidden from regular users.
+    </ResponseField>
+    <ResponseField name="ua" type="string" required>
+      User-Agent header; blanked when the client headers field is hidden from regular users.
+    </ResponseField>
+    <ResponseField name="x_title" type="string" required>
+      X-Title header; blanked when the client headers field is hidden from regular users.
+    </ResponseField>
+    <ResponseField name="http_referer" type="string" required>
+      Referer header; blanked when the client headers field is hidden from regular users.
+    </ResponseField>
+    <ResponseField name="request_id" type="string">
+      NookMux request id; blanked when the `request_id` field is hidden from regular users. Omitted when empty.
+    </ResponseField>
+    <ResponseField name="upstream_request_id" type="string">
+      Upstream provider request id; blanked when the `upstream_request_id` field is hidden from regular users. Omitted when empty.
+    </ResponseField>
+    <ResponseField name="other" type="string" required>
+      JSON object string with supplementary details. `admin_info` and `reject_reason` are always removed; detail-dialog-only keys are removed when hidden from regular users.
+    </ResponseField>
+    <ResponseField name="model_icon" type="string">
+      Icon of the model resolved from model or vendor metadata. Omitted when no icon is configured.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<Note>
+Legacy array mode: when neither `p` nor `page_size` is present, `data` is a plain array of up to 1000 recent logs of the token (same log structure and sanitization, `id` numbered from 1) instead of the pagination object, and the type, timestamp and model filters are not applied.
+</Note>
+
+<Note>
+Management endpoints return HTTP `200` even on business failures; authentication failures on this route return HTTP `401` / `403` / `500` instead.
+</Note>
+
+## Error messages
+
+| Condition | Status | Description |
+| --- | --- | --- |
+| No Authorization header | `401` | The `Authorization` header is missing |
+| Invalid token | `401` | The key does not match any token |
+| User has been banned | `403` | The token owner is disabled |
+| Database error, please try again later | `500` | Loading the token owner's user cache failed |
+| Database error, please try again later | `200` | Querying or counting the logs failed; see server logs |

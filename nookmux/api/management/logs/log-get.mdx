@@ -1,0 +1,248 @@
+---
+title: Get All Logs
+description: List all usage and system logs across every user with pagination and rich filters.
+api: "GET /api/log/"
+---
+
+List every log recorded by NookMux — consumption, top-up, error, refund, manage and system entries — ordered newest first and paginated. Channel names and model icons are resolved for display.
+
+Requires **Admin** permissions. See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url 'https://your-nookmux-domain/api/log/?p=1&page_size=10&type=2&model_name=gpt-4o%25' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1'
+```
+
+</RequestExample>
+
+### Query parameters
+
+<ParamField path="query.p" type="integer" default="1">
+  Page number.
+</ParamField>
+
+<ParamField path="query.page_size" type="integer" default="10">
+  Items per page, capped at 100. The pagination helper also accepts the legacy aliases `ps` and `size`.
+</ParamField>
+
+<ParamField path="query.type" type="integer">
+  Log type: `1` top-up, `2` consumption, `3` manage, `4` system, `5` error, `6` refund. Omitted or `0` matches all types.
+</ParamField>
+
+<ParamField path="query.start_timestamp" type="integer">
+  Unix timestamp (seconds); only logs with `created_at` greater than or equal to this value are returned. `0` (default) means no lower bound.
+</ParamField>
+
+<ParamField path="query.end_timestamp" type="integer">
+  Unix timestamp (seconds); only logs with `created_at` less than or equal to this value are returned. `0` (default) means no upper bound.
+</ParamField>
+
+<ParamField path="query.username" type="string">
+  Exact match on the username that produced the log.
+</ParamField>
+
+<ParamField path="query.token_name" type="string">
+  Exact match on the token name.
+</ParamField>
+
+<ParamField path="query.model_name" type="string">
+  SQL `LIKE` pattern on the model name; `%` and `_` wildcards are passed through as-is, so `gpt-4o%` matches model names starting with `gpt-4o`.
+</ParamField>
+
+<ParamField path="query.channel" type="integer">
+  Channel id. `0` (default) matches all channels.
+</ParamField>
+
+<ParamField path="query.group" type="string">
+  Exact match on the group used for the request.
+</ParamField>
+
+<ParamField path="query.request_id" type="string">
+  Exact match on the NookMux request id.
+</ParamField>
+
+<ParamField path="query.upstream_request_id" type="string">
+  Exact match on the upstream provider request id.
+</ParamField>
+
+<ParamField path="query.ip" type="string">
+  Substring match on the client IP; `%` and `_` in the value are matched literally.
+</ParamField>
+
+<ParamField path="query.ua" type="string">
+  Substring match on the stored User-Agent header.
+</ParamField>
+
+<ParamField path="query.x_title" type="string">
+  Substring match on the stored X-Title header.
+</ParamField>
+
+<ParamField path="query.http_referer" type="string">
+  Substring match on the stored Referer header.
+</ParamField>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": {
+    "page": 1,
+    "page_size": 10,
+    "total": 1,
+    "items": [
+      {
+        "id": 1024,
+        "user_id": 1,
+        "created_at": 1748086400,
+        "type": 2,
+        "content": "gpt-4o, prompt 100 tokens, completion 50 tokens",
+        "username": "admin",
+        "token_name": "my-token",
+        "model_name": "gpt-4o",
+        "quota": 150,
+        "prompt_tokens": 100,
+        "completion_tokens": 50,
+        "use_time": 1234,
+        "is_stream": false,
+        "channel": 1,
+        "channel_name": "my-openai",
+        "token_id": 3,
+        "group": "default",
+        "ip": "203.0.113.10",
+        "ua": "OpenAI/NodeJS",
+        "x_title": "-",
+        "http_referer": "-",
+        "request_id": "chatcmpl-xxxxxxxxxxxxxxxxxxxx",
+        "upstream_request_id": "req-8f3a2b",
+        "other": "{\"billing_source\":\"local\"}"
+      }
+    ]
+  }
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+  Whether the request succeeded.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  Error description when `success` is `false`; empty otherwise.
+</ResponseField>
+
+<ResponseField name="data.page" type="integer" required>
+  Current page number.
+</ResponseField>
+
+<ResponseField name="data.page_size" type="integer" required>
+  Items per page actually applied.
+</ResponseField>
+
+<ResponseField name="data.total" type="integer" required>
+  Total number of logs matching the filters.
+</ResponseField>
+
+<ResponseField name="data.items" type="array" required>
+  Log objects on the current page, ordered by `created_at` descending, then by `id` descending.
+
+  <Expandable title="log structure">
+    <ResponseField name="id" type="integer" required>
+      Database id of the log row.
+    </ResponseField>
+    <ResponseField name="user_id" type="integer" required>
+      Id of the user who produced the log.
+    </ResponseField>
+    <ResponseField name="created_at" type="integer" required>
+      Unix timestamp (seconds) when the log was recorded.
+    </ResponseField>
+    <ResponseField name="type" type="integer" required>
+      Log type: `1` top-up, `2` consumption, `3` manage, `4` system, `5` error, `6` refund.
+    </ResponseField>
+    <ResponseField name="content" type="string" required>
+      Human-readable summary of the log entry.
+    </ResponseField>
+    <ResponseField name="username" type="string" required>
+      Username that produced the log.
+    </ResponseField>
+    <ResponseField name="token_name" type="string" required>
+      Name of the API token used for the request.
+    </ResponseField>
+    <ResponseField name="model_name" type="string" required>
+      Model name requested by the client.
+    </ResponseField>
+    <ResponseField name="quota" type="integer" required>
+      Quota consumed by the request.
+    </ResponseField>
+    <ResponseField name="prompt_tokens" type="integer" required>
+      Number of prompt (input) tokens.
+    </ResponseField>
+    <ResponseField name="completion_tokens" type="integer" required>
+      Number of completion (output) tokens.
+    </ResponseField>
+    <ResponseField name="use_time" type="integer" required>
+      Request duration in milliseconds.
+    </ResponseField>
+    <ResponseField name="is_stream" type="boolean" required>
+      Whether the response was streamed.
+    </ResponseField>
+    <ResponseField name="channel" type="integer" required>
+      Id of the channel that served the request.
+    </ResponseField>
+    <ResponseField name="channel_name" type="string" required>
+      Name of the channel that served the request, resolved from the channels table; empty when no channel was involved.
+    </ResponseField>
+    <ResponseField name="token_id" type="integer" required>
+      Id of the API token used for the request.
+    </ResponseField>
+    <ResponseField name="group" type="string" required>
+      Group used for channel selection.
+    </ResponseField>
+    <ResponseField name="ip" type="string" required>
+      Client IP of the request.
+    </ResponseField>
+    <ResponseField name="ua" type="string" required>
+      User-Agent header of the request; `-` when the client sent none.
+    </ResponseField>
+    <ResponseField name="x_title" type="string" required>
+      X-Title header of the request; `-` when the client sent none.
+    </ResponseField>
+    <ResponseField name="http_referer" type="string" required>
+      Referer header of the request; `-` when the client sent none.
+    </ResponseField>
+    <ResponseField name="request_id" type="string">
+      NookMux request id. Omitted when empty.
+    </ResponseField>
+    <ResponseField name="upstream_request_id" type="string">
+      Request id returned by the upstream provider. Omitted when empty.
+    </ResponseField>
+    <ResponseField name="other" type="string" required>
+      JSON object string with supplementary details such as billing source, token breakdown, stream status and (for admins) the retry chain under `admin_info`; the key set varies by log type.
+    </ResponseField>
+    <ResponseField name="model_icon" type="string">
+      Icon of the model resolved from model or vendor metadata. Omitted when no icon is configured.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<Note>
+Management endpoints return HTTP `200` even on business failures; always check the `success` field.
+</Note>
+
+## Error messages
+
+| Condition | Description |
+| --- | --- |
+| Database error, please try again later | Querying or counting the logs failed; see server logs |

@@ -1,0 +1,144 @@
+---
+title: Get Logs Stat
+description: Aggregate quota consumption, realtime RPM/TPM and success/failure counts over all logs.
+api: "GET /api/log/stat"
+---
+
+Return aggregate statistics over all logs for the given filters: total quota consumed, realtime requests and tokens per minute, and success/failure counts. When the pre-aggregated quota data is enabled and no log-only filter is set, the quota and counts come from the `quota_data` table instead of scanning `logs`.
+
+Requires **Admin** permissions. See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url 'https://your-nookmux-domain/api/log/stat?start_timestamp=1748000000&end_timestamp=1748600000&type=2&model_name=gpt-4o' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1'
+```
+
+</RequestExample>
+
+### Query parameters
+
+<ParamField path="query.type" type="integer">
+  Log type: `1` top-up, `2` consumption, `3` manage, `4` system, `5` error, `6` refund. Omitted or `0` defaults the quota and success count to consumption logs (type `2`); the failure count always counts error logs.
+</ParamField>
+
+<ParamField path="query.start_timestamp" type="integer">
+  Unix timestamp (seconds); only logs with `created_at` greater than or equal to this value are counted. `0` (default) means no lower bound. Does not affect `rpm` and `tpm`.
+</ParamField>
+
+<ParamField path="query.end_timestamp" type="integer">
+  Unix timestamp (seconds); only logs with `created_at` less than or equal to this value are counted. `0` (default) means no upper bound. Does not affect `rpm` and `tpm`.
+</ParamField>
+
+<ParamField path="query.username" type="string">
+  Exact match on the username.
+</ParamField>
+
+<ParamField path="query.token_name" type="string">
+  Exact match on the token name.
+</ParamField>
+
+<ParamField path="query.model_name" type="string">
+  Model name pattern; `%` wildcards are allowed (at most two, not consecutive, and the keyword without `%` must be at least 2 characters), `_` and `!` are matched literally. Without `%` the model name must match exactly.
+</ParamField>
+
+<ParamField path="query.channel" type="integer">
+  Channel id. `0` (default) matches all channels.
+</ParamField>
+
+<ParamField path="query.group" type="string">
+  Exact match on the group used for the request.
+</ParamField>
+
+<ParamField path="query.request_id" type="string">
+  Exact match on the NookMux request id.
+</ParamField>
+
+<ParamField path="query.upstream_request_id" type="string">
+  Exact match on the upstream provider request id.
+</ParamField>
+
+<ParamField path="query.ip" type="string">
+  Substring match on the client IP; `%` and `_` in the value are matched literally.
+</ParamField>
+
+<ParamField path="query.ua" type="string">
+  Substring match on the stored User-Agent header.
+</ParamField>
+
+<ParamField path="query.x_title" type="string">
+  Substring match on the stored X-Title header.
+</ParamField>
+
+<ParamField path="query.http_referer" type="string">
+  Substring match on the stored Referer header.
+</ParamField>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": {
+    "quota": 15000,
+    "rpm": 12,
+    "tpm": 3600,
+    "success_count": 850,
+    "fail_count": 25
+  }
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+  Whether the request succeeded.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  Error description when `success` is `false`; empty otherwise.
+</ResponseField>
+
+<ResponseField name="data.quota" type="integer" required>
+  Sum of the `quota` field over logs of the selected type (default consumption) inside the time range.
+</ResponseField>
+
+<ResponseField name="data.rpm" type="integer" required>
+  Requests per minute: number of consumption logs of the last 60 seconds, regardless of the requested time range.
+</ResponseField>
+
+<ResponseField name="data.tpm" type="integer" required>
+  Tokens per minute: sum of prompt and completion tokens of consumption logs of the last 60 seconds, regardless of the requested time range.
+</ResponseField>
+
+<ResponseField name="data.success_count" type="integer" required>
+  Number of logs of the selected type (default consumption) inside the time range.
+</ResponseField>
+
+<ResponseField name="data.fail_count" type="integer" required>
+  Number of error logs (type `5`) inside the time range, regardless of the selected type.
+</ResponseField>
+
+<Note>
+When the quota-data write is enabled and none of `token_name`, `channel`, `group`, `model_name` or the detail-only filters (`request_id`, `upstream_request_id`, `ip`, `ua`, `x_title`, `http_referer`) is set and `type` is omitted or `0`, `quota`, `success_count` and `fail_count` are aggregated from the pre-aggregated `quota_data` table (a `username` filter is still allowed), while `rpm` and `tpm` are always queried live from the `logs` table.
+</Note>
+
+<Note>
+Management endpoints return HTTP `200` even on business failures; always check the `success` field.
+</Note>
+
+## Error messages
+
+| Condition | Description |
+| --- | --- |
+| Database error, please try again later | Aggregating the statistics failed; see server logs |

@@ -1,0 +1,105 @@
+---
+title: 删除历史日志
+description: 按时间范围批量删除历史日志、已存储媒体与审计记录。
+api: "DELETE /api/log/"
+---
+
+删除指定 `created_at` 时间范围内的历史数据，可按类型勾选清理范围：用量日志、已存储图片、已存储视频与审计日志。每个勾选的类型都会返回实际删除的行数。
+
+需要**管理员**权限。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
+
+## 请求
+
+<RequestExample>
+
+```bash cURL
+curl --request DELETE \
+  --url 'https://your-nookmux-domain/api/log/?start_timestamp=1740000000&end_timestamp=1748000000&clean_logs=true' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1'
+```
+
+</RequestExample>
+
+### 查询参数
+
+<ParamField path="query.start_timestamp" type="integer" default="0">
+  Unix 时间戳（秒）；只删除 `created_at` 大于等于该值的行。`0` 表示不限下界（删除 `end_timestamp` 之前的全部数据）。
+</ParamField>
+
+<ParamField path="query.end_timestamp" type="integer" required>
+  Unix 时间戳（秒）；只删除 `created_at` 小于等于该值的行。必须非 0，否则按参数无效拒绝请求。
+</ParamField>
+
+<ParamField path="query.clean_logs" type="string">
+  设为 `true` 或 `1` 时删除用量日志行（`logs` 表）。
+</ParamField>
+
+<ParamField path="query.clean_stored_images" type="string">
+  设为 `true` 或 `1` 时删除范围内已存储的图片媒体。
+</ParamField>
+
+<ParamField path="query.clean_stored_videos" type="string">
+  设为 `true` 或 `1` 时删除范围内已存储的视频媒体。
+</ParamField>
+
+<ParamField path="query.clean_audit_logs" type="string">
+  设为 `true` 或 `1` 时删除范围内已存储的审计日志行。
+</ParamField>
+
+<Note>
+四个 `clean_*` 开关至少需勾选一个；全部未勾选的请求按参数无效拒绝。多个开关可在一次调用中组合使用，每个勾选类型各自返回删除数量。
+</Note>
+
+## 响应
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": {
+    "logs": 128
+  }
+}
+```
+
+</ResponseExample>
+
+### 响应字段
+
+<ResponseField name="success" type="boolean" required>
+  删除是否成功。
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  `success` 为 `false` 时的错误描述；成功时为空字符串。
+</ResponseField>
+
+<ResponseField name="data.logs" type="integer">
+  删除的用量日志行数。仅在请求了 `clean_logs` 时返回。
+</ResponseField>
+
+<ResponseField name="data.stored_images" type="integer">
+  删除的已存储图片记录数。仅在请求了 `clean_stored_images` 时返回。
+</ResponseField>
+
+<ResponseField name="data.stored_videos" type="integer">
+  删除的已存储视频记录数。仅在请求了 `clean_stored_videos` 时返回。
+</ResponseField>
+
+<ResponseField name="data.audit_logs" type="integer">
+  删除的审计日志行数。仅在请求了 `clean_audit_logs` 时返回。
+</ResponseField>
+
+<Note>
+管理接口在业务失败时同样返回 HTTP `200`，必须以 `success` 字段判断结果。删除按批次执行以控制事务大小，操作会写入审计日志（强制记录，即使审计开关已关闭）。若某一类型清理失败，其余类型仍会继续清理并保留审计记录，请求最终返回数据库错误。
+</Note>
+
+## 错误说明
+
+| 条件 | 说明 |
+| --- | --- |
+| 无效的参数 | `end_timestamp` 缺失或为 `0`，或未勾选任何 `clean_*` 开关 |
+| 数据库错误，请稍后重试 | 至少一个类型的删除失败，详见服务端日志 |

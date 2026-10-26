@@ -1,0 +1,224 @@
+---
+title: 按令牌密钥查询日志
+description: 查询 Authorization 请求头所携带令牌密钥的用量日志，支持分页与旧版数组两种响应。
+api: "GET /api/log/token"
+---
+
+返回请求所携带的 API 令牌的用量日志。令牌 id 由认证上下文强制注入，调用方无法查询其他令牌的日志。本接口通过令牌密钥本身鉴权——`Authorization` 请求头必须携带令牌密钥（例如 `sk-xxxx`），而不是管理访问令牌。
+
+令牌由只读令牌鉴权中间件解析，只校验密钥是否存在：已禁用、已过期或额度耗尽的令牌同样允许访问；被封禁的用户会被拒绝。管理接口的通用鉴权模型参见[身份认证](/cn/nookmux/api/management/auth)。
+
+<Note>
+本路由受严格的关键操作限流保护，并允许跨域请求（CORS）。传入 `p` 或 `page_size` 任意一个即切换到分页响应；两者都缺省时保留旧版的近期日志数组响应。
+</Note>
+
+## 请求
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url 'https://your-nookmux-domain/api/log/token?p=1&page_size=10&type=2&model_name=gpt-4o' \
+  --header 'Authorization: Bearer sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
+```
+
+</RequestExample>
+
+### 请求头
+
+<ParamField path="header.Authorization" type="string" required>
+  API 令牌密钥，形如 `Bearer sk-xxxx`。
+</ParamField>
+
+### 查询参数
+
+<ParamField path="query.p" type="integer" default="1">
+  页码。传入 `p` 或 `page_size` 任意一个即切换到分页响应。
+</ParamField>
+
+<ParamField path="query.page_size" type="integer" default="10">
+  每页条数，上限 100。分页助手同时兼容旧别名 `ps` 与 `size`。
+</ParamField>
+
+<ParamField path="query.type" type="integer">
+  日志类型：`1` 充值、`2` 消费、`3` 管理、`4` 系统、`5` 错误、`6` 退款。缺省或 `0` 匹配全部类型。仅在分页模式下生效。
+</ParamField>
+
+<ParamField path="query.start_timestamp" type="integer">
+  Unix 时间戳（秒）；只返回 `created_at` 大于等于该值的日志。`0`（默认）表示不限下界。仅在分页模式下生效。
+</ParamField>
+
+<ParamField path="query.end_timestamp" type="integer">
+  Unix 时间戳（秒）；只返回 `created_at` 小于等于该值的日志。`0`（默认）表示不限上界。仅在分页模式下生效。
+</ParamField>
+
+<ParamField path="query.model_name" type="string">
+  模型名匹配模式；允许 `%` 通配符（最多两个、不得连续、去掉 `%` 后关键词至少 2 个字符），`_` 与 `!` 按字面匹配。不含 `%` 时按模型名精确匹配。仅在分页模式下生效。
+</ParamField>
+
+## 响应
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": {
+    "page": 1,
+    "page_size": 10,
+    "total": 1,
+    "items": [
+      {
+        "id": 1,
+        "user_id": 2,
+        "created_at": 1748086400,
+        "type": 2,
+        "content": "gpt-4o, prompt 100 tokens, completion 50 tokens",
+        "username": "alice",
+        "token_name": "my-token",
+        "model_name": "gpt-4o",
+        "quota": 150,
+        "prompt_tokens": 100,
+        "completion_tokens": 50,
+        "use_time": 1234,
+        "is_stream": false,
+        "channel": 1,
+        "channel_name": "",
+        "token_id": 3,
+        "group": "default",
+        "ip": "203.0.113.10",
+        "ua": "OpenAI/NodeJS",
+        "x_title": "-",
+        "http_referer": "-",
+        "request_id": "chatcmpl-xxxxxxxxxxxxxxxxxxxx",
+        "other": "{}"
+      }
+    ]
+  }
+}
+```
+
+</ResponseExample>
+
+### 响应字段
+
+<ResponseField name="success" type="boolean" required>
+  请求是否成功。
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  `success` 为 `false` 时的错误描述；成功时为空字符串。
+</ResponseField>
+
+<ResponseField name="data.page" type="integer" required>
+  当前页码。仅分页模式返回。
+</ResponseField>
+
+<ResponseField name="data.page_size" type="integer" required>
+  实际生效的每页条数。仅分页模式返回。
+</ResponseField>
+
+<ResponseField name="data.total" type="integer" required>
+  匹配的日志总数，上限 10000。仅分页模式返回。
+</ResponseField>
+
+<ResponseField name="data.items" type="array" required>
+  当前页的日志对象，按 `created_at` 倒序、再按 `id` 倒序排列。按普通用户视角脱敏：`channel_name` 为空，`id` 为结果集内序号（分页起始下标加位置），`other` 中的 `admin_info` 与 `reject_reason` 被移除，详情弹窗独有字段按使用日志字段可见性配置清空。
+
+  <Expandable title="log 结构">
+    <ResponseField name="id" type="integer" required>
+      结果集内的序号（分页起始下标加位置），不是数据库行 id。
+    </ResponseField>
+    <ResponseField name="user_id" type="integer" required>
+      持有该令牌的用户 id。
+    </ResponseField>
+    <ResponseField name="created_at" type="integer" required>
+      日志记录的 Unix 时间戳（秒）。
+    </ResponseField>
+    <ResponseField name="type" type="integer" required>
+      日志类型：`1` 充值、`2` 消费、`3` 管理、`4` 系统、`5` 错误、`6` 退款。
+    </ResponseField>
+    <ResponseField name="content" type="string" required>
+      日志条目的可读摘要。
+    </ResponseField>
+    <ResponseField name="username" type="string" required>
+      持有该令牌的用户名。
+    </ResponseField>
+    <ResponseField name="token_name" type="string" required>
+      API 令牌名称。
+    </ResponseField>
+    <ResponseField name="model_name" type="string" required>
+      客户端请求的模型名。
+    </ResponseField>
+    <ResponseField name="quota" type="integer" required>
+      请求消耗的额度。
+    </ResponseField>
+    <ResponseField name="prompt_tokens" type="integer" required>
+      输入（prompt）token 数。
+    </ResponseField>
+    <ResponseField name="completion_tokens" type="integer" required>
+      输出（completion）token 数。
+    </ResponseField>
+    <ResponseField name="use_time" type="integer" required>
+      请求耗时，毫秒。
+    </ResponseField>
+    <ResponseField name="is_stream" type="boolean" required>
+      响应是否为流式。
+    </ResponseField>
+    <ResponseField name="channel" type="integer" required>
+      承接该请求的渠道 id。
+    </ResponseField>
+    <ResponseField name="channel_name" type="string" required>
+      本接口恒为空字符串。
+    </ResponseField>
+    <ResponseField name="token_id" type="integer" required>
+      API 令牌 id。
+    </ResponseField>
+    <ResponseField name="group" type="string" required>
+      渠道选择所用的分组。
+    </ResponseField>
+    <ResponseField name="ip" type="string" required>
+      客户端 IP；IP 地址字段对普通用户隐藏时被清空。
+    </ResponseField>
+    <ResponseField name="ua" type="string" required>
+      User-Agent 请求头；客户端请求头字段对普通用户隐藏时被清空。
+    </ResponseField>
+    <ResponseField name="x_title" type="string" required>
+      X-Title 请求头；客户端请求头字段对普通用户隐藏时被清空。
+    </ResponseField>
+    <ResponseField name="http_referer" type="string" required>
+      Referer 请求头；客户端请求头字段对普通用户隐藏时被清空。
+    </ResponseField>
+    <ResponseField name="request_id" type="string">
+      NookMux 请求 id；`request_id` 字段对普通用户隐藏时被清空。为空时省略。
+    </ResponseField>
+    <ResponseField name="upstream_request_id" type="string">
+      上游供应商请求 id；`upstream_request_id` 字段对普通用户隐藏时被清空。为空时省略。
+    </ResponseField>
+    <ResponseField name="other" type="string" required>
+      补充详情的 JSON 对象字符串。`admin_info` 与 `reject_reason` 始终移除；详情弹窗独有键在对普通用户隐藏时移除。
+    </ResponseField>
+    <ResponseField name="model_icon" type="string">
+      从模型或供应商元数据解析的模型图标。未配置时省略。
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<Note>
+旧版数组模式：`p` 与 `page_size` 都缺省时，`data` 直接为该令牌最近最多 1000 条日志的数组（log 结构与脱敏规则相同，`id` 从 1 起编号），而非分页对象；类型、时间与模型过滤在该模式下不生效。
+</Note>
+
+<Note>
+管理接口在业务失败时同样返回 HTTP `200`；本路由的鉴权失败返回 HTTP `401` / `403` / `500`。
+</Note>
+
+## 错误说明
+
+| 条件 | 状态码 | 说明 |
+| --- | --- | --- |
+| 缺少 Authorization 请求头 | `401` | `Authorization` 请求头缺失 |
+| 无效的令牌 | `401` | 密钥未匹配到任何令牌 |
+| 用户已被封禁 | `403` | 令牌所属用户已被禁用 |
+| 数据库错误，请稍后重试 | `500` | 加载令牌所属用户的用户缓存失败 |
+| 数据库错误，请稍后重试 | `200` | 查询或统计日志失败，详见服务端日志 |

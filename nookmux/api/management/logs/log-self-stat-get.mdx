@@ -1,0 +1,150 @@
+---
+title: Get My Logs Stat
+description: Aggregate the current user's own quota consumption, realtime RPM/TPM and success/failure counts.
+api: "GET /api/log/self/stat"
+---
+
+Return aggregate statistics over the current user's own logs: total quota consumed, realtime requests and tokens per minute, and success/failure counts. The username dimension is forced to the session user; quota-data aggregation applies per user id.
+
+Requires a logged-in user (**User** permissions). See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url 'https://your-nookmux-domain/api/log/self/stat?start_timestamp=1748000000&end_timestamp=1748600000&model_name=gpt-4o' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1'
+```
+
+</RequestExample>
+
+### Query parameters
+
+<ParamField path="query.type" type="integer">
+  Log type: `1` top-up, `2` consumption, `3` manage, `4` system, `5` error, `6` refund. Omitted or `0` defaults the quota and success count to consumption logs (type `2`); the failure count always counts error logs.
+</ParamField>
+
+<ParamField path="query.start_timestamp" type="integer">
+  Unix timestamp (seconds); only logs with `created_at` greater than or equal to this value are counted. `0` (default) means no lower bound. Does not affect `rpm` and `tpm`.
+</ParamField>
+
+<ParamField path="query.end_timestamp" type="integer">
+  Unix timestamp (seconds); only logs with `created_at` less than or equal to this value are counted. `0` (default) means no upper bound. Does not affect `rpm` and `tpm`.
+</ParamField>
+
+<ParamField path="query.token_name" type="string">
+  Exact match on the token name.
+</ParamField>
+
+<ParamField path="query.model_name" type="string">
+  Model name pattern; `%` wildcards are allowed (at most two, not consecutive, and the keyword without `%` must be at least 2 characters), `_` and `!` are matched literally. Without `%` the model name must match exactly.
+</ParamField>
+
+<ParamField path="query.group" type="string">
+  Exact match on the group used for the request.
+</ParamField>
+
+<ParamField path="query.request_id" type="string">
+  Exact match on the NookMux request id. Only accepted when the `request_id` detail field is visible to regular users; otherwise the request is rejected.
+</ParamField>
+
+<ParamField path="query.upstream_request_id" type="string">
+  Exact match on the upstream provider request id. Only accepted when the `upstream_request_id` detail field is visible to regular users; otherwise the request is rejected.
+</ParamField>
+
+<ParamField path="query.ip" type="string">
+  Substring match on the client IP. Only accepted when the IP address detail field is visible to regular users; otherwise the request is rejected.
+</ParamField>
+
+<ParamField path="query.ua" type="string">
+  Substring match on the stored User-Agent header. Only accepted when the client headers detail field is visible to regular users; otherwise the request is rejected.
+</ParamField>
+
+<ParamField path="query.x_title" type="string">
+  Substring match on the stored X-Title header. Only accepted when the client headers detail field is visible to regular users; otherwise the request is rejected.
+</ParamField>
+
+<ParamField path="query.http_referer" type="string">
+  Substring match on the stored Referer header. Only accepted when the client headers detail field is visible to regular users; otherwise the request is rejected.
+</ParamField>
+
+<Note>
+There is no `channel` or `username` filter on this endpoint: `username` is always the session user, and filtering by channel is rejected for regular users. These restrictions prevent side-channel probing of hidden fields through changes in the statistics.
+</Note>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": {
+    "quota": 5000,
+    "rpm": 3,
+    "tpm": 900,
+    "success_count": 320,
+    "fail_count": 2
+  }
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+  Whether the request succeeded.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  Error description when `success` is `false`; empty otherwise.
+</ResponseField>
+
+<ResponseField name="data.quota" type="integer" required>
+  Sum of the `quota` field over the user's logs of the selected type (default consumption) inside the time range.
+</ResponseField>
+
+<ResponseField name="data.rpm" type="integer" required>
+  Requests per minute: number of the user's consumption logs of the last 60 seconds, regardless of the requested time range.
+</ResponseField>
+
+<ResponseField name="data.tpm" type="integer" required>
+  Tokens per minute: sum of prompt and completion tokens of the user's consumption logs of the last 60 seconds, regardless of the requested time range.
+</ResponseField>
+
+<ResponseField name="data.success_count" type="integer" required>
+  Number of the user's logs of the selected type (default consumption) inside the time range.
+</ResponseField>
+
+<ResponseField name="data.fail_count" type="integer" required>
+  Number of the user's error logs (type `5`) inside the time range, regardless of the selected type.
+</ResponseField>
+
+<Note>
+When the quota-data write is enabled and none of `token_name`, `channel`, `group`, `model_name` or the detail-only filters (`request_id`, `upstream_request_id`, `ip`, `ua`, `x_title`, `http_referer`) is set and `type` is omitted or `0`, `quota`, `success_count` and `fail_count` are aggregated from the pre-aggregated `quota_data` table for the session user's id, while `rpm` and `tpm` are always queried live from the `logs` table.
+</Note>
+
+<Note>
+Management endpoints return HTTP `200` even on business failures; always check the `success` field.
+</Note>
+
+## Error messages
+
+| Condition | Description |
+| --- | --- |
+| 使用日志详情已禁用，不支持按详情字段过滤 | A detail-only filter was used while the usage-log details switch is off for regular users |
+| 无权使用此过滤条件: channel | Filtering by `channel` is never allowed for regular users |
+| 无权使用此过滤条件: request_id | Filtering by `request_id` while the field is hidden from regular users |
+| 无权使用此过滤条件: upstream_request_id | Filtering by `upstream_request_id` while the field is hidden from regular users |
+| 无权使用此过滤条件: ip | Filtering by `ip` while the IP address field is hidden from regular users |
+| 无权使用此过滤条件: ua / x_title / http_referer | Filtering by a client header while the client headers field is hidden from regular users |
+| Database error, please try again later | Aggregating the statistics failed; see server logs |
+
+<Note>
+The filter rejection messages are fixed Chinese strings returned verbatim by the server; they are not localized by the caller's language.
+</Note>

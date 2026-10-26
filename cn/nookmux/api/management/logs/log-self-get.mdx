@@ -1,0 +1,253 @@
+---
+title: 获取我的日志
+description: 分页列出当前用户自己的用量日志，支持过滤与隐私脱敏。
+api: "GET /api/log/self"
+---
+
+分页列出当前用户产生的日志，按时间倒序返回。用户名维度强制取会话用户，且条目按普通用户视角脱敏：移除渠道名称、剥离 `admin_info` 详情，并按使用日志字段可见性配置清空详情弹窗独有字段。
+
+需要登录用户（**User**）权限。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
+
+## 请求
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url 'https://your-nookmux-domain/api/log/self?p=1&page_size=10&type=2&model_name=gpt-4o' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1'
+```
+
+</RequestExample>
+
+### 查询参数
+
+<ParamField path="query.p" type="integer" default="1">
+  页码。
+</ParamField>
+
+<ParamField path="query.page_size" type="integer" default="10">
+  每页条数，上限 100。分页助手同时兼容旧别名 `ps` 与 `size`。
+</ParamField>
+
+<ParamField path="query.type" type="integer">
+  日志类型：`1` 充值、`2` 消费、`3` 管理、`4` 系统、`5` 错误、`6` 退款。缺省或 `0` 匹配全部类型。
+</ParamField>
+
+<ParamField path="query.start_timestamp" type="integer">
+  Unix 时间戳（秒）；只返回 `created_at` 大于等于该值的日志。`0`（默认）表示不限下界。
+</ParamField>
+
+<ParamField path="query.end_timestamp" type="integer">
+  Unix 时间戳（秒）；只返回 `created_at` 小于等于该值的日志。`0`（默认）表示不限上界。
+</ParamField>
+
+<ParamField path="query.token_name" type="string">
+  按令牌名称精确匹配。
+</ParamField>
+
+<ParamField path="query.model_name" type="string">
+  模型名匹配模式；允许 `%` 通配符（最多两个、不得连续、去掉 `%` 后关键词至少 2 个字符），`_` 与 `!` 按字面匹配。不含 `%` 时按模型名精确匹配。
+</ParamField>
+
+<ParamField path="query.group" type="string">
+  按请求使用的分组精确匹配。
+</ParamField>
+
+<ParamField path="query.request_id" type="string">
+  按 NookMux 请求 id 精确匹配。仅当 `request_id` 详情字段对普通用户可见时可用，否则请求被拒绝。
+</ParamField>
+
+<ParamField path="query.upstream_request_id" type="string">
+  按上游供应商请求 id 精确匹配。仅当 `upstream_request_id` 详情字段对普通用户可见时可用，否则请求被拒绝。
+</ParamField>
+
+<ParamField path="query.ip" type="string">
+  按客户端 IP 子串匹配。仅当 IP 地址详情字段对普通用户可见时可用，否则请求被拒绝。
+</ParamField>
+
+<ParamField path="query.ua" type="string">
+  按存储的 User-Agent 请求头子串匹配。仅当客户端请求头详情字段对普通用户可见时可用，否则请求被拒绝。
+</ParamField>
+
+<ParamField path="query.x_title" type="string">
+  按存储的 X-Title 请求头子串匹配。仅当客户端请求头详情字段对普通用户可见时可用，否则请求被拒绝。
+</ParamField>
+
+<ParamField path="query.http_referer" type="string">
+  按存储的 Referer 请求头子串匹配。仅当客户端请求头详情字段对普通用户可见时可用，否则请求被拒绝。
+</ParamField>
+
+<Note>
+本接口没有 `channel` 与 `username` 过滤：`username` 恒为会话用户，普通用户按渠道过滤会被直接拒绝。这些限制用于封堵通过 `total`、`items` 或统计结果变化对隐藏字段做侧信道探测。
+</Note>
+
+## 响应
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": {
+    "page": 1,
+    "page_size": 10,
+    "total": 1,
+    "items": [
+      {
+        "id": 1,
+        "user_id": 2,
+        "created_at": 1748086400,
+        "type": 2,
+        "content": "gpt-4o, prompt 100 tokens, completion 50 tokens",
+        "username": "alice",
+        "token_name": "my-token",
+        "model_name": "gpt-4o",
+        "quota": 150,
+        "prompt_tokens": 100,
+        "completion_tokens": 50,
+        "use_time": 1234,
+        "is_stream": false,
+        "channel": 1,
+        "channel_name": "",
+        "token_id": 3,
+        "group": "default",
+        "ip": "203.0.113.10",
+        "ua": "OpenAI/NodeJS",
+        "x_title": "-",
+        "http_referer": "-",
+        "request_id": "chatcmpl-xxxxxxxxxxxxxxxxxxxx",
+        "other": "{}"
+      }
+    ]
+  }
+}
+```
+
+</ResponseExample>
+
+### 响应字段
+
+<ResponseField name="success" type="boolean" required>
+  请求是否成功。
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  `success` 为 `false` 时的错误描述；成功时为空字符串。
+</ResponseField>
+
+<ResponseField name="data.page" type="integer" required>
+  当前页码。
+</ResponseField>
+
+<ResponseField name="data.page_size" type="integer" required>
+  实际生效的每页条数。
+</ResponseField>
+
+<ResponseField name="data.total" type="integer" required>
+  匹配的日志总数，上限 10000。
+</ResponseField>
+
+<ResponseField name="data.items" type="array" required>
+  当前页的日志对象，按 `created_at` 倒序、再按 `id` 倒序排列。
+
+  <Expandable title="log 结构">
+    <ResponseField name="id" type="integer" required>
+      结果集内的序号（分页起始下标加位置），不是数据库行 id。
+    </ResponseField>
+    <ResponseField name="user_id" type="integer" required>
+      产生该日志的用户 id。
+    </ResponseField>
+    <ResponseField name="created_at" type="integer" required>
+      日志记录的 Unix 时间戳（秒）。
+    </ResponseField>
+    <ResponseField name="type" type="integer" required>
+      日志类型：`1` 充值、`2` 消费、`3` 管理、`4` 系统、`5` 错误、`6` 退款。
+    </ResponseField>
+    <ResponseField name="content" type="string" required>
+      日志条目的可读摘要。
+    </ResponseField>
+    <ResponseField name="username" type="string" required>
+      产生该日志的用户名。
+    </ResponseField>
+    <ResponseField name="token_name" type="string" required>
+      请求所用的 API 令牌名称。
+    </ResponseField>
+    <ResponseField name="model_name" type="string" required>
+      客户端请求的模型名。
+    </ResponseField>
+    <ResponseField name="quota" type="integer" required>
+      请求消耗的额度。
+    </ResponseField>
+    <ResponseField name="prompt_tokens" type="integer" required>
+      输入（prompt）token 数。
+    </ResponseField>
+    <ResponseField name="completion_tokens" type="integer" required>
+      输出（completion）token 数。
+    </ResponseField>
+    <ResponseField name="use_time" type="integer" required>
+      请求耗时，毫秒。
+    </ResponseField>
+    <ResponseField name="is_stream" type="boolean" required>
+      响应是否为流式。
+    </ResponseField>
+    <ResponseField name="channel" type="integer" required>
+      承接该请求的渠道 id。
+    </ResponseField>
+    <ResponseField name="channel_name" type="string" required>
+      本接口恒为空字符串。
+    </ResponseField>
+    <ResponseField name="token_id" type="integer" required>
+      请求所用的 API 令牌 id。
+    </ResponseField>
+    <ResponseField name="group" type="string" required>
+      渠道选择所用的分组。
+    </ResponseField>
+    <ResponseField name="ip" type="string" required>
+      客户端 IP；IP 地址字段对普通用户隐藏时被清空。
+    </ResponseField>
+    <ResponseField name="ua" type="string" required>
+      User-Agent 请求头；客户端请求头字段对普通用户隐藏时被清空。
+    </ResponseField>
+    <ResponseField name="x_title" type="string" required>
+      X-Title 请求头；客户端请求头字段对普通用户隐藏时被清空。
+    </ResponseField>
+    <ResponseField name="http_referer" type="string" required>
+      Referer 请求头；客户端请求头字段对普通用户隐藏时被清空。
+    </ResponseField>
+    <ResponseField name="request_id" type="string">
+      NookMux 请求 id；`request_id` 字段对普通用户隐藏时被清空。为空时省略。
+    </ResponseField>
+    <ResponseField name="upstream_request_id" type="string">
+      上游供应商请求 id；`upstream_request_id` 字段对普通用户隐藏时被清空。为空时省略。
+    </ResponseField>
+    <ResponseField name="other" type="string" required>
+      补充详情的 JSON 对象字符串。`admin_info` 与 `reject_reason` 始终移除；计费来源、token 明细、请求转换、订阅计费等详情弹窗独有键在对普通用户隐藏时移除。
+    </ResponseField>
+    <ResponseField name="model_icon" type="string">
+      从模型或供应商元数据解析的模型图标。未配置时省略。
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<Note>
+管理接口在业务失败时同样返回 HTTP `200`，必须以 `success` 字段判断结果。
+</Note>
+
+## 错误说明
+
+| 条件 | 说明 |
+| --- | --- |
+| 使用日志详情已禁用，不支持按详情字段过滤 | 普通用户侧使用日志详情总开关关闭时使用了详情独有字段过滤 |
+| 无权使用此过滤条件: channel | 普通用户按渠道过滤始终被拒绝 |
+| 无权使用此过滤条件: request_id | `request_id` 字段对普通用户隐藏时按其过滤 |
+| 无权使用此过滤条件: upstream_request_id | `upstream_request_id` 字段对普通用户隐藏时按其过滤 |
+| 无权使用此过滤条件: ip | IP 地址字段对普通用户隐藏时按其过滤 |
+| 无权使用此过滤条件: ua / x_title / http_referer | 客户端请求头字段对普通用户隐藏时按其过滤 |
+| 数据库错误，请稍后重试 | 查询或统计日志失败，详见服务端日志 |
+
+<Note>
+过滤条件被拒绝时的文案为服务端固定返回的中文字符串，不随调用者语言本地化。
+</Note>

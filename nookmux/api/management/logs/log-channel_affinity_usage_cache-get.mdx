@@ -1,0 +1,141 @@
+---
+title: Get Channel Affinity Usage Cache Stats
+description: Inspect usage-cache hit counters tracked for one channel affinity cache entry.
+api: "GET /api/log/channel_affinity_usage_cache"
+---
+
+Return the usage-cache statistics observed for a single channel affinity cache entry, keyed by rule name, using group, model name and key fingerprint: how many of the routed requests saw a prompt cache hit, and cumulative token counters within the observation window.
+
+Requires **Admin** permissions. See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url 'https://your-nookmux-domain/api/log/channel_affinity_usage_cache?rule_name=default&using_group=default&model_name=gpt-4o&key_fp=1a2b3c4d' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1'
+```
+
+</RequestExample>
+
+### Query parameters
+
+<ParamField path="query.rule_name" type="string" required>
+  Name of the channel affinity rule the entry belongs to.
+</ParamField>
+
+<ParamField path="query.key_fp" type="string" required>
+  Fingerprint of the affinity key value the entry is tracked for (the first 8 hex characters of its SHA-1 hash, for example the token key).
+</ParamField>
+
+<ParamField path="query.using_group" type="string">
+  Using group dimension of the entry. Omit when the entry was tracked without a group.
+</ParamField>
+
+<ParamField path="query.model_name" type="string">
+  Model name dimension of the entry. Omit when the entry was tracked without a model.
+</ParamField>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": {
+    "rule_name": "default",
+    "using_group": "default",
+    "model_name": "gpt-4o",
+    "key_fp": "1a2b3c4d",
+    "hit": 42,
+    "total": 100,
+    "window_seconds": 3600,
+    "prompt_tokens": 12000,
+    "completion_tokens": 3000,
+    "total_tokens": 15000,
+    "cached_tokens": 8000,
+    "prompt_cache_hit_tokens": 0,
+    "last_seen_at": 1748086400
+  }
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+  Whether the request succeeded.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  Error description when `success` is `false`; empty otherwise.
+</ResponseField>
+
+<ResponseField name="data.rule_name" type="string" required>
+  Echo of the `rule_name` query parameter.
+</ResponseField>
+
+<ResponseField name="data.using_group" type="string" required>
+  Echo of the `using_group` query parameter.
+</ResponseField>
+
+<ResponseField name="data.model_name" type="string" required>
+  Echo of the `model_name` query parameter.
+</ResponseField>
+
+<ResponseField name="data.key_fp" type="string" required>
+  Echo of the `key_fp` query parameter.
+</ResponseField>
+
+<ResponseField name="data.hit" type="integer" required>
+  Number of observed requests whose usage reported cached prompt tokens or prompt-cache hit tokens.
+</ResponseField>
+
+<ResponseField name="data.total" type="integer" required>
+  Total number of requests observed for the entry.
+</ResponseField>
+
+<ResponseField name="data.window_seconds" type="integer" required>
+  Length of the observation window in seconds, equal to the rule TTL; the counters are discarded when no request refreshes the entry within this window.
+</ResponseField>
+
+<ResponseField name="data.prompt_tokens" type="integer" required>
+  Cumulative prompt (input) tokens of the observed requests.
+</ResponseField>
+
+<ResponseField name="data.completion_tokens" type="integer" required>
+  Cumulative completion (output) tokens of the observed requests.
+</ResponseField>
+
+<ResponseField name="data.total_tokens" type="integer" required>
+  Cumulative total tokens of the observed requests.
+</ResponseField>
+
+<ResponseField name="data.cached_tokens" type="integer" required>
+  Cumulative cached prompt tokens reported by upstream usage.
+</ResponseField>
+
+<ResponseField name="data.prompt_cache_hit_tokens" type="integer" required>
+  Cumulative prompt-cache hit tokens reported by upstream usage (for providers with an explicit prompt cache hit field).
+</ResponseField>
+
+<ResponseField name="data.last_seen_at" type="integer" required>
+  Unix timestamp (seconds) of the last request observed for the entry.
+</ResponseField>
+
+<Note>
+Management endpoints return HTTP `200` even on business failures; always check the `success` field. When no usage has been observed for the entry (or the entry expired), all counters are returned as `0`. This endpoint deviates from the `200` convention for validation errors: missing `rule_name` or `key_fp` returns HTTP `400` with `success: false`.
+</Note>
+
+## Error messages
+
+| Condition | Status | Description |
+| --- | --- | --- |
+| Missing parameter: rule_name | `400` | The `rule_name` query parameter is missing or blank |
+| Missing parameter: key_fp | `400` | The `key_fp` query parameter is missing or blank |

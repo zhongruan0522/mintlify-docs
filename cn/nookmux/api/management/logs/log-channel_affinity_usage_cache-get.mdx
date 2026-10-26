@@ -1,0 +1,141 @@
+---
+title: 获取渠道亲和用量缓存统计
+description: 查看单个渠道亲和缓存条目的用量缓存命中计数。
+api: "GET /api/log/channel_affinity_usage_cache"
+---
+
+返回单个渠道亲和缓存条目观测到的用量缓存统计，条目按规则名、使用分组、模型名与密钥指纹定位：路由请求中命中提示缓存（prompt cache）的比例，以及观测窗口内的累计 token 计数。
+
+需要**管理员**权限。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
+
+## 请求
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url 'https://your-nookmux-domain/api/log/channel_affinity_usage_cache?rule_name=default&using_group=default&model_name=gpt-4o&key_fp=1a2b3c4d' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1'
+```
+
+</RequestExample>
+
+### 查询参数
+
+<ParamField path="query.rule_name" type="string" required>
+  条目所属的渠道亲和规则名称。
+</ParamField>
+
+<ParamField path="query.key_fp" type="string" required>
+  条目对应的亲和键值指纹（其 SHA-1 哈希的前 8 位十六进制字符，例如令牌密钥）。
+</ParamField>
+
+<ParamField path="query.using_group" type="string">
+  条目的使用分组维度。条目未按分组统计时可省略。
+</ParamField>
+
+<ParamField path="query.model_name" type="string">
+  条目的模型名维度。条目未按模型统计时可省略。
+</ParamField>
+
+## 响应
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": {
+    "rule_name": "default",
+    "using_group": "default",
+    "model_name": "gpt-4o",
+    "key_fp": "1a2b3c4d",
+    "hit": 42,
+    "total": 100,
+    "window_seconds": 3600,
+    "prompt_tokens": 12000,
+    "completion_tokens": 3000,
+    "total_tokens": 15000,
+    "cached_tokens": 8000,
+    "prompt_cache_hit_tokens": 0,
+    "last_seen_at": 1748086400
+  }
+}
+```
+
+</ResponseExample>
+
+### 响应字段
+
+<ResponseField name="success" type="boolean" required>
+  请求是否成功。
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  `success` 为 `false` 时的错误描述；成功时为空字符串。
+</ResponseField>
+
+<ResponseField name="data.rule_name" type="string" required>
+  回显 `rule_name` 查询参数。
+</ResponseField>
+
+<ResponseField name="data.using_group" type="string" required>
+  回显 `using_group` 查询参数。
+</ResponseField>
+
+<ResponseField name="data.model_name" type="string" required>
+  回显 `model_name` 查询参数。
+</ResponseField>
+
+<ResponseField name="data.key_fp" type="string" required>
+  回显 `key_fp` 查询参数。
+</ResponseField>
+
+<ResponseField name="data.hit" type="integer" required>
+  usage 上报了缓存 prompt token 或提示缓存命中 token 的请求数。
+</ResponseField>
+
+<ResponseField name="data.total" type="integer" required>
+  该条目观测到的请求总数。
+</ResponseField>
+
+<ResponseField name="data.window_seconds" type="integer" required>
+  观测窗口长度（秒），等于规则 TTL；窗口内无请求刷新条目时计数被丢弃。
+</ResponseField>
+
+<ResponseField name="data.prompt_tokens" type="integer" required>
+  观测请求的累计输入（prompt）token。
+</ResponseField>
+
+<ResponseField name="data.completion_tokens" type="integer" required>
+  观测请求的累计输出（completion）token。
+</ResponseField>
+
+<ResponseField name="data.total_tokens" type="integer" required>
+  观测请求的累计总 token。
+</ResponseField>
+
+<ResponseField name="data.cached_tokens" type="integer" required>
+  上游 usage 上报的累计缓存 prompt token。
+</ResponseField>
+
+<ResponseField name="data.prompt_cache_hit_tokens" type="integer" required>
+  上游 usage 上报的累计提示缓存命中 token（针对提供显式提示缓存命中字段的服务商）。
+</ResponseField>
+
+<ResponseField name="data.last_seen_at" type="integer" required>
+  该条目最近一次观测到请求的 Unix 时间戳（秒）。
+</ResponseField>
+
+<Note>
+管理接口在业务失败时同样返回 HTTP `200`，必须以 `success` 字段判断结果。条目尚无用量观测（或已过期）时全部计数返回 `0`。本接口的校验类错误偏离该约定：缺少 `rule_name` 或 `key_fp` 时返回 HTTP `400` 且 `success: false`。
+</Note>
+
+## 错误说明
+
+| 条件 | 状态码 | 说明 |
+| --- | --- | --- |
+| 缺少参数 rule_name | `400` | `rule_name` 查询参数缺失或为空 |
+| 缺少参数 key_fp | `400` | `key_fp` 查询参数缺失或为空 |

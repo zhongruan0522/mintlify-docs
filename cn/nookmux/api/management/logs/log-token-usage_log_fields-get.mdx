@@ -1,0 +1,85 @@
+---
+title: 获取可见的使用日志字段
+description: 返回 Authorization 请求头所携带令牌密钥可见的使用日志详情字段 key 列表。
+api: "GET /api/log/token/usage_log_fields"
+---
+
+返回请求所携带令牌密钥对应的使用日志详情弹窗字段可见性：详情弹窗是否启用，以及哪些字段 key 可见。客户端据此决定是否展示详情按钮与渲染哪些字段。
+
+本接口通过令牌密钥本身鉴权——`Authorization` 请求头必须携带令牌密钥（例如 `sk-xxxx`），而不是管理访问令牌。令牌由只读令牌鉴权中间件解析，只校验密钥是否存在：已禁用、已过期或额度耗尽的令牌同样允许访问；被封禁的用户会被拒绝。管理接口的通用鉴权模型参见[身份认证](/cn/nookmux/api/management/auth)。
+
+<Note>
+本路由受严格的关键操作限流保护，并允许跨域请求（CORS）。可见性始终按普通用户角色评估——即使令牌属于管理员——因为令牌鉴权中间件不携带角色信息。
+</Note>
+
+## 请求
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url 'https://your-nookmux-domain/api/log/token/usage_log_fields' \
+  --header 'Authorization: Bearer sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
+```
+
+</RequestExample>
+
+### 请求头
+
+<ParamField path="header.Authorization" type="string" required>
+  API 令牌密钥，形如 `Bearer sk-xxxx`。
+</ParamField>
+
+## 响应
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": {
+    "enabled": true,
+    "fields": [
+      "request_id",
+      "upstream_request_id",
+      "ip_address",
+      "client_headers"
+    ]
+  }
+}
+```
+
+</ResponseExample>
+
+### 响应字段
+
+<ResponseField name="success" type="boolean" required>
+  请求是否成功。
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  `success` 为 `false` 时的错误描述；成功时为空字符串。
+</ResponseField>
+
+<ResponseField name="data.enabled" type="boolean" required>
+  普通用户侧的使用日志详情弹窗是否启用。为 `false` 时 `fields` 为空数组，前端应整体隐藏详情弹窗。
+</ResponseField>
+
+<ResponseField name="data.fields" type="array" required>
+  对普通用户可见的使用日志详情字段 key，例如 `request_id`、`upstream_request_id`、`ip_address`、`client_headers`；具体集合取决于控制台的使用日志字段可见性配置。`enabled` 为 `false` 时为空数组。
+</ResponseField>
+
+<Note>
+管理接口在业务失败时同样返回 HTTP `200`；本路由的鉴权失败返回 HTTP `401` / `403` / `500`。
+</Note>
+
+## 错误说明
+
+| 条件 | 状态码 | 说明 |
+| --- | --- | --- |
+| 缺少 Authorization 请求头 | `401` | `Authorization` 请求头缺失 |
+| 无效的令牌 | `401` | 密钥未匹配到任何令牌 |
+| 用户已被封禁 | `403` | 令牌所属用户已被禁用 |
+| 数据库错误，请稍后重试 | `500` | 加载令牌所属用户的用户缓存失败 |
+| 使用日志字段配置解析失败 | `200` | 控制台使用日志字段可见性配置格式错误，详见服务端日志 |
