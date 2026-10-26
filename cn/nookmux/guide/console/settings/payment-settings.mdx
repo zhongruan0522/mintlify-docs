@@ -45,4 +45,20 @@ title: 计费与支付
 - `type`：支付通道标识；`stripe` 走 Stripe，其余常见值走易支付风格网关，具体支持取决于后端控制器和已启用的支付模块。
 - `min_topup`：该支付方式最低充值金额。
 
+### Stripe Webhook 配置
+
+Stripe 充值通过 Checkout Session + Webhook 入账。在 Stripe Dashboard 的
+Developers → Webhooks 中添加端点 `https://<你的域名>/api/stripe/webhook`，
+并订阅以下事件：
+
+- `checkout.session.completed`
+- `checkout.session.async_payment_succeeded`
+- `checkout.session.async_payment_failed`
+- `checkout.session.expired`
+
+**金额一致性要求**：`StripeUnitPrice` 必须与 `StripePriceId` 对应 Price 的单价
+（同一币种的主单位数值）保持一致。Webhook 入账前会核对
+`实付金额 + 促销折扣 = 数量 × StripeUnitPrice`（零小数币种按主单位核对），
+不一致时订单拒绝入账并返回 5xx 触发 Stripe 重投告警，以暴露价格配置漂移。
+
 相关实现：`internal/httpapi/controller/topup/topup.go`、`internal/httpapi/controller/topup/topup_stripe.go`、`web/src/features/system-settings/integrations/payment-settings-section.tsx`。
