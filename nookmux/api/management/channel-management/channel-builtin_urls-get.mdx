@@ -1,0 +1,98 @@
+---
+title: Get Builtin Channel URLs
+description: List the built-in base URL presets offered per channel type in the console.
+api: "GET /api/channel/builtin_urls"
+---
+
+List the base URL presets offered per channel type in the console channel form, which renders them as a preset dropdown plus free-form input.
+
+Each preset's `value` is stored verbatim as the channel `base_url` when picked — ordinary sites use the vendor's official address, plan presets use the plan identifier — and `label_key` is a frontend i18n key used to render the option label. Channel types absent from the map (Azure, Custom, AWS Bedrock, Vertex AI, and others) keep free-form input with no presets.
+
+Requires **Admin** permissions. See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url 'https://your-nookmux-domain/api/channel/builtin_urls' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1'
+```
+
+</RequestExample>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": {
+    "1": [{ "value": "https://api.openai.com", "label_key": "channels.fields.baseUrlOfficial" }],
+    "4": [
+      { "value": "http://localhost:11434", "label_key": "channels.fields.baseUrlDefault" },
+      { "value": "ollama-coding-plan", "label_key": "channels.fields.planOllamaCodingPlan" }
+    ],
+    "6": [
+      { "value": "https://api.xiaomimimo.com", "label_key": "channels.fields.baseUrlOfficial" },
+      { "value": "xiaomi-coding-plan", "label_key": "channels.fields.planXiaomiCodingPlan" },
+      { "value": "xiaomi-coding-plan-sgp", "label_key": "channels.fields.planXiaomiCodingPlanSingapore" },
+      { "value": "xiaomi-coding-plan-ams", "label_key": "channels.fields.planXiaomiCodingPlanAmsterdam" }
+    ],
+    "14": [{ "value": "https://api.anthropic.com", "label_key": "channels.fields.baseUrlOfficial" }],
+    "20": [{ "value": "https://openrouter.ai/api", "label_key": "channels.fields.baseUrlOfficial" }],
+    "24": [{ "value": "https://generativelanguage.googleapis.com", "label_key": "channels.fields.baseUrlOfficial" }],
+    "25": [
+      { "value": "https://api.moonshot.cn", "label_key": "channels.fields.baseUrlOfficial" },
+      { "value": "kimi-coding-plan", "label_key": "channels.fields.planKimiCodingPlan" }
+    ],
+    "26": [
+      { "value": "https://open.bigmodel.cn", "label_key": "channels.fields.baseUrlDomestic" },
+      { "value": "https://api.z.ai", "label_key": "channels.fields.baseUrlInternational" },
+      { "value": "glm-coding-plan", "label_key": "channels.fields.planGlmCodingPlan" },
+      { "value": "glm-coding-plan-international", "label_key": "channels.fields.planGlmCodingPlanInternational" }
+    ],
+    "35": [
+      { "value": "https://api.minimaxi.com/v1", "label_key": "channels.fields.baseUrlOfficial" },
+      { "value": "minimax-coding-plan", "label_key": "channels.fields.planMinimaxCodingPlan" },
+      { "value": "minimax-coding-plan-international", "label_key": "channels.fields.planMinimaxCodingPlanInternational" }
+    ],
+    "40": [{ "value": "https://api.siliconflow.cn", "label_key": "channels.fields.baseUrlOfficial" }],
+    "43": [{ "value": "https://api.deepseek.com", "label_key": "channels.fields.baseUrlOfficial" }],
+    "44": [{ "value": "https://ark.cn-beijing.volces.com/api/v3", "label_key": "channels.fields.baseUrlOfficial" }]
+  }
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+  Whether the request succeeded.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  Error description when `success` is `false`; empty otherwise.
+</ResponseField>
+
+<ResponseField name="data" type="object" required>
+  Map of channel type to its list of base URL presets. Keys are the numeric channel type constants serialized as JSON strings; the map covers OpenAI (`1`), Ollama (`4`), Xiaomi (`6`), Anthropic (`14`), OpenRouter (`20`), Gemini (`24`), Moonshot (`25`), Zhipu v4 (`26`), MiniMax (`35`), SiliconFlow (`40`), DeepSeek (`43`) and ByteDance (`44`).
+
+  <Expandable title="preset structure">
+    <ResponseField name="value" type="string" required>
+      Preset value stored verbatim as the channel `base_url`: the vendor's official address for ordinary sites, or the plan identifier for plan presets.
+    </ResponseField>
+    <ResponseField name="label_key" type="string" required>
+      Frontend i18n key used to render the option label in the console.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<Note>
+This endpoint serves static metadata from the server build; it performs no upstream request and cannot fail on business grounds.
+</Note>

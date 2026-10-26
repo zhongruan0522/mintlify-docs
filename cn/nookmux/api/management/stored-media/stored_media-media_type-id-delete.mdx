@@ -1,0 +1,74 @@
+---
+title: 删除存储媒体
+description: 按媒体类型与记录 ID 删除单个存储的图片或视频。
+api: "DELETE /api/stored_media/{media_type}/{id}"
+---
+
+删除单条存储媒体记录及其内容。删除前会校验归属：普通用户只能删除自己的记录，管理员可删除任意记录。
+
+需要**用户**权限（任意登录用户）。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
+
+## 请求
+
+<RequestExample>
+
+```bash cURL
+curl --request DELETE \
+  --url 'https://your-nookmux-domain/api/stored_media/image/0d8c9f9a-1b2c-3d4e-5f6a-7b8c9d0e1f2a' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 2'
+```
+
+</RequestExample>
+
+### 路径参数
+
+<ParamField path="media_type" type="string" required>
+记录的媒体类型：`image` 或 `video`。匹配前会去除首尾空白并转为小写。
+</ParamField>
+
+<ParamField path="id" type="string" required>
+存储媒体记录 ID（UUID），不能为空。
+</ParamField>
+
+## 响应
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": 1
+}
+```
+
+</ResponseExample>
+
+### 响应字段
+
+<ResponseField name="success" type="boolean" required>
+删除是否执行成功。
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+`success` 为 `false` 时的错误描述；成功时为空字符串。
+</ResponseField>
+
+<ResponseField name="data" type="integer" required>
+删除的记录数量：成功时为 `1`。
+</ResponseField>
+
+<Note>
+管理接口在业务失败时同样返回 HTTP `200`，必须以 `success` 字段判断结果。
+</Note>
+
+## 错误说明
+
+| 条件 | 说明 |
+| --- | --- |
+| id 不能为空 | 路径中的 `{id}` 为空或仅空白字符 |
+| media_type 必须为 image 或 video | `{media_type}` 不是 `image` 或 `video` |
+| 资源不存在 | `{id}` 对应的记录不存在，或其存储类型与 `{media_type}` 不一致 |
+| 无权访问该资源 | 调用者既非所有者也非管理员 |
+| 数据库错误，请稍后重试 | 记录加载或删除失败，详见服务端日志 |

@@ -1,0 +1,148 @@
+---
+title: 查询同类型迁移任务
+description: 按任务 ID 查询同类型迁移任务的状态、分表进度与日志。
+api: "GET /api/db/same_type_migrate/{id}"
+---
+
+返回通过 `POST /api/db/same_type_migrate` 启动的同类型迁移任务快照：任务状态、分表复制进度与按时间排序的任务日志。
+
+需要**超级管理员（Root）**权限。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
+
+## 请求
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url 'https://your-nookmux-domain/api/db/same_type_migrate/7c2b9e41-08d5-4a6f-b3c7-9d8e1f2a3b4c' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1'
+```
+
+</RequestExample>
+
+### 路径参数
+
+<ParamField path="id" type="string" required>
+  `POST /api/db/same_type_migrate` 返回的任务 ID。首尾空白字符会被去除。
+</ParamField>
+
+## 响应
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": {
+    "id": "7c2b9e41-08d5-4a6f-b3c7-9d8e1f2a3b4c",
+    "status": "success",
+    "started_at": 1787451200,
+    "finished_at": 1787451242,
+    "source_db_type": "postgres",
+    "target_db_type": "postgres",
+    "include_logs": true,
+    "force": false,
+    "current_step": "完成",
+    "tables": [
+      {
+        "name": "users",
+        "copied": 128,
+        "total": 128
+      },
+      {
+        "name": "channels",
+        "copied": 36,
+        "total": 36
+      },
+      {
+        "name": "logs",
+        "copied": 52310,
+        "total": 52310
+      }
+    ],
+    "logs": [
+      "[2026-08-23T10:13:20+08:00] 同类型迁移启动：postgres -> postgres",
+      "[2026-08-23T10:13:21+08:00] 迁移表 users 完成"
+    ]
+  }
+}
+```
+
+</ResponseExample>
+
+### 响应字段
+
+<ResponseField name="success" type="boolean" required>
+  请求是否成功。
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  `success` 为 `false` 时的错误描述；成功时为空字符串。
+</ResponseField>
+
+<ResponseField name="data" type="object" required>
+  迁移任务快照。
+
+  <ResponseField name="id" type="string" required>
+    任务 ID。
+  </ResponseField>
+  <ResponseField name="status" type="string" required>
+    任务状态：`running`（运行中）、`success`（成功）或 `failed`（失败）。
+  </ResponseField>
+  <ResponseField name="started_at" type="integer" required>
+    任务启动的 Unix 时间戳（秒）。
+  </ResponseField>
+  <ResponseField name="finished_at" type="integer">
+    任务结束的 Unix 时间戳（秒）；任务运行中时省略。
+  </ResponseField>
+  <ResponseField name="source_db_type" type="string" required>
+    源主库的数据库类型，例如 `postgres`。
+  </ResponseField>
+  <ResponseField name="target_db_type" type="string" required>
+    目标主库的数据库类型；同类型迁移中与 `source_db_type` 一致。
+  </ResponseField>
+  <ResponseField name="include_logs" type="boolean" required>
+    任务是否同时迁移请求日志。
+  </ResponseField>
+  <ResponseField name="force" type="boolean" required>
+    任务是否以覆盖模式启动。
+  </ResponseField>
+  <ResponseField name="current_step" type="string" required>
+    当前步骤的可读描述，由服务端生成（例如 `校验目标数据库连接`、`完成`）。
+  </ResponseField>
+  <ResponseField name="tables" type="array" required>
+    分表复制进度。
+
+    <Expandable title="表迁移进度结构">
+      <ParamField path="name" type="string" required>
+        表名，例如 `users`、`channels`、`logs`。
+      </ParamField>
+      <ParamField path="copied" type="integer" required>
+        已复制的行数。
+      </ParamField>
+      <ParamField path="total" type="integer" required>
+        源表的总行数。
+      </ParamField>
+    </Expandable>
+  </ResponseField>
+  <ResponseField name="logs" type="string[]" required>
+    按时间排序的任务日志行，由服务端生成，含各表完成记录。
+  </ResponseField>
+  <ResponseField name="error" type="string">
+    失败原因；仅当 `status` 为 `failed` 时出现。
+  </ResponseField>
+</ResponseField>
+
+<Note>
+与多数管理接口不同，本接口失败时使用非 200 状态码：`id` 为空或全空白返回 HTTP `400` 与“job_id 不能为空”；任务 ID 未知返回 HTTP `404` 与“任务不存在”。任务保存在进程内存中，任务 ID 只能在启动它的实例上查询，且进程重启后失效。
+</Note>
+
+## 错误说明
+
+| 条件 | 说明 |
+| --- | --- |
+| job_id 不能为空 | `id` 路径参数为空或全空白（HTTP `400`） |
+| 任务不存在 | 当前实例没有该 ID 的任务——ID 有误、任务由其他实例启动、或进程已重启（HTTP `404`） |
+| 鉴权失败 | 调用者不是 Root 用户时返回标准鉴权错误（HTTP `401`） |

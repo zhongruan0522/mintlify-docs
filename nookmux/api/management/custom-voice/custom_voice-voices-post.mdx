@@ -1,0 +1,144 @@
+---
+title: Create Voice
+description: Create a voice record manually, typically to whitelist or redirect an upstream voice.
+api: "POST /api/custom_voice/voices/"
+---
+
+Creates a voice record directly, without going through the user preview/confirm flow. Use it to whitelist an upstream voice for TTS, optionally under a different external ID by setting `redirect_id`.
+
+The operator is recorded as the current administrator (`operator_kind` is `admin`) and `quota_cost` is `0`. Duplicate voice IDs are rejected with a generic invalid-ID error that does not reveal the duplication.
+
+Requires **Admin** permissions. See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request POST \
+  --url 'https://your-nookmux-domain/api/custom_voice/voices/' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1' \
+  --header 'Content-Type: application/json' \
+  --data '{
+  "voice_id": "official-voice-001",
+  "type": "created",
+  "redirect_id": "minimax-voice-0000",
+  "allowed": true,
+  "remark": "Official voice"
+}'
+```
+
+</RequestExample>
+
+### Body
+
+<ParamField path="body.voice_id" type="string" required>
+  External voice ID referenced by TTS requests; trimmed before use, unique across records, and must not be empty.
+</ParamField>
+
+<ParamField path="body.type" type="string" default="created">
+  Voice type: `preview` or `created`. Defaults to `created` when omitted or empty.
+</ParamField>
+
+<ParamField path="body.redirect_id" type="string">
+  Real upstream voice ID to send to the provider; trimmed before use. Leave empty to send `voice_id` itself upstream.
+</ParamField>
+
+<ParamField path="body.allowed" type="boolean" default="false">
+  Whether the voice may be used for TTS. Effective for `created` records only.
+</ParamField>
+
+<ParamField path="body.remark" type="string">
+  Free-form remark, up to 255 characters.
+</ParamField>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": {
+    "id": 3,
+    "created_at": 1735689600,
+    "updated_at": 1735689600,
+    "type": "created",
+    "operator_id": 1,
+    "operator_kind": "admin",
+    "voice_id": "official-voice-001",
+    "quota_cost": 0,
+    "redirect_id": "minimax-voice-0000",
+    "allowed": true,
+    "remark": "Official voice"
+  }
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+  Whether the voice record was created.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  Error description when `success` is `false`; empty otherwise.
+</ResponseField>
+
+<ResponseField name="data" type="object" required>
+  The created voice record. `created_at` and `updated_at` are set by the server, `operator_id` is the current administrator's ID, and `operator_kind` is `admin`.
+
+  <Expandable title="voice structure">
+    <ResponseField name="id" type="integer" required>
+      Primary key of the record.
+    </ResponseField>
+    <ResponseField name="created_at" type="integer" required>
+      Creation time as a Unix timestamp in seconds.
+    </ResponseField>
+    <ResponseField name="updated_at" type="integer" required>
+      Last update time as a Unix timestamp in seconds.
+    </ResponseField>
+    <ResponseField name="type" type="string" required>
+      Voice type: `preview` or `created`.
+    </ResponseField>
+    <ResponseField name="operator_id" type="integer" required>
+      ID of the creating administrator.
+    </ResponseField>
+    <ResponseField name="operator_kind" type="string" required>
+      Always `admin` for records created through this endpoint.
+    </ResponseField>
+    <ResponseField name="voice_id" type="string" required>
+      External voice ID referenced by TTS requests.
+    </ResponseField>
+    <ResponseField name="quota_cost" type="integer" required>
+      Always `0` for admin-created records.
+    </ResponseField>
+    <ResponseField name="redirect_id" type="string" required>
+      Real upstream voice ID; empty means `voice_id` is sent upstream.
+    </ResponseField>
+    <ResponseField name="allowed" type="boolean" required>
+      Whether the voice may be used for TTS.
+    </ResponseField>
+    <ResponseField name="remark" type="string" required>
+      Free-form remark; may be empty.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<Note>
+Management endpoints return HTTP `200` even on business failures; always check the `success` field. A malformed JSON body is instead rejected with HTTP `400`. Successful creations are recorded in the admin audit log (voice module).
+</Note>
+
+## Error messages
+
+| Condition | Description |
+| --- | --- |
+| Invalid parameters (HTTP 400) | The JSON body is missing or malformed |
+| Voice ID cannot be empty | `voice_id` is empty after trimming |
+| Invalid voice type | `type` is neither `preview` nor `created` |
+| Invalid voice ID | `voice_id` already exists (reported as invalid, not as a duplicate) |
+| Database error, please try again later | The duplicate check or the insert failed; see server logs |

@@ -1,0 +1,153 @@
+---
+title: 更新音色
+description: 按主键 ID 更新已有音色记录。
+api: "PUT /api/custom_voice/voices/{id}"
+---
+
+更新指定主键 ID 的音色记录。字段按部分更新语义生效：`voice_id` 与 `type` 仅在非空时更新；`redirect_id` 与 `allowed` 总是被覆盖（`redirect_id` 传空字符串即清除重定向）；`remark` 仅在非空时覆盖，无法清空为空字符串。
+
+将 `voice_id` 改为与当前值不同的新非空 ID 时，新 ID 必须未被占用；重复以统一的"不合规"错误拒绝。`updated_at` 由服务端刷新。
+
+需要**超级管理员（Root）**权限。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
+
+## 请求
+
+<RequestExample>
+
+```bash cURL
+curl --request PUT \
+  --url 'https://your-nookmux-domain/api/custom_voice/voices/3' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1' \
+  --header 'Content-Type: application/json' \
+  --data '{
+  "voice_id": "official-voice-001",
+  "type": "created",
+  "redirect_id": "minimax-voice-1111",
+  "allowed": false,
+  "remark": "Temporarily disabled"
+}'
+```
+
+</RequestExample>
+
+### 路径参数
+
+<ParamField path="id" type="integer" required>
+  音色记录的主键。
+</ParamField>
+
+### 请求体
+
+所有请求体字段均可选；部分更新规则见上文。
+
+<ParamField path="body.voice_id" type="string">
+  新的对外音色 ID，使用前去除首尾空白。仅非空且与当前值不同时更新；不能与其他记录的音色 ID 冲突。
+</ParamField>
+
+<ParamField path="body.type" type="string">
+  新的音色类型：`preview` 或 `created`。仅非空时更新。
+</ParamField>
+
+<ParamField path="body.redirect_id" type="string">
+  发往上游的真实音色 ID；去除首尾空白后总是被覆盖。传空字符串可清除重定向，改为直接把 `voice_id` 发给上游。
+</ParamField>
+
+<ParamField path="body.allowed" type="boolean">
+  是否允许用于 TTS；总是被覆盖。仅对 `created` 类型生效。
+</ParamField>
+
+<ParamField path="body.remark" type="string">
+  自由备注，最长 255 字符。仅非空时更新。
+</ParamField>
+
+## 响应
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": {
+    "id": 3,
+    "created_at": 1735689000,
+    "updated_at": 1735776000,
+    "type": "created",
+    "operator_id": 1,
+    "operator_kind": "admin",
+    "voice_id": "official-voice-001",
+    "quota_cost": 0,
+    "redirect_id": "minimax-voice-1111",
+    "allowed": false,
+    "remark": "Temporarily disabled"
+  }
+}
+```
+
+</ResponseExample>
+
+### 响应字段
+
+<ResponseField name="success" type="boolean" required>
+  音色记录是否更新成功。
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  `success` 为 `false` 时的错误描述；成功时为空字符串。
+</ResponseField>
+
+<ResponseField name="data" type="object" required>
+  更新后的音色记录。
+
+  <Expandable title="voice 结构">
+    <ResponseField name="id" type="integer" required>
+      记录主键。
+    </ResponseField>
+    <ResponseField name="created_at" type="integer" required>
+      创建时间的 Unix 时间戳（秒）。
+    </ResponseField>
+    <ResponseField name="updated_at" type="integer" required>
+      最近更新时间的 Unix 时间戳（秒）；本次更新已刷新。
+    </ResponseField>
+    <ResponseField name="type" type="string" required>
+      音色类型：`preview` 或 `created`。
+    </ResponseField>
+    <ResponseField name="operator_id" type="integer" required>
+      原操作人 ID；本接口不修改该字段。
+    </ResponseField>
+    <ResponseField name="operator_kind" type="string" required>
+      操作人类型：`user` 或 `admin`；本接口不修改该字段。
+    </ResponseField>
+    <ResponseField name="voice_id" type="string" required>
+      对外音色 ID，TTS 请求引用该 ID。
+    </ResponseField>
+    <ResponseField name="quota_cost" type="integer" required>
+      确认定制时扣减的额度；从未确认为 `0`。
+    </ResponseField>
+    <ResponseField name="redirect_id" type="string" required>
+      发往上游的真实音色 ID；为空表示直接把 `voice_id` 发给上游。
+    </ResponseField>
+    <ResponseField name="allowed" type="boolean" required>
+      是否允许用于 TTS。
+    </ResponseField>
+    <ResponseField name="remark" type="string" required>
+      自由备注；可能为空字符串。
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<Note>
+管理接口在业务失败时同样返回 HTTP `200`，必须以 `success` 字段判断结果。该接口额外存在两类非 200 响应：`id` 不是合法整数或 JSON 请求体缺失/格式错误时返回 HTTP `400`，记录不存在时返回 HTTP `404`。更新成功会计入管理员审计日志（音色模块）。
+</Note>
+
+## 错误说明
+
+| 条件 | 说明 |
+| --- | --- |
+| 音色ID不合规（HTTP 400） | `id` 不是合法整数 |
+| 无效的参数（HTTP 400） | JSON 请求体缺失或格式错误 |
+| 音色类型不合规 | `type` 非空但不是 `preview` 或 `created` |
+| 音色不存在（HTTP 404） | 给定 `id` 的记录不存在 |
+| 音色ID不合规 | 新 `voice_id` 已被其他记录占用（按不合规提示，不暴露重复） |
+| 数据库错误，请稍后重试 | 查重、记录查询或更新失败，详见服务端日志 |

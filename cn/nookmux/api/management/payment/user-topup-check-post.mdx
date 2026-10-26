@@ -1,0 +1,88 @@
+---
+title: 检查充值订单状态
+description: 向易支付网关查询充值订单状态，并补回丢失的支付回调。
+api: "POST /api/user/topup/check"
+---
+
+在线充值订单的自助状态检查。服务端向易支付网关查询该订单：网关确认已支付时，订单走与支付回调相同的入账路径完成入账，可补回丢失回调的订单；网关确认未支付（或不认识该订单）时，不做任何操作，直接返回当前的 `pending` 状态。
+
+需要**用户**权限（任意登录用户）。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
+
+<Note>
+本接口启用时受更严格的按 IP 限流（CriticalRateLimit）保护，超限返回 HTTP `429`。普通用户只能检查本人订单，管理员可检查全部订单。订单号不存在与订单号属于他人返回相同错误，无法借此探测订单号。
+</Note>
+
+## 请求
+
+<RequestExample>
+
+```bash cURL
+curl --request POST \
+  --url 'https://your-nookmux-domain/api/user/topup/check' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1' \
+  --header 'Content-Type: application/json' \
+  --data '{
+  "trade_no": "USR1NOAb12cd1730000000"
+}'
+```
+
+</RequestExample>
+
+### 请求体
+
+<ParamField path="body.trade_no" type="string" required>
+要检查的充值订单号，与创建订单时返回的格式一致，例如 `USR1NOAb12cd1730000000`。
+</ParamField>
+
+## 响应
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": {
+    "status": "pending"
+  }
+}
+```
+
+</ResponseExample>
+
+### 响应字段
+
+<ResponseField name="success" type="boolean" required>
+订单是否检查成功。
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+`success` 为 `false` 时的错误描述；成功时为空字符串。
+</ResponseField>
+
+<ResponseField name="data" type="object" required>
+检查结果。
+
+<Expandable title="data 结构">
+  <ParamField path="status" type="string" required>
+  检查后的订单状态：
+
+  - `pending`：网关未确认支付（含从未打开收银台的订单），未入账。
+  - `success`：网关确认已支付且已完成入账；支付回调已并发完成入账时同样返回该值。
+  </ParamField>
+</Expandable>
+</ResponseField>
+
+## 错误说明
+
+| 条件 | 说明 |
+| --- | --- |
+| 无效的参数 | JSON 缺失、格式错误，或 `trade_no` 为空 |
+| 订单不存在 | `trade_no` 对应的订单不存在，或属于其他用户且调用者非管理员 |
+| 该订单的支付方式不支持在线检查 | 订单由非易支付渠道创建，例如 Stripe |
+| 仅待支付的订单支持检查 | 订单既非待支付也非已成功，例如 `expired` 或 `failed` |
+| 当前管理员未配置支付信息 | 服务端缺少易支付网关地址、商户 ID 或密钥 |
+| 支付网关查询失败，请稍后重试 | 网关查询失败，或已支付响应缺少入账所需数据，详见服务端日志 |
+| 订单金额或支付方式与网关不一致，请联系管理员核对处理 | 网关侧金额或支付渠道与本地订单不符，需人工核对 |
+| 数据库错误，请稍后重试 | 订单加载或入账失败，详见服务端日志 |

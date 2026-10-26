@@ -1,0 +1,78 @@
+---
+title: 更新工单状态
+description: 将工单状态改为待处理、处理中或已完成，并将流转记录写入时间线。
+api: "POST /api/ticket/{id}/status"
+---
+
+变更工单状态。目标状态为 `completed` 时记录 `closed_at` 为变更时间；其他目标状态会把 `closed_at` 重置为 `0`。变更会在消息时间线追加一条状态变更记录。工单已处于目标状态时请求同样成功，但不会产生任何变更。
+
+该路由挂载在**用户（User）**鉴权之下，但领域层将此操作限制为**管理员（Admin）**角色，普通用户调用会被拒绝。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
+
+## 请求
+
+<RequestExample>
+
+```bash cURL
+curl --request POST \
+  --url 'https://your-nookmux-domain/api/ticket/3/status' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1' \
+  --header 'Content-Type: application/json' \
+  --data '{
+  "status": "processing"
+}'
+```
+
+</RequestExample>
+
+### 路径参数
+
+<ParamField path="id" type="integer" required>
+  工单 id，正整数。
+</ParamField>
+
+### 请求体
+
+<ParamField path="body.status" type="string" required>
+  目标工单状态：`pending`、`processing` 或 `completed`。
+</ParamField>
+
+## 响应
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": null
+}
+```
+
+</ResponseExample>
+
+### 响应字段
+
+<ResponseField name="success" type="boolean" required>
+  状态是否应用成功。
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  `success` 为 `false` 时的错误描述；成功时为空字符串。
+</ResponseField>
+
+<ResponseField name="data" type="null">
+  成功时恒为 `null`。如需查看更新后的状态与时间线，请再次获取工单详情。
+</ResponseField>
+
+<Note>
+  管理接口在业务失败时同样返回 HTTP `200`，必须以 `success` 字段判断结果。服务层失败（状态取值未知、非管理员调用、工单不存在、状态并发变更、数据库错误等）均以本地化的数据库错误文案返回，具体原因仅记录在服务端日志中。
+</Note>
+
+## 错误说明
+
+| 条件 | 说明 |
+| --- | --- |
+| 无效的工单编号 | `id` 不是正整数 |
+| 请求体格式不正确 | JSON 请求体缺失或格式错误 |
+| 数据库错误，请稍后重试 | `status` 不是 `pending`、`processing`、`completed` 之一、调用者不是管理员、不存在该 id 的工单、读取与更新之间工单状态被并发修改（请刷新后重试），或更新工单失败，详见服务端日志 |

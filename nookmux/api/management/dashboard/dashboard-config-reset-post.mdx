@@ -1,0 +1,145 @@
+---
+title: Reset dashboard config
+description: Reset all dashboard configuration items to their default values.
+api: "POST /api/dashboard/config/reset"
+---
+
+Resets every dashboard configuration item to its built-in default value. All items are persisted to the database and the full default map is returned. Takes no request body.
+
+Requires **Admin** permissions. See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request POST \
+  --url 'https://your-nookmux-domain/api/dashboard/config/reset' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1'
+```
+
+</RequestExample>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "Configuration has been reset to defaults",
+  "data": {
+    "api_info_enabled": "true",
+    "announcements_enabled": "true",
+    "default_time_range_days": "7",
+    "faq_enabled": "true",
+    "max_time_range_days": "31",
+    "media_convert_stats_enabled": "true",
+    "quota_data_enabled": "true",
+    "quota_data_refresh_interval": "3600",
+    "quota_data_track_by_model": "true",
+    "quota_data_track_by_user": "true",
+    "quota_data_track_tokens": "true",
+    "rankings_enabled": "true",
+    "rankings_model_limit": "20",
+    "rankings_refresh_interval": "300",
+    "rankings_vendor_limit": "5",
+    "uptime_kuma_enabled": "true",
+    "uptime_kuma_refresh_interval": "60",
+    "user_analytics_enabled": "true",
+    "user_analytics_refresh_interval": "3600",
+    "user_analytics_top_n": "20"
+  }
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+Whether the configuration was reset.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+Localized success description when `success` is `true`; error description when `false`.
+</ResponseField>
+
+<ResponseField name="data" type="object">
+  The full configuration map after the reset; every value is the default shown below and is returned as a string. The key set is identical to [Get dashboard config](/nookmux/api/management/dashboard/dashboard-config-get).
+
+  <Expandable title="data structure">
+    <ResponseField name="api_info_enabled" type="string" required>
+      API info panel switch, reset to `true`.
+    </ResponseField>
+    <ResponseField name="announcements_enabled" type="string" required>
+      Announcements panel switch, reset to `true`.
+    </ResponseField>
+    <ResponseField name="default_time_range_days" type="string" required>
+      Default query time range in days, reset to `7`.
+    </ResponseField>
+    <ResponseField name="faq_enabled" type="string" required>
+      FAQ panel switch, reset to `true`.
+    </ResponseField>
+    <ResponseField name="max_time_range_days" type="string" required>
+      Maximum query time range in days, reset to `31`.
+    </ResponseField>
+    <ResponseField name="media_convert_stats_enabled" type="string" required>
+      Image/video-to-URL statistics panel switch, reset to `true`.
+    </ResponseField>
+    <ResponseField name="quota_data_enabled" type="string" required>
+      Quota data (time series) panel switch, reset to `true`.
+    </ResponseField>
+    <ResponseField name="quota_data_refresh_interval" type="string" required>
+      Quota data refresh interval in seconds, reset to `3600`.
+    </ResponseField>
+    <ResponseField name="quota_data_track_by_model" type="string" required>
+      Aggregate quota data by model, reset to `true`.
+    </ResponseField>
+    <ResponseField name="quota_data_track_by_user" type="string" required>
+      Aggregate quota data by user, reset to `true`.
+    </ResponseField>
+    <ResponseField name="quota_data_track_tokens" type="string" required>
+      Record token usage with quota data, reset to `true`.
+    </ResponseField>
+    <ResponseField name="rankings_enabled" type="string" required>
+      Rankings panel switch, reset to `true`.
+    </ResponseField>
+    <ResponseField name="rankings_model_limit" type="string" required>
+      Number of models kept in the rankings, reset to `20`.
+    </ResponseField>
+    <ResponseField name="rankings_refresh_interval" type="string" required>
+      Rankings refresh interval in seconds, reset to `300`.
+    </ResponseField>
+    <ResponseField name="rankings_vendor_limit" type="string" required>
+      Number of vendors kept in the rankings, reset to `5`.
+    </ResponseField>
+    <ResponseField name="uptime_kuma_enabled" type="string" required>
+      Uptime Kuma panel switch, reset to `true`.
+    </ResponseField>
+    <ResponseField name="uptime_kuma_refresh_interval" type="string" required>
+      Uptime Kuma refresh interval in seconds, reset to `60`.
+    </ResponseField>
+    <ResponseField name="user_analytics_enabled" type="string" required>
+      User analytics panel switch, reset to `true`.
+    </ResponseField>
+    <ResponseField name="user_analytics_refresh_interval" type="string" required>
+      User analytics refresh interval in seconds, reset to `3600`.
+    </ResponseField>
+    <ResponseField name="user_analytics_top_n" type="string" required>
+      Number of users kept in the user analytics ranking, reset to `20`.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<Note>
+The reset is written to the audit log (module `dashboard_config`) when audit logging is enabled.
+</Note>
+
+## Error messages
+
+| Condition | Description |
+| --- | --- |
+| Serialization failed | Serializing the default configuration failed; `message` is `Failed to serialize configuration: {error}`, see server logs |
+| Database error | Persisting an item failed; `message` is `Failed to reset configuration: {error}`, see server logs |

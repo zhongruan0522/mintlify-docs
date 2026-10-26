@@ -1,0 +1,74 @@
+---
+title: Delete Stored Media
+description: Delete one stored image or video by media type and record ID.
+api: "DELETE /api/stored_media/{media_type}/{id}"
+---
+
+Deletes a single stored media record together with its content. Ownership is verified before deletion: a regular user may only delete their own records, while administrators may delete any record.
+
+Requires **User** permission (any logged-in user). See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request DELETE \
+  --url 'https://your-nookmux-domain/api/stored_media/image/0d8c9f9a-1b2c-3d4e-5f6a-7b8c9d0e1f2a' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 2'
+```
+
+</RequestExample>
+
+### Path parameters
+
+<ParamField path="media_type" type="string" required>
+Media type of the record: `image` or `video`. The value is matched after trimming and lowercasing.
+</ParamField>
+
+<ParamField path="id" type="string" required>
+Record ID (UUID) of the stored media. It must not be empty.
+</ParamField>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": 1
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+Whether the deletion was executed.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+Error description when `success` is `false`; empty otherwise.
+</ResponseField>
+
+<ResponseField name="data" type="integer" required>
+Number of records deleted: `1` on success.
+</ResponseField>
+
+<Note>
+Management endpoints return HTTP `200` even on business failures; always check the `success` field.
+</Note>
+
+## Error messages
+
+| Condition | Description |
+| --- | --- |
+| id is required | `{id}` in the path is empty or whitespace only |
+| media_type must be image or video | `{media_type}` is not `image` or `video` |
+| Resource not found | No record exists for `{id}`, or its stored media type does not match `{media_type}` |
+| You do not have permission to access this resource | The caller is neither the owner nor an administrator |
+| Database error, please try again later | Loading or deleting the record failed; see server logs |

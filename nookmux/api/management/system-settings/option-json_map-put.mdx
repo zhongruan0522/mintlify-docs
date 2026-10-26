@@ -1,0 +1,87 @@
+---
+title: Upsert JSON Map Option
+description: Create, update, or rename a single entry inside a JSON map system option.
+api: "PUT /api/option/json_map"
+---
+
+Inserts or replaces one entry in a JSON-object-valued system option. The supported key set matches [Get JSON Map Option](/nookmux/api/management/system-settings/option-json_map-get): the MiniMax redirect options and the pricing options. When a non-empty `old_map_key` different from `map_key` is provided, the entry is renamed instead: the old entry must exist, and no entry may already exist under the new key. After the change the whole option is re-serialized, validated, persisted through the option store (database write plus in-memory refresh), and the change is recorded in the admin audit log as an option update.
+
+Requires **Root** (super administrator) permissions. See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request PUT \
+  --url 'https://your-nookmux-domain/api/option/json_map' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1' \
+  --header 'Content-Type: application/json' \
+  --data '{
+  "key": "ModelRatio",
+  "map_key": "gpt-4o",
+  "value": "2.5"
+}'
+```
+
+</RequestExample>
+
+### Body
+
+<ParamField path="body.key" type="string" required>
+  Option key to modify. Must be one of the supported JSON map keys: `minimax.model_redirect`, `minimax.emotion_redirect`, `minimax.tone_word_redirect`, `ModelPrice`, `ModelRatio`, `CacheRatio`, `CreateCacheRatio`, `CompletionRatio`, `AudioRatio`, `AudioCompletionRatio`, `ContextPricing`.
+</ParamField>
+
+<ParamField path="body.map_key" type="string" required>
+  Entry key inside the JSON object, whitespace-trimmed; must be non-empty. When the entry already exists its value is replaced.
+</ParamField>
+
+<ParamField path="body.old_map_key" type="string">
+  Previous entry key when renaming the entry. Ignored when empty or equal to `map_key`; otherwise the entry stored under `old_map_key` must exist and `map_key` must not be taken.
+</ParamField>
+
+<ParamField path="body.value" type="string" required>
+  New entry value. For MiniMax options it is the plain mapped string (whitespace-trimmed). For pricing options it must be a valid JSON document, for example `"2.5"` for a numeric ratio entry.
+</ParamField>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": ""
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+  Whether the entry was written.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  Error description when `success` is `false`; empty otherwise.
+</ResponseField>
+
+<Note>
+  Pricing options are re-validated as a whole after the upsert: most keys must remain a JSON object of numbers, and `ContextPricing` is checked against its dedicated schema; MiniMax options are validated with their own value rules. Body-shape errors (malformed JSON, empty `map_key`, non-JSON `value`, unsupported `key`) return HTTP `400`, while rename conflicts and whole-option validation failures return HTTP `200` with `success: false` and a localized `message`.
+</Note>
+
+## Error messages
+
+| Condition | Description |
+| --- | --- |
+| Invalid parameters | HTTP `400`; the JSON body is missing or malformed |
+| Map key cannot be empty | HTTP `400`; `map_key` is empty after trimming |
+| Map value must be valid JSON | HTTP `400`; `key` is a pricing option and `value` is not valid JSON |
+| Unsupported JSON map option | HTTP `400`; `key` is not one of the supported JSON map option keys |
+| Original map item does not exist | HTTP `200` with `success: false`; rename requested but no entry exists under `old_map_key` |
+| Map key already exists | HTTP `200` with `success: false`; rename requested but an entry already exists under `map_key` |
+| `Failed to parse JSON map option: {Error}` | HTTP `200` with `success: false`; re-serializing or validating a pricing option failed |
+| `MiniMax setting failed: {Error}` | HTTP `200` with `success: false`; the MiniMax option value failed validation |
+| Database error, please try again later | HTTP `200` with `success: false`; persisting the option failed; see server logs |

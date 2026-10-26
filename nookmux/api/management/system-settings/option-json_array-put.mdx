@@ -1,0 +1,55 @@
+---
+title: Upsert JSON Array Option
+description: Legacy write endpoint for JSON array options; always rejected because the voice whitelist migrated to voice management.
+api: "PUT /api/option/json_array"
+---
+
+Legacy endpoint that used to add or update an entry in a JSON-array-valued system option. The voice whitelist (`minimax.voice_whitelist`) has been migrated to the database voice table, so the route is kept only for old frontends and every write is rejected with a migration notice. No body is read.
+
+Requires **Root** (super administrator) permissions. See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request PUT \
+  --url 'https://your-nookmux-domain/api/option/json_array' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1'
+```
+
+</RequestExample>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": false,
+  "message": "This option has been migrated to voice management. Please maintain it from the voice management page"
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+  Always `false`; this endpoint can no longer succeed.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  Always the migration notice pointing to voice management.
+</ResponseField>
+
+<Note>
+  Maintain the voice whitelist through the voice management console instead. The response is HTTP `200` with `success: false`, and no `data` field is returned.
+</Note>
+
+## Error messages
+
+| Condition | Description |
+| --- | --- |
+| This option has been migrated to voice management. Please maintain it from the voice management page | HTTP `200` with `success: false`; returned for every request to this endpoint |

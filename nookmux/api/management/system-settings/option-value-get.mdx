@@ -1,0 +1,80 @@
+---
+title: Get Option Value
+description: Read the current value of a single system option by key.
+api: "GET /api/option/value"
+---
+
+Returns the current value of one system option held in the in-memory option map. The same sensitive-key filter as [Get System Options](/nookmux/api/management/system-settings/option-get) applies: keys ending with `Token`, `Secret`, `Key`, `secret`, or `api_key`, or containing `Password`/`password`, are rejected, with the boolean switches `PasswordLoginEnabled` and `PasswordRegisterEnabled` explicitly exempted.
+
+Requires **Root** (super administrator) permissions. See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url 'https://your-nookmux-domain/api/option/value?key=SystemName' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1'
+```
+
+</RequestExample>
+
+### Query parameters
+
+<ParamField path="key" type="string" required>
+  Option key to read, for example `SystemName`.
+</ParamField>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": {
+    "key": "SystemName",
+    "value": "NookMux"
+  }
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+  Whether the option was read.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  Error description when `success` is `false`; empty otherwise.
+</ResponseField>
+
+<ResponseField name="data" type="object" required>
+  The requested option.
+
+  <Expandable title="option structure">
+    <ResponseField name="key" type="string" required>
+      Option key, identical to the `key` query parameter.
+    </ResponseField>
+    <ResponseField name="value" type="string" required>
+      Current option value serialized as a string; booleans and numbers are rendered in their string form.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<Note>
+  Unlike most management endpoints, failures here are reported with real HTTP status codes instead of HTTP `200` with `success: false`: a missing `key` returns HTTP `400`, a sensitive key returns HTTP `403`, and an unknown key returns HTTP `404`. The value is read from the in-memory option map, which is refreshed from the database at startup and after every option update.
+</Note>
+
+## Error messages
+
+| Condition | Description |
+| --- | --- |
+| Missing option key | HTTP `400`; the `key` query parameter is missing or empty |
+| This option is not allowed to be read | HTTP `403`; `key` matches the sensitive-key rule (ends with `Token`/`Secret`/`Key`/`secret`/`api_key` or contains `Password`/`password`) |
+| Option does not exist | HTTP `404`; `key` is not present in the in-memory option map |

@@ -1,0 +1,78 @@
+---
+title: Reply to Ticket
+description: Append a message from the current user to a ticket and refresh its updated_at timestamp.
+api: "POST /api/ticket/{id}/reply"
+---
+
+Append a message to a ticket and refresh its `updated_at` timestamp. A reply does not change the ticket status.
+
+Requires a logged-in user (**User** permissions). Only the ticket owner and administrators can reply to the ticket. See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request POST \
+  --url 'https://your-nookmux-domain/api/ticket/3/reply' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1' \
+  --header 'Content-Type: application/json' \
+  --data '{
+  "content": "The duplicated charge appeared again today."
+}'
+```
+
+</RequestExample>
+
+### Path parameters
+
+<ParamField path="id" type="integer" required>
+  Ticket id, a positive integer.
+</ParamField>
+
+### Body
+
+<ParamField path="body.content" type="string" required>
+  Reply text. Trimmed before validation; must not be empty and is limited to 10000 characters.
+</ParamField>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": null
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+  Whether the reply was appended.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  Error description when `success` is `false`; empty otherwise.
+</ResponseField>
+
+<ResponseField name="data" type="null">
+  Always `null` on success. Fetch the ticket again to read the updated timeline.
+</ResponseField>
+
+<Note>
+  Management endpoints return HTTP `200` even on business failures; always check the `success` field. Service-layer failures, including empty or over-length content, a missing ticket, access denial and database errors, are all returned with the localized database-error message; the specific cause is recorded in the server logs.
+</Note>
+
+## Error messages
+
+| Condition | Description |
+| --- | --- |
+| Invalid ticket ID | `id` is not a positive integer |
+| Invalid request body | The JSON body is missing or malformed |
+| Database error, please try again later | `content` is empty after trimming or exceeds 10000 characters, no ticket with this id exists, the caller is neither the ticket owner nor an administrator, or appending the reply failed; see server logs |

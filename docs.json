@@ -180,18 +180,33 @@
                     "pages": [
                       "cn/nookmux/api/management/channel-management/channel-batch-post",
                       "cn/nookmux/api/management/channel-management/channel-batch-tag-post",
+                      "cn/nookmux/api/management/channel-management/channel-builtin_urls-get",
                       "cn/nookmux/api/management/channel-management/channel-copy-id-post",
                       "cn/nookmux/api/management/channel-management/channel-disabled-delete",
                       "cn/nookmux/api/management/channel-management/channel-fetch_models-id-get",
                       "cn/nookmux/api/management/channel-management/channel-fetch_models-post",
+                      "cn/nookmux/api/management/channel-management/channel-fetch_providers-id-get",
+                      "cn/nookmux/api/management/channel-management/channel-fetch_providers-post",
                       "cn/nookmux/api/management/channel-management/channel-fix-post",
                       "cn/nookmux/api/management/channel-management/channel-get",
+                      "cn/nookmux/api/management/channel-management/channel-glm-account_report-id-get",
+                      "cn/nookmux/api/management/channel-management/channel-glm-contact-id-get",
                       "cn/nookmux/api/management/channel-management/channel-id-delete",
                       "cn/nookmux/api/management/channel-management/channel-id-get",
                       "cn/nookmux/api/management/channel-management/channel-id-key-post",
                       "cn/nookmux/api/management/channel-management/channel-models-get",
                       "cn/nookmux/api/management/channel-management/channel-models_enabled-get",
                       "cn/nookmux/api/management/channel-management/channel-multi_key-manage-post",
+                      "cn/nookmux/api/management/channel-management/channel-ollama-delete-delete",
+                      "cn/nookmux/api/management/channel-management/channel-ollama-pull-post",
+                      "cn/nookmux/api/management/channel-management/channel-ollama-pull-stream-post",
+                      "cn/nookmux/api/management/channel-management/channel-ollama-version-id-get",
+                      "cn/nookmux/api/management/channel-management/channel-plan-glm-activity-id-get",
+                      "cn/nookmux/api/management/channel-management/channel-plan-glm-reset_cards-id-get",
+                      "cn/nookmux/api/management/channel-management/channel-plan-glm-reset_cards-id-use-post",
+                      "cn/nookmux/api/management/channel-management/channel-plan-glm-risk-id-get",
+                      "cn/nookmux/api/management/channel-management/channel-plan-glm-usage-id-get",
+                      "cn/nookmux/api/management/channel-management/channel-plan-quota-id-get",
                       "cn/nookmux/api/management/channel-management/channel-post",
                       "cn/nookmux/api/management/channel-management/channel-put",
                       "cn/nookmux/api/management/channel-management/channel-search-get",
@@ -201,6 +216,7 @@
                       "cn/nookmux/api/management/channel-management/channel-tag-put",
                       "cn/nookmux/api/management/channel-management/channel-test-get",
                       "cn/nookmux/api/management/channel-management/channel-test-id-get",
+                      "cn/nookmux/api/management/channel-management/channel-test_proxy-post",
                       "cn/nookmux/api/management/channel-management/channel-update_balance-get",
                       "cn/nookmux/api/management/channel-management/channel-update_balance-id-get"
                     ]
@@ -253,6 +269,7 @@
                       "cn/nookmux/api/management/payment/user-pay-post",
                       "cn/nookmux/api/management/payment/user-stripe-amount-post",
                       "cn/nookmux/api/management/payment/user-stripe-pay-post",
+                      "cn/nookmux/api/management/payment/user-topup-check-post",
                       "cn/nookmux/api/management/payment/user-topup-info-get",
                       "cn/nookmux/api/management/payment/user-topup-self-get"
                     ]
@@ -280,16 +297,30 @@
                     "group": "数据统计",
                     "pages": [
                       "cn/nookmux/api/management/statistics/data-get",
-                      "cn/nookmux/api/management/statistics/data-self-get"
+                      "cn/nookmux/api/management/statistics/data-media_convert_stats-get",
+                      "cn/nookmux/api/management/statistics/data-recalculate-post",
+                      "cn/nookmux/api/management/statistics/data-self-get",
+                      "cn/nookmux/api/management/statistics/data-self-media_convert_stats-get",
+                      "cn/nookmux/api/management/statistics/data-users-get"
                     ]
                   },
                   {
                     "group": "系统设置",
                     "pages": [
+                      "cn/nookmux/api/management/system-settings/option-channel_affinity_cache-delete",
+                      "cn/nookmux/api/management/system-settings/option-channel_affinity_cache-get",
                       "cn/nookmux/api/management/system-settings/option-get",
+                      "cn/nookmux/api/management/system-settings/option-json_array-delete",
+                      "cn/nookmux/api/management/system-settings/option-json_array-get",
+                      "cn/nookmux/api/management/system-settings/option-json_array-put",
+                      "cn/nookmux/api/management/system-settings/option-json_map-delete",
+                      "cn/nookmux/api/management/system-settings/option-json_map-get",
+                      "cn/nookmux/api/management/system-settings/option-json_map-put",
                       "cn/nookmux/api/management/system-settings/option-migrate_console_setting-post",
                       "cn/nookmux/api/management/system-settings/option-put",
-                      "cn/nookmux/api/management/system-settings/option-rest_model_ratio-post"
+                      "cn/nookmux/api/management/system-settings/option-reset_tool_billing_rules-post",
+                      "cn/nookmux/api/management/system-settings/option-rest_model_ratio-post",
+                      "cn/nookmux/api/management/system-settings/option-value-get"
                     ]
                   },
                   {
@@ -301,10 +332,14 @@
                       "cn/nookmux/api/management/system/notice-get",
                       "cn/nookmux/api/management/system/pricing-get",
                       "cn/nookmux/api/management/system/privacy-policy-get",
+                      "cn/nookmux/api/management/system/rankings-get",
                       "cn/nookmux/api/management/system/setup-get",
                       "cn/nookmux/api/management/system/setup-post",
+                      "cn/nookmux/api/management/system/status-admin_modules-get",
                       "cn/nookmux/api/management/system/status-get",
+                      "cn/nookmux/api/management/system/status-system_info-get",
                       "cn/nookmux/api/management/system/status-test-get",
+                      "cn/nookmux/api/management/system/status-user_modules-get",
                       "cn/nookmux/api/management/system/uptime-status-get",
                       "cn/nookmux/api/management/system/user-agreement-get"
                     ]
@@ -355,6 +390,9 @@
                     "pages": [
                       "cn/nookmux/api/management/user-management/user-aff-get",
                       "cn/nookmux/api/management/user-management/user-aff_transfer-post",
+                      "cn/nookmux/api/management/user-management/user-ban-post",
+                      "cn/nookmux/api/management/user-management/user-checkin-get",
+                      "cn/nookmux/api/management/user-management/user-checkin-post",
                       "cn/nookmux/api/management/user-management/user-get",
                       "cn/nookmux/api/management/user-management/user-id-2fa-delete",
                       "cn/nookmux/api/management/user-management/user-id-delete",
@@ -364,6 +402,7 @@
                       "cn/nookmux/api/management/user-management/user-models-get",
                       "cn/nookmux/api/management/user-management/user-passkey-delete",
                       "cn/nookmux/api/management/user-management/user-passkey-get",
+                      "cn/nookmux/api/management/user-management/user-passkey-id-put",
                       "cn/nookmux/api/management/user-management/user-passkey-register-begin-post",
                       "cn/nookmux/api/management/user-management/user-passkey-register-finish-post",
                       "cn/nookmux/api/management/user-management/user-passkey-verify-begin-post",
@@ -375,6 +414,7 @@
                       "cn/nookmux/api/management/user-management/user-self-get",
                       "cn/nookmux/api/management/user-management/user-self-groups-get",
                       "cn/nookmux/api/management/user-management/user-self-put",
+                      "cn/nookmux/api/management/user-management/user-self-usage_log_fields-get",
                       "cn/nookmux/api/management/user-management/user-setting-put",
                       "cn/nookmux/api/management/user-management/user-token-get",
                       "cn/nookmux/api/management/user-management/user-topup-complete-post",
@@ -390,6 +430,101 @@
                       "cn/nookmux/api/management/vendors/vendors-post",
                       "cn/nookmux/api/management/vendors/vendors-put",
                       "cn/nookmux/api/management/vendors/vendors-search-get"
+                    ]
+                  },
+                  {
+                    "group": "审计日志",
+                    "pages": [
+                      "cn/nookmux/api/management/audit/audit-get",
+                      "cn/nookmux/api/management/audit/audit-modules-get"
+                    ]
+                  },
+                  {
+                    "group": "消费日志",
+                    "pages": [
+                      "cn/nookmux/api/management/logs/log-channel_affinity_usage_cache-get",
+                      "cn/nookmux/api/management/logs/log-delete",
+                      "cn/nookmux/api/management/logs/log-get",
+                      "cn/nookmux/api/management/logs/log-self-get",
+                      "cn/nookmux/api/management/logs/log-self-stat-get",
+                      "cn/nookmux/api/management/logs/log-stat-get",
+                      "cn/nookmux/api/management/logs/log-token-get",
+                      "cn/nookmux/api/management/logs/log-token-usage_log_fields-get"
+                    ]
+                  },
+                  {
+                    "group": "仪表盘配置",
+                    "pages": [
+                      "cn/nookmux/api/management/dashboard/dashboard-config-get",
+                      "cn/nookmux/api/management/dashboard/dashboard-config-put",
+                      "cn/nookmux/api/management/dashboard/dashboard-config-reset-post"
+                    ]
+                  },
+                  {
+                    "group": "动态倍率",
+                    "pages": [
+                      "cn/nookmux/api/management/dynamic-ratio/dynamic_ratio-enabled-put",
+                      "cn/nookmux/api/management/dynamic-ratio/dynamic_ratio-rules-get",
+                      "cn/nookmux/api/management/dynamic-ratio/dynamic_ratio-rules-id-delete",
+                      "cn/nookmux/api/management/dynamic-ratio/dynamic_ratio-rules-post",
+                      "cn/nookmux/api/management/dynamic-ratio/dynamic_ratio-rules-put",
+                      "cn/nookmux/api/management/dynamic-ratio/dynamic_ratio-rules-reorder-put",
+                      "cn/nookmux/api/management/dynamic-ratio/dynamic_ratio-status-get"
+                    ]
+                  },
+                  {
+                    "group": "定制音色",
+                    "pages": [
+                      "cn/nookmux/api/management/custom-voice/custom_voice-confirm-post",
+                      "cn/nookmux/api/management/custom-voice/custom_voice-confirm_quote-post",
+                      "cn/nookmux/api/management/custom-voice/custom_voice-preview-post",
+                      "cn/nookmux/api/management/custom-voice/custom_voice-tags-get",
+                      "cn/nookmux/api/management/custom-voice/custom_voice-voices-get",
+                      "cn/nookmux/api/management/custom-voice/custom_voice-voices-id-delete",
+                      "cn/nookmux/api/management/custom-voice/custom_voice-voices-id-put",
+                      "cn/nookmux/api/management/custom-voice/custom_voice-voices-post"
+                    ]
+                  },
+                  {
+                    "group": "工单系统",
+                    "pages": [
+                      "cn/nookmux/api/management/tickets/ticket-admin-get",
+                      "cn/nookmux/api/management/tickets/ticket-get",
+                      "cn/nookmux/api/management/tickets/ticket-id-close-post",
+                      "cn/nookmux/api/management/tickets/ticket-id-get",
+                      "cn/nookmux/api/management/tickets/ticket-id-reply-post",
+                      "cn/nookmux/api/management/tickets/ticket-id-status-post",
+                      "cn/nookmux/api/management/tickets/ticket-post"
+                    ]
+                  },
+                  {
+                    "group": "媒体存储",
+                    "pages": [
+                      "cn/nookmux/api/management/stored-media/stored_media-batch-post",
+                      "cn/nookmux/api/management/stored-media/stored_media-get",
+                      "cn/nookmux/api/management/stored-media/stored_media-media_type-id-delete",
+                      "cn/nookmux/api/management/stored-media/stored_media-media_type-id-get",
+                      "cn/nookmux/api/management/stored-media/stored_media-self-get"
+                    ]
+                  },
+                  {
+                    "group": "性能运维",
+                    "pages": [
+                      "cn/nookmux/api/management/performance/performance-disk_cache-delete",
+                      "cn/nookmux/api/management/performance/performance-gc-post",
+                      "cn/nookmux/api/management/performance/performance-reset_stats-post",
+                      "cn/nookmux/api/management/performance/performance-stats-get"
+                    ]
+                  },
+                  {
+                    "group": "数据库迁移",
+                    "pages": [
+                      "cn/nookmux/api/management/db-migration/db-pre_migrate-id-get",
+                      "cn/nookmux/api/management/db-migration/db-pre_migrate-info-get",
+                      "cn/nookmux/api/management/db-migration/db-pre_migrate-post",
+                      "cn/nookmux/api/management/db-migration/db-same_type_migrate-id-get",
+                      "cn/nookmux/api/management/db-migration/db-same_type_migrate-info-get",
+                      "cn/nookmux/api/management/db-migration/db-same_type_migrate-post"
                     ]
                   }
                 ]
@@ -584,18 +719,33 @@
                     "pages": [
                       "nookmux/api/management/channel-management/channel-batch-post",
                       "nookmux/api/management/channel-management/channel-batch-tag-post",
+                      "nookmux/api/management/channel-management/channel-builtin_urls-get",
                       "nookmux/api/management/channel-management/channel-copy-id-post",
                       "nookmux/api/management/channel-management/channel-disabled-delete",
                       "nookmux/api/management/channel-management/channel-fetch_models-id-get",
                       "nookmux/api/management/channel-management/channel-fetch_models-post",
+                      "nookmux/api/management/channel-management/channel-fetch_providers-id-get",
+                      "nookmux/api/management/channel-management/channel-fetch_providers-post",
                       "nookmux/api/management/channel-management/channel-fix-post",
                       "nookmux/api/management/channel-management/channel-get",
+                      "nookmux/api/management/channel-management/channel-glm-account_report-id-get",
+                      "nookmux/api/management/channel-management/channel-glm-contact-id-get",
                       "nookmux/api/management/channel-management/channel-id-delete",
                       "nookmux/api/management/channel-management/channel-id-get",
                       "nookmux/api/management/channel-management/channel-id-key-post",
                       "nookmux/api/management/channel-management/channel-models-get",
                       "nookmux/api/management/channel-management/channel-models_enabled-get",
                       "nookmux/api/management/channel-management/channel-multi_key-manage-post",
+                      "nookmux/api/management/channel-management/channel-ollama-delete-delete",
+                      "nookmux/api/management/channel-management/channel-ollama-pull-post",
+                      "nookmux/api/management/channel-management/channel-ollama-pull-stream-post",
+                      "nookmux/api/management/channel-management/channel-ollama-version-id-get",
+                      "nookmux/api/management/channel-management/channel-plan-glm-activity-id-get",
+                      "nookmux/api/management/channel-management/channel-plan-glm-reset_cards-id-get",
+                      "nookmux/api/management/channel-management/channel-plan-glm-reset_cards-id-use-post",
+                      "nookmux/api/management/channel-management/channel-plan-glm-risk-id-get",
+                      "nookmux/api/management/channel-management/channel-plan-glm-usage-id-get",
+                      "nookmux/api/management/channel-management/channel-plan-quota-id-get",
                       "nookmux/api/management/channel-management/channel-post",
                       "nookmux/api/management/channel-management/channel-put",
                       "nookmux/api/management/channel-management/channel-search-get",
@@ -605,6 +755,7 @@
                       "nookmux/api/management/channel-management/channel-tag-put",
                       "nookmux/api/management/channel-management/channel-test-get",
                       "nookmux/api/management/channel-management/channel-test-id-get",
+                      "nookmux/api/management/channel-management/channel-test_proxy-post",
                       "nookmux/api/management/channel-management/channel-update_balance-get",
                       "nookmux/api/management/channel-management/channel-update_balance-id-get"
                     ]
@@ -657,6 +808,7 @@
                       "nookmux/api/management/payment/user-pay-post",
                       "nookmux/api/management/payment/user-stripe-amount-post",
                       "nookmux/api/management/payment/user-stripe-pay-post",
+                      "nookmux/api/management/payment/user-topup-check-post",
                       "nookmux/api/management/payment/user-topup-info-get",
                       "nookmux/api/management/payment/user-topup-self-get"
                     ]
@@ -684,16 +836,30 @@
                     "group": "Statistics",
                     "pages": [
                       "nookmux/api/management/statistics/data-get",
-                      "nookmux/api/management/statistics/data-self-get"
+                      "nookmux/api/management/statistics/data-media_convert_stats-get",
+                      "nookmux/api/management/statistics/data-recalculate-post",
+                      "nookmux/api/management/statistics/data-self-get",
+                      "nookmux/api/management/statistics/data-self-media_convert_stats-get",
+                      "nookmux/api/management/statistics/data-users-get"
                     ]
                   },
                   {
                     "group": "System Settings",
                     "pages": [
+                      "nookmux/api/management/system-settings/option-channel_affinity_cache-delete",
+                      "nookmux/api/management/system-settings/option-channel_affinity_cache-get",
                       "nookmux/api/management/system-settings/option-get",
+                      "nookmux/api/management/system-settings/option-json_array-delete",
+                      "nookmux/api/management/system-settings/option-json_array-get",
+                      "nookmux/api/management/system-settings/option-json_array-put",
+                      "nookmux/api/management/system-settings/option-json_map-delete",
+                      "nookmux/api/management/system-settings/option-json_map-get",
+                      "nookmux/api/management/system-settings/option-json_map-put",
                       "nookmux/api/management/system-settings/option-migrate_console_setting-post",
                       "nookmux/api/management/system-settings/option-put",
-                      "nookmux/api/management/system-settings/option-rest_model_ratio-post"
+                      "nookmux/api/management/system-settings/option-reset_tool_billing_rules-post",
+                      "nookmux/api/management/system-settings/option-rest_model_ratio-post",
+                      "nookmux/api/management/system-settings/option-value-get"
                     ]
                   },
                   {
@@ -705,10 +871,14 @@
                       "nookmux/api/management/system/notice-get",
                       "nookmux/api/management/system/pricing-get",
                       "nookmux/api/management/system/privacy-policy-get",
+                      "nookmux/api/management/system/rankings-get",
                       "nookmux/api/management/system/setup-get",
                       "nookmux/api/management/system/setup-post",
+                      "nookmux/api/management/system/status-admin_modules-get",
                       "nookmux/api/management/system/status-get",
+                      "nookmux/api/management/system/status-system_info-get",
                       "nookmux/api/management/system/status-test-get",
+                      "nookmux/api/management/system/status-user_modules-get",
                       "nookmux/api/management/system/uptime-status-get",
                       "nookmux/api/management/system/user-agreement-get"
                     ]
@@ -759,6 +929,9 @@
                     "pages": [
                       "nookmux/api/management/user-management/user-aff-get",
                       "nookmux/api/management/user-management/user-aff_transfer-post",
+                      "nookmux/api/management/user-management/user-ban-post",
+                      "nookmux/api/management/user-management/user-checkin-get",
+                      "nookmux/api/management/user-management/user-checkin-post",
                       "nookmux/api/management/user-management/user-get",
                       "nookmux/api/management/user-management/user-id-2fa-delete",
                       "nookmux/api/management/user-management/user-id-delete",
@@ -768,6 +941,7 @@
                       "nookmux/api/management/user-management/user-models-get",
                       "nookmux/api/management/user-management/user-passkey-delete",
                       "nookmux/api/management/user-management/user-passkey-get",
+                      "nookmux/api/management/user-management/user-passkey-id-put",
                       "nookmux/api/management/user-management/user-passkey-register-begin-post",
                       "nookmux/api/management/user-management/user-passkey-register-finish-post",
                       "nookmux/api/management/user-management/user-passkey-verify-begin-post",
@@ -779,6 +953,7 @@
                       "nookmux/api/management/user-management/user-self-get",
                       "nookmux/api/management/user-management/user-self-groups-get",
                       "nookmux/api/management/user-management/user-self-put",
+                      "nookmux/api/management/user-management/user-self-usage_log_fields-get",
                       "nookmux/api/management/user-management/user-setting-put",
                       "nookmux/api/management/user-management/user-token-get",
                       "nookmux/api/management/user-management/user-topup-complete-post",
@@ -794,6 +969,101 @@
                       "nookmux/api/management/vendors/vendors-post",
                       "nookmux/api/management/vendors/vendors-put",
                       "nookmux/api/management/vendors/vendors-search-get"
+                    ]
+                  },
+                  {
+                    "group": "Audit Logs",
+                    "pages": [
+                      "nookmux/api/management/audit/audit-get",
+                      "nookmux/api/management/audit/audit-modules-get"
+                    ]
+                  },
+                  {
+                    "group": "Consumption Logs",
+                    "pages": [
+                      "nookmux/api/management/logs/log-channel_affinity_usage_cache-get",
+                      "nookmux/api/management/logs/log-delete",
+                      "nookmux/api/management/logs/log-get",
+                      "nookmux/api/management/logs/log-self-get",
+                      "nookmux/api/management/logs/log-self-stat-get",
+                      "nookmux/api/management/logs/log-stat-get",
+                      "nookmux/api/management/logs/log-token-get",
+                      "nookmux/api/management/logs/log-token-usage_log_fields-get"
+                    ]
+                  },
+                  {
+                    "group": "Dashboard Config",
+                    "pages": [
+                      "nookmux/api/management/dashboard/dashboard-config-get",
+                      "nookmux/api/management/dashboard/dashboard-config-put",
+                      "nookmux/api/management/dashboard/dashboard-config-reset-post"
+                    ]
+                  },
+                  {
+                    "group": "Dynamic Ratio",
+                    "pages": [
+                      "nookmux/api/management/dynamic-ratio/dynamic_ratio-enabled-put",
+                      "nookmux/api/management/dynamic-ratio/dynamic_ratio-rules-get",
+                      "nookmux/api/management/dynamic-ratio/dynamic_ratio-rules-id-delete",
+                      "nookmux/api/management/dynamic-ratio/dynamic_ratio-rules-post",
+                      "nookmux/api/management/dynamic-ratio/dynamic_ratio-rules-put",
+                      "nookmux/api/management/dynamic-ratio/dynamic_ratio-rules-reorder-put",
+                      "nookmux/api/management/dynamic-ratio/dynamic_ratio-status-get"
+                    ]
+                  },
+                  {
+                    "group": "Custom Voice",
+                    "pages": [
+                      "nookmux/api/management/custom-voice/custom_voice-confirm-post",
+                      "nookmux/api/management/custom-voice/custom_voice-confirm_quote-post",
+                      "nookmux/api/management/custom-voice/custom_voice-preview-post",
+                      "nookmux/api/management/custom-voice/custom_voice-tags-get",
+                      "nookmux/api/management/custom-voice/custom_voice-voices-get",
+                      "nookmux/api/management/custom-voice/custom_voice-voices-id-delete",
+                      "nookmux/api/management/custom-voice/custom_voice-voices-id-put",
+                      "nookmux/api/management/custom-voice/custom_voice-voices-post"
+                    ]
+                  },
+                  {
+                    "group": "Tickets",
+                    "pages": [
+                      "nookmux/api/management/tickets/ticket-admin-get",
+                      "nookmux/api/management/tickets/ticket-get",
+                      "nookmux/api/management/tickets/ticket-id-close-post",
+                      "nookmux/api/management/tickets/ticket-id-get",
+                      "nookmux/api/management/tickets/ticket-id-reply-post",
+                      "nookmux/api/management/tickets/ticket-id-status-post",
+                      "nookmux/api/management/tickets/ticket-post"
+                    ]
+                  },
+                  {
+                    "group": "Stored Media",
+                    "pages": [
+                      "nookmux/api/management/stored-media/stored_media-batch-post",
+                      "nookmux/api/management/stored-media/stored_media-get",
+                      "nookmux/api/management/stored-media/stored_media-media_type-id-delete",
+                      "nookmux/api/management/stored-media/stored_media-media_type-id-get",
+                      "nookmux/api/management/stored-media/stored_media-self-get"
+                    ]
+                  },
+                  {
+                    "group": "Performance",
+                    "pages": [
+                      "nookmux/api/management/performance/performance-disk_cache-delete",
+                      "nookmux/api/management/performance/performance-gc-post",
+                      "nookmux/api/management/performance/performance-reset_stats-post",
+                      "nookmux/api/management/performance/performance-stats-get"
+                    ]
+                  },
+                  {
+                    "group": "DB Migration",
+                    "pages": [
+                      "nookmux/api/management/db-migration/db-pre_migrate-id-get",
+                      "nookmux/api/management/db-migration/db-pre_migrate-info-get",
+                      "nookmux/api/management/db-migration/db-pre_migrate-post",
+                      "nookmux/api/management/db-migration/db-same_type_migrate-id-get",
+                      "nookmux/api/management/db-migration/db-same_type_migrate-info-get",
+                      "nookmux/api/management/db-migration/db-same_type_migrate-post"
                     ]
                   }
                 ]

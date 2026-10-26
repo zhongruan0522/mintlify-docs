@@ -1,0 +1,172 @@
+---
+title: 获取所有音色
+description: 分页查询定制音色记录，支持多条件筛选。
+api: "GET /api/custom_voice/voices/"
+---
+
+音色记录驱动定制音色功能与 TTS 音色白名单：TTS 请求通过 `voice_id` 引用记录，校验通过后 NookMux 使用 `redirect_id`（为空则用 `voice_id`）将请求发往上游。
+
+分页返回全部音色记录，按 `id` 倒序（最新在前），支持按类型、操作人、音色 ID 和创建时间筛选。
+
+需要**管理员（Admin）**权限。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
+
+## 请求
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url 'https://your-nookmux-domain/api/custom_voice/voices/?page=1&page_size=10&type=created' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1'
+```
+
+</RequestExample>
+
+### 查询参数
+
+<ParamField path="type" type="string">
+  按音色类型精确筛选：`preview`（试听中）或 `created`（已创建）。省略时返回全部类型。
+</ParamField>
+
+<ParamField path="operator_id" type="integer">
+  按操作人 ID 筛选（创建记录的用户或管理员 ID）。仅大于 0 时生效。
+</ParamField>
+
+<ParamField path="voice_id" type="string">
+  音色 ID 模糊匹配（包含匹配）。
+</ParamField>
+
+<ParamField path="start_timestamp" type="integer">
+  `created_at` 的下界，Unix 时间戳（秒）。仅大于 0 时生效。
+</ParamField>
+
+<ParamField path="end_timestamp" type="integer">
+  `created_at` 的上界，Unix 时间戳（秒）。仅大于 0 时生效。
+</ParamField>
+
+<ParamField path="page" type="integer" default="1">
+  页码。小于 1 时归一为 1。
+</ParamField>
+
+<ParamField path="page_size" type="integer" default="10">
+  每页条数，上限 100。小于 1 时归一为 10。
+</ParamField>
+
+## 响应
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": {
+    "items": [
+      {
+        "id": 128,
+        "created_at": 1735689600,
+        "updated_at": 1735689700,
+        "type": "preview",
+        "operator_id": 42,
+        "operator_kind": "user",
+        "voice_id": "my-custom-voice-01",
+        "quota_cost": 0,
+        "redirect_id": "",
+        "allowed": false,
+        "remark": ""
+      },
+      {
+        "id": 3,
+        "created_at": 1735689000,
+        "updated_at": 1735689100,
+        "type": "created",
+        "operator_id": 1,
+        "operator_kind": "admin",
+        "voice_id": "official-voice-001",
+        "quota_cost": 0,
+        "redirect_id": "minimax-voice-0000",
+        "allowed": true,
+        "remark": "Official voice"
+      }
+    ],
+    "total": 2,
+    "page": 1,
+    "page_size": 10
+  }
+}
+```
+
+</ResponseExample>
+
+### 响应字段
+
+<ResponseField name="success" type="boolean" required>
+  请求是否成功。
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  `success` 为 `false` 时的错误描述；成功时为空字符串。
+</ResponseField>
+
+<ResponseField name="data.total" type="integer" required>
+  满足筛选条件的音色记录总数。
+</ResponseField>
+
+<ResponseField name="data.page" type="integer" required>
+  当前页码。
+</ResponseField>
+
+<ResponseField name="data.page_size" type="integer" required>
+  实际生效的每页条数。
+</ResponseField>
+
+<ResponseField name="data.items" type="array" required>
+  当前页的音色记录数组。
+
+  <Expandable title="voice 结构">
+    <ResponseField name="id" type="integer" required>
+      记录主键。
+    </ResponseField>
+    <ResponseField name="created_at" type="integer" required>
+      创建时间的 Unix 时间戳（秒）。
+    </ResponseField>
+    <ResponseField name="updated_at" type="integer" required>
+      最近更新时间的 Unix 时间戳（秒）。
+    </ResponseField>
+    <ResponseField name="type" type="string" required>
+      音色类型：`preview`（试听中，仅在定制音色页面可用）或 `created`（已创建，`allowed` 为 `true` 时可用于 TTS）。
+    </ResponseField>
+    <ResponseField name="operator_id" type="integer" required>
+      操作人 ID：试听/确认流程创建的记录为用户 ID，管理员创建的记录为管理员 ID。
+    </ResponseField>
+    <ResponseField name="operator_kind" type="string" required>
+      操作人类型：`user` 或 `admin`。
+    </ResponseField>
+    <ResponseField name="voice_id" type="string" required>
+      对外音色 ID，TTS 请求引用该 ID；全表唯一。
+    </ResponseField>
+    <ResponseField name="quota_cost" type="integer" required>
+      确认定制时扣减的额度；未确认及管理员创建的记录为 `0`。
+    </ResponseField>
+    <ResponseField name="redirect_id" type="string" required>
+      发往上游的真实音色 ID；为空表示直接把 `voice_id` 发给上游。
+    </ResponseField>
+    <ResponseField name="allowed" type="boolean" required>
+      是否允许用于 TTS。仅对 `created` 类型生效；确认定制时自动置为 `true`。
+    </ResponseField>
+    <ResponseField name="remark" type="string" required>
+      自由备注，最长 255 字符；可能为空字符串。
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<Note>
+管理接口在业务失败时同样返回 HTTP `200`，必须以 `success` 字段判断结果。该接口仅支持 `page` 与 `page_size` 分页参数，不识别其他列表接口兼容的 `p`、`ps`、`size` 别名。
+</Note>
+
+## 错误说明
+
+| 条件 | 说明 |
+| --- | --- |
+| 数据库错误，请稍后重试 | 读取音色列表或统计总数失败，详见服务端日志 |

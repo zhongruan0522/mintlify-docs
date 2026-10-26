@@ -1,0 +1,161 @@
+---
+title: Update dashboard config
+description: Partially update dashboard configuration items with per-field validation.
+api: "PUT /api/dashboard/config"
+---
+
+Partially updates the dashboard configuration. The body is a flat JSON object containing only the keys to change; every key is validated against its allowed range and persisted as a `dashboard_config.<key>` option before taking effect immediately.
+
+Requires **Admin** permissions. See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request PUT \
+  --url 'https://your-nookmux-domain/api/dashboard/config' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1' \
+  --header 'Content-Type: application/json' \
+  --data '{
+  "rankings_model_limit": 50,
+  "uptime_kuma_refresh_interval": 120
+}'
+```
+
+</RequestExample>
+
+### Body
+
+The body is a flat JSON object; send only the keys to update. The keys and constraints below are the documented configuration items; see [Get dashboard config](/nookmux/api/management/dashboard/dashboard-config-get) for their meaning and defaults.
+
+<ParamField path="body.quota_data_enabled" type="boolean">
+Whether the quota data (time series) panel is enabled.
+</ParamField>
+
+<ParamField path="body.user_analytics_enabled" type="boolean">
+Whether the user analytics (user ranking and trend) panel is enabled.
+</ParamField>
+
+<ParamField path="body.rankings_enabled" type="boolean">
+Whether the rankings panel is enabled.
+</ParamField>
+
+<ParamField path="body.media_convert_stats_enabled" type="boolean">
+Whether the image/video-to-URL statistics panel is enabled.
+</ParamField>
+
+<ParamField path="body.quota_data_track_tokens" type="boolean">
+Whether token usage is recorded with quota data.
+</ParamField>
+
+<ParamField path="body.quota_data_track_by_model" type="boolean">
+Whether quota data is aggregated by model.
+</ParamField>
+
+<ParamField path="body.quota_data_track_by_user" type="boolean">
+Whether quota data is aggregated by user.
+</ParamField>
+
+<ParamField path="body.api_info_enabled" type="boolean">
+Whether the API info panel is enabled.
+</ParamField>
+
+<ParamField path="body.uptime_kuma_enabled" type="boolean">
+Whether the Uptime Kuma panel is enabled.
+</ParamField>
+
+<ParamField path="body.announcements_enabled" type="boolean">
+Whether the announcements panel is enabled.
+</ParamField>
+
+<ParamField path="body.faq_enabled" type="boolean">
+Whether the FAQ panel is enabled.
+</ParamField>
+
+<ParamField path="body.quota_data_refresh_interval" type="integer">
+Quota data refresh interval in seconds, 60-86400.
+</ParamField>
+
+<ParamField path="body.user_analytics_refresh_interval" type="integer">
+User analytics refresh interval in seconds, 60-86400.
+</ParamField>
+
+<ParamField path="body.rankings_refresh_interval" type="integer">
+Rankings refresh interval in seconds, 60-86400.
+</ParamField>
+
+<ParamField path="body.uptime_kuma_refresh_interval" type="integer">
+Uptime Kuma refresh interval in seconds, 30-3600.
+</ParamField>
+
+<ParamField path="body.default_time_range_days" type="integer">
+Default dashboard query time range in days, 1-365. Must not exceed the currently effective `max_time_range_days`.
+</ParamField>
+
+<ParamField path="body.max_time_range_days" type="integer">
+Maximum dashboard query time range in days, 1-365.
+</ParamField>
+
+<ParamField path="body.rankings_model_limit" type="integer">
+Number of models kept in the rankings, 1-100.
+</ParamField>
+
+<ParamField path="body.rankings_vendor_limit" type="integer">
+Number of vendors kept in the rankings, 1-50.
+</ParamField>
+
+<ParamField path="body.user_analytics_top_n" type="integer">
+Number of users kept in the user analytics ranking, 1-100.
+</ParamField>
+
+<Note>
+JSON numbers are read as floating point and stored as integers; send whole numbers. Keys outside the documented set are accepted and persisted but do not affect the dashboard configuration. Changing `rankings_refresh_interval`, `user_analytics_refresh_interval`, or `uptime_kuma_refresh_interval` immediately invalidates the corresponding cached data. The update is written to the audit log (module `dashboard_config`) when audit logging is enabled.
+</Note>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "Configuration updated",
+  "data": {
+    "rankings_model_limit": 50,
+    "uptime_kuma_refresh_interval": 120
+  }
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+Whether the configuration items were updated.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+Localized success description when `success` is `true`; error description when `false`.
+</ResponseField>
+
+<ResponseField name="data" type="object">
+  Map of each updated key to the applied value: integers for numeric fields and booleans for switch fields.
+
+  <Expandable title="data structure">
+    <ResponseField name="<key>" type="integer | boolean">
+      One entry per key sent in the request body, with the value that was validated and persisted.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+## Error messages
+
+| Condition | Description |
+| --- | --- |
+| Invalid request body | The body is not a valid JSON object; `message` is `Invalid request parameter format: {error}` |
+| Empty update | The body contains no keys; `message` is `No configuration items need to be updated` |
+| Field validation failed | A value is outside its allowed range; `message` is the localized constraint, for example `Rankings model limit must be between 1 and 100` |
+| Database error | Persisting an item failed; `message` is `Failed to update configuration: {error}`, see server logs |

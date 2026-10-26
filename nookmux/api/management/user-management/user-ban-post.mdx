@@ -1,0 +1,204 @@
+---
+title: Ban User by Identifier
+description: Locate a user by a one-click-login identifier (GitHub or LinuxDO ID, email, GitHub username) and disable the account.
+api: "POST /api/user/ban"
+---
+
+Bans a user identified by a one-click-login identifier instead of a user ID. The server locates every user matching the identifier (soft-deleted users included) and then:
+
+- exactly one match: the account is disabled (status `2`); an optional `remark` replaces the user's remark. If it is already disabled or already deleted, the corresponding outcome is reported without further action.
+- no match: a pre-created, already-disabled placeholder user bound to the identifier is inserted, so the identifier is rejected on its first login attempt.
+- multiple matches: nobody is banned; all candidates are returned for per-item confirmation.
+
+With `type` `github_username`, the login is first resolved to its numeric GitHub ID through the GitHub API.
+
+Requires **Admin** permissions. See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request POST \
+  --url 'https://your-nookmux-domain/api/user/ban' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1' \
+  --header 'Content-Type: application/json' \
+  --data '{
+  "type": "github_id",
+  "value": "12345678",
+  "remark": "abuse reports 2026-10"
+}'
+```
+
+</RequestExample>
+
+### Body
+
+<ParamField path="body.type" type="string" required>
+Identifier type to locate the user by:
+
+- `github_id`: numeric GitHub user ID.
+- `linuxdo_id`: numeric LinuxDO user ID.
+- `email`: email address bound to the account.
+- `github_username`: GitHub login name; the server resolves it to the numeric GitHub ID via the GitHub API before matching.
+</ParamField>
+
+<ParamField path="body.value" type="string" required>
+Identifier value, matched after trimming. Format constraints by type:
+
+- `github_id` / `linuxdo_id`: 1 to 20 digits.
+- `email`: at most 50 characters and a syntactically valid email address.
+- `github_username`: a GitHub login (up to 39 characters, alphanumerics and hyphens, not starting or ending with a hyphen).
+</ParamField>
+
+<ParamField path="body.remark" type="string">
+Optional admin note stored on the banned user, matched after trimming, at most 255 characters. When non-empty it replaces the existing remark of a banned existing user.
+</ParamField>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": {
+    "result": "banned_existing",
+    "identifier": {
+      "type": "github_id",
+      "value": "12345678"
+    },
+    "user": {
+      "id": 42,
+      "username": "spammer",
+      "display_name": "spammer",
+      "email": "spammer@example.com",
+      "github_id": "12345678",
+      "linux_do_id": "",
+      "role": 1,
+      "status": 2,
+      "deleted": false
+    }
+  }
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+Whether the ban request was processed.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+Error description when `success` is `false`; empty otherwise.
+</ResponseField>
+
+<ResponseField name="data" type="object" required>
+Ban outcome.
+
+<Expandable title="data structure">
+  <ParamField path="result" type="string" required>
+  Outcome of the request:
+
+  - `banned_existing`: an existing, enabled user was found and disabled.
+  - `created_placeholder`: no user matched; a banned placeholder was inserted.
+  - `already_banned`: the matching user is already disabled.
+  - `already_deleted`: the identifier belongs to a deleted user; no action needed.
+  - `ambiguous`: multiple users match; nobody was banned.
+  </ParamField>
+  <ParamField path="identifier" type="object" required>
+  Echo of the request identifier.
+  </ParamField>
+  <ParamField path="resolved" type="object">
+  GitHub lookup result; present only for `type` `github_username`.
+  </ParamField>
+  <ParamField path="user" type="object">
+  The affected user; present for every result except `ambiguous`.
+  </ParamField>
+  <ParamField path="candidates" type="array">
+  All matching users; present only for the `ambiguous` result, using the same structure as `user`.
+  </ParamField>
+</Expandable>
+</ResponseField>
+
+<ResponseField name="data.identifier" type="object" required>
+Echo of the request identifier.
+
+<Expandable title="identifier structure">
+  <ParamField path="type" type="string" required>
+  Identifier type, equal to `body.type`.
+  </ParamField>
+  <ParamField path="value" type="string" required>
+  Identifier value after trimming, equal to `body.value`.
+  </ParamField>
+</Expandable>
+</ResponseField>
+
+<ResponseField name="data.resolved" type="object">
+GitHub username resolution result, present only when `body.type` is `github_username`.
+
+<Expandable title="resolved structure">
+  <ParamField path="login" type="string" required>
+  The resolved GitHub login, equal to the requested `value`.
+  </ParamField>
+  <ParamField path="id" type="integer" required>
+  Numeric GitHub user ID the login resolved to.
+  </ParamField>
+</Expandable>
+</ResponseField>
+
+<ResponseField name="data.user" type="object">
+The located user.
+
+<Expandable title="user structure">
+  <ParamField path="id" type="integer" required>
+  User ID.
+  </ParamField>
+  <ParamField path="username" type="string" required>
+  Login username. For a placeholder it is generated by the server, for example `gh_12345678`.
+  </ParamField>
+  <ParamField path="display_name" type="string" required>
+  Display name.
+  </ParamField>
+  <ParamField path="email" type="string" required>
+  Bound email address; empty when not bound.
+  </ParamField>
+  <ParamField path="github_id" type="string" required>
+  Bound GitHub ID. Legacy accounts may hold a login string instead of the numeric ID; it is returned as-is.
+  </ParamField>
+  <ParamField path="linux_do_id" type="string" required>
+  Bound LinuxDO ID; empty when not bound.
+  </ParamField>
+  <ParamField path="role" type="integer" required>
+  Role level: `1` common user, `10` admin, `100` root.
+  </ParamField>
+  <ParamField path="status" type="integer" required>
+  Account status after the operation: `2` disabled for a banned or placeholder user.
+  </ParamField>
+  <ParamField path="deleted" type="boolean" required>
+  Whether the account is soft-deleted.
+  </ParamField>
+</Expandable>
+</ResponseField>
+
+<Note>
+Banning an existing user applies the same role checks as user management: an admin cannot ban a user of equal or higher role, and the root account cannot be banned. For `github_username`, matching probes both the resolved numeric ID and the login string, covering accounts created before the numeric-ID migration.
+</Note>
+
+## Error messages
+
+| Condition | Description |
+| --- | --- |
+| Invalid identifier type or value | The body is not valid JSON, `type` is unknown, or `value` fails the format check of its type |
+| Remark must not exceed 255 characters | `remark` is longer than 255 characters after trimming |
+| This GitHub username does not exist | The GitHub API reports the login does not exist |
+| GitHub API rate limit reached (60 requests/hour/IP unauthenticated), please try again later | The unauthenticated GitHub lookup quota is exhausted |
+| Failed to look up GitHub user info, please try again later | The GitHub API request failed; see server logs |
+| No permission to update users of same or higher permission level | The caller's role is not higher than the target's role (root exempted) |
+| Cannot disable super administrator user | The matched user is the root account |
+| Failed to create the banned placeholder user, please try again | Inserting the placeholder failed; see server logs |
+| Database error, please try again later | Locating or updating the user failed; see server logs |

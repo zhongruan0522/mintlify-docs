@@ -1,0 +1,131 @@
+---
+title: Update Dynamic Ratio Rule
+description: Replace an existing dynamic ratio rule by ID; the request body overwrites the whole record.
+api: "PUT /api/dynamic_ratio/rules"
+---
+
+Update an existing dynamic ratio rule. The request body replaces the whole stored record, so send the complete rule, not only the changed fields: omitted optional fields are reset to their empty values (for example, omitting `enable` disables the rule, omitting `concurrency` removes the concurrency condition). After a successful update the runtime rule cache is refreshed immediately and the change, with its before/after diff, is recorded in the audit log.
+
+Requires **Root** permissions. See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request PUT \
+  --url 'https://your-nookmux-domain/api/dynamic_ratio/rules' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1' \
+  --header 'Content-Type: application/json' \
+  --data '{
+  "id": 3,
+  "enable": true,
+  "group": "vip",
+  "models": "[\"gpt-4o\",\"claude-*\"]",
+  "concurrency": 100,
+  "weekdays": "[1,2,3,4,5]",
+  "start_time": "09:00",
+  "end_time": "18:00",
+  "ratio": 1.8,
+  "priority": 0
+}'
+```
+
+</RequestExample>
+
+### Body
+
+<ParamField path="body.id" type="integer" required>
+ID of the rule to update.
+</ParamField>
+
+<ParamField path="body.enable" type="boolean" default="false">
+Whether the rule participates in matching after the update. This is a full replacement: omitting it resets the rule to disabled.
+</ParamField>
+
+<ParamField path="body.group" type="string" required>
+User group the rule applies to. Must exist in the group ratio configuration.
+</ParamField>
+
+<ParamField path="body.models" type="string">
+Model patterns as a JSON array string, for example `"[\"gpt-4o\",\"claude-*\"]"`. Patterns support `*` wildcards: exact names, a trailing `*` for prefix match (for example `gpt-4*`), a leading `*` for suffix match (for example `*-preview`), and a lone `*` for all models. Empty means the rule applies to every model. Blank names inside the array are rejected.
+</ParamField>
+
+<ParamField path="body.concurrency" type="integer">
+Relay concurrency threshold; the rule only matches while the current relay concurrency is strictly greater than this value. Must be greater than `0` when present; omit it (or send `null`) to remove the concurrency condition.
+</ParamField>
+
+<ParamField path="body.weekdays" type="string">
+Weekday condition as a JSON array string of integers `0`-`6`, where `0` is Sunday, for example `"[1,2,3,4,5]"`. Empty means every day.
+</ParamField>
+
+<ParamField path="body.start_time" type="string">
+Start of the daily time window in `HH:MM` in the server's startup timezone; the window includes the start and excludes the end, and may cross midnight. Must be set together with `end_time`; leave both empty for no time window.
+</ParamField>
+
+<ParamField path="body.end_time" type="string">
+End of the daily time window in `HH:MM` in the server's startup timezone. Must be set together with `start_time`; leave both empty for no time window.
+</ParamField>
+
+<ParamField path="body.ratio" type="number" required>
+Billing ratio applied when the rule matches. Must be greater than `0`.
+</ParamField>
+
+<ParamField path="body.priority" type="integer" default="0">
+Arbitration order among simultaneously matching rules; the smaller value wins. Managed with [Reorder Dynamic Ratio Rules](/nookmux/api/management/dynamic-ratio/dynamic_ratio-rules-reorder-put).
+</ParamField>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": {
+    "id": 3,
+    "enable": true,
+    "group": "vip",
+    "models": "[\"gpt-4o\",\"claude-*\"]",
+    "concurrency": 100,
+    "weekdays": "[1,2,3,4,5]",
+    "start_time": "09:00",
+    "end_time": "18:00",
+    "ratio": 1.8,
+    "priority": 0,
+    "created_at": 1718272800,
+    "updated_at": 1718359200
+  }
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+Whether the rule was updated.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+Error description when `success` is `false`; empty otherwise.
+</ResponseField>
+
+<ResponseField name="data" type="object" required>
+The updated rule record: the request body fields plus `created_at` and the refreshed `updated_at`. Field meanings are the same as in [Get All Dynamic Ratio Rules](/nookmux/api/management/dynamic-ratio/dynamic_ratio-rules-get).
+</ResponseField>
+
+<Note>
+Management endpoints return HTTP `200` even on business failures; always check the `success` field. When the rule ID does not exist, the pre-update lookup fails and a generic database error is returned. Validation failures are reported as a generic invalid-parameters message; check the server logs for the specific reason.
+</Note>
+
+## Error messages
+
+| Condition | Description |
+| --- | --- |
+| Invalid request body | The JSON body is missing or malformed |
+| Rule ID cannot be empty | `id` is missing or `0` |
+| Invalid parameters | Rule validation failed: `group` missing or unknown in the group ratio configuration, `models` not a JSON array string or containing a blank name, `ratio` not greater than `0`, `concurrency` present but not greater than `0`, only one of `start_time`/`end_time` set or not in `HH:MM` format, `weekdays` not a JSON array string or containing a value outside `0`-`6` |
+| Database error, please try again later | Loading the original rule (including when it does not exist) or saving the update failed; see server logs |

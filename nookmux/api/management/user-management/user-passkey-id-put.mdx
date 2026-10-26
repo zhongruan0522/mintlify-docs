@@ -1,0 +1,80 @@
+---
+title: Update Passkey
+description: Rename one passkey credential of the current user by its ID.
+api: "PUT /api/user/passkey/{id}"
+---
+
+Changes the device name of a single passkey (WebAuthn) credential. The credential must belong to the user making the request. The new name is trimmed and truncated to 255 characters; passing an empty name clears the device name.
+
+Requires **User** permission (any logged-in user). See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
+
+<Note>
+Like the other passkey endpoints, this endpoint resolves the user from the server-side session cookie; access-token-only authentication is rejected with HTTP `401`.
+</Note>
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request PUT \
+  --url 'https://your-nookmux-domain/api/user/passkey/1' \
+  --header 'Cookie: session={session_cookie}' \
+  --header 'New-Api-User: 1' \
+  --header 'Content-Type: application/json' \
+  --data '{
+  "device_name": "My YubiKey"
+}'
+```
+
+</RequestExample>
+
+### Path parameters
+
+<ParamField path="id" type="integer" required>
+ID of the passkey credential to rename.
+</ParamField>
+
+### Body
+
+<ParamField path="body.device_name" type="string" required>
+New device name for the credential. Trimmed and truncated to 255 characters; an empty value clears the name.
+</ParamField>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "Passkey updated",
+  "data": null
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+Whether the credential was updated.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+Localized success message; error description when `success` is `false`.
+</ResponseField>
+
+<ResponseField name="data" type="null">
+Always `null` for this endpoint.
+</ResponseField>
+
+## Error messages
+
+| Condition | Description |
+| --- | --- |
+| Not logged in / user disabled | The session cannot be resolved; returned as HTTP `401` |
+| Invalid Passkey ID | `{id}` in the path is not an integer |
+| No permission to update this Passkey | The credential belongs to another user; returned as HTTP `403` |
+| Invalid request parameters | The JSON body is missing or malformed |
+| Database error, please try again later | Loading or updating the credential failed; see server logs |

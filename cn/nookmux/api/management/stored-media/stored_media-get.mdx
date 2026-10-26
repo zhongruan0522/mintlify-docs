@@ -1,0 +1,136 @@
+---
+title: 获取所有存储媒体
+description: 分页列出多模态自动转 URL 功能存储的全部图片与视频。
+api: "GET /api/stored_media/"
+---
+
+分页返回全平台所有用户的存储媒体元数据，按时间倒序排列。这些记录是 NookMux 为多模态自动转 URL 功能保存的图片与视频；接口只返回元数据与临时下载链接，不返回二进制内容。
+
+需要**管理员**权限。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
+
+## 请求
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url 'https://your-nookmux-domain/api/stored_media/?p=1&page_size=10&start_timestamp=1790000000&end_timestamp=1790172800' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1'
+```
+
+</RequestExample>
+
+### 查询参数
+
+<ParamField path="p" type="integer" default="1">
+页码，从 1 开始。
+</ParamField>
+
+<ParamField path="page_size" type="integer" default="10">
+页大小，上限 100。未传 `page_size` 时兼容旧别名 `ps` 与 `size`。
+</ParamField>
+
+<ParamField path="start_timestamp" type="integer">
+`created_at` 的下界，Unix 秒级时间戳。省略或传 `0` 表示不限下界。
+</ParamField>
+
+<ParamField path="end_timestamp" type="integer">
+`created_at` 的上界，Unix 秒级时间戳。省略或传 `0` 表示不限上界。
+</ParamField>
+
+## 响应
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": {
+    "page": 1,
+    "page_size": 10,
+    "total": 2,
+    "items": [
+      {
+        "id": "0d8c9f9a-1b2c-3d4e-5f6a-7b8c9d0e1f2a",
+        "media_type": "image",
+        "created_at": 1790110000,
+        "mime_type": "image/png",
+        "size_bytes": 204800,
+        "url": "https://your-nookmux-domain/mcp/image/0d8c9f9a-1b2c-3d4e-5f6a-7b8c9d0e1f2a?exp=1790120000&sig=5f4e3d2c1b0a9f8e7d6c5b4a3f2e1d0c"
+      },
+      {
+        "id": "7a6b5c4d-3e2f-1a0b-9c8d-7e6f5a4b3c2d",
+        "media_type": "video",
+        "created_at": 1790090000,
+        "mime_type": "video/mp4",
+        "size_bytes": 15728640,
+        "url": "https://your-nookmux-domain/mcp/video/7a6b5c4d-3e2f-1a0b-9c8d-7e6f5a4b3c2d?exp=1790120000&sig=1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d"
+      }
+    ]
+  }
+}
+```
+
+</ResponseExample>
+
+### 响应字段
+
+<ResponseField name="success" type="boolean" required>
+记录是否加载成功。
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+`success` 为 `false` 时的错误描述；成功时为空字符串。
+</ResponseField>
+
+<ResponseField name="data" type="object" required>
+分页结构。
+
+<Expandable title="data 结构">
+  <ParamField path="page" type="integer" required>
+    当前页码。
+  </ParamField>
+  <ParamField path="page_size" type="integer" required>
+    实际生效的页大小（经过默认值填充与 100 上限截断）。
+  </ParamField>
+  <ParamField path="total" type="integer" required>
+    符合条件的记录总数。
+  </ParamField>
+  <ParamField path="items" type="array" required>
+    当前页的存储媒体记录，按 `created_at` 倒序、`id` 倒序排列。
+  </ParamField>
+</Expandable>
+</ResponseField>
+
+<ResponseField name="data.items[]" type="object" required>
+单条存储媒体记录。
+
+<Expandable title="存储媒体结构">
+  <ParamField path="id" type="string" required>
+    存储媒体记录 ID（UUID）。
+  </ParamField>
+  <ParamField path="media_type" type="string" required>
+    媒体类型：`image` 或 `video`。
+  </ParamField>
+  <ParamField path="created_at" type="integer" required>
+    存入时间，Unix 秒级时间戳。
+  </ParamField>
+  <ParamField path="mime_type" type="string" required>
+    原始文件的 MIME 类型，例如 `image/png`、`video/mp4`。
+  </ParamField>
+  <ParamField path="size_bytes" type="integer" required>
+    存储文件大小，单位字节。
+  </ParamField>
+  <ParamField path="url" type="string" required>
+    媒体内容的签名下载链接，格式为 `{server_address}/mcp/{media_type}/{id}?exp=...&sig=...`，签名有效期 1 小时。
+  </ParamField>
+</Expandable>
+</ResponseField>
+
+## 错误说明
+
+| 条件 | 说明 |
+| --- | --- |
+| 数据库错误，请稍后重试 | 记录加载失败，详见服务端日志 |

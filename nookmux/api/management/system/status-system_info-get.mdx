@@ -1,0 +1,64 @@
+---
+title: Get System Info
+description: Fetch the build version fingerprint of the running NookMux instance.
+api: "GET /api/status/system_info"
+---
+
+Returns the build version of the running NookMux instance. Version information is admin-scoped and served on this dedicated endpoint rather than through the anonymous `/api/status`.
+
+Requires **Admin** permissions. See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url 'https://your-nookmux-domain/api/status/system_info' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1'
+```
+
+</RequestExample>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": {
+    "version": "v1.2.3"
+  }
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+  Whether the request succeeded.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  Error description when `success` is `false`; empty otherwise.
+</ResponseField>
+
+<ResponseField name="data" type="object" required>
+  Build version fingerprint.
+
+  <Expandable title="system info structure">
+    <ResponseField name="version" type="string" required>
+      Build version injected at build time; defaults to the git commit hash and may be empty in untagged development builds.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+## Error messages
+
+| Condition | Description |
+| --- | --- |
+| Authentication failed | Standard authentication errors (HTTP `401`) when the caller is not an administrator |

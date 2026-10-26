@@ -1,0 +1,72 @@
+---
+title: 重排动态倍率规则
+description: 按给定的规则 ID 顺序在单个事务中批量改写规则优先级。
+api: "PUT /api/dynamic_ratio/rules/reorder"
+---
+
+按有序的规则 ID 列表批量改写规则优先级：每条规则的 `priority` 被设置为它在 `ids` 数组中从 `0` 开始的下标，全部在单个事务中完成。未列入列表的规则保持原优先级。规则列表按 `priority` 升序排列，匹配裁决也以更小的值为先，因此该调用同时决定规则的展示顺序与裁决顺序。重排成功后运行时规则缓存立即刷新，变更会记录到审计日志。
+
+需要**超级管理员**权限。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
+
+## 请求
+
+<RequestExample>
+
+```bash cURL
+curl --request PUT \
+  --url 'https://your-nookmux-domain/api/dynamic_ratio/rules/reorder' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1' \
+  --header 'Content-Type: application/json' \
+  --data '{
+  "ids": [3, 1, 2]
+}'
+```
+
+</RequestExample>
+
+### 请求体
+
+<ParamField path="body.ids" type="array of integer" required>
+有序的规则 ID 列表；每条规则的 `priority` 被设置为它在该数组中从 `0` 开始的下标。不能为空。当前规则及其 ID 见[获取所有动态倍率规则](/cn/nookmux/api/management/dynamic-ratio/dynamic_ratio-rules-get)。
+</ParamField>
+
+## 响应
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": null
+}
+```
+
+</ResponseExample>
+
+### 响应字段
+
+<ResponseField name="success" type="boolean" required>
+规则是否重排成功。
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+`success` 为 `false` 时的错误描述；成功时为空字符串。
+</ResponseField>
+
+<ResponseField name="data" type="null" required>
+恒为 `null`；该接口不返回数据。
+</ResponseField>
+
+<Note>
+管理接口在业务失败时同样返回 HTTP `200`，必须以 `success` 字段判断结果。
+</Note>
+
+## 错误说明
+
+| 条件 | 说明 |
+| --- | --- |
+| 请求体非法 | `message` 为「请求体格式不正确」；JSON 缺失或格式错误 |
+| ID 列表缺失 | `message` 为「ID 列表不能为空」；`ids` 缺失或为空数组 |
+| 数据库错误 | `message` 为「数据库错误，请稍后重试」；改写优先级失败并回滚事务，详见服务端日志 |

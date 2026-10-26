@@ -1,0 +1,148 @@
+---
+title: Get Same-Type Migration Job
+description: Query the status, per-table progress, and logs of a same-type migration job by its ID.
+api: "GET /api/db/same_type_migrate/{id}"
+---
+
+Returns a snapshot of a same-type migration job started with `POST /api/db/same_type_migrate`: its status, per-table copy progress, and chronological job logs.
+
+Requires **Root** (super administrator) permissions. See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url 'https://your-nookmux-domain/api/db/same_type_migrate/7c2b9e41-08d5-4a6f-b3c7-9d8e1f2a3b4c' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1'
+```
+
+</RequestExample>
+
+### Path parameters
+
+<ParamField path="id" type="string" required>
+  Job ID returned by `POST /api/db/same_type_migrate`. Leading and trailing whitespace is trimmed.
+</ParamField>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": {
+    "id": "7c2b9e41-08d5-4a6f-b3c7-9d8e1f2a3b4c",
+    "status": "success",
+    "started_at": 1787451200,
+    "finished_at": 1787451242,
+    "source_db_type": "postgres",
+    "target_db_type": "postgres",
+    "include_logs": true,
+    "force": false,
+    "current_step": "完成",
+    "tables": [
+      {
+        "name": "users",
+        "copied": 128,
+        "total": 128
+      },
+      {
+        "name": "channels",
+        "copied": 36,
+        "total": 36
+      },
+      {
+        "name": "logs",
+        "copied": 52310,
+        "total": 52310
+      }
+    ],
+    "logs": [
+      "[2026-08-23T10:13:20+08:00] 同类型迁移启动：postgres -> postgres",
+      "[2026-08-23T10:13:21+08:00] 迁移表 users 完成"
+    ]
+  }
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+  Whether the request succeeded.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  Error description when `success` is `false`; empty otherwise.
+</ResponseField>
+
+<ResponseField name="data" type="object" required>
+  Snapshot of the migration job.
+
+  <ResponseField name="id" type="string" required>
+    Job ID.
+  </ResponseField>
+  <ResponseField name="status" type="string" required>
+    Job status: `running`, `success`, or `failed`.
+  </ResponseField>
+  <ResponseField name="started_at" type="integer" required>
+    Unix timestamp (seconds) when the job started.
+  </ResponseField>
+  <ResponseField name="finished_at" type="integer">
+    Unix timestamp (seconds) when the job finished; omitted while the job is running.
+  </ResponseField>
+  <ResponseField name="source_db_type" type="string" required>
+    Database type of the source main database, for example `postgres`.
+  </ResponseField>
+  <ResponseField name="target_db_type" type="string" required>
+    Database type of the target main database; identical to `source_db_type` for same-type migrations.
+  </ResponseField>
+  <ResponseField name="include_logs" type="boolean" required>
+    Whether the job also migrates request logs.
+  </ResponseField>
+  <ResponseField name="force" type="boolean" required>
+    Whether the job was started in overwrite mode.
+  </ResponseField>
+  <ResponseField name="current_step" type="string" required>
+    Human-readable description of the current step, generated server-side (for example `校验目标数据库连接` or `完成`).
+  </ResponseField>
+  <ResponseField name="tables" type="array" required>
+    Per-table copy progress.
+
+    <Expandable title="table progress structure">
+      <ParamField path="name" type="string" required>
+        Table name, for example `users`, `channels`, or `logs`.
+      </ParamField>
+      <ParamField path="copied" type="integer" required>
+        Number of rows already copied.
+      </ParamField>
+      <ParamField path="total" type="integer" required>
+        Total number of rows in the source table.
+      </ParamField>
+    </Expandable>
+  </ResponseField>
+  <ResponseField name="logs" type="string[]" required>
+    Chronological job log lines generated server-side, including per-table completion lines.
+  </ResponseField>
+  <ResponseField name="error" type="string">
+    Failure reason; present only when `status` is `failed`.
+  </ResponseField>
+</ResponseField>
+
+<Note>
+Unlike most management endpoints, failures use non-200 status codes: an empty or blank `id` returns HTTP `400` with `job_id cannot be empty`, and an unknown job ID returns HTTP `404` with `Task does not exist`. Jobs are tracked in process memory, so a job ID can only be queried on the instance that started it and until that process restarts.
+</Note>
+
+## Error messages
+
+| Condition | Description |
+| --- | --- |
+| job_id cannot be empty | The `id` path parameter is empty or blank (HTTP `400`) |
+| Task does not exist | No job with this ID is known to this instance — wrong ID, another instance, or the process has restarted (HTTP `404`) |
+| Authentication failed | Standard authentication errors (HTTP `401`) when the caller is not a root user |

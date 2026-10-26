@@ -1,0 +1,68 @@
+---
+title: 获取用户侧栏模块开关
+description: 获取当前登录用户可见的侧栏模块开关，非管理员调用者的 admin 段会被剥离。
+api: "GET /api/status/user_modules"
+---
+
+返回当前登录用户可见的侧栏模块开关。管理员收到完整的 `SidebarModulesAdmin` 配置；其他用户收到剔除 `admin` 段后的同一文档，管理后台结构不会暴露给普通账号。
+
+需要**用户（User）**权限。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
+
+## 请求
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url 'https://your-nookmux-domain/api/status/user_modules' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1'
+```
+
+</RequestExample>
+
+## 响应
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": {
+    "SidebarModulesAdmin": "{\"chat\":{\"enabled\":true,\"playground\":false},\"console\":{\"enabled\":true,\"log\":true}}"
+  }
+}
+```
+
+</ResponseExample>
+
+### 响应字段
+
+<ResponseField name="success" type="boolean" required>
+  请求是否成功。
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  `success` 为 `false` 时的错误描述；成功时为空字符串。
+</ResponseField>
+
+<ResponseField name="data" type="object" required>
+  调用者可见的侧栏模块配置。
+
+  <Expandable title="用户模块结构">
+    <ResponseField name="SidebarModulesAdmin" type="string" required>
+      JSON 文档（序列化为字符串），以侧栏分区名（如 `chat`、`console`、`admin`）为键，每个分区把模块名映射到开关标志。非管理员调用者返回前会移除 `admin` 段；存储值为空或非法 JSON 时按原样返回。
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<Note>
+  响应内容随调用者角色变化，因此该路由挂载了 no-cache 中间件：响应携带 `Cache-Control: no-store, no-cache, must-revalidate, private, max-age=0`，防止管理员的响应经共享缓存被重放。
+</Note>
+
+## 错误说明
+
+| 条件 | 说明 |
+| --- | --- |
+| 鉴权失败 | 调用者未登录时的标准鉴权错误（HTTP `401`） |

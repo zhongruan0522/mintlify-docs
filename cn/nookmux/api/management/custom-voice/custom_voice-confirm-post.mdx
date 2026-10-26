@@ -1,0 +1,97 @@
+---
+title: 确认定制音色
+description: 扣减报价额度并激活试听中的定制音色。
+api: "POST /api/custom_voice/confirm"
+---
+
+确认通过试听接口创建的定制音色。系统按定制音色功能配置的扣费模型从当前用户钱包扣费一次（金额与报价接口一致），并把音色记录原子地从 `preview` 流转为 `created`，同时开启 TTS 放行（`allowed` 置为 `true`）。扣费会以该扣费模型记入消费日志。
+
+只有试听记录的所有者可以确认。同一音色只能成功确认一次；重复或并发确认会被拒绝，且已扣费用会退还。扣费成功但激活失败时，已扣额度退还，音色不激活。
+
+需要**用户（User）**权限（任意已登录账号）。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
+
+## 请求
+
+<RequestExample>
+
+```bash cURL
+curl --request POST \
+  --url 'https://your-nookmux-domain/api/custom_voice/confirm' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1' \
+  --header 'Content-Type: application/json' \
+  --data '{
+  "voice_id": "my-custom-voice-01"
+}'
+```
+
+</RequestExample>
+
+### 请求体
+
+<ParamField path="body.voice_id" type="string" required>
+  此前通过试听接口创建的待确认（试听中）记录的音色 ID。
+</ParamField>
+
+## 响应
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": {
+    "voice_id": "my-custom-voice-01",
+    "status": "created"
+  }
+}
+```
+
+</ResponseExample>
+
+### 响应字段
+
+<ResponseField name="success" type="boolean" required>
+  音色是否确认并激活成功。
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  `success` 为 `false` 时的错误描述；成功时为空字符串。
+</ResponseField>
+
+<ResponseField name="data" type="object" required>
+  确认结果。
+
+  <Expandable title="data 结构">
+    <ResponseField name="voice_id" type="string" required>
+      被确认的音色 ID。
+    </ResponseField>
+    <ResponseField name="status" type="string" required>
+      确认后的音色状态；`created` 表示音色已激活、可用于 TTS。
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<Note>
+管理接口在业务失败时同样返回 HTTP `200`，必须以 `success` 字段判断结果。JSON 请求体缺失或格式错误时返回 HTTP `400`。
+</Note>
+
+## 错误说明
+
+| 条件 | 说明 |
+| --- | --- |
+| 无效的参数（HTTP 400） | JSON 请求体缺失或格式错误 |
+| 音色ID不能为空 | `voice_id` 去除首尾空白后为空 |
+| 定制音色功能未开启，请联系管理员 | 定制音色功能开关未开启 |
+| 计费模型未配置，请联系管理员 | 定制音色扣费模型 ID 为空 |
+| 音色校验失败，请稍后重试 | 过期试听清理失败 |
+| 音色ID不合规 | `voice_id` 没有对应记录 |
+| 该音色无需确认或已处理 | 记录不处于 `preview`（试听中）状态，或并发确认已被他人抢先 |
+| 无权操作该音色 | 记录属于其他用户 |
+| 所选计费模型暂不可用，请联系管理员 | 扣费模型无计费配置（fail closed，绝不免费） |
+| 所选计费模型价格无效，请联系管理员 | 计算出的额度不为正数 |
+| 额度不足，请充值后再试 | 用户钱包额度低于确认扣费 |
+| 额度查询失败，请稍后重试 | 读取用户额度失败 |
+| 扣费失败，请稍后重试 | 扣减确认额度失败 |
+| 音色激活失败，已退还费用 | preview 到 created 的流转失败，费用已退还 |

@@ -1,0 +1,78 @@
+---
+title: Get Visible Usage Log Fields
+description: Return the usage log detail fields visible to the current user's role.
+api: "GET /api/user/self/usage_log_fields"
+---
+
+Returns which fields of the usage log detail dialog are visible to the caller. The visibility of each field is configured by the administrator per role (System Settings, console content, usage log fields); this endpoint evaluates that configuration for the caller's own role and returns the list of visible field keys. The console uses the result to decide whether to show the detail dialog at all and which fields to render.
+
+Requires **User** permission (any logged-in user). See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url 'https://your-nookmux-domain/api/user/self/usage_log_fields' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 2'
+```
+
+</RequestExample>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": {
+    "enabled": true,
+    "fields": [
+      "request_id",
+      "upstream_request_id",
+      "ip_address",
+      "billing_details",
+      "token_breakdown"
+    ]
+  }
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+Whether the configuration was loaded.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+Error description when `success` is `false`; empty otherwise.
+</ResponseField>
+
+<ResponseField name="data" type="object" required>
+Visible usage log fields.
+
+<Expandable title="data structure">
+  <ParamField path="enabled" type="boolean" required>
+    Whether the usage log detail dialog is enabled for the caller's role. When `false`, `fields` is an empty list and the console hides the detail entry.
+  </ParamField>
+  <ParamField path="fields" type="array" required>
+    Keys of the usage log fields visible to the caller's role, for example `request_id`, `ip_address` or `billing_details`. The set of configurable keys and their defaults are defined server-side.
+  </ParamField>
+</Expandable>
+</ResponseField>
+
+<Note>
+Calling with an administrator account returns the admin visibility list, which is configured separately from the regular-user list.
+</Note>
+
+## Error messages
+
+| Condition | Description |
+| --- | --- |
+| Failed to parse usage log field configuration | The stored visibility configuration is malformed; see server logs |

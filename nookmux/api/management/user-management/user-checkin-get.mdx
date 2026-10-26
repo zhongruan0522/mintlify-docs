@@ -1,0 +1,136 @@
+---
+title: Get Check-in Status
+description: Return the check-in configuration, current-month records, and all-time statistics for the current user.
+api: "GET /api/user/checkin"
+---
+
+Returns the daily check-in state for the user making the request: the globally configured quota reward range, the check-in records of the requested month, and all-time statistics. Check-in must be enabled server-side; when it is disabled the endpoint reports an error instead of returning data.
+
+Requires **User** permission (any logged-in user). See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url 'https://your-nookmux-domain/api/user/checkin?month=2026-10' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 2'
+```
+
+</RequestExample>
+
+### Query parameters
+
+<ParamField path="month" type="string" default="current month">
+Month to list records for, in `YYYY-MM` format. Defaults to the current month.
+</ParamField>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "data": {
+    "enabled": true,
+    "min_quota": 1000,
+    "max_quota": 10000,
+    "stats": {
+      "total_quota": 32000,
+      "total_checkins": 6,
+      "checkin_count": 3,
+      "checked_in_today": false,
+      "records": [
+        {
+          "checkin_date": "2026-10-24",
+          "quota_awarded": 8400
+        },
+        {
+          "checkin_date": "2026-10-23",
+          "quota_awarded": 5600
+        },
+        {
+          "checkin_date": "2026-10-22",
+          "quota_awarded": 4200
+        }
+      ]
+    }
+  }
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+Whether the status was loaded.
+</ResponseField>
+
+<ResponseField name="data" type="object" required>
+Check-in status of the current user.
+
+<Expandable title="data structure">
+  <ParamField path="enabled" type="boolean" required>
+    Whether the check-in feature is enabled; always `true` in a successful response.
+  </ParamField>
+  <ParamField path="min_quota" type="integer" required>
+    Lower bound of the random quota reward granted per check-in. Server default is `1000` (about $0.002); configurable by the administrator.
+  </ParamField>
+  <ParamField path="max_quota" type="integer" required>
+    Upper bound of the random quota reward granted per check-in. Server default is `10000` (about $0.02); configurable by the administrator.
+  </ParamField>
+  <ParamField path="stats" type="object" required>
+    Check-in statistics; see the expandable structure below.
+  </ParamField>
+</Expandable>
+</ResponseField>
+
+<ResponseField name="data.stats" type="object" required>
+Check-in statistics of the current user.
+
+<Expandable title="stats structure">
+  <ParamField path="total_quota" type="integer" required>
+    Total quota earned from check-ins across all time.
+  </ParamField>
+  <ParamField path="total_checkins" type="integer" required>
+    Total number of check-ins across all time.
+  </ParamField>
+  <ParamField path="checkin_count" type="integer" required>
+    Number of check-ins in the requested month.
+  </ParamField>
+  <ParamField path="checked_in_today" type="boolean" required>
+    Whether the user has already checked in today.
+  </ParamField>
+  <ParamField path="records" type="array" required>
+    Check-in records of the requested month, ordered by `checkin_date` descending.
+  </ParamField>
+</Expandable>
+</ResponseField>
+
+<ResponseField name="data.stats.records[]" type="object" required>
+One check-in record.
+
+<Expandable title="records[] structure">
+  <ParamField path="checkin_date" type="string" required>
+    Date of the check-in in `YYYY-MM-DD` format.
+  </ParamField>
+  <ParamField path="quota_awarded" type="integer" required>
+    Quota granted by that check-in.
+  </ParamField>
+</Expandable>
+</ResponseField>
+
+<Note>
+This endpoint omits the `message` field in its success payload, deviating from the usual `{success, message, data}` envelope of management endpoints.
+</Note>
+
+## Error messages
+
+| Condition | Description |
+| --- | --- |
+| Check-in is disabled | The check-in feature is disabled server-side |
+| Database error | Reading the check-in records failed; the raw error text is returned, see server logs |

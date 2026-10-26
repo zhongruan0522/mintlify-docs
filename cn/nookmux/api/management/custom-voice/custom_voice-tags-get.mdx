@@ -1,0 +1,76 @@
+---
+title: 获取定制音色标签
+description: 获取定制音色试听文本可用的情绪与语气词标签。
+api: "GET /api/custom_voice/tags"
+---
+
+返回定制音色试听文本中可使用的情绪与语气词标签，以及识别这些标签的正则表达式。接口只暴露源标签（管理员配置的重定向表的键），不暴露其映射到的上游真实标签，保证客户端始终展示用户应当输入的标签。
+
+需要**用户（User）**权限（任意已登录账号）。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
+
+## 请求
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url 'https://your-nookmux-domain/api/custom_voice/tags' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1'
+```
+
+</RequestExample>
+
+## 响应
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": {
+    "enabled": true,
+    "emotion_pattern": "<tts(?:\\s+emotion=\"([^\"]+)\")?>([\\s\\S]*?)</tts>",
+    "tone_word_pattern": "\\(([^()]+)\\)",
+    "emotion_tags": ["angry", "happy", "sad"],
+    "tone_word_tags": ["laugh", "sigh"]
+  }
+}
+```
+
+</ResponseExample>
+
+### 响应字段
+
+<ResponseField name="success" type="boolean" required>
+  请求是否成功。
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  `success` 为 `false` 时的错误描述；成功时为空字符串。
+</ResponseField>
+
+<ResponseField name="data.enabled" type="boolean" required>
+  MiniMax TTS 增强（模型重定向、情绪与语气词处理）总开关是否开启。无论该开关状态如何，标签与正则都会返回，但只有在开关开启时才对试听文本生效。
+</ResponseField>
+
+<ResponseField name="data.emotion_pattern" type="string" required>
+  管理员配置的、用于识别文本中情绪标签的正则表达式。默认正则匹配带可选 `emotion` 属性的 `<tts emotion="...">...</tts>`。
+</ResponseField>
+
+<ResponseField name="data.tone_word_pattern" type="string" required>
+  管理员配置的、用于识别文本中语气词标签的正则表达式。默认正则匹配括号包裹的内容，如 `(laugh)`。
+</ResponseField>
+
+<ResponseField name="data.emotion_tags" type="array">
+  排序后的情绪源标签（情绪重定向表的键），用户可在试听文本中输入。未配置情绪标签时为 `null`。
+</ResponseField>
+
+<ResponseField name="data.tone_word_tags" type="array">
+  排序后的语气词源标签（语气词重定向表的键），用户可在试听文本中输入。未配置语气词标签时为 `null`。
+</ResponseField>
+
+<Note>
+管理接口在业务失败时同样返回 HTTP `200`，必须以 `success` 字段判断结果。该接口自身没有业务失败分支，失败只可能来自鉴权或全局限流中间件。
+</Note>

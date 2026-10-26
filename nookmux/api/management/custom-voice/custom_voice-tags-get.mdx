@@ -1,0 +1,76 @@
+---
+title: Get Custom Voice Tags
+description: List the emotion and tone-word tags accepted in custom voice preview text.
+api: "GET /api/custom_voice/tags"
+---
+
+Returns the emotion and tone-word tags that can be used in custom voice preview text, together with the regular expressions that recognize the tags. Only the source tags (the keys of the administrator-configured redirect maps) are exposed; the upstream tags they map to are never returned, so clients always present the tags users are meant to type.
+
+Requires **User** permissions (any logged-in account). See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url 'https://your-nookmux-domain/api/custom_voice/tags' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1'
+```
+
+</RequestExample>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": {
+    "enabled": true,
+    "emotion_pattern": "<tts(?:\\s+emotion=\"([^\"]+)\")?>([\\s\\S]*?)</tts>",
+    "tone_word_pattern": "\\(([^()]+)\\)",
+    "emotion_tags": ["angry", "happy", "sad"],
+    "tone_word_tags": ["laugh", "sigh"]
+  }
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+  Whether the request succeeded.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  Error description when `success` is `false`; empty otherwise.
+</ResponseField>
+
+<ResponseField name="data.enabled" type="boolean" required>
+  Whether the MiniMax TTS enhancement master switch (model redirect, emotion and tone-word handling) is enabled. Tags and patterns are returned regardless of this flag, but they only take effect in preview text when it is `true`.
+</ResponseField>
+
+<ResponseField name="data.emotion_pattern" type="string" required>
+  Regular expression configured by the administrator that recognizes emotion tags in text. The default pattern matches `<tts emotion="...">...</tts>` with an optional `emotion` attribute.
+</ResponseField>
+
+<ResponseField name="data.tone_word_pattern" type="string" required>
+  Regular expression configured by the administrator that recognizes tone-word tags in text. The default pattern matches parenthesized content such as `(laugh)`.
+</ResponseField>
+
+<ResponseField name="data.emotion_tags" type="array">
+  Sorted source emotion tags users can type in preview text (the keys of the emotion redirect map). `null` when no emotion tags are configured.
+</ResponseField>
+
+<ResponseField name="data.tone_word_tags" type="array">
+  Sorted source tone-word tags users can type in preview text (the keys of the tone-word redirect map). `null` when no tone-word tags are configured.
+</ResponseField>
+
+<Note>
+Management endpoints return HTTP `200` even on business failures; always check the `success` field. This endpoint has no business-failure branches of its own; failures can only originate from authentication or the global rate limit middleware.
+</Note>

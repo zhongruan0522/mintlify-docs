@@ -1,0 +1,85 @@
+---
+title: Use GLM Reset Card
+description: Consume a GLM plan reset card to reset the 5-hour or weekly quota.
+api: "POST /api/channel/plan/glm/reset_cards/{id}/use"
+---
+
+Consume one quota reset card of a GLM coding plan. The channel must be a plan channel whose plan is `glm-coding-plan` or `glm-coding-plan-international`. A `FIVE_HOUR` card resets only the 5-hour quota and does not consume a weekly reset; a `WEEK` card resets the weekly quota and the 5-hour quota along with it.
+
+The upstream request is assembled by the server: `targetType` is fixed to `PERSONAL` and a UUID `requestId` is generated server-side, so clients only submit `resetType` and `recordId`. Discover available cards with [Get GLM Reset Cards](/nookmux/api/management/channel-management/channel-plan-glm-reset_cards-id-get).
+
+Requires **Admin** permissions. See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request POST \
+  --url 'https://your-nookmux-domain/api/channel/plan/glm/reset_cards/1/use' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1' \
+  --header 'Content-Type: application/json' \
+  --data '{
+  "resetType": "FIVE_HOUR",
+  "recordId": 1001
+}'
+```
+
+</RequestExample>
+
+### Path parameters
+
+<ParamField path="id" type="integer" required>
+Channel id.
+</ParamField>
+
+### Body
+
+<ParamField path="body.resetType" type="string" required>
+Reset type of the card: `FIVE_HOUR` or `WEEK`.
+</ParamField>
+
+<ParamField path="body.recordId" type="integer" required>
+Card record id, taken from the reset card list. Must be a positive integer.
+</ParamField>
+
+## Response
+
+When the upstream accepts the card, the response contains only the `success` flag. When the upstream rejects the operation (for example the requested reset count is no longer available), the response carries `success: false` with the upstream message in a `msg` field.
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+Whether the reset card was consumed.
+</ResponseField>
+
+<ResponseField name="msg" type="string">
+Present only when the upstream rejects the operation; carries the upstream message verbatim, for example `指定的重置次数不可用，请刷新后重试`. Re-fetch the card list in this case.
+</ResponseField>
+
+<Note>
+Management endpoints return HTTP `200` even on business failures; always check the `success` field. Unlike other management endpoints, an upstream business rejection is reported in a `msg` field (not `message`), and errors detected by NookMux return `success: false` with a localized `message`. The success body contains neither `data` nor `message`.
+</Note>
+
+## Error messages
+
+| Condition | message | Description |
+| --- | --- | --- |
+| Invalid parameters | `Invalid parameters` | `id` in the path is missing or not an integer |
+| Channel not found | `Channel not found` | The channel does not exist or could not be loaded |
+| Not a plan channel | `This channel is not a plan channel` | `channel_info.is_plan` is `false` |
+| Reset card use unsupported | `This channel does not support reset card query` | The channel plan is neither `glm-coding-plan` nor `glm-coding-plan-international` |
+| Invalid request parameters | `Invalid request parameters` | The JSON body is malformed, `resetType` is empty, or `recordId` is not a positive integer |
+| Channel key invalid | `The channel API key is invalid or authentication failed. Please check the key configuration` | The upstream rejected the key |
+| Reset card use failed | `Failed to use reset card: {{.Error}}` | The upstream request or response parsing failed; `{{.Error}}` carries the underlying error |

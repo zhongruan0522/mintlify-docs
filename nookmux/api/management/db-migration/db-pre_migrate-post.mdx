@@ -1,0 +1,97 @@
+---
+title: Start Pre-Migration
+description: Start an asynchronous job that copies the current databases into a target database of a different type.
+api: "POST /api/db/pre_migrate"
+---
+
+Starts an asynchronous pre-migration job that copies the main database — and optionally the log database — of the running instance into a target database of a different type, for example SQLite to MySQL or MySQL to PostgreSQL. The job runs in the background; poll `GET /api/db/pre_migrate/{id}` with the returned job ID for progress and results.
+
+The target type must differ from the source type and be one of MySQL, PostgreSQL, openGauss, DM, or KingbaseES; SQLite can only serve as the source. Unless `force` is set, the target database must be empty.
+
+Requires **Root** (super administrator) permissions. This endpoint is protected by a stricter rate limit (CriticalRateLimit). See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request POST \
+  --url 'https://your-nookmux-domain/api/db/pre_migrate' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1' \
+  --header 'Content-Type: application/json' \
+  --data '{
+  "target_dsn": "mysql://nookmux:{password}@10.0.0.8:3306/nookmux",
+  "target_log_dsn": "",
+  "include_logs": true,
+  "force": false
+}'
+```
+
+</RequestExample>
+
+### Body
+
+<ParamField path="body.target_dsn" type="string" required>
+  DSN of the target main database. Recognized schemes: `postgres://`, `postgresql://`, `opengauss://`, `mysql://`, `dm://`, and `kingbase://`. Leading and trailing whitespace is trimmed.
+</ParamField>
+
+<ParamField path="body.target_log_dsn" type="string">
+  DSN of a separate target log database; used only when `include_logs` is `true`. When empty, `target_dsn` is reused for logs. Its database type must match the target main database type.
+</ParamField>
+
+<ParamField path="body.include_logs" type="boolean" default="false">
+  Also copy request logs from the source log database to the target.
+</ParamField>
+
+<ParamField path="body.force" type="boolean" default="false">
+  Overwrite mode. When `true`, each target table is cleared before copying. When `false`, the job requires an empty target: it fails if the target `users`, `options`, `channels`, or `tokens` tables contain any rows, and likewise for a separate target log database.
+</ParamField>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": {
+    "job_id": "0f4a3c2e-1b6d-4f0a-9a1e-52c1a4b9d7e3"
+  }
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+  Whether the migration job was started.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  Error description when `success` is `false`; empty otherwise.
+</ResponseField>
+
+<ResponseField name="data" type="object" required>
+  Reference to the started job.
+
+  <Expandable title="data structure">
+    <ResponseField name="job_id" type="string" required>
+      ID of the created migration job; query it with `GET /api/db/pre_migrate/{id}`.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<Note>
+A malformed JSON body is rejected with HTTP `400` and `Invalid parameters`, unlike most management endpoints that always return HTTP `200`. All other startup failures are reported with HTTP `200`, `success: false`, and the generic message `Database error, please try again later`; the specific reason is only available in the server logs. The password inside the target DSN is masked in the audit record of this operation. Connection checks and the empty-target check run inside the background job: if they fail, this call still succeeds and the failure appears in the job status instead.
+</Note>
+
+## Error messages
+
+| Condition | Description |
+| --- | --- |
+| Invalid parameters | The JSON body is missing or malformed (HTTP `400`) |
+| Database error, please try again later | The job could not be started: `target_dsn` is empty, its scheme is not recognized, the target type equals the source type, the source or target type is unsupported (targets are limited to MySQL / PostgreSQL / openGauss / DM / KingbaseES; SQLite only as source), or another pre-migration job is still running. The exact reason is in the server logs |
+| Authentication failed | Standard authentication errors (HTTP `401`) when the caller is not a root user |

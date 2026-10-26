@@ -1,0 +1,82 @@
+---
+title: 获取个人图片/视频转URL统计
+description: 统计指定时间范围内当前用户自己账号的图片与视频转 URL 转换数量。
+api: "GET /api/data/self/media_convert_stats"
+---
+
+返回当前用户的图片与视频转换计数：调用方账号通过多模态自动转 URL 功能在查询范围内创建的各类已存储媒体资产数量。
+
+需要**用户（User）**权限。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
+
+## 请求
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url 'https://your-nookmux-domain/api/data/self/media_convert_stats?start_timestamp=1735689600&end_timestamp=1738368000' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1'
+```
+
+</RequestExample>
+
+### 查询参数
+
+<ParamField path="start_timestamp" type="integer">
+  范围起点的 Unix 时间戳（秒）。可选；省略或传 `0` 表示不设下界。
+</ParamField>
+
+<ParamField path="end_timestamp" type="integer">
+  范围终点的 Unix 时间戳（秒）。可选；省略或传 `0` 表示不设上界。与额度数据端点不同，本端点不限制查询范围的最大长度。
+</ParamField>
+
+## 响应
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": {
+    "image_count": 32,
+    "video_count": 4
+  }
+}
+```
+
+</ResponseExample>
+
+### 响应字段
+
+<ResponseField name="success" type="boolean" required>
+  查询是否成功。
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  `success` 为 `false` 时的错误描述；成功时为空字符串。
+</ResponseField>
+
+<ResponseField name="data" type="object" required>
+  所请求范围内的转换计数，限定为调用方账号。
+
+  <Expandable title="转 URL 统计结构">
+    <ResponseField name="image_count" type="integer" required>
+      范围内当前用户创建的图片类已存储资产数量。
+    </ResponseField>
+    <ResponseField name="video_count" type="integer" required>
+      范围内当前用户创建的视频类已存储资产数量。
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<Note>
+  当看板配置关闭图片/视频转URL统计功能时，端点返回 `success: true`、`message` 为 `图片/视频转URL统计功能已禁用` 且两个计数归零，而不是报错。
+</Note>
+
+## 错误说明
+
+| 条件 | 说明 |
+| --- | --- |
+| 数据库错误，请稍后重试 | 查询已存储媒体失败，详见服务端日志 |

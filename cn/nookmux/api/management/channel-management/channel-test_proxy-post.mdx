@@ -1,0 +1,89 @@
+---
+title: 测试代理
+description: 通过代理解析出口 IP，验证代理地址是否可用。
+api: "POST /api/channel/test_proxy"
+---
+
+在把代理地址保存到渠道之前先验证其可用性：接口通过给定代理向 `https://api.ipify.org` 发起 GET 请求，并返回该服务观测到的出口 IP。支持的代理协议为 `http`、`https`、`socks5` 和 `socks5h`。探测最长 15 秒，失效的代理不会长时间阻塞控制台。
+
+这是控制台渠道编辑器中的“测试代理”功能。
+
+需要**管理员（Admin）**权限。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
+
+## 请求
+
+<RequestExample>
+
+```bash cURL
+curl --request POST \
+  --url 'https://your-nookmux-domain/api/channel/test_proxy' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1' \
+  --header 'Content-Type: application/json' \
+  --data '{
+  "proxy": "http://proxy.example.com:8080"
+}'
+```
+
+</RequestExample>
+
+### 请求体
+
+<ParamField path="body.proxy" type="string">
+  要测试的代理地址，例如 `http://user:pass@proxy.example.com:8080` 或 `socks5://proxy.example.com:1080`。为空时跳过探测并返回 `status: "invalid"`。
+</ParamField>
+
+## 响应
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": {
+    "status": "success",
+    "ip": "203.0.113.7"
+  }
+}
+```
+
+</ResponseExample>
+
+### 响应字段
+
+<ResponseField name="success" type="boolean" required>
+  请求本身是否被处理。
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  `success` 为 `false` 时的错误描述；其余情况为空字符串。
+</ResponseField>
+
+<ResponseField name="data" type="object" required>
+  探测结果。
+
+  <Expandable title="data 结构">
+    <ResponseField name="status" type="string" required>
+      探测结果：`success`（代理可用且已解析出口 IP）、`invalid`（代理地址为空或协议不受支持）或 `failed`（地址格式正确但代理无法连通或 IP 服务响应异常）。
+    </ResponseField>
+    <ResponseField name="ip" type="string">
+      经代理解析出的出口 IP。仅 `status` 为 `success` 时存在。
+    </ResponseField>
+    <ResponseField name="message" type="string">
+      `invalid` 或 `failed` 结果的本地化原因。`success` 时不存在。
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<Note>
+探测失败并不会得到 `success: false`——接口本身已正常执行，结果由 `data.status` 携带。只有 JSON 请求体格式错误才会返回 `success: false`（HTTP `200`）。
+</Note>
+
+## 错误说明
+
+| 条件 | 说明 |
+| --- | --- |
+| 请求体格式不正确 | JSON 请求体格式错误 |
+| 状态 `invalid` | 代理地址为空，或协议不是 `http`/`https`/`socks5`/`socks5h` |
+| 状态 `failed` | 代理无法连通、超时，或 IP 服务返回异常响应 |

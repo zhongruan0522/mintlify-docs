@@ -1,0 +1,137 @@
+---
+title: 获取动态倍率状态
+description: 查询当前用户可见的动态倍率状态，包含当前生效倍率与背后的已启用规则。
+api: "GET /api/dynamic_ratio/status"
+---
+
+返回当前调用用户的动态倍率状态。动态倍率规则在条件（模型匹配、中继并发、星期、时间段）命中时临时覆盖分组的计费倍率。带 `group` 查询参数时响应只覆盖该分组；不传时聚合当前用户分组可用的全部分组，外加用户自身分组。
+
+需要**用户**权限。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
+
+## 请求
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url 'https://your-nookmux-domain/api/dynamic_ratio/status' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1'
+```
+
+</RequestExample>
+
+### 查询参数
+
+<ParamField path="group" type="string">
+要查询的分组。必须是当前用户分组可用的分组（含用户自身分组），否则请求以分组无权访问错误失败。不传时聚合全部可用分组外加用户自身分组。
+</ParamField>
+
+## 响应
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": {
+    "enabled": true,
+    "active_ratio": 1.5,
+    "active_group": "vip",
+    "timezone": "Asia/Shanghai",
+    "rules_count": 2,
+    "rules": [
+      {
+        "group": "vip",
+        "concurrency": 100,
+        "weekdays": "[1,2,3,4,5]",
+        "start_time": "09:00",
+        "end_time": "18:00",
+        "ratio": 1.5,
+        "priority": 0
+      },
+      {
+        "group": "default",
+        "concurrency": null,
+        "weekdays": "",
+        "start_time": "",
+        "end_time": "",
+        "ratio": 0.8,
+        "priority": 1
+      }
+    ]
+  }
+}
+```
+
+</ResponseExample>
+
+### 响应字段
+
+<ResponseField name="success" type="boolean" required>
+查询是否成功执行。
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+`success` 为 `false` 时的错误描述；成功时为空字符串。
+</ResponseField>
+
+<ResponseField name="data.enabled" type="boolean" required>
+动态倍率功能是否开启。全局开关由[设置动态倍率开关](/cn/nookmux/api/management/dynamic-ratio/dynamic_ratio-enabled-put)管理。
+</ResponseField>
+
+<ResponseField name="data.active_ratio" type="number" required>
+当前生效的倍率，计算时不区分模型：在所查分组当前命中的规则中取偏离 `1` 最远的倍率。功能关闭或当前无规则命中时保持为 `1`。
+</ResponseField>
+
+<ResponseField name="data.active_group" type="string">
+上报的 `active_ratio` 所属分组；当前无规则命中时省略。
+</ResponseField>
+
+<ResponseField name="data.timezone" type="string" required>
+时间段与星期匹配所用时区的名称，即服务端启动时区（设置了 `TZ` 环境变量时为其值，否则为系统本地时区）。
+</ResponseField>
+
+<ResponseField name="data.rules_count" type="integer" required>
+所查分组中已启用规则的数量，不论其条件当前是否命中。
+</ResponseField>
+
+<ResponseField name="data.rules" type="array of object" required>
+所查分组中的已启用规则。
+
+  <Expandable title="规则摘要结构">
+    <ResponseField name="group" type="string" required>
+    规则适用的用户分组。
+    </ResponseField>
+    <ResponseField name="concurrency" type="integer">
+    中继并发阈值；仅当当前中继并发严格大于该值时规则才命中。规则无并发条件时为 `null`。
+    </ResponseField>
+    <ResponseField name="weekdays" type="string" required>
+    星期条件，`0`-`6` 整数的 JSON 数组字符串，`0` 表示周日，例如 `"[1,2,3,4,5]"`。留空表示不限星期。跨午夜时间段中，结束时间之前的请求按前一天的星期匹配。
+    </ResponseField>
+    <ResponseField name="start_time" type="string" required>
+    每日时间段的开始时间，`timezone` 时区下的 `HH:MM`；时间段含开始、不含结束，允许跨午夜。留空表示不限时间段。
+    </ResponseField>
+    <ResponseField name="end_time" type="string" required>
+    每日时间段的结束时间，`timezone` 时区下的 `HH:MM`。留空表示不限时间段。
+    </ResponseField>
+    <ResponseField name="ratio" type="number" required>
+    规则命中时应用的计费倍率。
+    </ResponseField>
+    <ResponseField name="priority" type="integer" required>
+    多条规则同时命中时的裁决顺序，数值越小优先。由[重排动态倍率规则](/cn/nookmux/api/management/dynamic-ratio/dynamic_ratio-rules-reorder-put)维护。
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<Note>
+管理接口在业务失败时同样返回 HTTP `200`，必须以 `success` 字段判断结果。功能关闭时 `data.active_ratio` 为 `1`、`data.rules_count` 为 `0`、`data.rules` 为 `null`。
+</Note>
+
+## 错误说明
+
+| 条件 | 说明 |
+| --- | --- |
+| 分组无权访问 | `message` 为「无权访问该分组」；`group` 不是当前用户分组可用的分组 |
+| 数据库错误 | `message` 为「数据库错误，请稍后重试」；查询用户信息失败，详见服务端日志 |

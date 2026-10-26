@@ -1,0 +1,125 @@
+---
+title: Get GLM Plan Activity
+description: Retrieve the 365-day activity summary and daily token series of a GLM coding plan.
+api: "GET /api/channel/plan/glm/activity/{id}"
+---
+
+Retrieve the personal-plan activity data of a GLM coding plan: cumulative tokens, peak daily usage, usage streaks, and a daily series for a calendar heatmap. The channel must be a plan channel whose plan is `glm-coding-plan` or `glm-coding-plan-international`.
+
+The time window is fixed by the server: the last 365 days up to today 23:59:59 in the server timezone. Client-supplied time parameters are not accepted, so the 365-day semantics cannot be altered.
+
+Requires **Admin** permissions. See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url 'https://your-nookmux-domain/api/channel/plan/glm/activity/1' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1'
+```
+
+</RequestExample>
+
+### Path parameters
+
+<ParamField path="id" type="integer" required>
+Channel id.
+</ParamField>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "data": {
+    "summary": {
+      "totalTokens": 12345678,
+      "peakDailyTokens": 987654,
+      "peakDailyTokensDate": "2026-09-18",
+      "totalUsageDurationMs": 3600000.5,
+      "currentStreakDays": 12,
+      "longestStreakDays": 45
+    },
+    "series": [
+      {
+        "date": "2026-10-25",
+        "totalTokens": 150000,
+        "mcpCalls": 12
+      }
+    ]
+  }
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+Whether the request succeeded.
+</ResponseField>
+
+<ResponseField name="data" type="object" required>
+Activity data for the fixed 365-day window.
+
+<Expandable title="data structure">
+  <ResponseField name="summary" type="object">
+    Totals across the window. Omitted when the upstream returns none.
+
+    <Expandable title="summary structure">
+      <ResponseField name="totalTokens" type="integer" required>
+        Cumulative tokens used in the window.
+      </ResponseField>
+      <ResponseField name="peakDailyTokens" type="integer" required>
+        Highest single-day token usage.
+      </ResponseField>
+      <ResponseField name="peakDailyTokensDate" type="string" required>
+        Date of the peak daily usage.
+      </ResponseField>
+      <ResponseField name="totalUsageDurationMs" type="number" required>
+        Cumulative usage duration in milliseconds.
+      </ResponseField>
+      <ResponseField name="currentStreakDays" type="integer" required>
+        Current consecutive days with activity.
+      </ResponseField>
+      <ResponseField name="longestStreakDays" type="integer" required>
+        Longest consecutive days with activity in the window.
+      </ResponseField>
+    </Expandable>
+  </ResponseField>
+  <ResponseField name="series" type="object[]" required>
+    Daily entries for a calendar heatmap; an empty array when the account has no activity.
+    <Expandable title="series item structure">
+      <ResponseField name="date" type="string" required>
+        Day of the entry.
+      </ResponseField>
+      <ResponseField name="totalTokens" type="integer" required>
+        Tokens used that day.
+      </ResponseField>
+      <ResponseField name="mcpCalls" type="integer" required>
+        MCP tool calls that day.
+      </ResponseField>
+    </Expandable>
+  </ResponseField>
+</Expandable>
+</ResponseField>
+
+<Note>
+Management endpoints return HTTP `200` even on business failures; always check the `success` field. On success this endpoint returns only `success` and `data` (no `message` field); failures return `success: false` with a localized `message`.
+</Note>
+
+## Error messages
+
+| Condition | message | Description |
+| --- | --- | --- |
+| Invalid parameters | `Invalid parameters` | `id` in the path is missing or not an integer |
+| Channel not found | `Channel not found` | The channel does not exist or could not be loaded |
+| Not a plan channel | `This channel is not a plan channel` | `channel_info.is_plan` is `false` |
+| Activity query unsupported | `This channel does not support activity data query` | The channel plan is neither `glm-coding-plan` nor `glm-coding-plan-international` |
+| Channel key invalid | `The channel API key is invalid or authentication failed. Please check the key configuration` | The upstream rejected the key |
+| Activity query failed | `Activity data query failed: {{.Error}}` | The upstream request failed or reported a non-success status; `{{.Error}}` carries the underlying error |

@@ -1,0 +1,277 @@
+---
+title: 查询渠道套餐额度
+description: 从上游厂商实时查询套餐渠道的额度使用情况。
+api: "GET /api/channel/plan/quota/{id}"
+---
+
+从上游厂商实时查询套餐渠道的额度使用情况。目标渠道必须是套餐渠道（Base URL 为内置套餐地址，记录在 `channel_info.is_plan` 与 `channel_info.plan_name`）。`data` 的结构随渠道套餐而定：
+
+- `glm-coding-plan` / `glm-coding-plan-international`：聚合后的 GLM 套餐结构。
+- `kimi-coding-plan`：Kimi 上游返回的额度分层列表。
+- `minimax-coding-plan` / `minimax-coding-plan-international`：MiniMax 上游返回的额度分层列表。
+- 其他套餐名：返回 `quota_supported: false` 的占位结构，该套餐暂未实现实时额度查询。
+
+上游请求使用渠道的第一个密钥发出；配置了代理的渠道经代理访问上游。
+
+需要**管理员**权限。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
+
+## 请求
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url 'https://your-nookmux-domain/api/channel/plan/quota/1' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1'
+```
+
+</RequestExample>
+
+### 路径参数
+
+<ParamField path="id" type="integer" required>
+渠道 ID。
+</ParamField>
+
+## 响应
+
+示例为 GLM 套餐（按 Token 计费的 V2 套餐）的响应。
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "data": {
+    "plan_name": "glm-coding-plan",
+    "plan_version": "V2",
+    "is_credit_plan": false,
+    "product_level": "Pro",
+    "product_name": "GLM Coding Plan Pro",
+    "effective_date": "2026-01-01 00:00:00",
+    "expiry_date": "2027-01-01 00:00:00",
+    "auto_renew": true,
+    "token_limit": {
+      "percentage": 12,
+      "next_reset_time": "2026-10-26T12:00:00Z",
+      "status": "充裕"
+    },
+    "weekly_limit": {
+      "percentage": 35,
+      "next_reset_time": "2026-11-01T00:00:00Z",
+      "status": "适中"
+    },
+    "mcp_tool_limit": {
+      "percentage": 5,
+      "current_usage": "10/200",
+      "next_reset_time": "2026-10-26T12:00:00Z",
+      "status": "充裕",
+      "tools": [
+        {
+          "name": "联网搜索",
+          "usage": 8
+        },
+        {
+          "name": "网页读取",
+          "usage": 2
+        }
+      ]
+    }
+  }
+}
+```
+
+</ResponseExample>
+
+### 响应字段
+
+<ResponseField name="success" type="boolean" required>
+请求是否成功。
+</ResponseField>
+
+<ResponseField name="data" type="object" required>
+套餐额度数据。结构取决于渠道的 `plan_name`，见下方各变体。
+</ResponseField>
+
+<Expandable title="glm 套餐数据结构">
+
+`plan_name` 为 `glm-coding-plan` 或 `glm-coding-plan-international` 时返回。
+
+<ResponseField name="plan_name" type="string" required>
+由 NookMux 按渠道套餐填写的套餐标识：`glm-coding-plan` 或 `glm-coding-plan-international`。
+</ResponseField>
+<ResponseField name="plan_version" type="string">
+按上游额度条目推断的套餐代次：`V1`（仅 5 小时额度）、`V2`（5 小时 + 每周额度，按 Token 计费）、`V3`（按积分计费）。
+</ResponseField>
+<ResponseField name="is_credit_plan" type="boolean" required>
+是否为按积分计费的 V3 套餐。
+</ResponseField>
+<ResponseField name="product_level" type="string" required>
+按上游产品名推断的套餐档位：`Lite`、`Pro`、`Max`，无法识别时回退为 `Standard`。
+</ResponseField>
+<ResponseField name="product_name" type="string" required>
+上游产品名。
+</ResponseField>
+<ResponseField name="effective_date" type="string" required>
+当前计费周期开始时间，来自上游订阅信息。
+</ResponseField>
+<ResponseField name="expiry_date" type="string" required>
+下次续费时间，来自上游订阅信息。
+</ResponseField>
+<ResponseField name="auto_renew" type="boolean" required>
+订阅是否自动续费。
+</ResponseField>
+<ResponseField name="token_limit" type="object">
+5 小时 Token 额度。上游返回 5 小时额度条目时存在。
+
+<Expandable title="token_limit 结构">
+  <ResponseField name="percentage" type="integer" required>
+    已用百分比，0-100。
+  </ResponseField>
+  <ResponseField name="next_reset_time" type="string">
+    额度重置时间，统一规范为 RFC3339。上游未返回时省略。
+  </ResponseField>
+  <ResponseField name="status" type="string" required>
+    服务端计算的额度紧张度：`充裕`（低于 50%）、`适中`（50%-79%）、`紧张`（80% 及以上）。
+  </ResponseField>
+</Expandable>
+</ResponseField>
+<ResponseField name="weekly_limit" type="object">
+每周 Token 额度，套餐含每周额度时存在（V2 套餐）。结构与 `token_limit` 相同。
+</ResponseField>
+<ResponseField name="credit_limit" type="object">
+按积分计费的 V3 套餐的 5 小时积分额度。
+
+<Expandable title="credit_limit 结构">
+  <ResponseField name="percentage" type="integer" required>
+    已用百分比，0-100。
+  </ResponseField>
+  <ResponseField name="current_value" type="integer" required>
+    窗口内已用积分。
+  </ResponseField>
+  <ResponseField name="usage" type="integer" required>
+    窗口总积分。
+  </ResponseField>
+  <ResponseField name="next_reset_time" type="string">
+    额度重置时间，统一规范为 RFC3339。上游未返回时省略。
+  </ResponseField>
+  <ResponseField name="status" type="string" required>
+    服务端计算的额度紧张度：`充裕`、`适中` 或 `紧张`。
+  </ResponseField>
+</Expandable>
+</ResponseField>
+<ResponseField name="credit_weekly_limit" type="object">
+按积分计费的 V3 套餐的每周积分额度。结构与 `credit_limit` 相同。
+</ResponseField>
+<ResponseField name="mcp_tool_limit" type="object">
+MCP 工具额度。
+
+<Expandable title="mcp_tool_limit 结构">
+  <ResponseField name="percentage" type="integer" required>
+    已用百分比，0-100。
+  </ResponseField>
+  <ResponseField name="current_usage" type="string">
+    已用/总次数的工具调用用量，例如 `10/200`。
+  </ResponseField>
+  <ResponseField name="next_reset_time" type="string">
+    额度重置时间，统一规范为 RFC3339。上游未返回时省略。
+  </ResponseField>
+  <ResponseField name="status" type="string" required>
+    服务端计算的额度紧张度：`充裕`、`适中` 或 `紧张`。
+  </ResponseField>
+  <ResponseField name="tools" type="object[]">
+    各工具的用量。`name` 为服务端映射的展示名（`联网搜索`、`网页读取`、`开源仓库`），未映射时为上游原始 model code；`usage` 为调用次数。
+  </ResponseField>
+</Expandable>
+</ResponseField>
+
+</Expandable>
+
+<Expandable title="kimi 套餐数据结构">
+
+`plan_name` 为 `kimi-coding-plan` 时返回。
+
+<ResponseField name="plan_name" type="string" required>
+套餐标识：`kimi-coding-plan`。
+</ResponseField>
+<ResponseField name="tiers" type="object[]" required>
+套餐的额度分层列表。
+
+<Expandable title="tier 结构">
+  <ResponseField name="name" type="string" required>
+    分层标识：`five_hour` 或 `weekly_limit`。
+  </ResponseField>
+  <ResponseField name="percentage" type="integer" required>
+    已用百分比，0-100。
+  </ResponseField>
+  <ResponseField name="used" type="number" required>
+    已用量。
+  </ResponseField>
+  <ResponseField name="limit" type="number" required>
+    总量。
+  </ResponseField>
+  <ResponseField name="remaining" type="number" required>
+    剩余量。
+  </ResponseField>
+  <ResponseField name="resets_at" type="string">
+    重置时间，RFC3339 格式。上游未返回时省略。
+  </ResponseField>
+  <ResponseField name="status" type="string" required>
+    额度紧张度：`充裕`、`适中` 或 `紧张`。
+  </ResponseField>
+</Expandable>
+</ResponseField>
+<ResponseField name="credential" type="string" required>
+上游凭据状态：`valid`、`expired` 或 `error`。
+</ResponseField>
+
+</Expandable>
+
+<Expandable title="minimax 套餐数据结构">
+
+`plan_name` 为 `minimax-coding-plan` 或 `minimax-coding-plan-international` 时返回。结构与 kimi 套餐数据相同：`plan_name`、`tiers`（含 `five_hour` / `weekly_limit` 条目，字段为 `percentage`、`used`、`limit`、`remaining`、可选 `resets_at`、`status`）与 `credential`（`valid` / `expired` / `error`）。
+
+</Expandable>
+
+<Expandable title="未支持套餐数据结构">
+
+未实现实时额度查询的套餐渠道返回该结构。
+
+```json
+{
+  "plan_name": "ollama-coding-plan",
+  "quota_supported": false,
+  "channel_id": 1,
+  "channel_name": "my-plan-channel"
+}
+```
+
+<ResponseField name="plan_name" type="string" required>
+渠道的套餐标识。
+</ResponseField>
+<ResponseField name="quota_supported" type="boolean" required>
+该变体下恒为 `false`。
+</ResponseField>
+<ResponseField name="channel_id" type="integer" required>
+渠道 ID。
+</ResponseField>
+<ResponseField name="channel_name" type="string" required>
+渠道名称。
+</ResponseField>
+
+</Expandable>
+
+<Note>
+管理接口在业务失败时同样返回 HTTP `200`，必须以 `success` 字段判断结果。本端点成功时仅返回 `success` 与 `data`（不含 `message` 字段）；失败时返回 `success: false` 与本地化的 `message`。
+</Note>
+
+## 错误说明
+
+| 条件 | message 文案 | 说明 |
+| --- | --- | --- |
+| 参数错误 | `参数错误` | 路径中的 `id` 缺失或不是整数 |
+| 渠道不存在 | `渠道不存在` | 渠道不存在或加载失败 |
+| 非套餐渠道 | `该渠道不是套餐渠道` | `channel_info.is_plan` 为 `false` |
+| 渠道密钥无效 | `渠道 API Key 无效或认证失败，请检查 Key 配置` | 上游拒绝该密钥（GLM 套餐） |
+| 查询额度失败 | `查询额度失败: {{.Error}}` | 上游请求或响应解析失败；`{{.Error}}` 为底层错误详情 |

@@ -1,0 +1,98 @@
+---
+title: 获取渠道内置地址列表
+description: 列出各渠道类型在控制台中可选的内置 Base URL 预设。
+api: "GET /api/channel/builtin_urls"
+---
+
+列出各渠道类型在控制台渠道表单中可选的 Base URL 预设；表单以“预设下拉 + 自定义输入”的方式渲染。
+
+每个预设的 `value` 在选中后原样存为渠道的 `base_url`——普通站点预设取厂商官方地址，套餐预设取套餐标识；`label_key` 是渲染选项标签所用的前端 i18n key。未出现在映射中的渠道类型（Azure、自定义、AWS Bedrock、Vertex AI 等）保持自由输入，无预设。
+
+需要**管理员（Admin）**权限。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
+
+## 请求
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url 'https://your-nookmux-domain/api/channel/builtin_urls' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1'
+```
+
+</RequestExample>
+
+## 响应
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": {
+    "1": [{ "value": "https://api.openai.com", "label_key": "channels.fields.baseUrlOfficial" }],
+    "4": [
+      { "value": "http://localhost:11434", "label_key": "channels.fields.baseUrlDefault" },
+      { "value": "ollama-coding-plan", "label_key": "channels.fields.planOllamaCodingPlan" }
+    ],
+    "6": [
+      { "value": "https://api.xiaomimimo.com", "label_key": "channels.fields.baseUrlOfficial" },
+      { "value": "xiaomi-coding-plan", "label_key": "channels.fields.planXiaomiCodingPlan" },
+      { "value": "xiaomi-coding-plan-sgp", "label_key": "channels.fields.planXiaomiCodingPlanSingapore" },
+      { "value": "xiaomi-coding-plan-ams", "label_key": "channels.fields.planXiaomiCodingPlanAmsterdam" }
+    ],
+    "14": [{ "value": "https://api.anthropic.com", "label_key": "channels.fields.baseUrlOfficial" }],
+    "20": [{ "value": "https://openrouter.ai/api", "label_key": "channels.fields.baseUrlOfficial" }],
+    "24": [{ "value": "https://generativelanguage.googleapis.com", "label_key": "channels.fields.baseUrlOfficial" }],
+    "25": [
+      { "value": "https://api.moonshot.cn", "label_key": "channels.fields.baseUrlOfficial" },
+      { "value": "kimi-coding-plan", "label_key": "channels.fields.planKimiCodingPlan" }
+    ],
+    "26": [
+      { "value": "https://open.bigmodel.cn", "label_key": "channels.fields.baseUrlDomestic" },
+      { "value": "https://api.z.ai", "label_key": "channels.fields.baseUrlInternational" },
+      { "value": "glm-coding-plan", "label_key": "channels.fields.planGlmCodingPlan" },
+      { "value": "glm-coding-plan-international", "label_key": "channels.fields.planGlmCodingPlanInternational" }
+    ],
+    "35": [
+      { "value": "https://api.minimaxi.com/v1", "label_key": "channels.fields.baseUrlOfficial" },
+      { "value": "minimax-coding-plan", "label_key": "channels.fields.planMinimaxCodingPlan" },
+      { "value": "minimax-coding-plan-international", "label_key": "channels.fields.planMinimaxCodingPlanInternational" }
+    ],
+    "40": [{ "value": "https://api.siliconflow.cn", "label_key": "channels.fields.baseUrlOfficial" }],
+    "43": [{ "value": "https://api.deepseek.com", "label_key": "channels.fields.baseUrlOfficial" }],
+    "44": [{ "value": "https://ark.cn-beijing.volces.com/api/v3", "label_key": "channels.fields.baseUrlOfficial" }]
+  }
+}
+```
+
+</ResponseExample>
+
+### 响应字段
+
+<ResponseField name="success" type="boolean" required>
+  请求是否成功。
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  `success` 为 `false` 时的错误描述；成功时为空字符串。
+</ResponseField>
+
+<ResponseField name="data" type="object" required>
+  渠道类型到其 Base URL 预设列表的映射。键为渠道类型数字常量序列化后的 JSON 字符串；映射覆盖 OpenAI（`1`）、Ollama（`4`）、小米（`6`）、Anthropic（`14`）、OpenRouter（`20`）、Gemini（`24`）、Moonshot（`25`）、智谱 v4（`26`）、MiniMax（`35`）、SiliconFlow（`40`）、DeepSeek（`43`）和字节跳动（`44`）。
+
+  <Expandable title="preset 结构">
+    <ResponseField name="value" type="string" required>
+      预设值，选中后原样存为渠道的 `base_url`：普通站点为厂商官方地址，套餐预设为套餐标识。
+    </ResponseField>
+    <ResponseField name="label_key" type="string" required>
+      控制台渲染选项标签所用的前端 i18n key。
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<Note>
+本接口返回服务端构建内置的静态元数据，不发起任何上游请求，不存在业务层面的失败。
+</Note>

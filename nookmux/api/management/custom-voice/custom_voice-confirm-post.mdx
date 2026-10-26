@@ -1,0 +1,97 @@
+---
+title: Confirm Custom Voice
+description: Charge the quoted quota and activate a previewed custom voice.
+api: "POST /api/custom_voice/confirm"
+---
+
+Confirms a custom voice created through the preview endpoint. The current user's wallet is charged once for the billing model configured for the custom voice feature (same amount as the quote endpoint), and the voice record atomically transitions from `preview` to `created` with TTS access enabled (`allowed` becomes `true`). The charge is recorded in the consumption log under the billing model.
+
+Only the owner of the preview record can confirm it. A voice can be confirmed successfully only once; repeated or concurrent confirmations are rejected and any charge made for them is refunded. If activation fails after a successful charge, the charged quota is refunded.
+
+Requires **User** permissions (any logged-in account). See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request POST \
+  --url 'https://your-nookmux-domain/api/custom_voice/confirm' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1' \
+  --header 'Content-Type: application/json' \
+  --data '{
+  "voice_id": "my-custom-voice-01"
+}'
+```
+
+</RequestExample>
+
+### Body
+
+<ParamField path="body.voice_id" type="string" required>
+  Voice ID of the pending preview record previously created through the preview endpoint.
+</ParamField>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": {
+    "voice_id": "my-custom-voice-01",
+    "status": "created"
+  }
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+  Whether the voice was confirmed and activated.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  Error description when `success` is `false`; empty otherwise.
+</ResponseField>
+
+<ResponseField name="data" type="object" required>
+  The confirmation result.
+
+  <Expandable title="data structure">
+    <ResponseField name="voice_id" type="string" required>
+      The confirmed voice ID.
+    </ResponseField>
+    <ResponseField name="status" type="string" required>
+      Voice state after confirmation; `created` means the voice is active for TTS.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<Note>
+Management endpoints return HTTP `200` even on business failures; always check the `success` field. A malformed JSON body is instead rejected with HTTP `400`.
+</Note>
+
+## Error messages
+
+| Condition | Description |
+| --- | --- |
+| Invalid parameters (HTTP 400) | The JSON body is missing or malformed |
+| Voice ID cannot be empty | `voice_id` is empty after trimming |
+| Custom voice feature is disabled, please contact the administrator | The custom voice feature switch is off |
+| Billing model is not configured, please contact the administrator | The custom voice billing model ID is empty |
+| Voice validation failed, please try again later | The expired-preview cleanup failed |
+| Invalid voice ID | No record exists for `voice_id` |
+| This voice does not need confirmation or has already been processed | The record is not in the `preview` state, or a concurrent confirmation won |
+| No permission to operate this voice | The record belongs to another user |
+| The selected billing model is currently unavailable, please contact the administrator | No pricing exists for the billing model (fail closed, never free) |
+| The price of the selected billing model is invalid, please contact the administrator | The computed quota is not positive |
+| Insufficient quota, please top up and try again | The user's wallet quota is lower than the confirmation charge |
+| Failed to query quota, please try again later | Reading the user's quota failed |
+| Failed to charge quota, please try again later | Deducting the confirmation quota failed |
+| Failed to activate the voice, the fee has been refunded | The preview-to-created transition failed; the charge was refunded |

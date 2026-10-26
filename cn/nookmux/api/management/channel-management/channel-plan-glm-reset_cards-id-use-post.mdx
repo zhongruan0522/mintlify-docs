@@ -1,0 +1,85 @@
+---
+title: 使用 GLM 重置卡
+description: 消费一张 GLM 套餐重置卡，重置 5 小时或每周额度。
+api: "POST /api/channel/plan/glm/reset_cards/{id}/use"
+---
+
+消费一张 GLM 套餐的额度重置卡。渠道必须是套餐为 `glm-coding-plan` 或 `glm-coding-plan-international` 的套餐渠道。`FIVE_HOUR` 卡仅重置 5 小时额度，不消耗每周重置次数；`WEEK` 卡重置每周额度，同时重置 5 小时额度。
+
+上游请求由服务端组装：`targetType` 固定为 `PERSONAL`，`requestId` 由服务端生成 UUID 注入，客户端只需提交 `resetType` 与 `recordId`。可用卡片通过[查询 GLM 重置卡列表](/cn/nookmux/api/management/channel-management/channel-plan-glm-reset_cards-id-get)获取。
+
+需要**管理员**权限。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
+
+## 请求
+
+<RequestExample>
+
+```bash cURL
+curl --request POST \
+  --url 'https://your-nookmux-domain/api/channel/plan/glm/reset_cards/1/use' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1' \
+  --header 'Content-Type: application/json' \
+  --data '{
+  "resetType": "FIVE_HOUR",
+  "recordId": 1001
+}'
+```
+
+</RequestExample>
+
+### 路径参数
+
+<ParamField path="id" type="integer" required>
+渠道 ID。
+</ParamField>
+
+### 请求体
+
+<ParamField path="body.resetType" type="string" required>
+重置卡类型：`FIVE_HOUR` 或 `WEEK`。
+</ParamField>
+
+<ParamField path="body.recordId" type="integer" required>
+卡记录 ID，取自重置卡列表。必须为正整数。
+</ParamField>
+
+## 响应
+
+上游接受该卡时，响应仅含 `success` 标志。上游拒绝该操作时（例如指定的重置次数已不可用），响应为 `success: false`，并在 `msg` 字段携带上游消息。
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true
+}
+```
+
+</ResponseExample>
+
+### 响应字段
+
+<ResponseField name="success" type="boolean" required>
+重置卡是否使用成功。
+</ResponseField>
+
+<ResponseField name="msg" type="string">
+仅在上游拒绝该操作时存在；原样携带上游消息，例如 `指定的重置次数不可用，请刷新后重试`。此时应重新拉取卡列表。
+</ResponseField>
+
+<Note>
+管理接口在业务失败时同样返回 HTTP `200`，必须以 `success` 字段判断结果。与其他管理端点不同，上游业务拒绝通过 `msg` 字段（而非 `message`）上报，NookMux 侧检测到的错误则返回 `success: false` 与本地化的 `message`。成功响应不含 `data` 与 `message`。
+</Note>
+
+## 错误说明
+
+| 条件 | message 文案 | 说明 |
+| --- | --- | --- |
+| 参数错误 | `参数错误` | 路径中的 `id` 缺失或不是整数 |
+| 渠道不存在 | `渠道不存在` | 渠道不存在或加载失败 |
+| 非套餐渠道 | `该渠道不是套餐渠道` | `channel_info.is_plan` 为 `false` |
+| 不支持重置卡查询 | `该渠道不支持重置卡查询` | 渠道套餐不是 `glm-coding-plan` 或 `glm-coding-plan-international` |
+| 请求参数无效 | `请求参数无效` | JSON 请求体格式错误、`resetType` 为空或 `recordId` 不是正整数 |
+| 渠道密钥无效 | `渠道 API Key 无效或认证失败，请检查 Key 配置` | 上游拒绝该密钥 |
+| 使用重置卡失败 | `使用重置卡失败: {{.Error}}` | 上游请求或响应解析失败；`{{.Error}}` 为底层错误详情 |

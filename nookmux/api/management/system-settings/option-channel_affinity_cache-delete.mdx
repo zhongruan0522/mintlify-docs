@@ -1,0 +1,82 @@
+---
+title: Clear Channel Affinity Cache
+description: Delete all channel affinity cache entries, or only those of one rule.
+api: "DELETE /api/option/channel_affinity_cache"
+---
+
+Deletes channel affinity cache entries: either every entry at once, or only the entries belonging to one affinity rule (rules key their entries by rule name only when `include_rule_name` is enabled). The number of deleted entries is returned, and the action is recorded in the admin audit log as an option delete.
+
+Requires **Root** (super administrator) permissions. See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request DELETE \
+  --url 'https://your-nookmux-domain/api/option/channel_affinity_cache?all=true' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1'
+```
+
+</RequestExample>
+
+### Query parameters
+
+<ParamField path="all" type="string" default="">
+  Set to `true` to delete every entry regardless of rule. When set, `rule_name` is ignored.
+</ParamField>
+
+<ParamField path="rule_name" type="string">
+  Name of the affinity rule whose entries should be deleted; used when `all` is not `true`. Exactly one of `all=true` or `rule_name` must be provided, otherwise the request is rejected.
+</ParamField>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": {
+    "deleted": 128
+  }
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+  Whether the entries were deleted.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  Error description when `success` is `false`; empty otherwise.
+</ResponseField>
+
+<ResponseField name="data" type="object" required>
+  Deletion summary.
+
+  <Expandable title="data structure">
+    <ResponseField name="deleted" type="integer" required>
+      Number of cache entries that were deleted.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<Note>
+  Clearing by rule requires the rule to exist and to enable `include_rule_name`; rules without that flag do not key their entries by rule name and cannot be cleared selectively. All failures here are reported with HTTP `400`, unlike the usual HTTP `200` + `success: false` convention of most management endpoints.
+</Note>
+
+## Error messages
+
+| Condition | Description |
+| --- | --- |
+| Missing parameter: rule_name, or use all=true to clear all | HTTP `400`; neither `all=true` nor `rule_name` was provided |
+| Channel affinity setting is not initialized | HTTP `400`; the channel affinity setting is unavailable |
+| Unknown rule name | HTTP `400`; `rule_name` matches no configured rule |
+| include_rule_name is not enabled for this rule | HTTP `400`; the matched rule does not key entries by rule name, so its entries cannot be cleared selectively |
+| Cache backend error | HTTP `400`; deleting from the cache failed; the raw error text is returned in `message`, see server logs |

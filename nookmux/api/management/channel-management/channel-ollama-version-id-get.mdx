@@ -1,0 +1,74 @@
+---
+title: Get Ollama Version
+description: Query the Ollama server version behind a channel.
+api: "GET /api/channel/ollama/version/{id}"
+---
+
+Query the version of the Ollama server behind a channel. Only channels of type Ollama (`4`) are accepted.
+
+The version is read from the channel's upstream `/api/version` endpoint, with a 10-second timeout. The upstream call goes through the proxy configured on the channel (settings `proxy`) and uses the first key of a multi-key channel. The channel's `base_url` overrides the built-in default (`http://localhost:11434`) when set.
+
+Requires **Admin** permissions. See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url 'https://your-nookmux-domain/api/channel/ollama/version/1' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1'
+```
+
+</RequestExample>
+
+### Path parameters
+
+<ParamField path="id" type="integer" required>
+  Id of the Ollama channel to query.
+</ParamField>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "data": {
+    "version": "0.12.6"
+  }
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+  Whether the version was fetched.
+</ResponseField>
+
+<ResponseField name="data" type="object" required>
+  The version info returned by the Ollama server.
+
+  <Expandable title="data structure">
+    <ResponseField name="version" type="string" required>
+      Version string reported by the Ollama server, for example `0.12.6`.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<Note>
+Failures before the upstream call (malformed id, unknown channel, non-Ollama type) are reported with real HTTP status codes (`400`, `404`), while a failed version request itself returns HTTP `200` with `success: false` and a localized `message`. The success response does not include a `message` field.
+</Note>
+
+## Error messages
+
+| Condition | Description |
+| --- | --- |
+| Invalid ID | HTTP 400 — `id` in the path is not an integer |
+| Channel not found | HTTP 404 — no channel exists with the given `id` |
+| Ollama channels only | HTTP 400 — the channel type is not Ollama |
+| Failed to fetch Ollama version | HTTP 200 with `success: false` — the version request failed or returned no version |

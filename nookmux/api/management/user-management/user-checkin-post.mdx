@@ -1,0 +1,76 @@
+---
+title: Perform Check-in
+description: Check in once for today and receive a random quota reward.
+api: "POST /api/user/checkin"
+---
+
+Performs the daily check-in for the user making the request. On success the user is granted a random quota reward between the configured `min_quota` and `max_quota` (inclusive), and the check-in record is created for today. Each user can check in at most once per day.
+
+Requires **User** permission (any logged-in user). See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
+
+<Note>
+When Cloudflare Turnstile verification is enabled server-side, this endpoint is guarded by it: pass a valid Turnstile token in the `turnstile` query parameter (for example `POST /api/user/checkin?turnstile={token}`), or reuse a session that has already passed the check. Requests without a valid token are rejected before the check-in is attempted.
+</Note>
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request POST \
+  --url 'https://your-nookmux-domain/api/user/checkin' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 2'
+```
+
+</RequestExample>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "Check-in successful",
+  "data": {
+    "quota_awarded": 6500,
+    "checkin_date": "2026-10-26"
+  }
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+Whether the check-in succeeded.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+Localized success message; error description when `success` is `false`.
+</ResponseField>
+
+<ResponseField name="data" type="object" required>
+Check-in result.
+
+<Expandable title="data structure">
+  <ParamField path="quota_awarded" type="integer" required>
+    Quota granted by this check-in, drawn uniformly from `[min_quota, max_quota]` as returned by `GET /api/user/checkin`.
+  </ParamField>
+  <ParamField path="checkin_date" type="string" required>
+    Date the check-in was recorded for, in `YYYY-MM-DD` format.
+  </ParamField>
+</Expandable>
+</ResponseField>
+
+## Error messages
+
+| Condition | Description |
+| --- | --- |
+| Check-in is disabled | The check-in feature is disabled server-side |
+| Already checked in today | The user has already checked in today; the message is a fixed Chinese string `今日已签到` |
+| Check-in failed | The check-in record could not be created or the quota could not be granted; the message is a fixed Chinese string (`签到失败，请稍后重试` or `签到失败：更新额度出错`), see server logs |
+| Turnstile token missing | Turnstile is enabled and no `turnstile` query parameter was provided; the message is a fixed Chinese string `Turnstile token 为空` |
+| Turnstile verification failed | The Turnstile token was rejected by Cloudflare; the message is a fixed Chinese string `Turnstile 校验失败，请刷新重试！` |

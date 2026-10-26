@@ -1,0 +1,115 @@
+---
+title: 获取用户分析数据
+description: 查询按用户分组的预聚合用量看板，供用户分析图表使用。
+api: "GET /api/data/users"
+---
+
+返回按用户分组的预聚合看板数据，供用户分析图表使用。数据行在整个部署范围内按 `username` 与小时时间桶聚合所有模型。底层 `quota_data` 表由请求日志周期性汇总落库，因此最近一段用量可能有仪表台配置中配额数据刷新间隔的延迟。
+
+需要**管理员（Admin）**权限。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
+
+## 请求
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url 'https://your-nookmux-domain/api/data/users?start_timestamp=1735689600&end_timestamp=1738368000' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1'
+```
+
+</RequestExample>
+
+### 查询参数
+
+<ParamField path="start_timestamp" type="integer">
+  范围起点的 Unix 时间戳（秒），与小时桶时间戳比较。可选；省略或传 `0` 表示不设下界。
+</ParamField>
+
+<ParamField path="end_timestamp" type="integer">
+  范围终点的 Unix 时间戳（秒）。可选；省略或传 `0` 表示不设上界。
+</ParamField>
+
+## 响应
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": [
+    {
+      "id": 0,
+      "user_id": 0,
+      "username": "alice",
+      "model_name": "",
+      "created_at": 1769472000,
+      "token_used": 12345,
+      "count": 10,
+      "fail_count": 1,
+      "quota": 5000
+    }
+  ]
+}
+```
+
+</ResponseExample>
+
+### 响应字段
+
+<ResponseField name="success" type="boolean" required>
+  查询是否成功。
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  `success` 为 `false` 时的错误描述；成功时为空字符串。
+</ResponseField>
+
+<ResponseField name="data" type="array" required>
+  聚合后的用量行，每个 `username` 与小时级 `created_at` 桶一行。
+
+  <Expandable title="用户分析行结构">
+    <ResponseField name="username" type="string" required>
+      该行聚合的用户名。
+    </ResponseField>
+    <ResponseField name="created_at" type="integer" required>
+      小时桶的 Unix 时间戳（秒）。
+    </ResponseField>
+    <ResponseField name="count" type="integer" required>
+      桶内成功请求次数。
+    </ResponseField>
+    <ResponseField name="fail_count" type="integer" required>
+      桶内失败请求次数。
+    </ResponseField>
+    <ResponseField name="token_used" type="integer" required>
+      桶内消耗的总 token 数。
+    </ResponseField>
+    <ResponseField name="quota" type="integer" required>
+      桶内消耗的总额度。
+    </ResponseField>
+    <ResponseField name="id" type="integer" required>
+      恒为 `0`：数据行为聚合结果，不填充行标识。
+    </ResponseField>
+    <ResponseField name="user_id" type="integer" required>
+      恒为 `0`：本端点按用户名而非用户 ID 分组。
+    </ResponseField>
+    <ResponseField name="model_name" type="string" required>
+      恒为空字符串：本端点跨所有模型聚合。
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<Note>
+  当看板配置关闭用户分析功能时，端点返回 `success: true`、`message` 为 `用户分析功能已禁用` 且 `data` 为空数组，而不是报错。两个时间戳都提供时，范围不得超过配置的最大查询窗口（默认 31 天）；拒绝提示文案固定，不随配置变化。
+
+  结果来自按时间窗口的快照缓存，每个窗口最多每 `user_analytics_refresh_interval` 秒（默认 3600 秒，下限 60 秒）刷新一次；对同一窗口重新计算的数据要等缓存过期后才会体现。
+</Note>
+
+## 错误说明
+
+| 条件 | 说明 |
+| --- | --- |
+| 时间跨度不能超过 1 个月 | `end_timestamp - start_timestamp` 超过配置的最大查询窗口 |
+| 数据库错误，请稍后重试 | 查询 `quota_data` 失败，详见服务端日志 |

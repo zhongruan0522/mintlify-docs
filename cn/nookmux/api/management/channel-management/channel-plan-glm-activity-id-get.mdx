@@ -1,0 +1,125 @@
+---
+title: 查询 GLM 套餐活跃数据
+description: 查询 GLM 套餐近 365 天的活跃汇总与逐日 Token 序列。
+api: "GET /api/channel/plan/glm/activity/{id}"
+---
+
+查询 GLM 个人套餐的活跃数据：累计 Token、峰值日用量、连续使用天数，以及供日历热力图消费的逐日序列。渠道必须是套餐为 `glm-coding-plan` 或 `glm-coding-plan-international` 的套餐渠道。
+
+时间窗由服务端固定为服务器时区「今天 23:59:59 往前推 365 天」，不接受客户端传时间参数，365 天语义无法被更改。
+
+需要**管理员**权限。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
+
+## 请求
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url 'https://your-nookmux-domain/api/channel/plan/glm/activity/1' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1'
+```
+
+</RequestExample>
+
+### 路径参数
+
+<ParamField path="id" type="integer" required>
+渠道 ID。
+</ParamField>
+
+## 响应
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "data": {
+    "summary": {
+      "totalTokens": 12345678,
+      "peakDailyTokens": 987654,
+      "peakDailyTokensDate": "2026-09-18",
+      "totalUsageDurationMs": 3600000.5,
+      "currentStreakDays": 12,
+      "longestStreakDays": 45
+    },
+    "series": [
+      {
+        "date": "2026-10-25",
+        "totalTokens": 150000,
+        "mcpCalls": 12
+      }
+    ]
+  }
+}
+```
+
+</ResponseExample>
+
+### 响应字段
+
+<ResponseField name="success" type="boolean" required>
+请求是否成功。
+</ResponseField>
+
+<ResponseField name="data" type="object" required>
+固定 365 天窗口内的活跃数据。
+
+<Expandable title="data 结构">
+  <ResponseField name="summary" type="object">
+    窗口内的汇总数据。上游未返回时省略。
+
+    <Expandable title="summary 结构">
+      <ResponseField name="totalTokens" type="integer" required>
+        窗口内累计使用的 Token 数。
+      </ResponseField>
+      <ResponseField name="peakDailyTokens" type="integer" required>
+        单日最高 Token 用量。
+      </ResponseField>
+      <ResponseField name="peakDailyTokensDate" type="string" required>
+        峰值日用量对应的日期。
+      </ResponseField>
+      <ResponseField name="totalUsageDurationMs" type="number" required>
+        累计使用时长，毫秒。
+      </ResponseField>
+      <ResponseField name="currentStreakDays" type="integer" required>
+        当前连续活跃天数。
+      </ResponseField>
+      <ResponseField name="longestStreakDays" type="integer" required>
+        窗口内最长连续活跃天数。
+      </ResponseField>
+    </Expandable>
+  </ResponseField>
+  <ResponseField name="series" type="object[]" required>
+    供日历热力图消费的逐日条目；账号无活跃数据时为空数组。
+    <Expandable title="series 条目结构">
+      <ResponseField name="date" type="string" required>
+        条目对应的日期。
+      </ResponseField>
+      <ResponseField name="totalTokens" type="integer" required>
+        当日使用的 Token 数。
+      </ResponseField>
+      <ResponseField name="mcpCalls" type="integer" required>
+        当日 MCP 工具调用次数。
+      </ResponseField>
+    </Expandable>
+  </ResponseField>
+</Expandable>
+</ResponseField>
+
+<Note>
+管理接口在业务失败时同样返回 HTTP `200`，必须以 `success` 字段判断结果。本端点成功时仅返回 `success` 与 `data`（不含 `message` 字段）；失败时返回 `success: false` 与本地化的 `message`。
+</Note>
+
+## 错误说明
+
+| 条件 | message 文案 | 说明 |
+| --- | --- | --- |
+| 参数错误 | `参数错误` | 路径中的 `id` 缺失或不是整数 |
+| 渠道不存在 | `渠道不存在` | 渠道不存在或加载失败 |
+| 非套餐渠道 | `该渠道不是套餐渠道` | `channel_info.is_plan` 为 `false` |
+| 不支持活跃数据查询 | `该渠道不支持活跃数据查询` | 渠道套餐不是 `glm-coding-plan` 或 `glm-coding-plan-international` |
+| 渠道密钥无效 | `渠道 API Key 无效或认证失败，请检查 Key 配置` | 上游拒绝该密钥 |
+| 查询活跃数据失败 | `查询活跃数据失败: {{.Error}}` | 上游请求失败或返回非成功状态；`{{.Error}}` 为底层错误详情 |

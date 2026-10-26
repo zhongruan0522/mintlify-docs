@@ -1,0 +1,82 @@
+---
+title: 清空渠道亲和缓存
+description: 清空全部渠道亲和缓存条目，或只清空某个规则的条目。
+api: "DELETE /api/option/channel_affinity_cache"
+---
+
+删除渠道亲和缓存条目：一次性删除全部条目，或只删除属于某个亲和规则的条目（规则只有在启用 `include_rule_name` 时才会把规则名编入缓存键）。返回删除的条目数，该操作以选项删除类型记入管理员审计日志。
+
+需要**超级管理员（Root）**权限。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
+
+## 请求
+
+<RequestExample>
+
+```bash cURL
+curl --request DELETE \
+  --url 'https://your-nookmux-domain/api/option/channel_affinity_cache?all=true' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1'
+```
+
+</RequestExample>
+
+### 查询参数
+
+<ParamField path="all" type="string" default="">
+  设为 `true` 时删除全部条目，不区分规则。设置后忽略 `rule_name`。
+</ParamField>
+
+<ParamField path="rule_name" type="string">
+  要清空其条目的亲和规则名；在 `all` 不为 `true` 时使用。必须提供 `all=true` 或 `rule_name` 二者之一，否则请求被拒绝。
+</ParamField>
+
+## 响应
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": {
+    "deleted": 128
+  }
+}
+```
+
+</ResponseExample>
+
+### 响应字段
+
+<ResponseField name="success" type="boolean" required>
+  条目是否删除成功。
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  `success` 为 `false` 时的错误描述；成功时为空字符串。
+</ResponseField>
+
+<ResponseField name="data" type="object" required>
+  删除结果摘要。
+
+  <Expandable title="data 结构">
+    <ResponseField name="deleted" type="integer" required>
+      被删除的缓存条目数。
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<Note>
+  按规则清空要求规则存在且启用了 `include_rule_name`；未启用该开关的规则不会把规则名编入缓存键，因此无法按规则选择性清空。本端点的所有失败均以 HTTP `400` 返回，不同于多数管理接口的 HTTP `200` 加 `success: false` 约定。
+</Note>
+
+## 错误说明
+
+| 条件 | 说明 |
+| --- | --- |
+| 缺少参数：rule_name，或使用 all=true 清空全部 | HTTP `400`；既未提供 `all=true` 也未提供 `rule_name` |
+| 渠道亲和性设置未初始化 | HTTP `400`；渠道亲和设置不可用 |
+| 未知规则名称 | HTTP `400`；`rule_name` 不匹配任何已配置规则 |
+| 该规则未启用 include_rule_name，无法按规则清空缓存 | HTTP `400`；命中的规则未把规则名编入缓存键，无法按规则选择性清空 |
+| 缓存后端错误 | HTTP `400`；从缓存删除条目失败；`message` 为原始错误文本，详见服务端日志 |

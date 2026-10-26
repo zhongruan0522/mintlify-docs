@@ -1,0 +1,135 @@
+---
+title: 创建定制音色试听
+description: 上传音频样本，上游克隆音色并生成试听音频。
+api: "POST /api/custom_voice/preview"
+---
+
+提交音频样本与目标音色 ID 进行音色克隆。NookMux 将文件转发到定制音色功能配置的 MiniMax 渠道，调用上游克隆接口并返回生成的试听音频。成功后为当前用户创建一条 `preview`（试听中）类型的音色记录；音色需经确认接口确认（并扣费）后才可用于 TTS。
+
+计费说明：提供试听文本时，试听按所选模型以正常 TTS 口径计费（优先按模型价格，否则按每千 token 倍率折算），并乘以定制音色分组配置的分组倍率（配置了动态倍率时一并乘入）。无试听文本时不产生 TTS 计费。上游失败时不扣费；上游成功但音色记录保存失败时，试听扣费会退还。
+
+需要**用户（User）**权限（任意已登录账号）。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
+
+## 请求
+
+<RequestExample>
+
+```bash cURL
+curl --request POST \
+  --url 'https://your-nookmux-domain/api/custom_voice/preview' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1' \
+  --form 'file=@/path/to/voice-sample.mp3' \
+  --form 'voice_id=my-custom-voice-01' \
+  --form 'model=tts-3-turbo' \
+  --form 'text=Hello, this is my cloned voice.' \
+  --form 'need_noise_reduction=true' \
+  --form 'need_volume_normalization=false'
+```
+
+</RequestExample>
+
+### 请求体
+
+请求以 `multipart/form-data` 提交，每个字段是一个表单 part。
+
+<ParamField path="body.file" type="file" required>
+  用于克隆的音频样本。必须是 `.mp3`、`.m4a` 或 `.wav` 文件，非空且不超过 20 MB。
+</ParamField>
+
+<ParamField path="body.voice_id" type="string" required>
+  要创建的音色 ID，长度 8–256 字符。必须以字母开头，只含字母、数字、下划线和连字符，且不能以下划线或连字符结尾。已存在的 ID 会被拒绝。
+</ParamField>
+
+<ParamField path="body.model" type="string">
+  用于合成试听文本的 TTS 模型；`text` 非空时必填。模型名会先经 MiniMax 模型重定向表映射后再发往上游。
+</ParamField>
+
+<ParamField path="body.text" type="string">
+  用克隆音色合成的试听文本，最长 2000 字符。文本中的情绪与语气词标签按配置的 TTS 策略识别并应用。省略时克隆请求不携带试听文本，也不产生 TTS 计费。
+</ParamField>
+
+<ParamField path="body.need_noise_reduction" type="string" default="false">
+  字面字符串 `true` 表示克隆时对音频样本启用降噪；其他取值或省略均视为关闭。
+</ParamField>
+
+<ParamField path="body.need_volume_normalization" type="string" default="false">
+  字面字符串 `true` 表示克隆时对音频样本启用音量归一化；其他取值或省略均视为关闭。
+</ParamField>
+
+## 响应
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": {
+    "voice_id": "my-custom-voice-01",
+    "demo_audio": "https://cdn.example.com/voice/demo_audio.mp3",
+    "file_id": "1748543921995",
+    "record_id": 128
+  }
+}
+```
+
+</ResponseExample>
+
+### 响应字段
+
+<ResponseField name="success" type="boolean" required>
+  试听是否创建成功。
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  `success` 为 `false` 时的错误描述；成功时为空字符串。
+</ResponseField>
+
+<ResponseField name="data" type="object" required>
+  试听结果。
+
+  <Expandable title="data 结构">
+    <ResponseField name="voice_id" type="string" required>
+      创建的音色 ID。
+    </ResponseField>
+    <ResponseField name="demo_audio" type="string" required>
+      上游返回的试听音频 URL。
+    </ResponseField>
+    <ResponseField name="file_id" type="string" required>
+      上传样本在上游的文件 ID；上游数字 ID 以字符串形式返回。
+    </ResponseField>
+    <ResponseField name="record_id" type="integer" required>
+      创建的 `preview` 音色记录的主键。
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<Note>
+管理接口在业务失败时同样返回 HTTP `200`，必须以 `success` 字段判断结果。超过 7 天未确认的试听记录会在查重前被自动清理，其音色 ID 可被重新使用。
+</Note>
+
+## 错误说明
+
+| 条件 | 说明 |
+| --- | --- |
+| 请上传音频文件 | 缺少 `file` 表单 part |
+| 音频文件为空 | 上传文件大小为 0 |
+| 音频文件过大，请压缩到 20MB 以内 | 上传文件超过 20 MB |
+| 仅支持 mp3、m4a、wav 格式 | 文件扩展名不是 `.mp3`、`.m4a` 或 `.wav` |
+| 音色ID不合规 | `voice_id` 未通过格式校验或已存在（重复统一按不合规提示，不暴露重复） |
+| 试听文本过长，最多 2000 字 | `text` 超过 2000 字符 |
+| 定制音色功能未开启，请联系管理员 | 定制音色功能开关未开启 |
+| 未找到可用的渠道，请联系管理员 | 定制音色分组下没有启用中的 MiniMax 渠道 |
+| 渠道凭证缺失，请联系管理员 | 解析到的渠道未配置密钥 |
+| 音色校验失败，请稍后重试 | 查重或过期试听清理失败 |
+| 试听模型未配置，请联系管理员 | `text` 非空但 `model` 为空 |
+| 试听计费模型暂不可用，请联系管理员 | 所选模型无计费配置（fail closed，绝不免费） |
+| 试听计费模型价格无效，请联系管理员 | 计算出的试听额度不为正数 |
+| 额度不足，请充值后再试 | 用户钱包额度低于试听扣费 |
+| 额度查询失败，请稍后重试 | 读取用户额度失败 |
+| 扣费失败，请稍后重试 | 扣减试听额度失败 |
+| 音色记录保存失败，请稍后重试 | 试听记录落库失败，试听扣费已退还 |
+| 上游服务暂不可用，请稍后重试 | 上游请求失败或返回错误 |
+| 上游服务繁忙，请稍后重试 | 上游返回 HTTP 5xx |
+| 音色处理失败，请稍后重试 | 上游拒绝请求；可能附带简短的上游摘要 |

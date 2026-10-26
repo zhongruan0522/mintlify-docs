@@ -1,0 +1,128 @@
+---
+title: 获取所有动态倍率规则
+description: 按优先级顺序列出全部动态倍率规则，包含已停用的规则。
+api: "GET /api/dynamic_ratio/rules"
+---
+
+返回全部动态倍率规则，按 `priority` 升序、再按 `id` 升序排列。每条规则描述计费时何时覆盖分组计费倍率：匹配的模型、可选的中继并发阈值、星期与时间段条件，以及命中时应用的倍率。只有 `enable` 为 `true` 的规则参与匹配；运行时规则缓存在每次新增、修改、删除或重排后立即刷新。
+
+需要**管理员**权限。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
+
+## 请求
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url 'https://your-nookmux-domain/api/dynamic_ratio/rules' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1'
+```
+
+</RequestExample>
+
+## 响应
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": [
+    {
+      "id": 1,
+      "enable": true,
+      "group": "vip",
+      "models": "[\"gpt-4o\",\"claude-*\"]",
+      "concurrency": 100,
+      "weekdays": "[1,2,3,4,5]",
+      "start_time": "09:00",
+      "end_time": "18:00",
+      "ratio": 1.5,
+      "priority": 0,
+      "created_at": 1718100000,
+      "updated_at": 1718100000
+    },
+    {
+      "id": 2,
+      "enable": true,
+      "group": "default",
+      "models": "",
+      "concurrency": null,
+      "weekdays": "",
+      "start_time": "",
+      "end_time": "",
+      "ratio": 0.8,
+      "priority": 1,
+      "created_at": 1718186400,
+      "updated_at": 1718186400
+    }
+  ]
+}
+```
+
+</ResponseExample>
+
+### 响应字段
+
+<ResponseField name="success" type="boolean" required>
+查询是否成功执行。
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+`success` 为 `false` 时的错误描述；成功时为空字符串。
+</ResponseField>
+
+<ResponseField name="data" type="array of object" required>
+全部动态倍率规则，包含已停用的，按 `priority` 升序、再按 `id` 升序排列。
+
+  <Expandable title="规则结构">
+    <ResponseField name="id" type="integer" required>
+    规则 ID。
+    </ResponseField>
+    <ResponseField name="enable" type="boolean" required>
+    规则是否参与匹配。停用的规则保留在列表中，但不会进入运行时规则缓存。
+    </ResponseField>
+    <ResponseField name="group" type="string" required>
+    规则适用的用户分组；必须存在于分组倍率配置中。
+    </ResponseField>
+    <ResponseField name="models" type="string" required>
+    模型匹配模式，JSON 数组字符串，例如 `"[\"gpt-4o\",\"claude-*\"]"`。模式支持 `*` 通配符：精确名称、尾部 `*` 前缀匹配（如 `gpt-4*`）、头部 `*` 后缀匹配（如 `*-preview`）、单独的 `*` 匹配全部模型。留空表示匹配所有模型。
+    </ResponseField>
+    <ResponseField name="concurrency" type="integer">
+    中继并发阈值；仅当当前中继并发严格大于该值时规则才命中。规则无并发条件时为 `null`。
+    </ResponseField>
+    <ResponseField name="weekdays" type="string" required>
+    星期条件，`0`-`6` 整数的 JSON 数组字符串，`0` 表示周日，例如 `"[1,2,3,4,5]"`。留空表示不限星期。
+    </ResponseField>
+    <ResponseField name="start_time" type="string" required>
+    每日时间段的开始时间，服务端启动时区下的 `HH:MM`；时间段含开始、不含结束，允许跨午夜。必须与 `end_time` 同时设置或同时留空；留空表示不限时间段。
+    </ResponseField>
+    <ResponseField name="end_time" type="string" required>
+    每日时间段的结束时间，服务端启动时区下的 `HH:MM`。留空表示不限时间段。
+    </ResponseField>
+    <ResponseField name="ratio" type="number" required>
+    规则命中时应用的计费倍率；必须大于 `0`。
+    </ResponseField>
+    <ResponseField name="priority" type="integer" required>
+    多条规则同时命中时的裁决顺序，数值越小优先。由[重排动态倍率规则](/cn/nookmux/api/management/dynamic-ratio/dynamic_ratio-rules-reorder-put)维护。
+    </ResponseField>
+    <ResponseField name="created_at" type="integer" required>
+    规则创建时间的 Unix 时间戳（秒）。
+    </ResponseField>
+    <ResponseField name="updated_at" type="integer" required>
+    最近一次更新的 Unix 时间戳（秒）。
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<Note>
+管理接口在业务失败时同样返回 HTTP `200`，必须以 `success` 字段判断结果。多条规则同时命中一个请求时：带模型条件的规则优先于不带模型条件的；再比较并发条件，带并发条件的优先；再取并发超出量最小者；仍相同则 `priority` 更小者优先，最后 `id` 更小者优先。
+</Note>
+
+## 错误说明
+
+| 条件 | 说明 |
+| --- | --- |
+| 数据库错误 | `message` 为「数据库错误，请稍后重试」；查询规则列表失败，详见服务端日志 |

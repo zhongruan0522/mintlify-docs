@@ -1,0 +1,221 @@
+---
+title: 获取性能统计
+description: 获取网关进程的运行时性能快照，涵盖缓存计数、内存、磁盘缓存目录、磁盘空间与生效的性能配置。
+api: "GET /api/performance/stats"
+---
+
+返回当前 NookMux 进程的性能快照：磁盘缓存与内存缓冲计数器、Go 运行时内存统计、磁盘缓存目录内容、其所在卷的剩余空间，以及当前生效的性能配置。
+
+需要**超级管理员（Root）**权限。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
+
+## 请求
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url 'https://your-nookmux-domain/api/performance/stats' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1'
+```
+
+</RequestExample>
+
+## 响应
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "data": {
+    "cache_stats": {
+      "active_disk_files": 3,
+      "current_disk_usage_bytes": 18874368,
+      "active_memory_buffers": 12,
+      "current_memory_usage_bytes": 104857600,
+      "disk_cache_hits": 1520,
+      "memory_cache_hits": 8934,
+      "disk_cache_max_bytes": 1073741824,
+      "disk_cache_threshold_bytes": 10485760
+    },
+    "memory_stats": {
+      "alloc": 134217728,
+      "total_alloc": 5368709120,
+      "sys": 268435456,
+      "num_gc": 42,
+      "num_goroutine": 120
+    },
+    "disk_cache_info": {
+      "path": "/tmp/nookmux-body-cache",
+      "exists": true,
+      "file_count": 3,
+      "total_size": 18874368
+    },
+    "disk_space_info": {
+      "total": 53687091200,
+      "free": 21474836480,
+      "used": 32212254720,
+      "used_percent": 60.0
+    },
+    "config": {
+      "disk_cache_enabled": true,
+      "disk_cache_threshold_mb": 10,
+      "disk_cache_max_size_mb": 1024,
+      "disk_cache_path": "",
+      "is_running_in_container": false,
+      "monitor_enabled": true,
+      "monitor_cpu_threshold": 90,
+      "monitor_memory_threshold": 90,
+      "monitor_disk_threshold": 95
+    }
+  }
+}
+```
+
+</ResponseExample>
+
+### 响应字段
+
+<ResponseField name="success" type="boolean" required>
+  请求是否成功。
+</ResponseField>
+
+<ResponseField name="data" type="object" required>
+  性能快照。
+
+  <ResponseField name="cache_stats" type="object" required>
+    请求体缓存的计数器，基于原子计数维护。
+
+    <Expandable title="cache_stats 结构">
+      <ResponseField name="active_disk_files" type="integer" required>
+        当前跟踪的磁盘缓存文件数。
+      </ResponseField>
+      <ResponseField name="current_disk_usage_bytes" type="integer" required>
+        磁盘缓存文件的当前总大小，单位字节。
+      </ResponseField>
+      <ResponseField name="active_memory_buffers" type="integer" required>
+        当前缓存在内存中的请求体数量。
+      </ResponseField>
+      <ResponseField name="current_memory_usage_bytes" type="integer" required>
+        内存中缓存的请求体总大小，单位字节。
+      </ResponseField>
+      <ResponseField name="disk_cache_hits" type="integer" required>
+        累计磁盘缓存命中次数；可通过 `POST /api/performance/reset_stats` 清零。
+      </ResponseField>
+      <ResponseField name="memory_cache_hits" type="integer" required>
+        累计内存缓存命中次数；可通过 `POST /api/performance/reset_stats` 清零。
+      </ResponseField>
+      <ResponseField name="disk_cache_max_bytes" type="integer" required>
+        磁盘缓存的最大总大小，单位字节。
+      </ResponseField>
+      <ResponseField name="disk_cache_threshold_bytes" type="integer" required>
+        请求体超过该大小（字节）时写入磁盘缓存。
+      </ResponseField>
+    </Expandable>
+  </ResponseField>
+
+  <ResponseField name="memory_stats" type="object" required>
+    进程的 Go 运行时内存统计。
+
+    <Expandable title="memory_stats 结构">
+      <ResponseField name="alloc" type="integer" required>
+        已分配且仍在使用的堆内存，单位字节。
+      </ResponseField>
+      <ResponseField name="total_alloc" type="integer" required>
+        进程生命周期内累计分配的字节数。
+      </ResponseField>
+      <ResponseField name="sys" type="integer" required>
+        向操作系统申请的内存总字节数。
+      </ResponseField>
+      <ResponseField name="num_gc" type="integer" required>
+        已完成的垃圾回收次数。
+      </ResponseField>
+      <ResponseField name="num_goroutine" type="integer" required>
+        当前存活的协程数量。
+      </ResponseField>
+    </Expandable>
+  </ResponseField>
+
+  <ResponseField name="disk_cache_info" type="object" required>
+    请求时对磁盘缓存目录实际扫描的结果。
+
+    <Expandable title="disk_cache_info 结构">
+      <ResponseField name="path" type="string" required>
+        磁盘缓存目录路径。未配置缓存路径时为系统临时目录下的 `nookmux-body-cache` 子目录。
+      </ResponseField>
+      <ResponseField name="exists" type="boolean" required>
+        目录是否存在。
+      </ResponseField>
+      <ResponseField name="file_count" type="integer" required>
+        目录直接包含的文件数；目录不存在时为 `0`。
+      </ResponseField>
+      <ResponseField name="total_size" type="integer" required>
+        这些文件的总大小，单位字节；目录不存在时为 `0`。
+      </ResponseField>
+    </Expandable>
+  </ResponseField>
+
+  <ResponseField name="disk_space_info" type="object" required>
+    磁盘缓存目录所在卷的磁盘空间（未配置缓存路径时为系统临时目录所在卷）。卷无法查询时各字段均为 `0`。
+
+    <Expandable title="disk_space_info 结构">
+      <ResponseField name="total" type="integer" required>
+        总空间，单位字节。
+      </ResponseField>
+      <ResponseField name="free" type="integer" required>
+        可用空间，单位字节。
+      </ResponseField>
+      <ResponseField name="used" type="integer" required>
+        已用空间，单位字节。
+      </ResponseField>
+      <ResponseField name="used_percent" type="number" required>
+        已用空间占总空间的百分比。
+      </ResponseField>
+    </Expandable>
+  </ResponseField>
+
+  <ResponseField name="config" type="object" required>
+    当前生效的性能配置。
+
+    <Expandable title="config 结构">
+      <ResponseField name="disk_cache_enabled" type="boolean" required>
+        是否启用磁盘缓存。
+      </ResponseField>
+      <ResponseField name="disk_cache_threshold_mb" type="integer" required>
+        请求体超过该阈值（MB）时落盘。
+      </ResponseField>
+      <ResponseField name="disk_cache_max_size_mb" type="integer" required>
+        磁盘缓存的最大总大小（MB）。
+      </ResponseField>
+      <ResponseField name="disk_cache_path" type="string" required>
+        配置的磁盘缓存基础目录；为空表示使用系统临时目录。
+      </ResponseField>
+      <ResponseField name="is_running_in_container" type="boolean" required>
+        进程是否被检测为运行在容器中。
+      </ResponseField>
+      <ResponseField name="monitor_enabled" type="boolean" required>
+        是否启用后台性能监控。
+      </ResponseField>
+      <ResponseField name="monitor_cpu_threshold" type="integer" required>
+        监控的 CPU 使用率阈值（%）。
+      </ResponseField>
+      <ResponseField name="monitor_memory_threshold" type="integer" required>
+        监控的内存使用率阈值（%）。
+      </ResponseField>
+      <ResponseField name="monitor_disk_threshold" type="integer" required>
+        监控的磁盘使用率阈值（%）。
+      </ResponseField>
+    </Expandable>
+  </ResponseField>
+</ResponseField>
+
+<Note>
+与多数管理接口不同，本接口成功响应只包含 `success` 与 `data`，不含 `message` 字段；接口本身没有业务失败分支。`cache_stats` 为内存中的原子计数值，`disk_cache_info` 则反映请求时对缓存目录的实际扫描结果。
+</Note>
+
+## 错误说明
+
+| 条件 | 说明 |
+| --- | --- |
+| 鉴权失败 | 调用者不是 Root 用户时返回标准鉴权错误（HTTP `401`） |

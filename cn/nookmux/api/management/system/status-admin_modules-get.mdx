@@ -1,0 +1,64 @@
+---
+title: 获取管理侧栏模块开关
+description: 获取管理后台侧栏模块的开关配置。
+api: "GET /api/status/admin_modules"
+---
+
+返回决定管理后台侧栏展示哪些模块的配置。负载为控制台设置中维护的 `SidebarModulesAdmin` 选项；因其描述管理后台的结构，由本管理员鉴权端点单独下发，而不进入公开的 `/api/status`。
+
+需要**管理员（Admin）**权限。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
+
+## 请求
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url 'https://your-nookmux-domain/api/status/admin_modules' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1'
+```
+
+</RequestExample>
+
+## 响应
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": {
+    "SidebarModulesAdmin": "{\"chat\":{\"enabled\":true,\"playground\":false},\"console\":{\"enabled\":true,\"log\":true},\"admin\":{\"enabled\":true,\"channel\":true}}"
+  }
+}
+```
+
+</ResponseExample>
+
+### 响应字段
+
+<ResponseField name="success" type="boolean" required>
+  请求是否成功。
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  `success` 为 `false` 时的错误描述；成功时为空字符串。
+</ResponseField>
+
+<ResponseField name="data" type="object" required>
+  管理侧栏模块配置。
+
+  <Expandable title="管理模块结构">
+    <ResponseField name="SidebarModulesAdmin" type="string" required>
+      JSON 文档（序列化为字符串），以侧栏分区名（如 `chat`、`console`、`admin`）为键，每个分区把模块名映射到开关标志。该值由控制台维护并原样返回；未设置时可能为空字符串。
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+## 错误说明
+
+| 条件 | 说明 |
+| --- | --- |
+| 鉴权失败 | 调用者不是管理员时的标准鉴权错误（HTTP `401`） |

@@ -1,0 +1,67 @@
+---
+title: Close Ticket
+description: Mark a ticket as completed and stamp its closed_at time with a status-change entry in the timeline.
+api: "POST /api/ticket/{id}/close"
+---
+
+Close a ticket by setting its status to `completed`. On a successful transition, `closed_at` is stamped with the closing time and a status-change entry is appended to the message timeline. Closing a ticket that is already completed succeeds without changes.
+
+Requires a logged-in user (**User** permissions). Only the ticket owner and administrators can close the ticket. See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request POST \
+  --url 'https://your-nookmux-domain/api/ticket/3/close' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1'
+```
+
+</RequestExample>
+
+### Path parameters
+
+<ParamField path="id" type="integer" required>
+  Ticket id, a positive integer.
+</ParamField>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": null
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+  Whether the ticket was closed.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  Error description when `success` is `false`; empty otherwise.
+</ResponseField>
+
+<ResponseField name="data" type="null">
+  Always `null` on success. Fetch the ticket again to read the updated status and timeline.
+</ResponseField>
+
+<Note>
+  Management endpoints return HTTP `200` even on business failures; always check the `success` field. Service-layer failures, including a missing ticket, access denial, concurrent status changes and database errors, are all returned with the localized database-error message; the specific cause is recorded in the server logs.
+</Note>
+
+## Error messages
+
+| Condition | Description |
+| --- | --- |
+| Invalid ticket ID | `id` is not a positive integer |
+| Database error, please try again later | No ticket with this id exists, the caller is neither the ticket owner nor an administrator, the ticket status changed concurrently between the read and the update (refresh and retry), or updating the ticket failed; see server logs |

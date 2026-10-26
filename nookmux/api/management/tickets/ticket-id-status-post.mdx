@@ -1,0 +1,78 @@
+---
+title: Update Ticket Status
+description: Change a ticket status to pending, processing or completed, recording the transition in the timeline.
+api: "POST /api/ticket/{id}/status"
+---
+
+Change the status of a ticket. Setting the status to `completed` stamps `closed_at` with the change time; any other target status resets `closed_at` to `0`. A status-change entry is appended to the message timeline. When the ticket already has the target status, the request succeeds without changes.
+
+The route is mounted under **User** authentication, but the service layer restricts this operation to the **Admin** role; calls from regular users fail. See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request POST \
+  --url 'https://your-nookmux-domain/api/ticket/3/status' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1' \
+  --header 'Content-Type: application/json' \
+  --data '{
+  "status": "processing"
+}'
+```
+
+</RequestExample>
+
+### Path parameters
+
+<ParamField path="id" type="integer" required>
+  Ticket id, a positive integer.
+</ParamField>
+
+### Body
+
+<ParamField path="body.status" type="string" required>
+  Target ticket status: `pending`, `processing`, or `completed`.
+</ParamField>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": null
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+  Whether the status was applied.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  Error description when `success` is `false`; empty otherwise.
+</ResponseField>
+
+<ResponseField name="data" type="null">
+  Always `null` on success. Fetch the ticket again to read the updated status and timeline.
+</ResponseField>
+
+<Note>
+  Management endpoints return HTTP `200` even on business failures; always check the `success` field. Service-layer failures, including an unknown status value, non-admin callers, a missing ticket, concurrent status changes and database errors, are all returned with the localized database-error message; the specific cause is recorded in the server logs.
+</Note>
+
+## Error messages
+
+| Condition | Description |
+| --- | --- |
+| Invalid ticket ID | `id` is not a positive integer |
+| Invalid request body | The JSON body is missing or malformed |
+| Database error, please try again later | `status` is not `pending`, `processing` or `completed`, the caller is not an administrator, no ticket with this id exists, the ticket status changed concurrently between the read and the update (refresh and retry), or updating the ticket failed; see server logs |

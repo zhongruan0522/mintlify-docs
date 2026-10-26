@@ -1,0 +1,90 @@
+---
+title: 批量删除存储媒体
+description: 一次调用按 ID 与媒体类型批量删除多个存储的图片和视频。
+api: "POST /api/stored_media/batch"
+---
+
+批量删除多条存储媒体记录及其内容。`media_type` 非法或 `id` 为空的条目会被静默跳过；若没有剩余的有效条目则请求失败。普通用户只能删除自己的记录，管理员可删除任意记录。
+
+需要**用户**权限（任意登录用户）。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
+
+## 请求
+
+<RequestExample>
+
+```bash cURL
+curl --request POST \
+  --url 'https://your-nookmux-domain/api/stored_media/batch' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 2' \
+  --header 'Content-Type: application/json' \
+  --data '{
+  "items": [
+    {
+      "id": "0d8c9f9a-1b2c-3d4e-5f6a-7b8c9d0e1f2a",
+      "media_type": "image"
+    },
+    {
+      "id": "7a6b5c4d-3e2f-1a0b-9c8d-7e6f5a4b3c2d",
+      "media_type": "video"
+    }
+  ]
+}'
+```
+
+</RequestExample>
+
+### 请求体
+
+<ParamField path="body.items" type="array" required>
+待删除的存储媒体记录列表，至少包含一个条目。
+</ParamField>
+
+<Expandable title="items[] 结构">
+  <ParamField path="id" type="string" required>
+  存储媒体记录 ID（UUID）。`id` 为空或仅空白字符的条目会被跳过。
+  </ParamField>
+  <ParamField path="media_type" type="string" required>
+  记录的媒体类型：`image` 或 `video`。其他取值的条目会被跳过。
+  </ParamField>
+</Expandable>
+
+## 响应
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": 2
+}
+```
+
+</ResponseExample>
+
+### 响应字段
+
+<ResponseField name="success" type="boolean" required>
+删除是否执行成功。
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+`success` 为 `false` 时的错误描述；成功时为空字符串。
+</ResponseField>
+
+<ResponseField name="data" type="integer" required>
+删除的记录总数。
+</ResponseField>
+
+<Note>
+被跳过的条目不会导致请求失败。对非管理员调用者，合法但不存在（或属于其他用户）的 ID 不会计入删除结果。
+</Note>
+
+## 错误说明
+
+| 条件 | 说明 |
+| --- | --- |
+| 无效的参数 | JSON 缺失、格式错误，或 `items` 为空 |
+| 没有有效的 id | 所有条目均被跳过：`id` 全为空或 `media_type` 全部非法 |
+| 数据库错误，请稍后重试 | 记录删除失败，详见服务端日志 |

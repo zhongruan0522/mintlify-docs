@@ -1,0 +1,80 @@
+---
+title: 获取配置项值
+description: 按键读取单个系统选项的当前值。
+api: "GET /api/option/value"
+---
+
+返回内存选项表中某个系统选项的当前值。与[获取系统选项](/cn/nookmux/api/management/system-settings/option-get)使用同一套敏感键过滤规则：以 `Token`、`Secret`、`Key`、`secret`、`api_key` 结尾，或包含 `Password`/`password` 的键一律拒绝读取，布尔开关 `PasswordLoginEnabled` 与 `PasswordRegisterEnabled` 为显式豁免项。
+
+需要**超级管理员（Root）**权限。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
+
+## 请求
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url 'https://your-nookmux-domain/api/option/value?key=SystemName' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1'
+```
+
+</RequestExample>
+
+### 查询参数
+
+<ParamField path="key" type="string" required>
+  要读取的选项键，例如 `SystemName`。
+</ParamField>
+
+## 响应
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": {
+    "key": "SystemName",
+    "value": "NookMux"
+  }
+}
+```
+
+</ResponseExample>
+
+### 响应字段
+
+<ResponseField name="success" type="boolean" required>
+  选项是否读取成功。
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  `success` 为 `false` 时的错误描述；成功时为空字符串。
+</ResponseField>
+
+<ResponseField name="data" type="object" required>
+  请求的选项。
+
+  <Expandable title="选项结构">
+    <ResponseField name="key" type="string" required>
+      选项键，与 `key` 查询参数一致。
+    </ResponseField>
+    <ResponseField name="value" type="string" required>
+      选项当前值的字符串形式；布尔值与数字按其字符串形式渲染。
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<Note>
+  与多数管理接口不同，本端点失败时返回真实 HTTP 状态码而非 HTTP `200` 加 `success: false`：缺少 `key` 返回 HTTP `400`，敏感键返回 HTTP `403`，未知键返回 HTTP `404`。值读取自内存选项表，该表在启动时及每次选项更新后从数据库刷新。
+</Note>
+
+## 错误说明
+
+| 条件 | 说明 |
+| --- | --- |
+| 缺少配置项 key | HTTP `400`；`key` 查询参数缺失或为空 |
+| 该配置项不允许读取 | HTTP `403`；`key` 命中敏感键规则（以 `Token`/`Secret`/`Key`/`secret`/`api_key` 结尾或包含 `Password`/`password`） |
+| 配置项不存在 | HTTP `404`；`key` 不在内存选项表中 |

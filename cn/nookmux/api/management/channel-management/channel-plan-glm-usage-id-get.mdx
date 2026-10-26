@@ -1,0 +1,96 @@
+---
+title: 查询 GLM 套餐用量
+description: 查询 GLM 套餐的用量图表数据，原始 JSON 由上游透传返回。
+api: "GET /api/channel/plan/glm/usage/{id}"
+---
+
+查询 GLM 套餐渠道的用量图表数据。NookMux 使用渠道的第一个密钥、经渠道配置的代理向上游发起请求，并把上游 JSON 原样透传给调用方。渠道套餐必须是 `glm-coding-plan` 或 `glm-coding-plan-international`；上游域名按套餐区域划分（国内套餐走 `bigmodel.cn`，国际套餐走 `api.z.ai`）。
+
+需要**管理员**权限。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
+
+## 请求
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url 'https://your-nookmux-domain/api/channel/plan/glm/usage/1?type=model&startTime=2026-10-01%2000:00:00&endTime=2026-10-26%2023:59:59' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1'
+```
+
+</RequestExample>
+
+### 路径参数
+
+<ParamField path="id" type="integer" required>
+渠道 ID。
+</ParamField>
+
+### 查询参数
+
+<ParamField path="type" type="string" default="model">
+用量数据类型：`model`（按模型的用量明细）、`tool` 或 `performance`。其他取值会在上游调用时以用量查询失败拒绝。
+</ParamField>
+
+<ParamField path="startTime" type="string">
+时间窗起点，格式 `YYYY-MM-DD HH:MM:SS`（空格需 URL 编码为 `%20` 或 `+`）。仅当 `startTime` 与 `endTime` 同时提供时才校验；时间窗不能超过 31 天。
+</ParamField>
+
+<ParamField path="endTime" type="string">
+时间窗终点，格式 `YYYY-MM-DD HH:MM:SS`。不能早于 `startTime`；时间窗不能超过 31 天。
+</ParamField>
+
+## 响应
+
+<ResponseExample>
+
+```json 200
+{
+  "code": 200,
+  "msg": "操作成功",
+  "success": true,
+  "data": {}
+}
+```
+
+</ResponseExample>
+
+### 响应字段
+
+<Note>
+与其他管理端点不同，本端点**不会**用 `{"success","message","data"}` 包裹结果。响应体是 GLM 上游的原始 JSON，以 `Content-Type: application/json` 原样返回。NookMux 只识别上游外壳的 `code`、`msg`、`success` 字段（读取 `code` 以识别上游认证失败）；`data` 载荷——由上游按小时/天粒度返回的图表序列与汇总指标——完全由 GLM 上游定义，NookMux 既不建模也不改写。
+</Note>
+
+<ResponseField name="code" type="integer" required>
+上游业务状态码。`1000` 表示认证失败，NookMux 会将其转换为标准错误响应，不会透传。
+</ResponseField>
+
+<ResponseField name="msg" type="string" required>
+上游状态消息。
+</ResponseField>
+
+<ResponseField name="success" type="boolean" required>
+上游成功标志。
+</ResponseField>
+
+<ResponseField name="data" type="object" required>
+由 GLM 上游定义的用量图表载荷。结构随 `type` 与时间窗变化，NookMux 不建模。
+</ResponseField>
+
+<Note>
+管理接口在业务失败时同样返回 HTTP `200`，必须以响应体的 `success` 标志判断结果。NookMux 侧检测到的错误（ID 非法、非 GLM 套餐、时间范围非法、密钥无效、上游失败）以标准包裹结构返回 `success: false` 与本地化的 `message`，不会以透传体返回。
+</Note>
+
+## 错误说明
+
+| 条件 | message 文案 | 说明 |
+| --- | --- | --- |
+| 参数错误 | `参数错误` | 路径中的 `id` 缺失或不是整数 |
+| 渠道不存在 | `渠道不存在` | 渠道不存在或加载失败 |
+| 不支持用量查询 | `该渠道不支持用量查询` | 渠道套餐不是 `glm-coding-plan` 或 `glm-coding-plan-international` |
+| 时间格式错误 | `时间格式错误，应为 YYYY-MM-DD HH:MM:SS` | `startTime` 或 `endTime` 无法解析 |
+| 结束时间早于开始时间 | `结束时间不能早于开始时间` | `endTime` 早于 `startTime` |
+| 时间范围过长 | `查询时间范围不能超过31天` | `startTime` 到 `endTime` 超过 31 天 |
+| 渠道密钥无效 | `渠道 API Key 无效或认证失败，请检查 Key 配置` | 上游拒绝该密钥 |
+| 查询用量失败 | `查询用量失败: {{.Error}}` | 上游请求失败，包括 `type` 不支持的情况；`{{.Error}}` 为底层错误详情 |

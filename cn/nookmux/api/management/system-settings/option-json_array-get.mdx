@@ -1,0 +1,94 @@
+---
+title: 获取 JSON 数组配置项
+description: 分页列出 JSON 数组型系统选项的条目。
+api: "GET /api/option/json_array"
+---
+
+返回 JSON 数组型系统选项的条目，以分页列表形式给出。唯一接受的 `key` 是 `minimax.voice_whitelist`，该配置已迁移到数据库音色表：为避免旧版控制台基于陈旧数据误操作，本端点现在恒返回空列表，`total` 恒为 `0`。
+
+需要**超级管理员（Root）**权限。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
+
+## 请求
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url 'https://your-nookmux-domain/api/option/json_array?key=minimax.voice_whitelist&page=1&page_size=10' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1'
+```
+
+</RequestExample>
+
+### 查询参数
+
+<ParamField path="key" type="string" required>
+  要读取的选项键。唯一支持的值是 `minimax.voice_whitelist`，其他键一律拒绝。
+</ParamField>
+
+<ParamField path="page" type="integer" default="1">
+  页码，从 1 开始。不是正整数时回退为 `1`；超出最后一页时返回最后一页。
+</ParamField>
+
+<ParamField path="page_size" type="integer" default="10">
+  每页条目数。不是正整数时回退为 `10`；超过 `100` 时按 `100` 处理。
+</ParamField>
+
+## 响应
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": {
+    "items": [],
+    "page": 1,
+    "page_size": 10,
+    "total": 0
+  }
+}
+```
+
+</ResponseExample>
+
+### 响应字段
+
+<ResponseField name="success" type="boolean" required>
+  请求是否处理成功。
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  `success` 为 `false` 时的错误描述；成功时为空字符串。
+</ResponseField>
+
+<ResponseField name="data" type="object" required>
+  分页的条目列表。
+
+  <Expandable title="data 结构">
+    <ResponseField name="items" type="array" required>
+      当前页的条目。每个条目是仅含一个 `value` 字符串字段的对象；对受支持的键而言列表恒为空。
+    </ResponseField>
+    <ResponseField name="page" type="integer" required>
+      钳制到有效范围后的当前页码。
+    </ResponseField>
+    <ResponseField name="page_size" type="integer" required>
+      实际生效的每页条目数（默认 `10`，上限 `100`）。
+    </ResponseField>
+    <ResponseField name="total" type="integer" required>
+      条目总数；对受支持的键恒为 `0`。
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<Note>
+  本端点为兼容旧版控制台而保留。音色白名单请在音色管理页面维护；对应的写入接口（`PUT` 与 `DELETE /api/option/json_array`）一律以迁移提示拒绝写入。
+</Note>
+
+## 错误说明
+
+| 条件 | 说明 |
+| --- | --- |
+| 不支持的 JSON 数组配置项 | HTTP `400`；`key` 不是 `minimax.voice_whitelist` |

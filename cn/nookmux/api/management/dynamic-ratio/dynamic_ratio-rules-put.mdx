@@ -1,0 +1,131 @@
+---
+title: 修改动态倍率规则
+description: 按 ID 整体替换一条已存在的动态倍率规则，请求体会覆盖整条记录。
+api: "PUT /api/dynamic_ratio/rules"
+---
+
+修改一条已存在的动态倍率规则。请求体会整体替换存储的记录，请发送完整规则而非仅变更字段：省略的可选字段会被重置为空值（例如省略 `enable` 会使规则停用，省略 `concurrency` 会去掉并发条件）。修改成功后运行时规则缓存立即刷新，变更连同前/后差异会记录到审计日志。
+
+需要**超级管理员**权限。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
+
+## 请求
+
+<RequestExample>
+
+```bash cURL
+curl --request PUT \
+  --url 'https://your-nookmux-domain/api/dynamic_ratio/rules' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1' \
+  --header 'Content-Type: application/json' \
+  --data '{
+  "id": 3,
+  "enable": true,
+  "group": "vip",
+  "models": "[\"gpt-4o\",\"claude-*\"]",
+  "concurrency": 100,
+  "weekdays": "[1,2,3,4,5]",
+  "start_time": "09:00",
+  "end_time": "18:00",
+  "ratio": 1.8,
+  "priority": 0
+}'
+```
+
+</RequestExample>
+
+### 请求体
+
+<ParamField path="body.id" type="integer" required>
+要修改的规则 ID。
+</ParamField>
+
+<ParamField path="body.enable" type="boolean" default="false">
+修改后规则是否参与匹配。本接口为整体替换：省略该字段会把规则重置为停用。
+</ParamField>
+
+<ParamField path="body.group" type="string" required>
+规则适用的用户分组。必须存在于分组倍率配置中。
+</ParamField>
+
+<ParamField path="body.models" type="string">
+模型匹配模式，JSON 数组字符串，例如 `"[\"gpt-4o\",\"claude-*\"]"`。模式支持 `*` 通配符：精确名称、尾部 `*` 前缀匹配（如 `gpt-4*`）、头部 `*` 后缀匹配（如 `*-preview`）、单独的 `*` 匹配全部模型。留空表示匹配所有模型。数组内出现空白名称会被拒绝。
+</ParamField>
+
+<ParamField path="body.concurrency" type="integer">
+中继并发阈值；仅当当前中继并发严格大于该值时规则才命中。填写时必须大于 `0`；不传（或传 `null`）表示去掉并发条件。
+</ParamField>
+
+<ParamField path="body.weekdays" type="string">
+星期条件，`0`-`6` 整数的 JSON 数组字符串，`0` 表示周日，例如 `"[1,2,3,4,5]"`。留空表示不限星期。
+</ParamField>
+
+<ParamField path="body.start_time" type="string">
+每日时间段的开始时间，服务端启动时区下的 `HH:MM`；时间段含开始、不含结束，允许跨午夜。必须与 `end_time` 同时设置或同时留空。
+</ParamField>
+
+<ParamField path="body.end_time" type="string">
+每日时间段的结束时间，服务端启动时区下的 `HH:MM`。必须与 `start_time` 同时设置或同时留空。
+</ParamField>
+
+<ParamField path="body.ratio" type="number" required>
+规则命中时应用的计费倍率。必须大于 `0`。
+</ParamField>
+
+<ParamField path="body.priority" type="integer" default="0">
+多条规则同时命中时的裁决顺序，数值越小优先。由[重排动态倍率规则](/cn/nookmux/api/management/dynamic-ratio/dynamic_ratio-rules-reorder-put)维护。
+</ParamField>
+
+## 响应
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": {
+    "id": 3,
+    "enable": true,
+    "group": "vip",
+    "models": "[\"gpt-4o\",\"claude-*\"]",
+    "concurrency": 100,
+    "weekdays": "[1,2,3,4,5]",
+    "start_time": "09:00",
+    "end_time": "18:00",
+    "ratio": 1.8,
+    "priority": 0,
+    "created_at": 1718272800,
+    "updated_at": 1718359200
+  }
+}
+```
+
+</ResponseExample>
+
+### 响应字段
+
+<ResponseField name="success" type="boolean" required>
+规则是否修改成功。
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+`success` 为 `false` 时的错误描述；成功时为空字符串。
+</ResponseField>
+
+<ResponseField name="data" type="object" required>
+修改后的规则记录：请求体字段加上 `created_at` 与刷新后的 `updated_at`。字段含义与[获取所有动态倍率规则](/cn/nookmux/api/management/dynamic-ratio/dynamic_ratio-rules-get)一致。
+</ResponseField>
+
+<Note>
+管理接口在业务失败时同样返回 HTTP `200`，必须以 `success` 字段判断结果。规则 ID 不存在时，更新前的原记录查询会失败并返回通用的「数据库错误」。校验失败时仅返回通用的「无效的参数」，具体原因请查看服务端日志。
+</Note>
+
+## 错误说明
+
+| 条件 | 说明 |
+| --- | --- |
+| 请求体非法 | `message` 为「请求体格式不正确」；JSON 缺失或格式错误 |
+| 规则 ID 缺失 | `message` 为「规则 ID 不能为空」；`id` 缺失或为 `0` |
+| 参数无效 | `message` 为「无效的参数」；规则校验未通过：`group` 缺失或不在分组倍率配置中、`models` 不是 JSON 数组字符串或含空白名称、`ratio` 不大于 `0`、`concurrency` 已填但不大于 `0`、`start_time`/`end_time` 只设置其一或格式不是 `HH:MM`、`weekdays` 不是 JSON 数组字符串或含 `0`-`6` 之外的值 |
+| 数据库错误 | `message` 为「数据库错误，请稍后重试」；查询原记录（含记录不存在）或保存修改失败，详见服务端日志 |

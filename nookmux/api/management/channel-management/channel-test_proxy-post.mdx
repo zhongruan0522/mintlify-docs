@@ -1,0 +1,89 @@
+---
+title: Test Proxy
+description: Validate a proxy URL by resolving the exit IP through it.
+api: "POST /api/channel/test_proxy"
+---
+
+Check whether a proxy URL works before saving it on a channel: the endpoint sends a GET request to `https://api.ipify.org` through the given proxy and returns the exit IP observed by that service. Supported proxy schemes are `http`, `https`, `socks5` and `socks5h`. The probe is capped at 15 seconds so a dead proxy cannot block the console.
+
+This is the console channel editor's "test proxy" affordance.
+
+Requires **Admin** permissions. See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request POST \
+  --url 'https://your-nookmux-domain/api/channel/test_proxy' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1' \
+  --header 'Content-Type: application/json' \
+  --data '{
+  "proxy": "http://proxy.example.com:8080"
+}'
+```
+
+</RequestExample>
+
+### Body
+
+<ParamField path="body.proxy" type="string">
+  Proxy URL to test, for example `http://user:pass@proxy.example.com:8080` or `socks5://proxy.example.com:1080`. An empty value skips the probe and returns `status: "invalid"`.
+</ParamField>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": {
+    "status": "success",
+    "ip": "203.0.113.7"
+  }
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+  Whether the request itself was processed.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  Error description when `success` is `false`; empty otherwise.
+</ResponseField>
+
+<ResponseField name="data" type="object" required>
+  The probe outcome.
+
+  <Expandable title="data structure">
+    <ResponseField name="status" type="string" required>
+      Probe outcome: `success` (the proxy works and the exit IP was resolved), `invalid` (the proxy URL is empty or uses an unsupported scheme), or `failed` (the URL is well-formed but the proxy could not be reached or the IP service responded abnormally).
+    </ResponseField>
+    <ResponseField name="ip" type="string">
+      Exit IP resolved through the proxy. Only present when `status` is `success`.
+    </ResponseField>
+    <ResponseField name="message" type="string">
+      Localized reason for an `invalid` or `failed` outcome. Not present on `success`.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<Note>
+A failed probe does not produce `success: false` — the endpoint itself executed fine and the outcome is carried by `data.status`. Only a malformed JSON body yields `success: false` with HTTP `200`.
+</Note>
+
+## Error messages
+
+| Condition | Description |
+| --- | --- |
+| Invalid request body | The JSON body is malformed |
+| Status `invalid` | The proxy URL is empty or its scheme is not `http`/`https`/`socks5`/`socks5h` |
+| Status `failed` | The proxy could not be reached, timed out, or the IP service returned an abnormal response |

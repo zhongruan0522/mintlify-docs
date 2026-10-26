@@ -1,0 +1,150 @@
+---
+title: Create Ticket
+description: Create a support ticket with a title, type and first message; the created ticket is returned in pending status.
+api: "POST /api/ticket/"
+---
+
+Create a ticket owned by the current user. The ticket starts in `pending` status, and the submitted content becomes the first message of the conversation.
+
+Requires a logged-in user (**User** permissions). See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request POST \
+  --url 'https://your-nookmux-domain/api/ticket/' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1' \
+  --header 'Content-Type: application/json' \
+  --data '{
+  "title": "Billing question",
+  "type": "question",
+  "content": "I was charged twice for the same request."
+}'
+```
+
+</RequestExample>
+
+### Body
+
+<ParamField path="body.title" type="string" required>
+  Ticket title. Trimmed before validation; must not be empty and is limited to 255 characters.
+</ParamField>
+
+<ParamField path="body.type" type="string" required>
+  Ticket type: `bug`, `feature`, `question`, or `other`.
+</ParamField>
+
+<ParamField path="body.content" type="string" required>
+  First message of the ticket. Trimmed before validation; must not be empty and is limited to 10000 characters.
+</ParamField>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": {
+    "id": 4,
+    "title": "Billing question",
+    "type": "question",
+    "status": "pending",
+    "created_at": 1748086400,
+    "updated_at": 1748086400,
+    "closed_at": 0,
+    "messages": [
+      {
+        "id": 8,
+        "type": "message",
+        "role": "user",
+        "username": "alice",
+        "content": "I was charged twice for the same request.",
+        "time": 1748086400
+      }
+    ]
+  }
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+  Whether the ticket was created.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  Error description when `success` is `false`; empty otherwise.
+</ResponseField>
+
+<ResponseField name="data" type="object" required>
+  The created ticket. It starts in `pending` status with `closed_at` set to `0` and exactly one message built from the submitted `content`; the message `role` reflects the creator's account role (`admin` when the creator is an administrator, `user` otherwise).
+
+  <Expandable title="ticket detail structure">
+    <ResponseField name="id" type="integer" required>
+      Ticket id.
+    </ResponseField>
+    <ResponseField name="title" type="string" required>
+      Ticket title.
+    </ResponseField>
+    <ResponseField name="type" type="string" required>
+      Ticket type: `bug`, `feature`, `question`, or `other`.
+    </ResponseField>
+    <ResponseField name="status" type="string" required>
+      Ticket status: `pending`, `processing`, or `completed`.
+    </ResponseField>
+    <ResponseField name="created_at" type="integer" required>
+      Unix timestamp (seconds) of creation.
+    </ResponseField>
+    <ResponseField name="updated_at" type="integer" required>
+      Unix timestamp (seconds) of the last update, refreshed by new messages and status changes.
+    </ResponseField>
+    <ResponseField name="closed_at" type="integer" required>
+      Unix timestamp (seconds) at which the ticket was completed; `0` while it is not completed.
+    </ResponseField>
+    <ResponseField name="messages" type="array" required>
+      Message timeline, ordered by message id ascending.
+
+      <Expandable title="message structure">
+        <ResponseField name="id" type="integer" required>
+          Message entry id.
+        </ResponseField>
+        <ResponseField name="type" type="string" required>
+          Entry kind: `message` for a conversation message, `status` for a status-change record.
+        </ResponseField>
+        <ResponseField name="role" type="string" required>
+          Sender role derived from the sender's account role: `admin` for administrators, `user` otherwise.
+        </ResponseField>
+        <ResponseField name="username" type="string" required>
+          Name of the account that produced the entry.
+        </ResponseField>
+        <ResponseField name="content" type="string">
+          Text of the entry; present only when `type` is `message`.
+        </ResponseField>
+        <ResponseField name="value" type="string">
+          Target status of the status change (`pending`, `processing`, or `completed`); present only when `type` is `status`.
+        </ResponseField>
+        <ResponseField name="time" type="integer" required>
+          Unix timestamp (seconds) of the entry.
+        </ResponseField>
+      </Expandable>
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<Note>
+  Management endpoints return HTTP `200` even on business failures; always check the `success` field. Service-layer failures, including an empty or over-length title or content, an unknown ticket type and database errors, are all returned with the localized database-error message; the specific cause is recorded in the server logs.
+</Note>
+
+## Error messages
+
+| Condition | Description |
+| --- | --- |
+| Invalid request body | The JSON body is missing or malformed |
+| Database error, please try again later | `title` or `content` is empty after trimming or exceeds its length limit, `type` is not `bug`, `feature`, `question` or `other`, or persisting the ticket failed; see server logs |

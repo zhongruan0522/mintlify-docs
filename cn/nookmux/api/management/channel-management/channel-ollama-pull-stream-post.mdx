@@ -1,0 +1,110 @@
+---
+title: 流式拉取 Ollama 模型
+description: 在 Ollama 渠道的上游服务器上拉取模型，并以 SSE 流式返回拉取进度。
+api: "POST /api/channel/ollama/pull/stream"
+---
+
+与[拉取 Ollama 模型](/cn/nookmux/api/management/channel-management/channel-ollama-pull-post)是同一操作，区别在于下载进度以 Server-Sent Events 流式返回给客户端，控制台用它渲染拉取进度条。仅接受 Ollama（`4`）类型的渠道。
+
+拉取请求以 `stream: true` 发往渠道上游的 `/api/pull` 接口；为支持超大模型，上游请求的超时时间为 1 小时。上游调用走渠道配置的代理（settings 中的 `proxy`），多 Key 渠道使用第一个密钥。渠道设置了 `base_url` 时覆盖内置默认地址（`http://localhost:11434`）。
+
+需要**管理员（Admin）**权限。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
+
+## 请求
+
+<RequestExample>
+
+```bash cURL
+curl --request POST \
+  --url 'https://your-nookmux-domain/api/channel/ollama/pull/stream' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1' \
+  --header 'Content-Type: application/json' \
+  --data '{
+  "channel_id": 1,
+  "model_name": "llama3.1:8b"
+}'
+```
+
+</RequestExample>
+
+### 请求体
+
+<ParamField path="body.channel_id" type="integer" required>
+  要拉取模型的 Ollama 渠道 ID。
+</ParamField>
+
+<ParamField path="body.model_name" type="string" required>
+  要拉取的模型标签，需为 Ollama 服务端可识别的名称，例如 `llama3.1:8b`。
+</ParamField>
+
+## 响应
+
+若校验在流开始前就失败（请求体格式错误、参数缺失、渠道不存在、渠道类型不是 Ollama），接口返回带对应 HTTP 状态码（`400` 或 `404`）的常规 JSON 错误，结构与失败条件同[拉取 Ollama 模型](/cn/nookmux/api/management/channel-management/channel-ollama-pull-post)。
+
+否则响应为 `text/event-stream`，附带 `Cache-Control: no-cache`、`Connection: keep-alive` 和 `Access-Control-Allow-Origin: *`。每个 `data:` 行携带一条从 Ollama 拉取流透传的进度事件，随后是终止事件和最终的 `[DONE]` 结束标志：
+
+```json
+data: {"status":"pulling manifest"}
+
+data: {"status":"pulling dfb8e4a1e6c7","digest":"sha256:dfb8e4a1e6c79b1f8c04b6f4c2d5a9e0f7b8c3d1a2e4f5b6c7d8e9f0a1b2c3d4","total":4708075968,"completed":1234567}
+
+data: {"status":"verifying sha256 digest"}
+
+data: {"status":"writing manifest"}
+
+data: {"status":"success","total":4708075968,"completed":4708075968}
+
+data: {"message":"模型 llama3.1:8b 拉取成功"}
+
+data: [DONE]
+```
+
+### 响应字段
+
+<ResponseField name="status" type="string" required>
+  Ollama 服务端上报的拉取阶段，例如 `pulling manifest`、`pulling <digest>`、`verifying sha256 digest`、`writing manifest`，下载完成时为 `success`。
+</ResponseField>
+
+<ResponseField name="digest" type="string">
+  当前正在下载的层摘要，形如 `sha256:<hex>`。仅出现在下载进度事件中。
+</ResponseField>
+
+<ResponseField name="total" type="integer">
+  当前正在下载的层的总字节数。仅出现在下载进度事件中。
+</ResponseField>
+
+<ResponseField name="completed" type="integer">
+  当前层已下载的字节数。仅出现在下载进度事件中。
+</ResponseField>
+
+<ResponseField name="message" type="string">
+  成功时的终止事件：本地化的模型拉取成功提示。
+</ResponseField>
+
+<ResponseField name="error" type="string">
+  失败时的终止事件：拉取未能完成的本地化原因（例如上游返回错误状态、进度流中断、未收到成功状态）。
+</ResponseField>
+
+<Note>
+`[DONE]` 是流的结束标志，以它（或连接关闭）作为完成信号。流开始之后的失败以 `data: {"error": ...}` 事件形式在流内上报，不会返回 JSON 错误响应。
+</Note>
+
+## 错误说明
+
+流开始前以常规 JSON 返回的错误：
+
+| 条件 | 说明 |
+| --- | --- |
+| 请求参数无效 | HTTP 400 —— JSON 请求体格式错误 |
+| 渠道 ID 和模型名称不能为空 | HTTP 400 —— 缺少 `channel_id` 或 `model_name` |
+| 渠道不存在 | HTTP 404 —— 给定的 `channel_id` 不存在 |
+| 此操作仅支持 Ollama 渠道 | HTTP 400 —— 渠道类型不是 Ollama |
+
+以流内 `data: {"error": ...}` 事件上报的错误：
+
+| 条件 | 说明 |
+| --- | --- |
+| 拉取模型失败 | 拉取过程中 Ollama 服务端上报了错误状态 |
+| 读取流式响应失败 | 读取上游进度流失败 |
+| 拉取模型未完成 | 流结束但未收到成功状态 |

@@ -1,0 +1,56 @@
+---
+title: 清理磁盘缓存
+description: 删除超过十分钟未使用的磁盘缓存文件。
+api: "DELETE /api/performance/disk_cache"
+---
+
+从磁盘缓存目录中删除不活跃的缓存文件。只有超过 10 分钟未使用的缓存文件才会被删除，支撑进行中请求的文件不会被误删。该操作会记入审计日志。
+
+需要**超级管理员（Root）**权限。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
+
+## 请求
+
+<RequestExample>
+
+```bash cURL
+curl --request DELETE \
+  --url 'https://your-nookmux-domain/api/performance/disk_cache' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1'
+```
+
+</RequestExample>
+
+## 响应
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "不活跃的磁盘缓存已清理"
+}
+```
+
+</ResponseExample>
+
+### 响应字段
+
+<ResponseField name="success" type="boolean" required>
+  不活跃的磁盘缓存文件是否清理成功。
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  成功时为确认文案（按调用者语言偏好本地化）；`success` 为 `false` 时为错误描述。
+</ResponseField>
+
+<Note>
+管理接口在业务失败时同样返回 HTTP `200`，必须以 `success` 字段判断结果。
+</Note>
+
+## 错误说明
+
+| 条件 | 说明 |
+| --- | --- |
+| 数据库错误，请稍后重试 | 清理失败（`success: false`）；具体错误原因会写入服务端日志 |
+| 鉴权失败 | 调用者不是 Root 用户时返回标准鉴权错误（HTTP `401`） |

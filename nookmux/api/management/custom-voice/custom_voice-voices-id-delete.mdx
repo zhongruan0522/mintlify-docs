@@ -1,0 +1,63 @@
+---
+title: Delete Voice
+description: Delete a voice record by ID.
+api: "DELETE /api/custom_voice/voices/{id}"
+---
+
+Permanently deletes the voice record with the given primary key ID. Deleting a record removes the voice ID from the TTS whitelist immediately; TTS requests referencing the ID are no longer accepted.
+
+Requires **Root** permissions. See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request DELETE \
+  --url 'https://your-nookmux-domain/api/custom_voice/voices/3' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1'
+```
+
+</RequestExample>
+
+### Path parameters
+
+<ParamField path="id" type="integer" required>
+  Primary key of the voice record.
+</ParamField>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": ""
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+  Whether the voice record was deleted.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  Error description when `success` is `false`; empty otherwise.
+</ResponseField>
+
+<Note>
+Management endpoints return HTTP `200` even on business failures; always check the `success` field. No `data` field is returned on success. This endpoint additionally returns HTTP `400` when `id` is not a valid integer and HTTP `404` when the record does not exist. Successful deletions are recorded in the admin audit log (voice module).
+</Note>
+
+## Error messages
+
+| Condition | Description |
+| --- | --- |
+| Invalid voice ID (HTTP 400) | `id` is not a valid integer |
+| Voice does not exist (HTTP 404) | No record exists with the given `id` |
+| Database error, please try again later | The record lookup or the delete failed; see server logs |

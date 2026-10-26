@@ -1,0 +1,135 @@
+---
+title: Create Custom Voice Preview
+description: Upload an audio sample, clone the voice upstream, and generate a demo audio.
+api: "POST /api/custom_voice/preview"
+---
+
+Submits an audio sample and the desired voice ID for voice cloning. NookMux forwards the file to the MiniMax channel configured for the custom voice feature, calls voice cloning upstream, and returns the generated demo audio. On success a voice record of type `preview` is created for the current user; the voice becomes usable for TTS only after it is confirmed (and charged) through the confirm endpoint.
+
+Charging: when preview text is supplied, the preview is billed like a normal TTS call against the selected model (model price first, otherwise model ratio priced as 1000 tokens), multiplied by the group ratio of the configured custom voice group (dynamic ratio included when configured). Without preview text no TTS usage is charged. Upstream failures charge nothing; if the voice record cannot be saved after a successful upstream call, the preview charge is refunded.
+
+Requires **User** permissions (any logged-in account). See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request POST \
+  --url 'https://your-nookmux-domain/api/custom_voice/preview' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1' \
+  --form 'file=@/path/to/voice-sample.mp3' \
+  --form 'voice_id=my-custom-voice-01' \
+  --form 'model=tts-3-turbo' \
+  --form 'text=Hello, this is my cloned voice.' \
+  --form 'need_noise_reduction=true' \
+  --form 'need_volume_normalization=false'
+```
+
+</RequestExample>
+
+### Body
+
+The request is submitted as `multipart/form-data`; each field is a form part.
+
+<ParamField path="body.file" type="file" required>
+  The audio sample to clone. Must be an `.mp3`, `.m4a`, or `.wav` file, non-empty and at most 20 MB.
+</ParamField>
+
+<ParamField path="body.voice_id" type="string" required>
+  The voice ID to create, 8-256 characters. Must start with a letter, contain only letters, digits, underscores, and hyphens, and must not end with an underscore or hyphen. IDs that already exist are rejected.
+</ParamField>
+
+<ParamField path="body.model" type="string">
+  The TTS model used to synthesize the preview text; required when `text` is non-empty. The model name is mapped through the MiniMax model redirect table before being sent upstream.
+</ParamField>
+
+<ParamField path="body.text" type="string">
+  Preview text to synthesize with the cloned voice, at most 2000 characters. Emotion and tone-word tags are recognized and applied by the configured TTS policy. When omitted, the clone request is sent without preview text and no TTS usage is charged.
+</ParamField>
+
+<ParamField path="body.need_noise_reduction" type="string" default="false">
+  Set to the literal string `true` to enable noise reduction on the audio sample during cloning; any other value or omission disables it.
+</ParamField>
+
+<ParamField path="body.need_volume_normalization" type="string" default="false">
+  Set to the literal string `true` to enable volume normalization on the audio sample during cloning; any other value or omission disables it.
+</ParamField>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": {
+    "voice_id": "my-custom-voice-01",
+    "demo_audio": "https://cdn.example.com/voice/demo_audio.mp3",
+    "file_id": "1748543921995",
+    "record_id": 128
+  }
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+  Whether the preview was created.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  Error description when `success` is `false`; empty otherwise.
+</ResponseField>
+
+<ResponseField name="data" type="object" required>
+  The preview result.
+
+  <Expandable title="data structure">
+    <ResponseField name="voice_id" type="string" required>
+      The created voice ID.
+    </ResponseField>
+    <ResponseField name="demo_audio" type="string" required>
+      URL of the generated demo audio, as returned by the upstream.
+    </ResponseField>
+    <ResponseField name="file_id" type="string" required>
+      Upstream file ID of the uploaded sample; numeric upstream IDs are returned in string form.
+    </ResponseField>
+    <ResponseField name="record_id" type="integer" required>
+      Primary key of the created `preview` voice record.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<Note>
+Management endpoints return HTTP `200` even on business failures; always check the `success` field. Preview records that are not confirmed within 7 days are automatically deleted before the duplicate-ID check, so their voice IDs become available again.
+</Note>
+
+## Error messages
+
+| Condition | Description |
+| --- | --- |
+| Please upload an audio file | The `file` part is missing |
+| Audio file is empty | The uploaded file has zero size |
+| Audio file is too large, please compress it to under 20MB | The uploaded file exceeds 20 MB |
+| Only mp3, m4a and wav formats are supported | The file extension is not `.mp3`, `.m4a`, or `.wav` |
+| Invalid voice ID | `voice_id` fails the format check or already exists (duplicates are reported as invalid) |
+| Preview text is too long, up to 2000 characters | `text` exceeds 2000 characters |
+| Custom voice feature is disabled, please contact the administrator | The custom voice feature switch is off |
+| No available channel found, please contact the administrator | No enabled MiniMax channel serves the configured custom voice group |
+| Channel credential is missing, please contact the administrator | The resolved channel has no API key |
+| Voice validation failed, please try again later | The duplicate check or the expired-preview cleanup failed |
+| Preview model is not configured, please contact the administrator | `text` is non-empty but `model` is empty |
+| The preview billing model is currently unavailable, please contact the administrator | No pricing exists for the selected model (fail closed, never free) |
+| The price of the preview billing model is invalid, please contact the administrator | The computed preview quota is not positive |
+| Insufficient quota, please top up and try again | The user's wallet quota is lower than the preview charge |
+| Failed to query quota, please try again later | Reading the user's quota failed |
+| Failed to charge quota, please try again later | Deducting the preview quota failed |
+| Failed to save the voice record, please try again later | The preview record could not be persisted; the preview charge is refunded |
+| Upstream service is temporarily unavailable, please try again later | The upstream request failed or returned a server error |
+| Upstream service is busy, please try again later | The upstream returned HTTP 5xx |
+| Voice processing failed, please try again later | The upstream rejected the request; may include a short upstream summary |

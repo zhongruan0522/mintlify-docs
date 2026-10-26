@@ -1,0 +1,77 @@
+---
+title: Get Same-Type Migration Info
+description: Inspect the main and log database types of the running instance before a same-type migration.
+api: "GET /api/db/same_type_migrate/info"
+---
+
+Returns the database types currently in use by the main and log databases of the running instance, and whether the log database is deployed separately. Use this to prepare a same-type migration started with `POST /api/db/same_type_migrate`, which copies the data into another database of the same engine.
+
+Requires **Root** (super administrator) permissions. See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url 'https://your-nookmux-domain/api/db/same_type_migrate/info' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1'
+```
+
+</RequestExample>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": {
+    "main_db_type": "postgres",
+    "log_db_type": "postgres",
+    "log_db_is_separated": false
+  }
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+  Whether the request succeeded.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  Error description when `success` is `false`; empty otherwise.
+</ResponseField>
+
+<ResponseField name="data" type="object" required>
+  Current database layout.
+
+  <Expandable title="data structure">
+    <ResponseField name="main_db_type" type="string" required>
+      Type of the main database: `sqlite`, `mysql`, `postgres`, `opengauss`, `dm`, or `kingbase`.
+    </ResponseField>
+    <ResponseField name="log_db_type" type="string" required>
+      Type of the log database; equals `main_db_type` when the log database is not deployed separately.
+    </ResponseField>
+    <ResponseField name="log_db_is_separated" type="boolean" required>
+      Whether request logs are stored in a dedicated database, i.e. the `LOG_SQL_DSN` environment variable is set.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<Note>
+Management endpoints return HTTP `200` even on business failures; always check the `success` field.
+</Note>
+
+## Error messages
+
+| Condition | Description |
+| --- | --- |
+| Database error, please try again later | The current main or log database type could not be determined; see server logs |
+| Authentication failed | Standard authentication errors (HTTP `401`) when the caller is not a root user |

@@ -1,0 +1,71 @@
+---
+title: Set Dynamic Ratio Enabled
+description: Turn the dynamic ratio feature on or off globally by writing the DynamicRatioEnabled option.
+api: "PUT /api/dynamic_ratio/enabled"
+---
+
+Turns the global dynamic ratio switch on or off by writing the `DynamicRatioEnabled` option. While disabled, every rule is bypassed and billing falls back to the configured group ratios; the switch state is visible to users through [Get Dynamic Ratio Status](/nookmux/api/management/dynamic-ratio/dynamic_ratio-status-get). The change is recorded in the audit log.
+
+Requires **Root** permissions. See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request PUT \
+  --url 'https://your-nookmux-domain/api/dynamic_ratio/enabled' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1' \
+  --header 'Content-Type: application/json' \
+  --data '{
+  "enabled": true
+}'
+```
+
+</RequestExample>
+
+### Body
+
+<ParamField path="body.enabled" type="boolean" required>
+Whether dynamic ratio is enabled. Omitting the field is equivalent to sending `false`.
+</ParamField>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": null
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+Whether the switch was written.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+Error description when `success` is `false`; empty otherwise.
+</ResponseField>
+
+<ResponseField name="data" type="null" required>
+Always `null`; the endpoint returns no data.
+</ResponseField>
+
+<Note>
+Management endpoints return HTTP `200` even on business failures; always check the `success` field. Disabling the switch does not delete any rules; they take effect again once it is re-enabled.
+</Note>
+
+## Error messages
+
+| Condition | Description |
+| --- | --- |
+| Invalid request body | The JSON body is missing or malformed |
+| Database error, please try again later | Writing the option failed; see server logs |

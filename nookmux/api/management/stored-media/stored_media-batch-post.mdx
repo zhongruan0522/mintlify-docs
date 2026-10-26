@@ -1,0 +1,90 @@
+---
+title: Batch Delete Stored Media
+description: Delete several stored images and videos in one call by their IDs and media types.
+api: "POST /api/stored_media/batch"
+---
+
+Deletes multiple stored media records together with their content. Entries with an unknown `media_type` or an empty `id` are silently skipped; if no valid entry remains, the request fails. A regular user may only delete their own records, while administrators may delete any record.
+
+Requires **User** permission (any logged-in user). See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request POST \
+  --url 'https://your-nookmux-domain/api/stored_media/batch' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 2' \
+  --header 'Content-Type: application/json' \
+  --data '{
+  "items": [
+    {
+      "id": "0d8c9f9a-1b2c-3d4e-5f6a-7b8c9d0e1f2a",
+      "media_type": "image"
+    },
+    {
+      "id": "7a6b5c4d-3e2f-1a0b-9c8d-7e6f5a4b3c2d",
+      "media_type": "video"
+    }
+  ]
+}'
+```
+
+</RequestExample>
+
+### Body
+
+<ParamField path="body.items" type="array" required>
+List of stored media records to delete. It must contain at least one entry.
+</ParamField>
+
+<Expandable title="items[] structure">
+  <ParamField path="id" type="string" required>
+  Record ID (UUID) of the stored media. Entries whose `id` is empty or whitespace only are skipped.
+  </ParamField>
+  <ParamField path="media_type" type="string" required>
+  Media type of the record: `image` or `video`. Entries with any other value are skipped.
+  </ParamField>
+</Expandable>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": 2
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+Whether the deletion was executed.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+Error description when `success` is `false`; empty otherwise.
+</ResponseField>
+
+<ResponseField name="data" type="integer" required>
+Total number of records deleted.
+</ResponseField>
+
+<Note>
+Skipped entries do not fail the request. IDs that are valid but do not exist (or belong to another user, for non-admin callers) are simply not counted in the result.
+</Note>
+
+## Error messages
+
+| Condition | Description |
+| --- | --- |
+| Invalid parameters | The JSON body is missing, malformed, or `items` is empty |
+| No valid ids | Every entry was skipped: all had an empty `id` or an invalid `media_type` |
+| Database error, please try again later | Deleting the records failed; see server logs |

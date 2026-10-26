@@ -1,0 +1,67 @@
+---
+title: 关闭工单
+description: 将工单标记为已完成并记录关闭时间，同时在时间线中追加状态变更记录。
+api: "POST /api/ticket/{id}/close"
+---
+
+关闭工单，即将其状态置为 `completed`。状态成功流转时会记录 `closed_at` 为关闭时间，并在消息时间线追加一条状态变更记录。对已完成的工单再次调用同样成功，但不会产生任何变更。
+
+需要登录（**User** 权限）。只有工单所有者与管理员可以关闭该工单。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
+
+## 请求
+
+<RequestExample>
+
+```bash cURL
+curl --request POST \
+  --url 'https://your-nookmux-domain/api/ticket/3/close' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1'
+```
+
+</RequestExample>
+
+### 路径参数
+
+<ParamField path="id" type="integer" required>
+  工单 id，正整数。
+</ParamField>
+
+## 响应
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": null
+}
+```
+
+</ResponseExample>
+
+### 响应字段
+
+<ResponseField name="success" type="boolean" required>
+  工单是否关闭成功。
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  `success` 为 `false` 时的错误描述；成功时为空字符串。
+</ResponseField>
+
+<ResponseField name="data" type="null">
+  成功时恒为 `null`。如需查看更新后的状态与时间线，请再次获取工单详情。
+</ResponseField>
+
+<Note>
+  管理接口在业务失败时同样返回 HTTP `200`，必须以 `success` 字段判断结果。服务层失败（工单不存在、无权访问、状态并发变更、数据库错误等）均以本地化的数据库错误文案返回，具体原因仅记录在服务端日志中。
+</Note>
+
+## 错误说明
+
+| 条件 | 说明 |
+| --- | --- |
+| 无效的工单编号 | `id` 不是正整数 |
+| 数据库错误，请稍后重试 | 不存在该 id 的工单、调用者既不是工单所有者也不是管理员、读取与更新之间工单状态被并发修改（请刷新后重试），或更新工单失败，详见服务端日志 |

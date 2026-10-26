@@ -1,0 +1,64 @@
+---
+title: Get Admin Sidebar Modules
+description: Fetch the admin console sidebar module toggle configuration.
+api: "GET /api/status/admin_modules"
+---
+
+Returns the configuration that decides which modules appear in the admin console sidebar. The payload is the `SidebarModulesAdmin` option maintained in the console settings; it is served on a dedicated admin-authenticated endpoint instead of the public `/api/status` because it describes the admin console structure.
+
+Requires **Admin** permissions. See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url 'https://your-nookmux-domain/api/status/admin_modules' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1'
+```
+
+</RequestExample>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": {
+    "SidebarModulesAdmin": "{\"chat\":{\"enabled\":true,\"playground\":false},\"console\":{\"enabled\":true,\"log\":true},\"admin\":{\"enabled\":true,\"channel\":true}}"
+  }
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+  Whether the request succeeded.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  Error description when `success` is `false`; empty otherwise.
+</ResponseField>
+
+<ResponseField name="data" type="object" required>
+  Admin sidebar module configuration.
+
+  <Expandable title="admin modules structure">
+    <ResponseField name="SidebarModulesAdmin" type="string" required>
+      JSON document (serialized as a string) keyed by sidebar section names such as `chat`, `console` and `admin`; each section maps module names to toggle flags. The value is managed by the console and returned verbatim; it may be empty when unset.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+## Error messages
+
+| Condition | Description |
+| --- | --- |
+| Authentication failed | Standard authentication errors (HTTP `401`) when the caller is not an administrator |

@@ -1,0 +1,55 @@
+---
+title: 删除 JSON 数组配置项
+description: JSON 数组型选项的旧版删除接口；音色白名单已迁移至音色管理，删除恒被拒绝。
+api: "DELETE /api/option/json_array"
+---
+
+历史上用于从 JSON 数组型系统选项中移除条目的旧版端点。音色白名单（`minimax.voice_whitelist`）已迁移到数据库音色表，本路由仅为兼容旧前端保留，所有删除一律以迁移提示拒绝。请求体不会被读取。
+
+需要**超级管理员（Root）**权限。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
+
+## 请求
+
+<RequestExample>
+
+```bash cURL
+curl --request DELETE \
+  --url 'https://your-nookmux-domain/api/option/json_array' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1'
+```
+
+</RequestExample>
+
+## 响应
+
+<ResponseExample>
+
+```json 200
+{
+  "success": false,
+  "message": "该配置已迁移至音色管理页面，请通过音色管理进行维护"
+}
+```
+
+</ResponseExample>
+
+### 响应字段
+
+<ResponseField name="success" type="boolean" required>
+  恒为 `false`；本端点已无法删除成功。
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  恒为指向音色管理的迁移提示。
+</ResponseField>
+
+<Note>
+  音色白名单请通过音色管理控制台维护。响应为 HTTP `200` 加 `success: false`，不返回 `data` 字段。
+</Note>
+
+## 错误说明
+
+| 条件 | 说明 |
+| --- | --- |
+| 该配置已迁移至音色管理页面，请通过音色管理进行维护 | HTTP `200` 加 `success: false`；对本端点的任何请求都返回该结果 |

@@ -1,0 +1,145 @@
+---
+title: 重置仪表板配置
+description: 将全部仪表板配置项重置为默认值。
+api: "POST /api/dashboard/config/reset"
+---
+
+将全部仪表板配置项重置为内置默认值。所有配置项会落库并立即生效，响应返回完整的默认值映射。该接口无请求体。
+
+需要**管理员（Admin）**权限。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
+
+## 请求
+
+<RequestExample>
+
+```bash cURL
+curl --request POST \
+  --url 'https://your-nookmux-domain/api/dashboard/config/reset' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1'
+```
+
+</RequestExample>
+
+## 响应
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "配置已重置为默认值",
+  "data": {
+    "api_info_enabled": "true",
+    "announcements_enabled": "true",
+    "default_time_range_days": "7",
+    "faq_enabled": "true",
+    "max_time_range_days": "31",
+    "media_convert_stats_enabled": "true",
+    "quota_data_enabled": "true",
+    "quota_data_refresh_interval": "3600",
+    "quota_data_track_by_model": "true",
+    "quota_data_track_by_user": "true",
+    "quota_data_track_tokens": "true",
+    "rankings_enabled": "true",
+    "rankings_model_limit": "20",
+    "rankings_refresh_interval": "300",
+    "rankings_vendor_limit": "5",
+    "uptime_kuma_enabled": "true",
+    "uptime_kuma_refresh_interval": "60",
+    "user_analytics_enabled": "true",
+    "user_analytics_refresh_interval": "3600",
+    "user_analytics_top_n": "20"
+  }
+}
+```
+
+</ResponseExample>
+
+### 响应字段
+
+<ResponseField name="success" type="boolean" required>
+配置是否重置成功。
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+`success` 为 `true` 时的本地化成功描述；为 `false` 时的错误描述。
+</ResponseField>
+
+<ResponseField name="data" type="object">
+  重置后的完整配置映射；每个值均为下方所示的默认值，以字符串返回。键集合与[获取仪表板配置](/cn/nookmux/api/management/dashboard/dashboard-config-get)一致。
+
+  <Expandable title="data 结构">
+    <ResponseField name="api_info_enabled" type="string" required>
+      API 信息面板开关，重置为 `true`。
+    </ResponseField>
+    <ResponseField name="announcements_enabled" type="string" required>
+      公告面板开关，重置为 `true`。
+    </ResponseField>
+    <ResponseField name="default_time_range_days" type="string" required>
+      默认查询时间范围（天），重置为 `7`。
+    </ResponseField>
+    <ResponseField name="faq_enabled" type="string" required>
+      FAQ 面板开关，重置为 `true`。
+    </ResponseField>
+    <ResponseField name="max_time_range_days" type="string" required>
+      最大查询时间范围（天），重置为 `31`。
+    </ResponseField>
+    <ResponseField name="media_convert_stats_enabled" type="string" required>
+      图片/视频转 URL 统计面板开关，重置为 `true`。
+    </ResponseField>
+    <ResponseField name="quota_data_enabled" type="string" required>
+      配额数据（时间序列）面板开关，重置为 `true`。
+    </ResponseField>
+    <ResponseField name="quota_data_refresh_interval" type="string" required>
+      配额数据刷新间隔（秒），重置为 `3600`。
+    </ResponseField>
+    <ResponseField name="quota_data_track_by_model" type="string" required>
+      按模型维度聚合配额数据，重置为 `true`。
+    </ResponseField>
+    <ResponseField name="quota_data_track_by_user" type="string" required>
+      按用户维度聚合配额数据，重置为 `true`。
+    </ResponseField>
+    <ResponseField name="quota_data_track_tokens" type="string" required>
+      随配额数据记录 token 用量，重置为 `true`。
+    </ResponseField>
+    <ResponseField name="rankings_enabled" type="string" required>
+      排行榜面板开关，重置为 `true`。
+    </ResponseField>
+    <ResponseField name="rankings_model_limit" type="string" required>
+      排行榜保留的模型数量，重置为 `20`。
+    </ResponseField>
+    <ResponseField name="rankings_refresh_interval" type="string" required>
+      排行榜刷新间隔（秒），重置为 `300`。
+    </ResponseField>
+    <ResponseField name="rankings_vendor_limit" type="string" required>
+      排行榜保留的供应商数量，重置为 `5`。
+    </ResponseField>
+    <ResponseField name="uptime_kuma_enabled" type="string" required>
+      Uptime Kuma 面板开关，重置为 `true`。
+    </ResponseField>
+    <ResponseField name="uptime_kuma_refresh_interval" type="string" required>
+      Uptime Kuma 刷新间隔（秒），重置为 `60`。
+    </ResponseField>
+    <ResponseField name="user_analytics_enabled" type="string" required>
+      用户分析面板开关，重置为 `true`。
+    </ResponseField>
+    <ResponseField name="user_analytics_refresh_interval" type="string" required>
+      用户分析刷新间隔（秒），重置为 `3600`。
+    </ResponseField>
+    <ResponseField name="user_analytics_top_n" type="string" required>
+      用户排行保留的用户数量，重置为 `20`。
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<Note>
+开启审计后，本次重置会写入审计日志（模块 `dashboard_config`）。
+</Note>
+
+## 错误说明
+
+| 条件 | 说明 |
+| --- | --- |
+| 序列化失败 | 默认配置序列化失败，`message` 为 `配置序列化失败: {错误详情}`，详见服务端日志 |
+| 数据库错误 | 配置项落库失败，`message` 为 `重置配置失败: {错误详情}`，详见服务端日志 |

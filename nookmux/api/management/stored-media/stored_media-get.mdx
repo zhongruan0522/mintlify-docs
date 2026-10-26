@@ -1,0 +1,136 @@
+---
+title: Get All Stored Media
+description: Paginated list of all stored images and videos created by the multimodal auto-URL conversion feature.
+api: "GET /api/stored_media/"
+---
+
+Returns the metadata of every stored media record across all users, newest first. These records are the images and videos NookMux keeps for the multimodal auto-URL conversion feature; the binary payload itself is never returned, only its metadata and a short-lived download URL.
+
+Requires **Admin** permissions. See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url 'https://your-nookmux-domain/api/stored_media/?p=1&page_size=10&start_timestamp=1790000000&end_timestamp=1790172800' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1'
+```
+
+</RequestExample>
+
+### Query parameters
+
+<ParamField path="p" type="integer" default="1">
+Page number, starting at 1.
+</ParamField>
+
+<ParamField path="page_size" type="integer" default="10">
+Page size, capped at 100. The legacy aliases `ps` and `size` are also accepted when `page_size` is absent.
+</ParamField>
+
+<ParamField path="start_timestamp" type="integer">
+Lower bound on `created_at` as a Unix timestamp in seconds. Omit or pass `0` for no lower bound.
+</ParamField>
+
+<ParamField path="end_timestamp" type="integer">
+Upper bound on `created_at` as a Unix timestamp in seconds. Omit or pass `0` for no upper bound.
+</ParamField>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": {
+    "page": 1,
+    "page_size": 10,
+    "total": 2,
+    "items": [
+      {
+        "id": "0d8c9f9a-1b2c-3d4e-5f6a-7b8c9d0e1f2a",
+        "media_type": "image",
+        "created_at": 1790110000,
+        "mime_type": "image/png",
+        "size_bytes": 204800,
+        "url": "https://your-nookmux-domain/mcp/image/0d8c9f9a-1b2c-3d4e-5f6a-7b8c9d0e1f2a?exp=1790120000&sig=5f4e3d2c1b0a9f8e7d6c5b4a3f2e1d0c"
+      },
+      {
+        "id": "7a6b5c4d-3e2f-1a0b-9c8d-7e6f5a4b3c2d",
+        "media_type": "video",
+        "created_at": 1790090000,
+        "mime_type": "video/mp4",
+        "size_bytes": 15728640,
+        "url": "https://your-nookmux-domain/mcp/video/7a6b5c4d-3e2f-1a0b-9c8d-7e6f5a4b3c2d?exp=1790120000&sig=1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d"
+      }
+    ]
+  }
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+Whether the records were loaded.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+Error description when `success` is `false`; empty otherwise.
+</ResponseField>
+
+<ResponseField name="data" type="object" required>
+Pagination envelope.
+
+<Expandable title="data structure">
+  <ParamField path="page" type="integer" required>
+    Current page number.
+  </ParamField>
+  <ParamField path="page_size" type="integer" required>
+    Page size actually applied (after defaulting and the 100 cap).
+  </ParamField>
+  <ParamField path="total" type="integer" required>
+    Total number of matching records.
+  </ParamField>
+  <ParamField path="items" type="array" required>
+    Stored media records of the current page, ordered by `created_at` descending, then `id` descending.
+  </ParamField>
+</Expandable>
+</ResponseField>
+
+<ResponseField name="data.items[]" type="object" required>
+One stored media record.
+
+<Expandable title="stored media structure">
+  <ParamField path="id" type="string" required>
+    Record ID (UUID) of the stored media.
+  </ParamField>
+  <ParamField path="media_type" type="string" required>
+    Media type: `image` or `video`.
+  </ParamField>
+  <ParamField path="created_at" type="integer" required>
+    Storage time as a Unix timestamp in seconds.
+  </ParamField>
+  <ParamField path="mime_type" type="string" required>
+    MIME type of the original file, for example `image/png` or `video/mp4`.
+  </ParamField>
+  <ParamField path="size_bytes" type="integer" required>
+    Size of the stored file in bytes.
+  </ParamField>
+  <ParamField path="url" type="string" required>
+    Signed download URL for the media content, in the form `{server_address}/mcp/{media_type}/{id}?exp=...&sig=...`. The signature expires after one hour.
+  </ParamField>
+</Expandable>
+</ResponseField>
+
+## Error messages
+
+| Condition | Description |
+| --- | --- |
+| Database error, please try again later | Loading the records failed; see server logs |

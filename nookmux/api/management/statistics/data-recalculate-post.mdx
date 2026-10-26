@@ -1,0 +1,73 @@
+---
+title: Recalculate Quota Data
+description: Rebuild the pre-aggregated quota dashboard for a time range from the raw request logs.
+api: "POST /api/data/recalculate"
+---
+
+Rebuilds the `quota_data` aggregation for a time range from the raw request logs: existing hourly buckets inside the range are deleted and re-inserted in a single transaction, with counts, quota, tokens and failure counts recomputed from successful and failed log entries. The rankings snapshot cache is invalidated as part of the run. Parameters are passed in the query string; the request has no body.
+
+Requires **Admin** permissions. See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request POST \
+  --url 'https://your-nookmux-domain/api/data/recalculate?start_timestamp=1735689600&end_timestamp=1738368000' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1'
+```
+
+</RequestExample>
+
+### Query parameters
+
+<ParamField path="start_timestamp" type="integer" required>
+  Unix timestamp (seconds) of the range start. Must be positive; floored down to the hour boundary before aggregation.
+</ParamField>
+
+<ParamField path="end_timestamp" type="integer" required>
+  Unix timestamp (seconds) of the range end. Must be positive and greater than `start_timestamp`; rounded up to the end of the hour bucket containing it.
+</ParamField>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "Recalculation completed",
+  "data": null
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+  Whether the recalculation completed.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  `Recalculation completed` on success; error description when `success` is `false`. The message is localized according to the caller's language preference.
+</ResponseField>
+
+<ResponseField name="data" type="null" required>
+  Always `null`.
+</ResponseField>
+
+<Note>
+  Successful requests are aggregated from consume logs (type `2`) and contribute request count, quota and token usage; failed requests (type `5`) contribute only the failure count. Recomputed rows follow the write-layer tracking granularity configured for the data pipeline (per-user, per-model and token tracking toggles), matching the live aggregation path.
+
+  The user-analytics snapshot cache is not invalidated by this endpoint; user analytics views refresh after their cache TTL elapses.
+</Note>
+
+## Error messages
+
+| Condition | Description |
+| --- | --- |
+| Invalid time range | Either timestamp is missing or not positive, or `end_timestamp` is not greater than `start_timestamp` |
+| Database error, please try again later | Reading the logs or rewriting `quota_data` failed; see server logs |

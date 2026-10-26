@@ -1,0 +1,85 @@
+---
+title: Get GLM Channel Contact Info
+description: Retrieve the phone number and name of the Zhipu account behind a channel, parsed from its monthly bill.
+api: "GET /api/channel/glm/contact/{id}"
+---
+
+Retrieve the contact info of the Zhipu account behind a channel. The channel must be of the Zhipu type (`type` `26`, `ChannelTypeZhipu_v4`); plan channels are not required. NookMux reads the account name from the upstream monthly bill details for the current month (server timezone, `YYYY-MM`) and parses it into a phone number and a name; the raw string is preserved as well. The request carries the channel's first key and goes through the channel's configured proxy; the upstream domain follows the plan region (`api.z.ai` for the international plan, `bigmodel.cn` otherwise).
+
+Requires **Admin** permissions. See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url 'https://your-nookmux-domain/api/channel/glm/contact/1' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1'
+```
+
+</RequestExample>
+
+### Path parameters
+
+<ParamField path="id" type="integer" required>
+Channel id.
+</ParamField>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "data": {
+    "phone": "13800001234",
+    "name": "张三",
+    "raw_name": "13800001234(张三)",
+    "billing_month": "2026-10"
+  }
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+Whether the request succeeded.
+</ResponseField>
+
+<ResponseField name="data" type="object" required>
+Contact info parsed from the upstream `customerAcName`.
+
+<Expandable title="data structure">
+  <ResponseField name="phone" type="string">
+    Phone number parsed from the `phone(name)` format. Omitted when the raw string does not match the format.
+  </ResponseField>
+  <ResponseField name="name" type="string">
+    Account holder name. When the raw string does not match the `phone(name)` format, the whole string is returned as the name.
+  </ResponseField>
+  <ResponseField name="raw_name" type="string">
+    Raw upstream string, for example `13800001234(张三)`.
+  </ResponseField>
+  <ResponseField name="billing_month" type="string">
+    Billing month of the queried bill details, `YYYY-MM` in the server timezone.
+  </ResponseField>
+</Expandable>
+</ResponseField>
+
+<Note>
+Management endpoints return HTTP `200` even on business failures; always check the `success` field. On success this endpoint returns only `success` and `data` (no `message` field); failures return `success: false` with a localized `message`.
+</Note>
+
+## Error messages
+
+| Condition | message | Description |
+| --- | --- | --- |
+| Invalid parameters | `Invalid parameters` | `id` in the path is missing or not an integer |
+| Channel not found | `Channel not found` | The channel does not exist or could not be loaded |
+| Contact query unsupported | `This channel does not support contact query` | The channel type is not Zhipu (`type` `26`) |
+| Channel key invalid | `The channel API key is invalid or authentication failed. Please check the key configuration` | The upstream rejected the key |
+| Contact query failed | `Contact query failed: {{.Error}}` | The upstream request or response parsing failed, including an upstream success response without an account name; `{{.Error}}` carries the underlying error |

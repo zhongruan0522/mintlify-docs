@@ -1,0 +1,125 @@
+---
+title: 获取所有工单
+description: 分页列出全部用户的工单，支持状态过滤与关键字搜索，按最近更新优先排序。
+api: "GET /api/ticket/admin"
+---
+
+分页列出全部用户的工单，按最近更新优先排序。支持按状态过滤，并支持按工单 id 或标题关键字搜索。响应结构与用户工单列表完全一致，仅范围不同。
+
+需要**管理员（Admin）**权限。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
+
+## 请求
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url 'https://your-nookmux-domain/api/ticket/admin?p=1&page_size=10&status=pending' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1'
+```
+
+</RequestExample>
+
+### 查询参数
+
+<ParamField path="query.p" type="integer" default="1">
+  页码。
+</ParamField>
+
+<ParamField path="query.page_size" type="integer" default="10">
+  每页条数，上限 100。分页辅助逻辑同时兼容旧别名 `ps` 与 `size`。
+</ParamField>
+
+<ParamField path="query.status" type="string" default="all">
+  按状态过滤：`all`、`pending`、`processing` 或 `completed`。其他取值会导致请求失败。
+</ParamField>
+
+<ParamField path="query.keyword" type="string">
+  搜索关键字，匹配前会去除首尾空白。关键字为整数时，匹配 `id` 等于该值或 `title` 包含该值的工单；否则匹配标题包含该关键字的工单。`%`、`_`、`!` 按字面值匹配。
+</ParamField>
+
+## 响应
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": {
+    "page": 1,
+    "page_size": 10,
+    "total": 1,
+    "items": [
+      {
+        "id": 3,
+        "title": "Billing question",
+        "type": "question",
+        "status": "pending",
+        "created_at": 1748000000,
+        "updated_at": 1748000000
+      }
+    ]
+  }
+}
+```
+
+</ResponseExample>
+
+### 响应字段
+
+<ResponseField name="success" type="boolean" required>
+  请求是否成功。
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  `success` 为 `false` 时的错误描述；成功时为空字符串。
+</ResponseField>
+
+<ResponseField name="data.page" type="integer" required>
+  当前页码。
+</ResponseField>
+
+<ResponseField name="data.page_size" type="integer" required>
+  本次查询应用的每页条数。
+</ResponseField>
+
+<ResponseField name="data.total" type="integer" required>
+  全部用户符合过滤条件的工单总数。
+</ResponseField>
+
+<ResponseField name="data.items" type="array" required>
+  当前页的工单，按 `updated_at` 倒序、再按 `id` 倒序排列。
+
+  <Expandable title="工单摘要结构">
+    <ResponseField name="id" type="integer" required>
+      工单 id。
+    </ResponseField>
+    <ResponseField name="title" type="string" required>
+      工单标题。
+    </ResponseField>
+    <ResponseField name="type" type="string" required>
+      工单类型：`bug`、`feature`、`question` 或 `other`。
+    </ResponseField>
+    <ResponseField name="status" type="string" required>
+      工单状态：`pending`、`processing` 或 `completed`。
+    </ResponseField>
+    <ResponseField name="created_at" type="integer" required>
+      创建时间的 Unix 时间戳（秒）。
+    </ResponseField>
+    <ResponseField name="updated_at" type="integer" required>
+      最近一次更新时间的 Unix 时间戳（秒），新消息与状态变更都会刷新该值。
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<Note>
+  管理接口在业务失败时同样返回 HTTP `200`，必须以 `success` 字段判断结果。列表类失败（包括非法的 `status` 取值）均以本地化的数据库错误文案返回。
+</Note>
+
+## 错误说明
+
+| 条件 | 说明 |
+| --- | --- |
+| 数据库错误，请稍后重试 | `status` 不是 `all`、`pending`、`processing`、`completed` 之一，或统计/查询工单失败，详见服务端日志 |

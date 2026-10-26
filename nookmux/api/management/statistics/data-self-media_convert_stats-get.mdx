@@ -1,0 +1,82 @@
+---
+title: Get Personal Media Convert Statistics
+description: Count stored image and video to URL conversions for the current user's own account within a time range.
+api: "GET /api/data/self/media_convert_stats"
+---
+
+Returns image and video conversion counts for the current user: how many stored media assets of each type were created within the query range by the calling account through the multimodal auto-convert-to-URL feature.
+
+Requires **User** permissions. See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url 'https://your-nookmux-domain/api/data/self/media_convert_stats?start_timestamp=1735689600&end_timestamp=1738368000' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1'
+```
+
+</RequestExample>
+
+### Query parameters
+
+<ParamField path="start_timestamp" type="integer">
+  Unix timestamp (seconds) of the range start. Optional; omit or pass `0` to skip the lower bound.
+</ParamField>
+
+<ParamField path="end_timestamp" type="integer">
+  Unix timestamp (seconds) of the range end. Optional; omit or pass `0` to skip the upper bound. Unlike the quota-data endpoints, no maximum range length is enforced here.
+</ParamField>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": {
+    "image_count": 32,
+    "video_count": 4
+  }
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+  Whether the query succeeded.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  Error description when `success` is `false`; empty otherwise.
+</ResponseField>
+
+<ResponseField name="data" type="object" required>
+  Conversion counters for the requested range, restricted to the calling account.
+
+  <Expandable title="media convert stats structure">
+    <ResponseField name="image_count" type="integer" required>
+      Number of stored image assets created in the range by the current user.
+    </ResponseField>
+    <ResponseField name="video_count" type="integer" required>
+      Number of stored video assets created in the range by the current user.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<Note>
+  When media convert statistics are disabled in the dashboard configuration, the endpoint returns `success: true` with the message `Image/video to URL statistics are disabled` and zeroed counters instead of an error.
+</Note>
+
+## Error messages
+
+| Condition | Description |
+| --- | --- |
+| Database error, please try again later | Querying stored media failed; see server logs |

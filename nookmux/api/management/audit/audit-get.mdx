@@ -1,0 +1,154 @@
+---
+title: Get audit logs
+description: Retrieve paginated audit logs of admin operations, filterable by module, action type, operator, and time range.
+api: "GET /api/audit/"
+---
+
+Retrieves audit log entries that record administrator create, update, and delete operations on system resources. Results are paginated and ordered by `id` descending. Text filters (`username`, `module`, `action_type`) match exactly; `start_timestamp` and `end_timestamp` bound the record time.
+
+Requires **Admin** permissions. See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
+
+<Note>
+Audit logging is disabled by default. Entries exist only after an administrator enables audit in system settings, and only for enabled modules. Read-only operations are never audited.
+</Note>
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url 'https://your-nookmux-domain/api/audit/?module=channel&action_type=update&p=1&page_size=20' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1'
+```
+
+</RequestExample>
+
+### Query parameters
+
+<ParamField path="query.username" type="string">
+Exact match on the username of the administrator who performed the operation.
+</ParamField>
+
+<ParamField path="query.module" type="string">
+Exact match on the audited module. Possible values: `option`, `channel`, `user`, `token`, `redemption`, `model`, `vendor`, `dynamic_ratio`, `prefill_group`, `db`, `performance`, `log`, `setup`, `dashboard_config`, `voice`. See [Get audit modules](/nookmux/api/management/audit/audit-modules-get).
+</ParamField>
+
+<ParamField path="query.action_type" type="string">
+Exact match on the operation type: `create`, `update`, or `delete`.
+</ParamField>
+
+<ParamField path="query.start_timestamp" type="integer">
+Lower bound for `created_at` as a Unix timestamp in seconds (inclusive). Non-numeric values are ignored and leave the lower bound open.
+</ParamField>
+
+<ParamField path="query.end_timestamp" type="integer">
+Upper bound for `created_at` as a Unix timestamp in seconds (inclusive). Non-numeric values are ignored and leave the upper bound open.
+</ParamField>
+
+<ParamField path="query.p" type="integer" default="1">
+Page number, starting at 1. Values below 1 are treated as 1.
+</ParamField>
+
+<ParamField path="query.page_size" type="integer" default="20">
+Number of entries per page. Values below 1 or above 100 fall back to 20.
+</ParamField>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": {
+    "items": [
+      {
+        "id": 42,
+        "created_at": 1761000000,
+        "username": "root",
+        "ip": "203.0.113.10",
+        "module": "dashboard_config",
+        "action_type": "update",
+        "description": "更新仪表板配置",
+        "before_data": "{\"rankings_model_limit\":\"20\"}",
+        "after_data": "{\"rankings_model_limit\":\"50\"}"
+      }
+    ],
+    "page": 1,
+    "page_size": 20,
+    "total": 1
+  }
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+Whether the audit logs were returned.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+Error description when `success` is `false`; empty otherwise.
+</ResponseField>
+
+<ResponseField name="data" type="object">
+  <Expandable title="data structure">
+    <ResponseField name="items" type="object[]">
+      Matching audit log entries on the current page, ordered by `id` descending.
+
+      <Expandable title="item structure">
+        <ResponseField name="id" type="integer" required>
+          Audit log ID.
+        </ResponseField>
+        <ResponseField name="created_at" type="integer" required>
+          Record time as a Unix timestamp in seconds.
+        </ResponseField>
+        <ResponseField name="username" type="string" required>
+          Username of the administrator who performed the operation.
+        </ResponseField>
+        <ResponseField name="ip" type="string" required>
+          Client IP of the operator; empty when IP recording is disabled in audit settings.
+        </ResponseField>
+        <ResponseField name="module" type="string" required>
+          Audited module, for example `dashboard_config`.
+        </ResponseField>
+        <ResponseField name="action_type" type="string" required>
+          Operation type: `create`, `update`, or `delete`.
+        </ResponseField>
+        <ResponseField name="description" type="string" required>
+          Human-readable summary of the operation written by the server.
+        </ResponseField>
+        <ResponseField name="before_data" type="string">
+          JSON string of the pre-operation data; for updates only the fields that changed are kept. Recorded only when diff recording is enabled in audit settings; omitted when empty.
+        </ResponseField>
+        <ResponseField name="after_data" type="string">
+          JSON string of the post-operation data; for updates only the fields that changed are kept. Recorded only when diff recording is enabled in audit settings; omitted when empty.
+        </ResponseField>
+      </Expandable>
+    </ResponseField>
+    <ResponseField name="total" type="integer" required>
+      Total number of entries matching the filters.
+    </ResponseField>
+    <ResponseField name="page" type="integer" required>
+      Current page number, starting at 1.
+    </ResponseField>
+    <ResponseField name="page_size" type="integer" required>
+      Page size actually applied.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<Note>
+For update operations, `before_data` and `after_data` keep only the fields that changed; for create or delete operations the recorded side holds the full snapshot the server wrote for that operation. Sensitive values are masked before persistence: fields whose names contain `key`, `password`, `token`, `secret`, `credential`, `authorization`, `private_key`, or `dsn` are replaced with `[REDACTED]`, and passwords embedded in URLs or database DSNs are replaced with `***`.
+</Note>
+
+## Error messages
+
+| Condition | Description |
+| --- | --- |
+| Database error | Running the query failed; `message` is `Failed to fetch audit logs: {error}`, see server logs |

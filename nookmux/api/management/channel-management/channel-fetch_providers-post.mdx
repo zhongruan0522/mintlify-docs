@@ -1,0 +1,93 @@
+---
+title: Get Provider List
+description: Fetch the OpenRouter provider list from an arbitrary base URL, before saving the channel.
+api: "POST /api/channel/fetch_providers"
+---
+
+Fetch the OpenRouter provider list by supplying a base URL and channel type directly, without needing a saved channel. This is the channel-creation helper for the provider picker in the channel form.
+
+Queries `{base_url}/v1/providers`; when `base_url` is empty, the built-in OpenRouter endpoint (`https://openrouter.ai/api`) is used. Only the OpenRouter type constant (`20`) is accepted. The target URL is checked against the fetch security settings (SSRF protection, private IP allowance, domain and IP filters, allowed ports); because no channel exists yet, no channel proxy is applied.
+
+Requires **Root** permissions. See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request POST \
+  --url 'https://your-nookmux-domain/api/channel/fetch_providers' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1' \
+  --header 'Content-Type: application/json' \
+  --data '{
+  "base_url": "https://openrouter.ai/api",
+  "type": 20
+}'
+```
+
+</RequestExample>
+
+### Body
+
+<ParamField path="body.base_url" type="string">
+  Upstream base URL. When empty, the built-in OpenRouter endpoint is used.
+</ParamField>
+
+<ParamField path="body.type" type="integer" required>
+  Channel type constant; must be the OpenRouter constant (`20`), otherwise the request is rejected.
+</ParamField>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": [
+    {
+      "slug": "openai",
+      "name": "OpenAI",
+      "headquarters": "San Francisco, CA, USA",
+      "privacy_policy_url": "https://openai.com/policies/privacy-policy/"
+    },
+    {
+      "slug": "anthropic",
+      "name": "Anthropic"
+    }
+  ]
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+  Whether the provider list was fetched.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  Error description when `success` is `false`; empty otherwise.
+</ResponseField>
+
+<ResponseField name="data" type="array" required>
+  Provider entries returned by the upstream; same structure as [Get Upstream Provider List](/nookmux/api/management/channel-management/channel-fetch_providers-id-get).
+</ResponseField>
+
+<Note>
+Unlike most management endpoints, this one does not always return HTTP `200`: URL validation failures return `400` and request transport failures return `500`, in the same `{ success, message }` shape. The remaining business failures return `200` with `success: false`.
+</Note>
+
+## Error messages
+
+| Condition | Description |
+| --- | --- |
+| Invalid request | HTTP 200 with `success: false` — the JSON body is malformed |
+| OpenRouter channels only | HTTP 200 with `success: false` — `type` is not the OpenRouter constant |
+| URL rejected | HTTP 400 — the target URL violates the fetch security settings |
+| Upstream request failed | HTTP 500 — building or sending the upstream request failed |
+| Failed to fetch providers | HTTP 200 with `success: false` — the upstream returned a non-200 status or the body could not be read |
+| Failed to parse response | HTTP 200 with `success: false` — the upstream response is not the expected JSON |

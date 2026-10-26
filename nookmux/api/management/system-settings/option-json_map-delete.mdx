@@ -1,0 +1,76 @@
+---
+title: Delete JSON Map Option
+description: Remove a single entry from a JSON map system option.
+api: "DELETE /api/option/json_map"
+---
+
+Removes one entry from a JSON-object-valued system option. The supported key set matches [Get JSON Map Option](/nookmux/api/management/system-settings/option-json_map-get): the MiniMax redirect options and the pricing options. After the removal the whole option is re-serialized, validated, persisted through the option store (database write plus in-memory refresh), and the change is recorded in the admin audit log as an option update.
+
+Requires **Root** (super administrator) permissions. See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request DELETE \
+  --url 'https://your-nookmux-domain/api/option/json_map' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1' \
+  --header 'Content-Type: application/json' \
+  --data '{
+  "key": "ModelRatio",
+  "map_key": "gpt-4o"
+}'
+```
+
+</RequestExample>
+
+### Body
+
+<ParamField path="body.key" type="string" required>
+  Option key to modify. Must be one of the supported JSON map keys: `minimax.model_redirect`, `minimax.emotion_redirect`, `minimax.tone_word_redirect`, `ModelPrice`, `ModelRatio`, `CacheRatio`, `CreateCacheRatio`, `CompletionRatio`, `AudioRatio`, `AudioCompletionRatio`, `ContextPricing`.
+</ParamField>
+
+<ParamField path="body.map_key" type="string" required>
+  Key of the entry to remove inside the JSON object, whitespace-trimmed; must be non-empty.
+</ParamField>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": ""
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+  Whether the entry was removed.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  Error description when `success` is `false`; empty otherwise.
+</ResponseField>
+
+<Note>
+  Deleting the last entry leaves an empty JSON object `{}` rather than removing the option itself. Body-shape errors (malformed JSON, empty `map_key`, unsupported `key`) return HTTP `400`; a missing entry and whole-option validation failures return HTTP `200` with `success: false` and a localized `message`.
+</Note>
+
+## Error messages
+
+| Condition | Description |
+| --- | --- |
+| Invalid parameters | HTTP `400`; the JSON body is missing or malformed |
+| Map key cannot be empty | HTTP `400`; `map_key` is empty after trimming |
+| Unsupported JSON map option | HTTP `400`; `key` is not one of the supported JSON map option keys |
+| Map item does not exist | HTTP `200` with `success: false`; no entry exists under `map_key` |
+| `Failed to parse JSON map option: {Error}` | HTTP `200` with `success: false`; re-serializing or validating a pricing option failed |
+| `MiniMax setting failed: {Error}` | HTTP `200` with `success: false`; the MiniMax option value failed validation |
+| Database error, please try again later | HTTP `200` with `success: false`; persisting the option failed; see server logs |

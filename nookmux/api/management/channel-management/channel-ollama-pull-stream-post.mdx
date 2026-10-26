@@ -1,0 +1,110 @@
+---
+title: Pull Ollama Model (Streaming)
+description: Pull a model on an Ollama channel's upstream server and stream the progress over SSE.
+api: "POST /api/channel/ollama/pull/stream"
+---
+
+Same operation as [Pull Ollama Model](/nookmux/api/management/channel-management/channel-ollama-pull-post), but the download progress is streamed back to the client as Server-Sent Events, which is what the console uses to render a pull progress bar. Only channels of type Ollama (`4`) are accepted.
+
+The pull is issued to the channel's upstream `/api/pull` endpoint with `stream: true`; the upstream request is given a 1-hour timeout to support very large models. The upstream call goes through the proxy configured on the channel (settings `proxy`) and uses the first key of a multi-key channel. The channel's `base_url` overrides the built-in default (`http://localhost:11434`) when set.
+
+Requires **Admin** permissions. See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request POST \
+  --url 'https://your-nookmux-domain/api/channel/ollama/pull/stream' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1' \
+  --header 'Content-Type: application/json' \
+  --data '{
+  "channel_id": 1,
+  "model_name": "llama3.1:8b"
+}'
+```
+
+</RequestExample>
+
+### Body
+
+<ParamField path="body.channel_id" type="integer" required>
+  Id of the Ollama channel whose upstream server should pull the model.
+</ParamField>
+
+<ParamField path="body.model_name" type="string" required>
+  Model tag to pull, as understood by the Ollama server, for example `llama3.1:8b`.
+</ParamField>
+
+## Response
+
+If validation fails before the stream starts (malformed body, missing parameters, unknown channel, non-Ollama channel type), the endpoint returns a regular JSON error with the corresponding HTTP status (`400` or `404`), in the same shape and with the same conditions as [Pull Ollama Model](/nookmux/api/management/channel-management/channel-ollama-pull-post).
+
+Otherwise the response is `text/event-stream` with `Cache-Control: no-cache`, `Connection: keep-alive` and `Access-Control-Allow-Origin: *`. Each `data:` line carries one progress event forwarded from the Ollama pull stream, followed by one terminal event and a final `[DONE]` sentinel:
+
+```json
+data: {"status":"pulling manifest"}
+
+data: {"status":"pulling dfb8e4a1e6c7","digest":"sha256:dfb8e4a1e6c79b1f8c04b6f4c2d5a9e0f7b8c3d1a2e4f5b6c7d8e9f0a1b2c3d4","total":4708075968,"completed":1234567}
+
+data: {"status":"verifying sha256 digest"}
+
+data: {"status":"writing manifest"}
+
+data: {"status":"success","total":4708075968,"completed":4708075968}
+
+data: {"message":"Model llama3.1:8b pulled successfully"}
+
+data: [DONE]
+```
+
+### Response fields
+
+<ResponseField name="status" type="string" required>
+  Pull stage reported by the Ollama server, for example `pulling manifest`, `pulling <digest>`, `verifying sha256 digest`, `writing manifest`, or `success` when the download completes.
+</ResponseField>
+
+<ResponseField name="digest" type="string">
+  Digest of the layer currently being downloaded, in `sha256:<hex>` form. Only present on download-progress events.
+</ResponseField>
+
+<ResponseField name="total" type="integer">
+  Total size in bytes of the layer currently being downloaded. Only present on download-progress events.
+</ResponseField>
+
+<ResponseField name="completed" type="integer">
+  Bytes of the current layer downloaded so far. Only present on download-progress events.
+</ResponseField>
+
+<ResponseField name="message" type="string">
+  Terminal event on success: localized confirmation that the model was pulled.
+</ResponseField>
+
+<ResponseField name="error" type="string">
+  Terminal event on failure: the localized reason the pull did not complete (for example the upstream returned an error status, the stream broke, or no success status was received).
+</ResponseField>
+
+<Note>
+The `[DONE]` sentinel marks the end of the stream; treat it (or the connection close) as the completion signal. A failure after the stream has started is reported inside the stream as a `data: {"error": ...}` event, not as a JSON error response.
+</Note>
+
+## Error messages
+
+Errors returned as regular JSON before the stream starts:
+
+| Condition | Description |
+| --- | --- |
+| Invalid request parameters | HTTP 400 — the JSON body is malformed |
+| Channel ID and model name are required | HTTP 400 — `channel_id` or `model_name` is missing |
+| Channel not found | HTTP 404 — no channel exists with the given `channel_id` |
+| Ollama channels only | HTTP 400 — the channel type is not Ollama |
+
+Errors reported as in-stream `data: {"error": ...}` events:
+
+| Condition | Description |
+| --- | --- |
+| Pull failed | The Ollama server reported an error status while pulling |
+| Stream read failed | Reading the upstream progress stream failed |
+| Pull not completed | The stream ended without a success status |

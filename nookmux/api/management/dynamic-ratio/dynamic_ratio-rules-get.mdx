@@ -1,0 +1,128 @@
+---
+title: Get All Dynamic Ratio Rules
+description: List all dynamic ratio rules ordered by priority, including disabled ones.
+api: "GET /api/dynamic_ratio/rules"
+---
+
+Returns all dynamic ratio rules, sorted by `priority` ascending, then by `id` ascending. Each rule describes when a group's billing ratio is overridden at billing time: the models it matches, an optional relay concurrency threshold, weekday and time-window conditions, and the ratio to apply. Only rules with `enable` set to `true` participate in matching; the runtime rule cache is refreshed after every create, update, delete or reorder.
+
+Requires **Admin** permissions. See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url 'https://your-nookmux-domain/api/dynamic_ratio/rules' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1'
+```
+
+</RequestExample>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": [
+    {
+      "id": 1,
+      "enable": true,
+      "group": "vip",
+      "models": "[\"gpt-4o\",\"claude-*\"]",
+      "concurrency": 100,
+      "weekdays": "[1,2,3,4,5]",
+      "start_time": "09:00",
+      "end_time": "18:00",
+      "ratio": 1.5,
+      "priority": 0,
+      "created_at": 1718100000,
+      "updated_at": 1718100000
+    },
+    {
+      "id": 2,
+      "enable": true,
+      "group": "default",
+      "models": "",
+      "concurrency": null,
+      "weekdays": "",
+      "start_time": "",
+      "end_time": "",
+      "ratio": 0.8,
+      "priority": 1,
+      "created_at": 1718186400,
+      "updated_at": 1718186400
+    }
+  ]
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+Whether the query was executed.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+Error description when `success` is `false`; empty otherwise.
+</ResponseField>
+
+<ResponseField name="data" type="array of object" required>
+All dynamic ratio rules, including disabled ones, sorted by `priority` ascending then `id` ascending.
+
+  <Expandable title="rule structure">
+    <ResponseField name="id" type="integer" required>
+    Rule ID.
+    </ResponseField>
+    <ResponseField name="enable" type="boolean" required>
+    Whether the rule participates in matching. Disabled rules are kept but excluded from the runtime rule cache.
+    </ResponseField>
+    <ResponseField name="group" type="string" required>
+    User group the rule applies to; must exist in the group ratio configuration.
+    </ResponseField>
+    <ResponseField name="models" type="string" required>
+    Model patterns as a JSON array string, for example `"[\"gpt-4o\",\"claude-*\"]"`. Patterns support `*` wildcards: exact names, a trailing `*` for prefix match (for example `gpt-4*`), a leading `*` for suffix match (for example `*-preview`), and a lone `*` for all models. Empty means the rule applies to every model.
+    </ResponseField>
+    <ResponseField name="concurrency" type="integer">
+    Relay concurrency threshold; the rule only matches while the current relay concurrency is strictly greater than this value. `null` when the rule has no concurrency condition.
+    </ResponseField>
+    <ResponseField name="weekdays" type="string" required>
+    Weekday condition as a JSON array string of integers `0`-`6`, where `0` is Sunday, for example `"[1,2,3,4,5]"`. Empty means every day.
+    </ResponseField>
+    <ResponseField name="start_time" type="string" required>
+    Start of the daily time window in `HH:MM` in the server's startup timezone; the window includes the start and excludes the end, and may cross midnight. Must be set together with `end_time`; empty means no time window.
+    </ResponseField>
+    <ResponseField name="end_time" type="string" required>
+    End of the daily time window in `HH:MM` in the server's startup timezone. Empty means no time window.
+    </ResponseField>
+    <ResponseField name="ratio" type="number" required>
+    Billing ratio applied when the rule matches; must be greater than `0`.
+    </ResponseField>
+    <ResponseField name="priority" type="integer" required>
+    Arbitration order among simultaneously matching rules; the smaller value wins. Managed with [Reorder Dynamic Ratio Rules](/nookmux/api/management/dynamic-ratio/dynamic_ratio-rules-reorder-put).
+    </ResponseField>
+    <ResponseField name="created_at" type="integer" required>
+    Unix timestamp (seconds) of rule creation.
+    </ResponseField>
+    <ResponseField name="updated_at" type="integer" required>
+    Unix timestamp (seconds) of the last update.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<Note>
+Management endpoints return HTTP `200` even on business failures; always check the `success` field. When several rules match a request, the rule with a model condition beats one without; then a rule with a concurrency condition beats one without; then the smallest concurrency overshoot wins; remaining ties break by smaller `priority`, then smaller `id`.
+</Note>
+
+## Error messages
+
+| Condition | Description |
+| --- | --- |
+| Database error, please try again later | Listing the rules failed; see server logs |

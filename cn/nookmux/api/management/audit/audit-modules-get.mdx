@@ -1,0 +1,79 @@
+---
+title: 获取审计模块列表
+description: 获取可作为审计日志筛选条件的模块列表。
+api: "GET /api/audit/modules"
+---
+
+返回全部审计模块及其筛选取值与显示名称，顺序为服务端定义的业务顺序。`value` 可直接作为[获取审计日志](/cn/nookmux/api/management/audit/audit-get)的 `module` 筛选值。
+
+需要**管理员（Admin）**权限。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
+
+## 请求
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url 'https://your-nookmux-domain/api/audit/modules' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1'
+```
+
+</RequestExample>
+
+## 响应
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": [
+    { "value": "option", "label": "系统设置" },
+    { "value": "channel", "label": "渠道" },
+    { "value": "user", "label": "用户" },
+    { "value": "token", "label": "令牌" },
+    { "value": "redemption", "label": "兑换码" },
+    { "value": "model", "label": "模型" },
+    { "value": "vendor", "label": "供应商" },
+    { "value": "dynamic_ratio", "label": "动态倍率" },
+    { "value": "prefill_group", "label": "预填充分组" },
+    { "value": "db", "label": "数据库迁移" },
+    { "value": "performance", "label": "性能管理" },
+    { "value": "log", "label": "日志清理" },
+    { "value": "setup", "label": "系统初始化" },
+    { "value": "dashboard_config", "label": "仪表板配置" },
+    { "value": "voice", "label": "音色管理" }
+  ]
+}
+```
+
+</ResponseExample>
+
+### 响应字段
+
+<ResponseField name="success" type="boolean" required>
+是否成功返回模块列表。
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+`success` 为 `false` 时的错误描述；成功时为空字符串。
+</ResponseField>
+
+<ResponseField name="data" type="object[]">
+  按服务端定义顺序排列的审计模块。
+
+  <Expandable title="模块结构">
+    <ResponseField name="value" type="string" required>
+      模块常量，可作为[获取审计日志](/cn/nookmux/api/management/audit/audit-get)的 `module` 筛选值。
+    </ResponseField>
+    <ResponseField name="label" type="string" required>
+      模块显示名称。
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<Note>
+该列表由服务端固定返回，每次调用结果相同。`label` 目前固定为中文，不随请求语言本地化。
+</Note>

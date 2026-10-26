@@ -1,0 +1,221 @@
+---
+title: Get Performance Stats
+description: Retrieve a runtime performance snapshot of the gateway process covering cache counters, memory, the disk cache directory, disk space, and active performance settings.
+api: "GET /api/performance/stats"
+---
+
+Returns a performance snapshot of the running NookMux process: disk cache and in-memory buffer counters, Go runtime memory statistics, the contents of the disk cache directory, free space on the volume that hosts it, and the effective performance settings.
+
+Requires **Root** (super administrator) permissions. See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url 'https://your-nookmux-domain/api/performance/stats' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1'
+```
+
+</RequestExample>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "data": {
+    "cache_stats": {
+      "active_disk_files": 3,
+      "current_disk_usage_bytes": 18874368,
+      "active_memory_buffers": 12,
+      "current_memory_usage_bytes": 104857600,
+      "disk_cache_hits": 1520,
+      "memory_cache_hits": 8934,
+      "disk_cache_max_bytes": 1073741824,
+      "disk_cache_threshold_bytes": 10485760
+    },
+    "memory_stats": {
+      "alloc": 134217728,
+      "total_alloc": 5368709120,
+      "sys": 268435456,
+      "num_gc": 42,
+      "num_goroutine": 120
+    },
+    "disk_cache_info": {
+      "path": "/tmp/nookmux-body-cache",
+      "exists": true,
+      "file_count": 3,
+      "total_size": 18874368
+    },
+    "disk_space_info": {
+      "total": 53687091200,
+      "free": 21474836480,
+      "used": 32212254720,
+      "used_percent": 60.0
+    },
+    "config": {
+      "disk_cache_enabled": true,
+      "disk_cache_threshold_mb": 10,
+      "disk_cache_max_size_mb": 1024,
+      "disk_cache_path": "",
+      "is_running_in_container": false,
+      "monitor_enabled": true,
+      "monitor_cpu_threshold": 90,
+      "monitor_memory_threshold": 90,
+      "monitor_disk_threshold": 95
+    }
+  }
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+  Whether the request succeeded.
+</ResponseField>
+
+<ResponseField name="data" type="object" required>
+  The performance snapshot.
+
+  <ResponseField name="cache_stats" type="object" required>
+    Counters of the request-body cache, maintained with atomic counters.
+
+    <Expandable title="cache_stats structure">
+      <ResponseField name="active_disk_files" type="integer" required>
+        Number of disk cache files currently tracked.
+      </ResponseField>
+      <ResponseField name="current_disk_usage_bytes" type="integer" required>
+        Current total size of the disk cache files, in bytes.
+      </ResponseField>
+      <ResponseField name="active_memory_buffers" type="integer" required>
+        Number of request bodies currently buffered in memory.
+      </ResponseField>
+      <ResponseField name="current_memory_usage_bytes" type="integer" required>
+        Total size of the in-memory buffered request bodies, in bytes.
+      </ResponseField>
+      <ResponseField name="disk_cache_hits" type="integer" required>
+        Cumulative disk cache hits; zeroed by `POST /api/performance/reset_stats`.
+      </ResponseField>
+      <ResponseField name="memory_cache_hits" type="integer" required>
+        Cumulative memory cache hits; zeroed by `POST /api/performance/reset_stats`.
+      </ResponseField>
+      <ResponseField name="disk_cache_max_bytes" type="integer" required>
+        Maximum total size of the disk cache, in bytes.
+      </ResponseField>
+      <ResponseField name="disk_cache_threshold_bytes" type="integer" required>
+        Request body size above which bodies are written to the disk cache, in bytes.
+      </ResponseField>
+    </Expandable>
+  </ResponseField>
+
+  <ResponseField name="memory_stats" type="object" required>
+    Go runtime memory statistics of the process.
+
+    <Expandable title="memory_stats structure">
+      <ResponseField name="alloc" type="integer" required>
+        Heap bytes allocated and still in use.
+      </ResponseField>
+      <ResponseField name="total_alloc" type="integer" required>
+        Cumulative bytes allocated over the process lifetime.
+      </ResponseField>
+      <ResponseField name="sys" type="integer" required>
+        Total bytes of memory obtained from the OS.
+      </ResponseField>
+      <ResponseField name="num_gc" type="integer" required>
+        Number of completed garbage collection cycles.
+      </ResponseField>
+      <ResponseField name="num_goroutine" type="integer" required>
+        Number of goroutines currently alive.
+      </ResponseField>
+    </Expandable>
+  </ResponseField>
+
+  <ResponseField name="disk_cache_info" type="object" required>
+    Result of an on-demand scan of the disk cache directory.
+
+    <Expandable title="disk_cache_info structure">
+      <ResponseField name="path" type="string" required>
+        Disk cache directory path. When no cache path is configured, this is the `nookmux-body-cache` subdirectory of the system temp directory.
+      </ResponseField>
+      <ResponseField name="exists" type="boolean" required>
+        Whether the directory exists.
+      </ResponseField>
+      <ResponseField name="file_count" type="integer" required>
+        Number of files directly inside the directory; `0` when it does not exist.
+      </ResponseField>
+      <ResponseField name="total_size" type="integer" required>
+        Total size of those files, in bytes; `0` when the directory does not exist.
+      </ResponseField>
+    </Expandable>
+  </ResponseField>
+
+  <ResponseField name="disk_space_info" type="object" required>
+    Disk space of the volume that hosts the disk cache directory (the system temp directory volume when no cache path is configured). All fields are `0` when the volume cannot be queried.
+
+    <Expandable title="disk_space_info structure">
+      <ResponseField name="total" type="integer" required>
+        Total space, in bytes.
+      </ResponseField>
+      <ResponseField name="free" type="integer" required>
+        Free space available, in bytes.
+      </ResponseField>
+      <ResponseField name="used" type="integer" required>
+        Used space, in bytes.
+      </ResponseField>
+      <ResponseField name="used_percent" type="number" required>
+        Used space as a percentage of the total.
+      </ResponseField>
+    </Expandable>
+  </ResponseField>
+
+  <ResponseField name="config" type="object" required>
+    Effective performance settings.
+
+    <Expandable title="config structure">
+      <ResponseField name="disk_cache_enabled" type="boolean" required>
+        Whether the disk cache is enabled.
+      </ResponseField>
+      <ResponseField name="disk_cache_threshold_mb" type="integer" required>
+        Request body size threshold in MB above which bodies spill to disk.
+      </ResponseField>
+      <ResponseField name="disk_cache_max_size_mb" type="integer" required>
+        Maximum total disk cache size in MB.
+      </ResponseField>
+      <ResponseField name="disk_cache_path" type="string" required>
+        Configured disk cache base directory; empty means the system temp directory.
+      </ResponseField>
+      <ResponseField name="is_running_in_container" type="boolean" required>
+        Whether the process is detected to run inside a container.
+      </ResponseField>
+      <ResponseField name="monitor_enabled" type="boolean" required>
+        Whether background performance monitoring is enabled.
+      </ResponseField>
+      <ResponseField name="monitor_cpu_threshold" type="integer" required>
+        CPU usage percentage threshold of the monitor.
+      </ResponseField>
+      <ResponseField name="monitor_memory_threshold" type="integer" required>
+        Memory usage percentage threshold of the monitor.
+      </ResponseField>
+      <ResponseField name="monitor_disk_threshold" type="integer" required>
+        Disk usage percentage threshold of the monitor.
+      </ResponseField>
+    </Expandable>
+  </ResponseField>
+</ResponseField>
+
+<Note>
+Unlike most management endpoints, the success payload of this endpoint contains only `success` and `data`; the `message` field is omitted. The endpoint has no business failure path. The `cache_stats` counters are in-memory atomic values, while `disk_cache_info` reflects an actual scan of the cache directory at request time.
+</Note>
+
+## Error messages
+
+| Condition | Description |
+| --- | --- |
+| Authentication failed | Standard authentication errors (HTTP `401`) when the caller is not a root user |

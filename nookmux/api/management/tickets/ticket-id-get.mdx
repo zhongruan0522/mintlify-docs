@@ -1,0 +1,152 @@
+---
+title: Get Ticket Detail
+description: Retrieve one ticket by id with its full message timeline; accessible to the ticket owner and administrators.
+api: "GET /api/ticket/{id}"
+---
+
+Retrieve one ticket by id, including its full message timeline. Messages are ordered by message id ascending; a `message` entry carries the sender and text, a `status` entry records a status transition.
+
+Requires a logged-in user (**User** permissions). Only the ticket owner and administrators can read the ticket. See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url 'https://your-nookmux-domain/api/ticket/3' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1'
+```
+
+</RequestExample>
+
+### Path parameters
+
+<ParamField path="id" type="integer" required>
+  Ticket id, a positive integer.
+</ParamField>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": {
+    "id": 3,
+    "title": "Billing question",
+    "type": "question",
+    "status": "processing",
+    "created_at": 1748000000,
+    "updated_at": 1748172800,
+    "closed_at": 0,
+    "messages": [
+      {
+        "id": 5,
+        "type": "message",
+        "role": "user",
+        "username": "alice",
+        "content": "I was charged twice for the same request.",
+        "time": 1748000000
+      },
+      {
+        "id": 6,
+        "type": "message",
+        "role": "admin",
+        "username": "root",
+        "content": "We are looking into the double charge.",
+        "time": 1748086400
+      },
+      {
+        "id": 7,
+        "type": "status",
+        "role": "admin",
+        "username": "root",
+        "value": "processing",
+        "time": 1748172800
+      }
+    ]
+  }
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+  Whether the request succeeded.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  Error description when `success` is `false`; empty otherwise.
+</ResponseField>
+
+<ResponseField name="data" type="object" required>
+  The ticket with its message timeline.
+
+  <Expandable title="ticket detail structure">
+    <ResponseField name="id" type="integer" required>
+      Ticket id.
+    </ResponseField>
+    <ResponseField name="title" type="string" required>
+      Ticket title.
+    </ResponseField>
+    <ResponseField name="type" type="string" required>
+      Ticket type: `bug`, `feature`, `question`, or `other`.
+    </ResponseField>
+    <ResponseField name="status" type="string" required>
+      Ticket status: `pending`, `processing`, or `completed`.
+    </ResponseField>
+    <ResponseField name="created_at" type="integer" required>
+      Unix timestamp (seconds) of creation.
+    </ResponseField>
+    <ResponseField name="updated_at" type="integer" required>
+      Unix timestamp (seconds) of the last update, refreshed by new messages and status changes.
+    </ResponseField>
+    <ResponseField name="closed_at" type="integer" required>
+      Unix timestamp (seconds) at which the ticket was completed; `0` while it is not completed.
+    </ResponseField>
+    <ResponseField name="messages" type="array" required>
+      Message timeline, ordered by message id ascending.
+
+      <Expandable title="message structure">
+        <ResponseField name="id" type="integer" required>
+          Message entry id.
+        </ResponseField>
+        <ResponseField name="type" type="string" required>
+          Entry kind: `message` for a conversation message, `status` for a status-change record.
+        </ResponseField>
+        <ResponseField name="role" type="string" required>
+          Sender role derived from the sender's account role: `admin` for administrators, `user` otherwise.
+        </ResponseField>
+        <ResponseField name="username" type="string" required>
+          Name of the account that produced the entry.
+        </ResponseField>
+        <ResponseField name="content" type="string">
+          Text of the entry; present only when `type` is `message`.
+        </ResponseField>
+        <ResponseField name="value" type="string">
+          Target status of the status change (`pending`, `processing`, or `completed`); present only when `type` is `status`.
+        </ResponseField>
+        <ResponseField name="time" type="integer" required>
+          Unix timestamp (seconds) of the entry.
+        </ResponseField>
+      </Expandable>
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<Note>
+  Management endpoints return HTTP `200` even on business failures; always check the `success` field. Detail failures, including a missing ticket and access denial, are all returned with the localized database-error message; the specific cause is recorded in the server logs.
+</Note>
+
+## Error messages
+
+| Condition | Description |
+| --- | --- |
+| Invalid ticket ID | `id` is not a positive integer |
+| Database error, please try again later | No ticket with this id exists, the caller is neither the ticket owner nor an administrator, or loading the ticket or its messages failed; see server logs |

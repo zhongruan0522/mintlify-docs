@@ -1,0 +1,55 @@
+---
+title: Reset Performance Stats
+description: Zero the cumulative disk cache and memory cache hit counters.
+api: "POST /api/performance/reset_stats"
+---
+
+Resets the cumulative cache hit counters `disk_cache_hits` and `memory_cache_hits` reported by `GET /api/performance/stats` to zero. Other counters, such as the number of active files and current usage, are not affected. The operation is recorded in the audit log.
+
+Requires **Root** (super administrator) permissions. See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request POST \
+  --url 'https://your-nookmux-domain/api/performance/reset_stats' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1'
+```
+
+</RequestExample>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "Statistics have been reset"
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+  Whether the hit counters were reset.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  Confirmation text on success, localized according to the caller's language preference.
+</ResponseField>
+
+<Note>
+Management endpoints return HTTP `200` even on business failures; always check the `success` field. This endpoint has no business failure path.
+</Note>
+
+## Error messages
+
+| Condition | Description |
+| --- | --- |
+| Authentication failed | Standard authentication errors (HTTP `401`) when the caller is not a root user |

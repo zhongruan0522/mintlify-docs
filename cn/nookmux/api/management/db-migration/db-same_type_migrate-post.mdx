@@ -1,0 +1,97 @@
+---
+title: 启动同类型数据库迁移
+description: 启动一个异步任务，将当前数据库复制到同类型的新目标数据库。
+api: "POST /api/db/same_type_migrate"
+---
+
+启动一个异步迁移任务，把当前实例的主库（可选包含日志库）复制到同类型的目标数据库，例如 PostgreSQL 迁往 PostgreSQL、MySQL 迁往 MySQL，适用于更换服务器等场景。支持的类型为 MySQL、PostgreSQL、openGauss、DM 与 KingbaseES，不支持 SQLite。任务在后台执行，使用返回的任务 ID 通过 `GET /api/db/same_type_migrate/{id}` 轮询进度与结果。
+
+源库与目标库不能是同一个物理数据库；该约束在任务启动时通过连接级标识校验。未设置 `force` 时，目标库必须为空库。
+
+需要**超级管理员（Root）**权限。该接口受更严格的限流保护（CriticalRateLimit）。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
+
+## 请求
+
+<RequestExample>
+
+```bash cURL
+curl --request POST \
+  --url 'https://your-nookmux-domain/api/db/same_type_migrate' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1' \
+  --header 'Content-Type: application/json' \
+  --data '{
+  "target_dsn": "postgres://nookmux:{password}@10.0.0.9:5432/nookmux",
+  "target_log_dsn": "",
+  "include_logs": true,
+  "force": false
+}'
+```
+
+</RequestExample>
+
+### 请求体
+
+<ParamField path="body.target_dsn" type="string" required>
+  目标主库的 DSN，其数据库类型必须与源主库一致。可识别的 scheme：`postgres://`、`postgresql://`、`opengauss://`、`mysql://`、`dm://`、`kingbase://`。首尾空白字符会被去除。
+</ParamField>
+
+<ParamField path="body.target_log_dsn" type="string">
+  独立目标日志库的 DSN；仅当 `include_logs` 为 `true` 时使用。为空时复用 `target_dsn` 存放日志。其数据库类型必须与目标主库一致。
+</ParamField>
+
+<ParamField path="body.include_logs" type="boolean" default="false">
+  是否同时把源日志库中的请求日志复制到目标库。
+</ParamField>
+
+<ParamField path="body.force" type="boolean" default="false">
+  覆盖模式。为 `true` 时每张目标表在复制前先清空。为 `false` 时要求目标库为空库：目标库的 `users`、`options`、`channels`、`tokens` 表中存在任何数据即失败，独立目标日志库同理。
+</ParamField>
+
+## 响应
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": {
+    "job_id": "7c2b9e41-08d5-4a6f-b3c7-9d8e1f2a3b4c"
+  }
+}
+```
+
+</ResponseExample>
+
+### 响应字段
+
+<ResponseField name="success" type="boolean" required>
+  迁移任务是否启动成功。
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  `success` 为 `false` 时的错误描述；成功时为空字符串。
+</ResponseField>
+
+<ResponseField name="data" type="object" required>
+  已启动任务的引用。
+
+  <Expandable title="data 结构">
+    <ResponseField name="job_id" type="string" required>
+      创建的迁移任务 ID；通过 `GET /api/db/same_type_migrate/{id}` 查询。
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<Note>
+JSON 请求体缺失或格式错误时会返回 HTTP `400` 与“无效的参数”，不同于多数始终返回 HTTP `200` 的管理接口。其余启动失败均以 HTTP `200`、`success: false` 与通用文案“数据库错误，请稍后重试”返回，具体原因仅记录在服务端日志中。目标 DSN 中的口令在该操作的审计记录里会被遮蔽。连接检查、同库校验与空库检查在后台任务内执行：若检查失败，本接口仍会返回成功，失败结果体现在任务状态中。
+</Note>
+
+## 错误说明
+
+| 条件 | 说明 |
+| --- | --- |
+| 无效的参数 | JSON 请求体缺失或格式错误（HTTP `400`） |
+| 数据库错误，请稍后重试 | 任务未能启动：`target_dsn` 为空、scheme 无法识别、目标类型与源类型不一致（同类型迁移要求两者均为 MySQL / PostgreSQL / openGauss / DM / KingbaseES 中的同一类型）、或已有同类型迁移任务仍在运行。确切原因见服务端日志 |
+| 鉴权失败 | 调用者不是 Root 用户时返回标准鉴权错误（HTTP `401`） |

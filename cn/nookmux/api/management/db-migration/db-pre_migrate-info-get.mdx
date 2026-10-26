@@ -1,0 +1,77 @@
+---
+title: 获取预迁移信息
+description: 在发起跨类型预迁移前，查看实例当前主库与日志库的数据库类型。
+api: "GET /api/db/pre_migrate/info"
+---
+
+返回当前实例主库与日志库使用的数据库类型，以及日志库是否独立部署。用于在调用 `POST /api/db/pre_migrate` 发起跨类型预迁移前确认现状。
+
+需要**超级管理员（Root）**权限。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
+
+## 请求
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url 'https://your-nookmux-domain/api/db/pre_migrate/info' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1'
+```
+
+</RequestExample>
+
+## 响应
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": {
+    "main_db_type": "sqlite",
+    "log_db_type": "sqlite",
+    "log_db_is_separated": false
+  }
+}
+```
+
+</ResponseExample>
+
+### 响应字段
+
+<ResponseField name="success" type="boolean" required>
+  请求是否成功。
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  `success` 为 `false` 时的错误描述；成功时为空字符串。
+</ResponseField>
+
+<ResponseField name="data" type="object" required>
+  当前数据库布局。
+
+  <Expandable title="data 结构">
+    <ResponseField name="main_db_type" type="string" required>
+      主库数据库类型：`sqlite`、`mysql`、`postgres`、`opengauss`、`dm` 或 `kingbase`。
+    </ResponseField>
+    <ResponseField name="log_db_type" type="string" required>
+      日志库数据库类型；日志库未独立部署时与 `main_db_type` 相同。
+    </ResponseField>
+    <ResponseField name="log_db_is_separated" type="boolean" required>
+      请求日志是否存储在独立数据库中，即是否设置了 `LOG_SQL_DSN` 环境变量。
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<Note>
+管理接口在业务失败时同样返回 HTTP `200`，必须以 `success` 字段判断结果。
+</Note>
+
+## 错误说明
+
+| 条件 | 说明 |
+| --- | --- |
+| 数据库错误，请稍后重试 | 无法确定当前主库或日志库的数据库类型；详见服务端日志 |
+| 鉴权失败 | 调用者不是 Root 用户时返回标准鉴权错误（HTTP `401`） |

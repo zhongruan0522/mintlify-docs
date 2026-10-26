@@ -1,0 +1,85 @@
+---
+title: 查询 GLM 渠道联系方式
+description: 查询渠道背后智谱账号的手机号与姓名，解析自月度账单明细。
+api: "GET /api/channel/glm/contact/{id}"
+---
+
+查询渠道背后智谱账号的联系方式。渠道必须是智谱类型（`type` 为 `26`，`ChannelTypeZhipu_v4`），不要求是套餐渠道。NookMux 读取上游当月（服务器时区，`YYYY-MM`）的月度账单明细中的账户名，并解析出手机号与姓名，同时保留原始字符串。请求携带渠道的第一个密钥、经渠道配置的代理发出；上游域名按套餐区域划分（国际套餐走 `api.z.ai`，其余走 `bigmodel.cn`）。
+
+需要**管理员**权限。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
+
+## 请求
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url 'https://your-nookmux-domain/api/channel/glm/contact/1' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1'
+```
+
+</RequestExample>
+
+### 路径参数
+
+<ParamField path="id" type="integer" required>
+渠道 ID。
+</ParamField>
+
+## 响应
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "data": {
+    "phone": "13800001234",
+    "name": "张三",
+    "raw_name": "13800001234(张三)",
+    "billing_month": "2026-10"
+  }
+}
+```
+
+</ResponseExample>
+
+### 响应字段
+
+<ResponseField name="success" type="boolean" required>
+请求是否成功。
+</ResponseField>
+
+<ResponseField name="data" type="object" required>
+由上游 `customerAcName` 解析出的联系方式。
+
+<Expandable title="data 结构">
+  <ResponseField name="phone" type="string">
+    从 `手机号(姓名)` 格式解析出的手机号。原始字符串不匹配该格式时省略。
+  </ResponseField>
+  <ResponseField name="name" type="string">
+    账户姓名。原始字符串不匹配 `手机号(姓名)` 格式时，整串作为姓名返回。
+  </ResponseField>
+  <ResponseField name="raw_name" type="string">
+    上游原始字符串，例如 `13800001234(张三)`。
+  </ResponseField>
+  <ResponseField name="billing_month" type="string">
+    所查账单明细的账期月份，服务器时区的 `YYYY-MM`。
+  </ResponseField>
+</Expandable>
+</ResponseField>
+
+<Note>
+管理接口在业务失败时同样返回 HTTP `200`，必须以 `success` 字段判断结果。本端点成功时仅返回 `success` 与 `data`（不含 `message` 字段）；失败时返回 `success: false` 与本地化的 `message`。
+</Note>
+
+## 错误说明
+
+| 条件 | message 文案 | 说明 |
+| --- | --- | --- |
+| 参数错误 | `参数错误` | 路径中的 `id` 缺失或不是整数 |
+| 渠道不存在 | `渠道不存在` | 渠道不存在或加载失败 |
+| 不支持联系方式查询 | `该渠道不支持联系方式查询` | 渠道类型不是智谱（`type` 非 `26`） |
+| 渠道密钥无效 | `渠道 API Key 无效或认证失败，请检查 Key 配置` | 上游拒绝该密钥 |
+| 联系方式查询失败 | `联系方式查询失败: {{.Error}}` | 上游请求或响应解析失败，包括上游成功响应但缺少账户名的情况；`{{.Error}}` 为底层错误详情 |

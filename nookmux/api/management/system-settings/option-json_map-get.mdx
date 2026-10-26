@@ -1,0 +1,117 @@
+---
+title: Get JSON Map Option
+description: List the entries of a JSON map system option with pagination and keyword filtering.
+api: "GET /api/option/json_map"
+---
+
+Returns the entries of a JSON-object-valued system option as a paginated `key`/`value` list. Two key families are supported: the MiniMax redirect options (`minimax.model_redirect`, `minimax.emotion_redirect`, `minimax.tone_word_redirect`, whose values are plain string maps) and the pricing options (`ModelPrice`, `ModelRatio`, `CacheRatio`, `CreateCacheRatio`, `CompletionRatio`, `AudioRatio`, `AudioCompletionRatio`, `ContextPricing`, whose per-model values are numbers or nested JSON). Entries are sorted by map key in ascending order, and a missing or blank stored value is treated as `{}`.
+
+Requires **Root** (super administrator) permissions. See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url 'https://your-nookmux-domain/api/option/json_map?key=ModelRatio&page=1&page_size=10&keyword=gpt-4o' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1'
+```
+
+</RequestExample>
+
+### Query parameters
+
+<ParamField path="key" type="string" required>
+  Option key to read. Must be one of the supported JSON map keys: `minimax.model_redirect`, `minimax.emotion_redirect`, `minimax.tone_word_redirect`, `ModelPrice`, `ModelRatio`, `CacheRatio`, `CreateCacheRatio`, `CompletionRatio`, `AudioRatio`, `AudioCompletionRatio`, `ContextPricing`.
+</ParamField>
+
+<ParamField path="page" type="integer" default="1">
+  Page number, 1-based. Values that are not a positive integer fall back to `1`; a page number beyond the last page returns the last page.
+</ParamField>
+
+<ParamField path="page_size" type="integer" default="10">
+  Entries per page. Values that are not a positive integer fall back to `10`; values above `100` are clamped to `100`.
+</ParamField>
+
+<ParamField path="keyword" type="string">
+  Substring filter. Only entries whose map key or value contains the keyword (whitespace-trimmed) are returned; omit to return all entries.
+</ParamField>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": {
+    "items": [
+      {
+        "key": "gpt-4o",
+        "value": "2.5"
+      },
+      {
+        "key": "gpt-4o-mini",
+        "value": "0.15"
+      }
+    ],
+    "page": 1,
+    "page_size": 10,
+    "total": 2
+  }
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+  Whether the entries were read.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  Error description when `success` is `false`; empty otherwise.
+</ResponseField>
+
+<ResponseField name="data" type="object" required>
+  The paginated entry list.
+
+  <Expandable title="data structure">
+    <ResponseField name="items" type="array" required>
+      Entries of the current page.
+
+      <Expandable title="entry structure">
+        <ResponseField name="key" type="string" required>
+          Entry key inside the JSON object, for example a model name.
+        </ResponseField>
+        <ResponseField name="value" type="string" required>
+          Entry value as a string. For MiniMax options it is the plain mapped string; for pricing options it is the raw JSON text of the entry value (numbers are rendered like `"2.5"`).
+        </ResponseField>
+      </Expandable>
+    </ResponseField>
+    <ResponseField name="page" type="integer" required>
+      Current page number after clamping to the valid range.
+    </ResponseField>
+    <ResponseField name="page_size" type="integer" required>
+      Effective page size (default `10`, capped at `100`).
+    </ResponseField>
+    <ResponseField name="total" type="integer" required>
+      Total number of entries matching the filter.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<Note>
+  Parameter errors use real HTTP status codes: an unsupported `key` returns HTTP `400`. A stored option value that fails JSON parsing returns HTTP `200` with `success: false` and the parse error in `message`. Use [Update System Options](/nookmux/api/management/system-settings/option-put) or the JSON map write endpoints to modify these options entry by entry.
+</Note>
+
+## Error messages
+
+| Condition | Description |
+| --- | --- |
+| Unsupported JSON map option | HTTP `400`; `key` is not one of the supported JSON map option keys |
+| `Failed to parse JSON map option: {Error}` | HTTP `200` with `success: false`; the stored option value is not valid JSON |

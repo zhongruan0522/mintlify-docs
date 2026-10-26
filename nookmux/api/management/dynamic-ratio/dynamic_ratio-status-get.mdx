@@ -1,0 +1,137 @@
+---
+title: Get Dynamic Ratio Status
+description: Read the dynamic ratio state visible to the current user, including the ratio currently in effect and the enabled rules behind it.
+api: "GET /api/dynamic_ratio/status"
+---
+
+Returns the dynamic ratio state for the calling user. Dynamic ratio rules temporarily override a group's billing ratio when their conditions (model patterns, relay concurrency, weekday, time window) match. With the `group` query parameter the response covers that single group; without it, the response aggregates over every group usable by the caller's user group plus the caller's own group.
+
+Requires **User** permissions. See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url 'https://your-nookmux-domain/api/dynamic_ratio/status' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1'
+```
+
+</RequestExample>
+
+### Query parameters
+
+<ParamField path="group" type="string">
+Group to inspect. Must be a group usable by the caller's user group (including the caller's own group), otherwise the request fails with a group-forbidden error. When omitted, the response aggregates over all usable groups plus the caller's own group.
+</ParamField>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": {
+    "enabled": true,
+    "active_ratio": 1.5,
+    "active_group": "vip",
+    "timezone": "Asia/Shanghai",
+    "rules_count": 2,
+    "rules": [
+      {
+        "group": "vip",
+        "concurrency": 100,
+        "weekdays": "[1,2,3,4,5]",
+        "start_time": "09:00",
+        "end_time": "18:00",
+        "ratio": 1.5,
+        "priority": 0
+      },
+      {
+        "group": "default",
+        "concurrency": null,
+        "weekdays": "",
+        "start_time": "",
+        "end_time": "",
+        "ratio": 0.8,
+        "priority": 1
+      }
+    ]
+  }
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+Whether the query was executed.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+Error description when `success` is `false`; empty otherwise.
+</ResponseField>
+
+<ResponseField name="data.enabled" type="boolean" required>
+Whether the dynamic ratio feature is on. The global switch is managed with [Set Dynamic Ratio Enabled](/nookmux/api/management/dynamic-ratio/dynamic_ratio-enabled-put).
+</ResponseField>
+
+<ResponseField name="data.active_ratio" type="number" required>
+Ratio currently in effect, computed without model conditions: among the rules matching right now in the queried groups, the ratio furthest away from `1`. Stays `1` when the feature is off or no rule currently matches.
+</ResponseField>
+
+<ResponseField name="data.active_group" type="string">
+Group the reported `active_ratio` comes from; omitted when no rule currently matches.
+</ResponseField>
+
+<ResponseField name="data.timezone" type="string" required>
+Name of the timezone used for time-window and weekday matching; the server's startup timezone (`TZ` environment variable when set, otherwise the system local timezone).
+</ResponseField>
+
+<ResponseField name="data.rules_count" type="integer" required>
+Number of enabled rules in the queried groups, regardless of whether their conditions currently match.
+</ResponseField>
+
+<ResponseField name="data.rules" type="array of object" required>
+Enabled rules in the queried groups.
+
+  <Expandable title="rule summary structure">
+    <ResponseField name="group" type="string" required>
+    User group the rule applies to.
+    </ResponseField>
+    <ResponseField name="concurrency" type="integer">
+    Relay concurrency threshold; the rule only matches while the current relay concurrency is strictly greater than this value. `null` when the rule has no concurrency condition.
+    </ResponseField>
+    <ResponseField name="weekdays" type="string" required>
+    Weekday condition as a JSON array string of integers `0`-`6`, where `0` is Sunday, for example `"[1,2,3,4,5]"`. Empty means every day. For a time window crossing midnight, requests before the end time are matched against the previous day's weekday.
+    </ResponseField>
+    <ResponseField name="start_time" type="string" required>
+    Start of the daily time window in `HH:MM` in `timezone`; the window includes the start and excludes the end, and may cross midnight. Empty means no time window.
+    </ResponseField>
+    <ResponseField name="end_time" type="string" required>
+    End of the daily time window in `HH:MM` in `timezone`. Empty means no time window.
+    </ResponseField>
+    <ResponseField name="ratio" type="number" required>
+    Billing ratio applied when the rule matches.
+    </ResponseField>
+    <ResponseField name="priority" type="integer" required>
+    Arbitration order among simultaneously matching rules; the smaller value wins. Managed with [Reorder Dynamic Ratio Rules](/nookmux/api/management/dynamic-ratio/dynamic_ratio-rules-reorder-put).
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<Note>
+Management endpoints return HTTP `200` even on business failures; always check the `success` field. When the feature is disabled, `data.active_ratio` is `1`, `data.rules_count` is `0` and `data.rules` is `null`.
+</Note>
+
+## Error messages
+
+| Condition | Description |
+| --- | --- |
+| No permission to access this group | `group` is not a group usable by the caller's user group |
+| Database error, please try again later | Loading the caller's user record failed; see server logs |

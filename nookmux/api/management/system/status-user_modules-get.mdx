@@ -1,0 +1,68 @@
+---
+title: Get User Sidebar Modules
+description: Fetch the sidebar module toggles visible to the current user, with the admin section stripped for non-admin callers.
+api: "GET /api/status/user_modules"
+---
+
+Returns the sidebar module toggles visible to the logged-in caller. Administrators receive the full `SidebarModulesAdmin` configuration; other users receive the same document with the `admin` section removed, so the admin console structure is not exposed to regular accounts.
+
+Requires **User** permissions. See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url 'https://your-nookmux-domain/api/status/user_modules' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1'
+```
+
+</RequestExample>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": {
+    "SidebarModulesAdmin": "{\"chat\":{\"enabled\":true,\"playground\":false},\"console\":{\"enabled\":true,\"log\":true}}"
+  }
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+  Whether the request succeeded.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  Error description when `success` is `false`; empty otherwise.
+</ResponseField>
+
+<ResponseField name="data" type="object" required>
+  Sidebar module configuration visible to the caller.
+
+  <Expandable title="user modules structure">
+    <ResponseField name="SidebarModulesAdmin" type="string" required>
+      JSON document (serialized as a string) keyed by sidebar section names such as `chat`, `console` and `admin`; each section maps module names to toggle flags. For non-admin callers the `admin` section is removed before the document is returned. When the stored value is empty or not valid JSON, it is returned as-is.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<Note>
+  The response varies with the caller's role, so the route is mounted with a no-cache middleware: responses carry `Cache-Control: no-store, no-cache, must-revalidate, private, max-age=0` to prevent an administrator's payload from being replayed through shared caches.
+</Note>
+
+## Error messages
+
+| Condition | Description |
+| --- | --- |
+| Authentication failed | Standard authentication errors (HTTP `401`) when the caller is not logged in |

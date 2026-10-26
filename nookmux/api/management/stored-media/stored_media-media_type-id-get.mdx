@@ -1,0 +1,102 @@
+---
+title: Get Stored Media Detail
+description: Return the metadata and a short-lived signed download URL of one stored image or video.
+api: "GET /api/stored_media/{media_type}/{id}"
+---
+
+Returns the metadata of a single stored media record identified by its media type and record ID, together with a signed download URL for the content.
+
+Requires **User** permission (any logged-in user). See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
+
+<Note>
+Only the owner of the record and administrators may read it. A record whose stored media type does not match the `{media_type}` path segment is reported as not found.
+</Note>
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url 'https://your-nookmux-domain/api/stored_media/image/0d8c9f9a-1b2c-3d4e-5f6a-7b8c9d0e1f2a' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 2'
+```
+
+</RequestExample>
+
+### Path parameters
+
+<ParamField path="media_type" type="string" required>
+Media type of the record: `image` or `video`. The value is matched after trimming and lowercasing.
+</ParamField>
+
+<ParamField path="id" type="string" required>
+Record ID (UUID) of the stored media. It must not be empty.
+</ParamField>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": {
+    "id": "0d8c9f9a-1b2c-3d4e-5f6a-7b8c9d0e1f2a",
+    "media_type": "image",
+    "created_at": 1790110000,
+    "mime_type": "image/png",
+    "size_bytes": 204800,
+    "url": "https://your-nookmux-domain/mcp/image/0d8c9f9a-1b2c-3d4e-5f6a-7b8c9d0e1f2a?exp=1790120000&sig=5f4e3d2c1b0a9f8e7d6c5b4a3f2e1d0c"
+  }
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+Whether the record was loaded.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+Error description when `success` is `false`; empty otherwise.
+</ResponseField>
+
+<ResponseField name="data" type="object" required>
+Stored media metadata.
+
+<Expandable title="data structure">
+  <ParamField path="id" type="string" required>
+    Record ID (UUID) of the stored media.
+  </ParamField>
+  <ParamField path="media_type" type="string" required>
+    Media type: `image` or `video`.
+  </ParamField>
+  <ParamField path="created_at" type="integer" required>
+    Storage time as a Unix timestamp in seconds.
+  </ParamField>
+  <ParamField path="mime_type" type="string" required>
+    MIME type of the original file, for example `image/png` or `video/mp4`.
+  </ParamField>
+  <ParamField path="size_bytes" type="integer" required>
+    Size of the stored file in bytes.
+  </ParamField>
+  <ParamField path="url" type="string" required>
+    Signed download URL for the media content, in the form `{server_address}/mcp/{media_type}/{id}?exp=...&sig=...`. The signature expires after one hour.
+  </ParamField>
+</Expandable>
+</ResponseField>
+
+## Error messages
+
+| Condition | Description |
+| --- | --- |
+| id is required | `{id}` in the path is empty or whitespace only |
+| media_type must be image or video | `{media_type}` is not `image` or `video` |
+| Resource not found | No record exists for `{id}`, or its stored media type does not match `{media_type}` |
+| You do not have permission to access this resource | The caller is neither the owner nor an administrator |
+| Database error, please try again later | Loading the record failed; see server logs |

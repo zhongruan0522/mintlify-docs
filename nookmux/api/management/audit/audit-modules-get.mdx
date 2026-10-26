@@ -1,0 +1,79 @@
+---
+title: Get audit modules
+description: Retrieve the list of audit modules that can be used as log filters.
+api: "GET /api/audit/modules"
+---
+
+Returns the full list of audit modules with their filter value and display label, ordered by the server-defined business order. Use the `value` as the `module` filter of [Get audit logs](/nookmux/api/management/audit/audit-get).
+
+Requires **Admin** permissions. See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url 'https://your-nookmux-domain/api/audit/modules' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1'
+```
+
+</RequestExample>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": [
+    { "value": "option", "label": "系统设置" },
+    { "value": "channel", "label": "渠道" },
+    { "value": "user", "label": "用户" },
+    { "value": "token", "label": "令牌" },
+    { "value": "redemption", "label": "兑换码" },
+    { "value": "model", "label": "模型" },
+    { "value": "vendor", "label": "供应商" },
+    { "value": "dynamic_ratio", "label": "动态倍率" },
+    { "value": "prefill_group", "label": "预填充分组" },
+    { "value": "db", "label": "数据库迁移" },
+    { "value": "performance", "label": "性能管理" },
+    { "value": "log", "label": "日志清理" },
+    { "value": "setup", "label": "系统初始化" },
+    { "value": "dashboard_config", "label": "仪表板配置" },
+    { "value": "voice", "label": "音色管理" }
+  ]
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+Whether the module list was returned.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+Error description when `success` is `false`; empty otherwise.
+</ResponseField>
+
+<ResponseField name="data" type="object[]">
+  The audit modules in server-defined order.
+
+  <Expandable title="module structure">
+    <ResponseField name="value" type="string" required>
+      Module constant accepted by the `module` filter of [Get audit logs](/nookmux/api/management/audit/audit-get).
+    </ResponseField>
+    <ResponseField name="label" type="string" required>
+      Display name of the module.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<Note>
+The list is fixed by the server and returned identically on every call. Labels are currently defined in Chinese regardless of the request language.
+</Note>

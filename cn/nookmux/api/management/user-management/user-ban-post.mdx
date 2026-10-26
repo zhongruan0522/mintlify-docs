@@ -1,0 +1,204 @@
+---
+title: 按标识拉黑用户
+description: 按一键登录标识（GitHub/LinuxDO ID、邮箱、GitHub 用户名）定位用户并禁用账号。
+api: "POST /api/user/ban"
+---
+
+按一键登录标识（而非用户 ID）拉黑用户。服务端会找出匹配该标识的所有用户（含软删除用户），然后：
+
+- 恰好一个匹配：禁用该账号（状态置为 `2`）；传了 `remark` 时会替换用户备注。若该账号本已禁用或已删除，则返回对应结果且不做其他操作。
+- 无匹配：插入一个绑定该标识、预先禁用的占位用户，使该标识首次登录即被拒绝。
+- 多个匹配：不拉黑任何人，返回全部候选用户供逐条确认。
+
+`type` 为 `github_username` 时，先通过 GitHub API 把用户名解析为数字 ID 再匹配。
+
+需要**管理员**权限。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
+
+## 请求
+
+<RequestExample>
+
+```bash cURL
+curl --request POST \
+  --url 'https://your-nookmux-domain/api/user/ban' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1' \
+  --header 'Content-Type: application/json' \
+  --data '{
+  "type": "github_id",
+  "value": "12345678",
+  "remark": "abuse reports 2026-10"
+}'
+```
+
+</RequestExample>
+
+### 请求体
+
+<ParamField path="body.type" type="string" required>
+定位用户所用的标识类型：
+
+- `github_id`：GitHub 数字用户 ID。
+- `linuxdo_id`：LinuxDO 数字用户 ID。
+- `email`：账号绑定的邮箱地址。
+- `github_username`：GitHub 用户名；服务端先通过 GitHub API 解析为数字 ID 再匹配。
+</ParamField>
+
+<ParamField path="body.value" type="string" required>
+标识值，匹配前会去除首尾空白。各类型的格式约束：
+
+- `github_id` / `linuxdo_id`：1 到 20 位数字。
+- `email`：不超过 50 字符且为语法合法的邮箱地址。
+- `github_username`：GitHub 用户名（最长 39 字符，字母数字与连字符，不以连字符开头或结尾）。
+</ParamField>
+
+<ParamField path="body.remark" type="string">
+可选的管理员备注，写入被拉黑用户，去除首尾空白后最长 255 字符。非空时替换被拉黑既有用户的备注。
+</ParamField>
+
+## 响应
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": {
+    "result": "banned_existing",
+    "identifier": {
+      "type": "github_id",
+      "value": "12345678"
+    },
+    "user": {
+      "id": 42,
+      "username": "spammer",
+      "display_name": "spammer",
+      "email": "spammer@example.com",
+      "github_id": "12345678",
+      "linux_do_id": "",
+      "role": 1,
+      "status": 2,
+      "deleted": false
+    }
+  }
+}
+```
+
+</ResponseExample>
+
+### 响应字段
+
+<ResponseField name="success" type="boolean" required>
+拉黑请求是否处理成功。
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+`success` 为 `false` 时的错误描述；成功时为空字符串。
+</ResponseField>
+
+<ResponseField name="data" type="object" required>
+拉黑结果。
+
+<Expandable title="data 结构">
+  <ParamField path="result" type="string" required>
+  请求结果：
+
+  - `banned_existing`：找到唯一启用用户并已禁用。
+  - `created_placeholder`：无匹配用户，已创建拉黑占位用户。
+  - `already_banned`：匹配用户本已处于禁用状态。
+  - `already_deleted`：标识属于已删除用户，无需处理。
+  - `ambiguous`：多个用户匹配，未拉黑任何人。
+  </ParamField>
+  <ParamField path="identifier" type="object" required>
+  请求标识回显。
+  </ParamField>
+  <ParamField path="resolved" type="object">
+  GitHub 解析结果；仅 `type` 为 `github_username` 时返回。
+  </ParamField>
+  <ParamField path="user" type="object">
+  受影响的用户；除 `ambiguous` 外的结果均返回。
+  </ParamField>
+  <ParamField path="candidates" type="array">
+  全部匹配用户；仅 `ambiguous` 结果返回，结构与 `user` 相同。
+  </ParamField>
+</Expandable>
+</ResponseField>
+
+<ResponseField name="data.identifier" type="object" required>
+请求标识回显。
+
+<Expandable title="identifier 结构">
+  <ParamField path="type" type="string" required>
+  标识类型，等于 `body.type`。
+  </ParamField>
+  <ParamField path="value" type="string" required>
+  去除首尾空白后的标识值，等于 `body.value`。
+  </ParamField>
+</Expandable>
+</ResponseField>
+
+<ResponseField name="data.resolved" type="object">
+GitHub 用户名解析结果，仅当 `body.type` 为 `github_username` 时返回。
+
+<Expandable title="resolved 结构">
+  <ParamField path="login" type="string" required>
+  解析的 GitHub 用户名，等于请求的 `value`。
+  </ParamField>
+  <ParamField path="id" type="integer" required>
+  该用户名对应的 GitHub 数字用户 ID。
+  </ParamField>
+</Expandable>
+</ResponseField>
+
+<ResponseField name="data.user" type="object">
+定位到的用户。
+
+<Expandable title="user 结构">
+  <ParamField path="id" type="integer" required>
+  用户 ID。
+  </ParamField>
+  <ParamField path="username" type="string" required>
+  登录用户名。占位用户的用户名由服务端生成，例如 `gh_12345678`。
+  </ParamField>
+  <ParamField path="display_name" type="string" required>
+  显示名称。
+  </ParamField>
+  <ParamField path="email" type="string" required>
+  绑定邮箱；未绑定为空字符串。
+  </ParamField>
+  <ParamField path="github_id" type="string" required>
+  绑定的 GitHub ID。旧账号可能存的是用户名字符串而非数字 ID，按原样返回。
+  </ParamField>
+  <ParamField path="linux_do_id" type="string" required>
+  绑定的 LinuxDO ID；未绑定为空字符串。
+  </ParamField>
+  <ParamField path="role" type="integer" required>
+  角色等级：`1` 普通用户，`10` 管理员，`100` 超级管理员。
+  </ParamField>
+  <ParamField path="status" type="integer" required>
+  操作后的账号状态：被拉黑或占位用户为 `2`（禁用）。
+  </ParamField>
+  <ParamField path="deleted" type="boolean" required>
+  账号是否已被软删除。
+  </ParamField>
+</Expandable>
+</ResponseField>
+
+<Note>
+拉黑既有用户沿用用户管理的角色校验：管理员不能拉黑同权限等级或更高权限等级的用户，超级管理员账号不可被拉黑。`github_username` 匹配时同时探测解析出的数字 ID 与用户名字符串，覆盖数字 ID 迁移前创建的账号。
+</Note>
+
+## 错误说明
+
+| 条件 | 说明 |
+| --- | --- |
+| 标识类型或取值不合法 | 请求体不是合法 JSON、`type` 未知，或 `value` 未通过该类型的格式校验 |
+| 备注长度不能超过 255 个字符 | `remark` 去除首尾空白后超过 255 字符 |
+| GitHub 上不存在该用户名 | GitHub API 报告该用户名不存在 |
+| GitHub API 请求过于频繁（无凭证限流 60 次/小时/IP），请稍后重试 | 无凭证 GitHub 查询配额耗尽 |
+| 查询 GitHub 用户信息失败，请稍后重试 | GitHub API 请求失败，详见服务端日志 |
+| 无权更新同权限等级或更高权限等级的用户信息 | 调用者角色不高于目标用户（超级管理员除外） |
+| 无法禁用超级管理员用户 | 匹配到的用户是超级管理员账号 |
+| 创建拉黑占位用户失败，请重试 | 占位用户插入失败，详见服务端日志 |
+| 数据库错误，请稍后重试 | 定位或更新用户失败，详见服务端日志 |

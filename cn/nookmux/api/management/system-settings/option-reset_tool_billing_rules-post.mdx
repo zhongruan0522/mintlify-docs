@@ -1,0 +1,56 @@
+---
+title: 重置工具计费规则
+description: 将 tool_billing_setting.rules 选项恢复为内置的默认工具计费规则集。
+api: "POST /api/option/reset_tool_billing_rules"
+---
+
+把 `tool_billing_setting.rules` 选项重置为内置默认规则集（即工具计费规则从未自定义过时所用的规则集）。默认 JSON 通过选项存储持久化（写库并刷新内存），网页搜索、图片生成等工具的按次计价立即回退到默认值。该操作会以选项更新类型记入管理员审计日志。
+
+无需请求体。
+
+需要**超级管理员（Root）**权限。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
+
+## 请求
+
+<RequestExample>
+
+```bash cURL
+curl --request POST \
+  --url 'https://your-nookmux-domain/api/option/reset_tool_billing_rules' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1'
+```
+
+</RequestExample>
+
+## 响应
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "重置工具计费规则成功",
+  "data": null
+}
+```
+
+</ResponseExample>
+
+### 响应字段
+
+<ResponseField name="success" type="boolean" required>
+  重置是否完成。
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  成功时为 `重置工具计费规则成功`；`success` 为 `false` 时为原始错误文本。
+</ResponseField>
+
+<ResponseField name="data" type="null" required>
+  恒为 `null`；本端点不返回数据载荷。
+</ResponseField>
+
+<Note>
+  自定义的工具计费规则会被直接覆盖且无二次确认；如需恢复请通过 `PUT /api/option/` 手动写回。持久化失败时返回 HTTP `200` 加 `success: false`，`message` 为原始错误文本；审计条目仅在重置成功后写入。
+</Note>

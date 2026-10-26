@@ -1,0 +1,72 @@
+---
+title: Reorder Dynamic Ratio Rules
+description: Rewrite rule priorities from an ordered list of rule IDs in one transaction.
+api: "PUT /api/dynamic_ratio/rules/reorder"
+---
+
+Rewrites rule priorities from an ordered list of rule IDs: each rule's `priority` is set to its zero-based position in the `ids` array, all in a single transaction. Rules missing from the list keep their current priority. Rule lists are ordered by `priority` ascending and matching arbitration prefers smaller values, so this call defines both the display order and the arbitration order of the rules. After a successful reorder the runtime rule cache is refreshed immediately and the change is recorded in the audit log.
+
+Requires **Root** permissions. See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request PUT \
+  --url 'https://your-nookmux-domain/api/dynamic_ratio/rules/reorder' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1' \
+  --header 'Content-Type: application/json' \
+  --data '{
+  "ids": [3, 1, 2]
+}'
+```
+
+</RequestExample>
+
+### Body
+
+<ParamField path="body.ids" type="array of integer" required>
+Ordered list of rule IDs; each rule's `priority` is set to its zero-based index in this array. Must not be empty. See [Get All Dynamic Ratio Rules](/nookmux/api/management/dynamic-ratio/dynamic_ratio-rules-get) for the current rules and their IDs.
+</ParamField>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": null
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+Whether the rules were reordered.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+Error description when `success` is `false`; empty otherwise.
+</ResponseField>
+
+<ResponseField name="data" type="null" required>
+Always `null`; the endpoint returns no data.
+</ResponseField>
+
+<Note>
+Management endpoints return HTTP `200` even on business failures; always check the `success` field.
+</Note>
+
+## Error messages
+
+| Condition | Description |
+| --- | --- |
+| Invalid request body | The JSON body is missing or malformed |
+| ID list cannot be empty | `ids` is missing or empty |
+| Database error, please try again later | Rewriting the priorities failed and the transaction was rolled back; see server logs |

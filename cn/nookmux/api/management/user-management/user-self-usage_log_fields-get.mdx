@@ -1,0 +1,78 @@
+---
+title: 获取可见的使用日志字段
+description: 返回当前用户角色可见的使用日志详情字段列表。
+api: "GET /api/user/self/usage_log_fields"
+---
+
+返回调用者可见的使用日志详情弹窗字段。每个字段的可见性由管理员按角色配置（系统设置 → 控制台内容 → 使用日志字段）；本接口按调用者自身角色计算该配置并返回可见字段 key 列表。控制台据此决定是否展示详情入口以及渲染哪些字段。
+
+需要**用户**权限（任意登录用户）。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
+
+## 请求
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url 'https://your-nookmux-domain/api/user/self/usage_log_fields' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 2'
+```
+
+</RequestExample>
+
+## 响应
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": {
+    "enabled": true,
+    "fields": [
+      "request_id",
+      "upstream_request_id",
+      "ip_address",
+      "billing_details",
+      "token_breakdown"
+    ]
+  }
+}
+```
+
+</ResponseExample>
+
+### 响应字段
+
+<ResponseField name="success" type="boolean" required>
+配置是否加载成功。
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+`success` 为 `false` 时的错误描述；成功时为空字符串。
+</ResponseField>
+
+<ResponseField name="data" type="object" required>
+可见的使用日志字段。
+
+<Expandable title="data 结构">
+  <ParamField path="enabled" type="boolean" required>
+    调用者角色是否启用了使用日志详情弹窗。为 `false` 时 `fields` 为空列表，控制台隐藏详情入口。
+  </ParamField>
+  <ParamField path="fields" type="array" required>
+    调用者角色可见的使用日志字段 key，例如 `request_id`、`ip_address`、`billing_details`。可配置的 key 集合与默认值由服务端定义。
+  </ParamField>
+</Expandable>
+</ResponseField>
+
+<Note>
+以管理员账号调用时返回管理员侧的可见性列表，其与普通用户侧分别配置。
+</Note>
+
+## 错误说明
+
+| 条件 | 说明 |
+| --- | --- |
+| 使用日志字段配置解析失败 | 存储的可见性配置格式非法，详见服务端日志 |

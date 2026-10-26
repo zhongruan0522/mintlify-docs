@@ -1,0 +1,94 @@
+---
+title: Get JSON Array Option
+description: List the entries of a JSON array system option with pagination.
+api: "GET /api/option/json_array"
+---
+
+Returns the entries of a JSON-array-valued system option as a paginated list. The only accepted `key` is `minimax.voice_whitelist`, which has been migrated to the database voice table: to keep legacy consoles from acting on stale data, this endpoint now always returns an empty list and `total` is always `0`.
+
+Requires **Root** (super administrator) permissions. See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url 'https://your-nookmux-domain/api/option/json_array?key=minimax.voice_whitelist&page=1&page_size=10' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1'
+```
+
+</RequestExample>
+
+### Query parameters
+
+<ParamField path="key" type="string" required>
+  Option key to read. The only supported value is `minimax.voice_whitelist`; any other key is rejected.
+</ParamField>
+
+<ParamField path="page" type="integer" default="1">
+  Page number, 1-based. Values that are not a positive integer fall back to `1`; a page number beyond the last page returns the last page.
+</ParamField>
+
+<ParamField path="page_size" type="integer" default="10">
+  Entries per page. Values that are not a positive integer fall back to `10`; values above `100` are clamped to `100`.
+</ParamField>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": {
+    "items": [],
+    "page": 1,
+    "page_size": 10,
+    "total": 0
+  }
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+  Whether the request was processed.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  Error description when `success` is `false`; empty otherwise.
+</ResponseField>
+
+<ResponseField name="data" type="object" required>
+  The paginated entry list.
+
+  <Expandable title="data structure">
+    <ResponseField name="items" type="array" required>
+      Entries of the current page. Each entry is an object with a single `value` string field; the list is always empty for the supported key.
+    </ResponseField>
+    <ResponseField name="page" type="integer" required>
+      Current page number after clamping to the valid range.
+    </ResponseField>
+    <ResponseField name="page_size" type="integer" required>
+      Effective page size (default `10`, capped at `100`).
+    </ResponseField>
+    <ResponseField name="total" type="integer" required>
+      Total number of entries; always `0` for the supported key.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<Note>
+  This endpoint is kept for legacy console compatibility. The voice whitelist is maintained on the voice management page; the matching write endpoints (`PUT` and `DELETE /api/option/json_array`) always reject writes with a migration notice.
+</Note>
+
+## Error messages
+
+| Condition | Description |
+| --- | --- |
+| Unsupported JSON array option | HTTP `400`; `key` is not `minimax.voice_whitelist` |

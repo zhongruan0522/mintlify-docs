@@ -1,0 +1,241 @@
+---
+title: Get Usage Rankings
+description: Fetch the model and vendor token-usage leaderboard snapshot with history series for a period.
+api: "GET /api/rankings"
+---
+
+Returns the usage leaderboard snapshot for a period, computed from the pre-aggregated `quota_data` token usage: models and vendors ranked by tokens consumed, the biggest rank movers and droppers versus the previous period, and per-bucket history series for charts.
+
+The endpoint is gated by the header navigation module configuration of the `rankings` module. By default the module is enabled and public: no authentication is required, and the caller's identity is resolved from the login session when one is present. If the module is configured to require login, a valid login is enforced (User permission). See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url 'https://your-nookmux-domain/api/rankings?period=week'
+```
+
+</RequestExample>
+
+### Query parameters
+
+<ParamField path="period" type="string" default="week">
+  Ranking period: `today`, `week`, `month`, `year` or `all`. Periods are natural calendar periods computed in the server startup timezone (`TZ`), not rolling windows; `week` starts on Monday and `all` has no lower bound.
+</ParamField>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": {
+    "models": [
+      {
+        "rank": 1,
+        "previous_rank": 2,
+        "model_name": "gpt-4o",
+        "vendor": "OpenAI",
+        "category": "all",
+        "total_tokens": 12345678,
+        "share": 0.3532,
+        "growth_pct": 12.34
+      }
+    ],
+    "vendors": [
+      {
+        "rank": 1,
+        "vendor": "OpenAI",
+        "total_tokens": 12345678,
+        "share": 0.3532,
+        "growth_pct": 12.34,
+        "models_count": 3,
+        "top_model": "gpt-4o"
+      }
+    ],
+    "top_movers": [
+      {
+        "model_name": "claude-sonnet-4",
+        "vendor": "Anthropic",
+        "rank_delta": 3,
+        "current_rank": 2,
+        "growth_pct": 42.5
+      }
+    ],
+    "top_droppers": [],
+    "models_history": {
+      "points": [
+        {
+          "ts": "2026-10-19T16:00:00Z",
+          "label": "Oct 20",
+          "model": "gpt-4o",
+          "vendor": "OpenAI",
+          "tokens": 123456
+        }
+      ],
+      "models": [
+        { "name": "gpt-4o", "vendor": "OpenAI", "total": 12345678 },
+        { "name": "Others", "vendor": "Various", "total": 1000 }
+      ],
+      "buckets": 7
+    },
+    "vendor_share_history": {
+      "points": [
+        {
+          "ts": "2026-10-19T16:00:00Z",
+          "label": "Oct 20",
+          "vendor": "OpenAI",
+          "share": 0.5,
+          "tokens": 500000
+        }
+      ],
+      "vendors": [
+        { "name": "OpenAI", "total": 12345678, "share": 0.3532 },
+        { "name": "Others", "total": 1000, "share": 0.0001 }
+      ],
+      "buckets": 7
+    }
+  }
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+  Whether the request succeeded.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  Error description when `success` is `false`; empty otherwise.
+</ResponseField>
+
+<ResponseField name="data" type="object" required>
+  Rankings snapshot for the requested period.
+
+  <Expandable title="rankings structure">
+    <ResponseField name="models" type="array" required>
+      Models ranked by total tokens in the period, limited to the configured model count (`rankings_model_limit`, 20 by default).
+
+      <Expandable title="ranked model structure">
+        <ResponseField name="rank" type="integer" required>
+          Current rank within the period, `1` for the most used model.
+        </ResponseField>
+        <ResponseField name="previous_rank" type="integer">
+          Rank in the previous natural period; omitted when the model had no rank there or the period is `all`.
+        </ResponseField>
+        <ResponseField name="model_name" type="string" required>
+          Model name.
+        </ResponseField>
+        <ResponseField name="vendor" type="string" required>
+          Vendor display name from model metadata; `Unknown` when no enabled model metadata matches.
+        </ResponseField>
+        <ResponseField name="vendor_icon" type="string">
+          Vendor icon URL from vendor metadata; omitted when unset.
+        </ResponseField>
+        <ResponseField name="model_icon" type="string">
+          Model icon URL from model metadata; omitted when unset.
+        </ResponseField>
+        <ResponseField name="category" type="string" required>
+          Always `all`.
+        </ResponseField>
+        <ResponseField name="total_tokens" type="integer" required>
+          Total tokens consumed by the model in the period.
+        </ResponseField>
+        <ResponseField name="share" type="number" required>
+          Share of all tokens in the period, a fraction between `0` and `1` rounded to 4 decimals.
+        </ResponseField>
+        <ResponseField name="growth_pct" type="number" required>
+          Token growth versus the previous period in percent, rounded to 4 decimals; `100` when the previous period had no usage. Always `0` for `all`.
+        </ResponseField>
+      </Expandable>
+    </ResponseField>
+    <ResponseField name="vendors" type="array" required>
+      Vendors ranked by total tokens, limited to the configured vendor count (`rankings_vendor_limit`, 5 by default).
+
+      <Expandable title="ranked vendor structure">
+        <ResponseField name="rank" type="integer" required>
+          Current rank within the period, `1` for the most used vendor.
+        </ResponseField>
+        <ResponseField name="vendor" type="string" required>
+          Vendor display name; `Unknown` when no enabled model metadata matches.
+        </ResponseField>
+        <ResponseField name="vendor_icon" type="string">
+          Vendor icon URL; omitted when unset.
+        </ResponseField>
+        <ResponseField name="total_tokens" type="integer" required>
+          Total tokens consumed by the vendor's models in the period.
+        </ResponseField>
+        <ResponseField name="share" type="number" required>
+          Share of all tokens in the period, a fraction between `0` and `1` rounded to 4 decimals.
+        </ResponseField>
+        <ResponseField name="growth_pct" type="number" required>
+          Token growth versus the previous period in percent; `100` when the previous period had no usage. Always `0` for `all`.
+        </ResponseField>
+        <ResponseField name="models_count" type="integer" required>
+          Number of distinct models from this vendor with usage in the period.
+        </ResponseField>
+        <ResponseField name="top_model" type="string" required>
+          The vendor's most used model in the period.
+        </ResponseField>
+      </Expandable>
+    </ResponseField>
+    <ResponseField name="top_movers" type="array" required>
+      Models that climbed the most ranks versus the previous period, up to 6 entries. Same member fields as `models` plus `rank_delta` (positive integer), `current_rank` and `growth_pct`, minus the aggregate fields.
+    </ResponseField>
+    <ResponseField name="top_droppers" type="array" required>
+      Models that fell the most ranks versus the previous period, up to 6 entries; `rank_delta` is negative.
+    </ResponseField>
+    <ResponseField name="models_history" type="object" required>
+      Per-bucket token series for the top models, used by the history chart.
+
+      <Expandable title="models_history structure">
+        <ResponseField name="points" type="array" required>
+          One entry per bucket and model with tokens in that bucket: `ts` (RFC 3339 UTC timestamp of the bucket start), `label` (human-readable bucket label formatted per period), `model`, `vendor` and `tokens`.
+        </ResponseField>
+        <ResponseField name="models" type="array" required>
+          The series members: the top models by tokens (`name`, `vendor`, `total`), plus an `Others` entry aggregating the remaining models when they have usage.
+        </ResponseField>
+        <ResponseField name="buckets" type="integer" required>
+          Number of time buckets in the series.
+        </ResponseField>
+      </Expandable>
+    </ResponseField>
+    <ResponseField name="vendor_share_history" type="object" required>
+      Per-bucket vendor share series.
+
+      <Expandable title="vendor_share_history structure">
+        <ResponseField name="points" type="array" required>
+          One entry per bucket and vendor with tokens in that bucket: `ts` (RFC 3339 UTC timestamp of the bucket start), `label` (human-readable bucket label formatted per period), `vendor`, `share` (fraction of the bucket's tokens) and `tokens`.
+        </ResponseField>
+        <ResponseField name="vendors" type="array" required>
+          The series members: the top vendors by tokens (`name`, `total`, `share`), plus an `Others` entry aggregating the remaining vendors when they have usage.
+        </ResponseField>
+        <ResponseField name="buckets" type="integer" required>
+          Number of time buckets in the series.
+        </ResponseField>
+      </Expandable>
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<Note>
+  Bucket sizes depend on the period: hourly for `today`, daily for `week` and `month`, weekly for `year`, and 30-day for `all`.
+
+  The snapshot is cached per period and configuration for `rankings_refresh_interval` seconds (300 by default, floor 60 seconds); recalculating quota data invalidates it.
+
+  When rankings are disabled in the dashboard configuration, the endpoint returns `success: true` with the message `Rankings feature is disabled` and a `data` object containing only empty `models` and `vendors` arrays instead of an error.
+</Note>
+
+## Error messages
+
+| Condition | Description |
+| --- | --- |
+| rankings is disabled | HTTP `403` with this message when the rankings module is switched off in header navigation module settings |
+| Login required | Standard authentication errors (HTTP `401`) when the rankings module is configured to require login and the caller is not authenticated |
+| Database error, please try again later | Building the snapshot failed; also returned for an unknown `period` value; see server logs |

@@ -1,0 +1,97 @@
+---
+title: Start Same-Type Migration
+description: Start an asynchronous job that copies the current databases into a new database of the same type.
+api: "POST /api/db/same_type_migrate"
+---
+
+Starts an asynchronous migration job that copies the main database — and optionally the log database — of the running instance into a target database of the same type, for example PostgreSQL to PostgreSQL or MySQL to MySQL, such as when moving to a new server. Supported types are MySQL, PostgreSQL, openGauss, DM, and KingbaseES; SQLite is not supported. The job runs in the background; poll `GET /api/db/same_type_migrate/{id}` with the returned job ID for progress and results.
+
+The source and target must not be the same physical database; this is verified with connection-level identifiers when the job starts. Unless `force` is set, the target database must be empty.
+
+Requires **Root** (super administrator) permissions. This endpoint is protected by a stricter rate limit (CriticalRateLimit). See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request POST \
+  --url 'https://your-nookmux-domain/api/db/same_type_migrate' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1' \
+  --header 'Content-Type: application/json' \
+  --data '{
+  "target_dsn": "postgres://nookmux:{password}@10.0.0.9:5432/nookmux",
+  "target_log_dsn": "",
+  "include_logs": true,
+  "force": false
+}'
+```
+
+</RequestExample>
+
+### Body
+
+<ParamField path="body.target_dsn" type="string" required>
+  DSN of the target main database. Its database type must match the source main database type. Recognized schemes: `postgres://`, `postgresql://`, `opengauss://`, `mysql://`, `dm://`, and `kingbase://`. Leading and trailing whitespace is trimmed.
+</ParamField>
+
+<ParamField path="body.target_log_dsn" type="string">
+  DSN of a separate target log database; used only when `include_logs` is `true`. When empty, `target_dsn` is reused for logs. Its database type must match the target main database type.
+</ParamField>
+
+<ParamField path="body.include_logs" type="boolean" default="false">
+  Also copy request logs from the source log database to the target.
+</ParamField>
+
+<ParamField path="body.force" type="boolean" default="false">
+  Overwrite mode. When `true`, each target table is cleared before copying. When `false`, the job requires an empty target: it fails if the target `users`, `options`, `channels`, or `tokens` tables contain any rows, and likewise for a separate target log database.
+</ParamField>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": {
+    "job_id": "7c2b9e41-08d5-4a6f-b3c7-9d8e1f2a3b4c"
+  }
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+  Whether the migration job was started.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  Error description when `success` is `false`; empty otherwise.
+</ResponseField>
+
+<ResponseField name="data" type="object" required>
+  Reference to the started job.
+
+  <Expandable title="data structure">
+    <ResponseField name="job_id" type="string" required>
+      ID of the created migration job; query it with `GET /api/db/same_type_migrate/{id}`.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<Note>
+A malformed JSON body is rejected with HTTP `400` and `Invalid parameters`, unlike most management endpoints that always return HTTP `200`. All other startup failures are reported with HTTP `200`, `success: false`, and the generic message `Database error, please try again later`; the specific reason is only available in the server logs. The password inside the target DSN is masked in the audit record of this operation. Connection checks, the same-database check, and the empty-target check run inside the background job: if they fail, this call still succeeds and the failure appears in the job status instead.
+</Note>
+
+## Error messages
+
+| Condition | Description |
+| --- | --- |
+| Invalid parameters | The JSON body is missing or malformed (HTTP `400`) |
+| Database error, please try again later | The job could not be started: `target_dsn` is empty, its scheme is not recognized, the target type differs from the source type (same-type migration requires identical types among MySQL / PostgreSQL / openGauss / DM / KingbaseES), or another same-type migration job is still running. The exact reason is in the server logs |
+| Authentication failed | Standard authentication errors (HTTP `401`) when the caller is not a root user |

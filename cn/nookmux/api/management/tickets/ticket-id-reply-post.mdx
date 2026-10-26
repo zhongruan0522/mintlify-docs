@@ -1,0 +1,78 @@
+---
+title: 回复工单
+description: 以当前用户身份向工单追加一条消息并刷新其更新时间。
+api: "POST /api/ticket/{id}/reply"
+---
+
+向工单追加一条消息并刷新其 `updated_at` 时间戳。回复不会改变工单状态。
+
+需要登录（**User** 权限）。只有工单所有者与管理员可以回复该工单。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
+
+## 请求
+
+<RequestExample>
+
+```bash cURL
+curl --request POST \
+  --url 'https://your-nookmux-domain/api/ticket/3/reply' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1' \
+  --header 'Content-Type: application/json' \
+  --data '{
+  "content": "The duplicated charge appeared again today."
+}'
+```
+
+</RequestExample>
+
+### 路径参数
+
+<ParamField path="id" type="integer" required>
+  工单 id，正整数。
+</ParamField>
+
+### 请求体
+
+<ParamField path="body.content" type="string" required>
+  回复文本。校验前会去除首尾空白；不能为空，最长 10000 个字符。
+</ParamField>
+
+## 响应
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": null
+}
+```
+
+</ResponseExample>
+
+### 响应字段
+
+<ResponseField name="success" type="boolean" required>
+  回复是否追加成功。
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  `success` 为 `false` 时的错误描述；成功时为空字符串。
+</ResponseField>
+
+<ResponseField name="data" type="null">
+  成功时恒为 `null`。如需查看更新后的时间线，请再次获取工单详情。
+</ResponseField>
+
+<Note>
+  管理接口在业务失败时同样返回 HTTP `200`，必须以 `success` 字段判断结果。服务层失败（回复内容为空/超长、工单不存在、无权访问、数据库错误等）均以本地化的数据库错误文案返回，具体原因仅记录在服务端日志中。
+</Note>
+
+## 错误说明
+
+| 条件 | 说明 |
+| --- | --- |
+| 无效的工单编号 | `id` 不是正整数 |
+| 请求体格式不正确 | JSON 请求体缺失或格式错误 |
+| 数据库错误，请稍后重试 | `content` 去除首尾空白后为空或超过 10000 个字符、不存在该 id 的工单、调用者既不是工单所有者也不是管理员，或追加回复失败，详见服务端日志 |

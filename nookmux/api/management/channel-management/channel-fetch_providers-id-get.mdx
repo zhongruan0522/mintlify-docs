@@ -1,0 +1,98 @@
+---
+title: Get Upstream Provider List
+description: Fetch the OpenRouter provider list from a saved channel's upstream.
+api: "GET /api/channel/fetch_providers/{id}"
+---
+
+Fetch the provider list from the upstream of a saved OpenRouter channel, for use in the channel form's provider picker. Queries `{base_url}/v1/providers` of the channel, or the built-in OpenRouter endpoint (`https://openrouter.ai/api`) when the channel has no custom base URL.
+
+The providers endpoint is public, so no key is required. The request is routed through the proxy configured on the channel. Only channels of type OpenRouter (`20`) are accepted. Entries with an empty slug are dropped, and `slug`/`name` values are trimmed.
+
+Requires **Root** permissions. See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url 'https://your-nookmux-domain/api/channel/fetch_providers/1' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1'
+```
+
+</RequestExample>
+
+### Path parameters
+
+<ParamField path="id" type="integer" required>
+  Id of the OpenRouter channel whose upstream should be queried.
+</ParamField>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": [
+    {
+      "slug": "openai",
+      "name": "OpenAI",
+      "headquarters": "San Francisco, CA, USA",
+      "privacy_policy_url": "https://openai.com/policies/privacy-policy/"
+    },
+    {
+      "slug": "anthropic",
+      "name": "Anthropic"
+    }
+  ]
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+  Whether the provider list was fetched.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  Error description when `success` is `false`; empty otherwise.
+</ResponseField>
+
+<ResponseField name="data" type="array" required>
+  Provider entries returned by the upstream.
+
+  <Expandable title="provider structure">
+    <ResponseField name="slug" type="string" required>
+      Provider identifier used by OpenRouter model ids, for example the `openai` in `openrouter/openai/gpt-4o`.
+    </ResponseField>
+    <ResponseField name="name" type="string">
+      Display name of the provider.
+    </ResponseField>
+    <ResponseField name="headquarters" type="string">
+      Location of the provider's headquarters. Omitted when the upstream does not provide it.
+    </ResponseField>
+    <ResponseField name="privacy_policy_url" type="string">
+      URL of the provider's privacy policy. Omitted when the upstream does not provide it.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<Note>
+Management endpoints return HTTP `200` even on business failures; always check the `success` field.
+</Note>
+
+## Error messages
+
+| Condition | Description |
+| --- | --- |
+| Channel id format error | `id` in the path is not an integer |
+| Database error | The channel could not be loaded, including when it does not exist |
+| OpenRouter channels only | The channel type is not OpenRouter |
+| Failed to fetch providers | The upstream request failed or returned a non-200 status |
+| Failed to parse response | The upstream response could not be parsed as a provider list |

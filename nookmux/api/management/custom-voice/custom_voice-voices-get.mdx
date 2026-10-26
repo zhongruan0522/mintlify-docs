@@ -1,0 +1,172 @@
+---
+title: Get All Voices
+description: List custom voice records with pagination and filters.
+api: "GET /api/custom_voice/voices/"
+---
+
+Voice records drive the custom voice feature and the TTS voice whitelist: a TTS request references a record through its `voice_id`, and after validation NookMux forwards the request upstream with `redirect_id` (or `voice_id` when `redirect_id` is empty).
+
+Returns a paginated list of all voice records, newest first (by `id` descending), with optional filters on type, operator, voice ID, and creation time.
+
+Requires **Admin** permissions. See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url 'https://your-nookmux-domain/api/custom_voice/voices/?page=1&page_size=10&type=created' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1'
+```
+
+</RequestExample>
+
+### Query parameters
+
+<ParamField path="type" type="string">
+  Filter by exact voice type: `preview` (awaiting confirmation) or `created` (active). Omit to return all types.
+</ParamField>
+
+<ParamField path="operator_id" type="integer">
+  Filter by operator ID (the user or administrator who created the record). Applied only when greater than 0.
+</ParamField>
+
+<ParamField path="voice_id" type="string">
+  Fuzzy match on the voice ID (contains).
+</ParamField>
+
+<ParamField path="start_timestamp" type="integer">
+  Lower bound for `created_at`, as a Unix timestamp in seconds. Applied only when greater than 0.
+</ParamField>
+
+<ParamField path="end_timestamp" type="integer">
+  Upper bound for `created_at`, as a Unix timestamp in seconds. Applied only when greater than 0.
+</ParamField>
+
+<ParamField path="page" type="integer" default="1">
+  Page number. Values below 1 are normalized to 1.
+</ParamField>
+
+<ParamField path="page_size" type="integer" default="10">
+  Page size, capped at 100. Values below 1 are normalized to 10.
+</ParamField>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": {
+    "items": [
+      {
+        "id": 128,
+        "created_at": 1735689600,
+        "updated_at": 1735689700,
+        "type": "preview",
+        "operator_id": 42,
+        "operator_kind": "user",
+        "voice_id": "my-custom-voice-01",
+        "quota_cost": 0,
+        "redirect_id": "",
+        "allowed": false,
+        "remark": ""
+      },
+      {
+        "id": 3,
+        "created_at": 1735689000,
+        "updated_at": 1735689100,
+        "type": "created",
+        "operator_id": 1,
+        "operator_kind": "admin",
+        "voice_id": "official-voice-001",
+        "quota_cost": 0,
+        "redirect_id": "minimax-voice-0000",
+        "allowed": true,
+        "remark": "Official voice"
+      }
+    ],
+    "total": 2,
+    "page": 1,
+    "page_size": 10
+  }
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+  Whether the request succeeded.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  Error description when `success` is `false`; empty otherwise.
+</ResponseField>
+
+<ResponseField name="data.total" type="integer" required>
+  Total number of voice records matching the filters.
+</ResponseField>
+
+<ResponseField name="data.page" type="integer" required>
+  Current page number.
+</ResponseField>
+
+<ResponseField name="data.page_size" type="integer" required>
+  Page size actually applied.
+</ResponseField>
+
+<ResponseField name="data.items" type="array" required>
+  Voice records on the current page.
+
+  <Expandable title="voice structure">
+    <ResponseField name="id" type="integer" required>
+      Primary key of the record.
+    </ResponseField>
+    <ResponseField name="created_at" type="integer" required>
+      Creation time as a Unix timestamp in seconds.
+    </ResponseField>
+    <ResponseField name="updated_at" type="integer" required>
+      Last update time as a Unix timestamp in seconds.
+    </ResponseField>
+    <ResponseField name="type" type="string" required>
+      Voice type: `preview` (awaiting confirmation, usable only on the custom voice page) or `created` (usable for TTS when `allowed` is `true`).
+    </ResponseField>
+    <ResponseField name="operator_id" type="integer" required>
+      ID of the operator: the user for records created through the preview/confirm flow, the administrator for admin-created records.
+    </ResponseField>
+    <ResponseField name="operator_kind" type="string" required>
+      Operator kind: `user` or `admin`.
+    </ResponseField>
+    <ResponseField name="voice_id" type="string" required>
+      External voice ID referenced by TTS requests; unique across records.
+    </ResponseField>
+    <ResponseField name="quota_cost" type="integer" required>
+      Quota charged when the voice was confirmed; `0` for records that have not been confirmed and for admin-created records.
+    </ResponseField>
+    <ResponseField name="redirect_id" type="string" required>
+      Real upstream voice ID to send to the provider; empty means `voice_id` itself is sent upstream.
+    </ResponseField>
+    <ResponseField name="allowed" type="boolean" required>
+      Whether the voice may be used for TTS. Effective for `created` records only; automatically set to `true` on confirmation.
+    </ResponseField>
+    <ResponseField name="remark" type="string" required>
+      Free-form remark, up to 255 characters; may be empty.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<Note>
+Management endpoints return HTTP `200` even on business failures; always check the `success` field. This endpoint paginates with `page` and `page_size` only; the `p`, `ps`, and `size` aliases accepted by other list endpoints are not recognized here.
+</Note>
+
+## Error messages
+
+| Condition | Description |
+| --- | --- |
+| Database error, please try again later | Reading the voice list or counting the total failed; see server logs |

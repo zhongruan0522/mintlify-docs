@@ -1,0 +1,73 @@
+---
+title: 重新计算额度数据
+description: 从原始请求日志重建指定时间范围的预聚合额度看板。
+api: "POST /api/data/recalculate"
+---
+
+从原始请求日志重建指定时间范围的 `quota_data` 聚合：范围内的既有小时桶在单个事务中先删除再重插，请求数、额度、token 数与失败次数均由成功与失败日志重新汇总。执行时会同时失效排行榜快照缓存。参数通过查询字符串传递，请求没有请求体。
+
+需要**管理员（Admin）**权限。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
+
+## 请求
+
+<RequestExample>
+
+```bash cURL
+curl --request POST \
+  --url 'https://your-nookmux-domain/api/data/recalculate?start_timestamp=1735689600&end_timestamp=1738368000' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1'
+```
+
+</RequestExample>
+
+### 查询参数
+
+<ParamField path="start_timestamp" type="integer" required>
+  范围起点的 Unix 时间戳（秒）。必须为正数；聚合前会向下对齐到小时边界。
+</ParamField>
+
+<ParamField path="end_timestamp" type="integer" required>
+  范围终点的 Unix 时间戳（秒）。必须为正数且大于 `start_timestamp`；聚合前会向上对齐到所在小时桶的末尾。
+</ParamField>
+
+## 响应
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "重新计算完成",
+  "data": null
+}
+```
+
+</ResponseExample>
+
+### 响应字段
+
+<ResponseField name="success" type="boolean" required>
+  重新计算是否完成。
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  成功时为 `重新计算完成`；`success` 为 `false` 时为错误描述。消息按调用者语言偏好本地化。
+</ResponseField>
+
+<ResponseField name="data" type="null" required>
+  恒为 `null`。
+</ResponseField>
+
+<Note>
+  成功请求从消费日志（type `2`）聚合，贡献请求数、额度与 token 用量；失败请求（type `5`）仅贡献失败次数。重算的数据行遵循数据管道配置的写入层聚合粒度（按用户、按模型与 token 记录开关），与实时聚合路径一致。
+
+  本端点不会失效用户分析快照缓存；用户分析视图要等其缓存 TTL 到期后才刷新。
+</Note>
+
+## 错误说明
+
+| 条件 | 说明 |
+| --- | --- |
+| 无效的时间范围 | 任一时间戳缺失或非正数，或 `end_timestamp` 不大于 `start_timestamp` |
+| 数据库错误，请稍后重试 | 读取日志或重写 `quota_data` 失败，详见服务端日志 |

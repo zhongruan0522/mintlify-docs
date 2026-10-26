@@ -1,0 +1,88 @@
+---
+title: Check Top-up Order Status
+description: Query an Epay top-up order at the payment gateway and recover a lost payment callback.
+api: "POST /api/user/topup/check"
+---
+
+Self-service status check for an online top-up order. The server queries the Epay gateway for the order: when the gateway reports the order as paid, the order is credited through the same path as the payment callback, which recovers credit for lost callbacks. When the gateway reports it as unpaid (or does not know the order), the current `pending` status is returned without any action.
+
+Requires **User** permission (any logged-in user). See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
+
+<Note>
+This endpoint applies a stricter per-IP rate limit (CriticalRateLimit, when enabled); exceeding it returns HTTP `429`. Regular users can only check their own orders; administrators can check any order. An order number that does not exist and an order number belonging to another user produce the same error, so order numbers cannot be probed.
+</Note>
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request POST \
+  --url 'https://your-nookmux-domain/api/user/topup/check' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1' \
+  --header 'Content-Type: application/json' \
+  --data '{
+  "trade_no": "USR1NOAb12cd1730000000"
+}'
+```
+
+</RequestExample>
+
+### Body
+
+<ParamField path="body.trade_no" type="string" required>
+Order number of the top-up order to check, in the form returned when the order was created, for example `USR1NOAb12cd1730000000`.
+</ParamField>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": {
+    "status": "pending"
+  }
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+Whether the order was checked.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+Error description when `success` is `false`; empty otherwise.
+</ResponseField>
+
+<ResponseField name="data" type="object" required>
+Check result.
+
+<Expandable title="data structure">
+  <ParamField path="status" type="string" required>
+  Order status after the check:
+
+  - `pending`: the gateway does not report the order as paid (including orders never opened at the cashier); nothing was credited.
+  - `success`: the gateway reported the order as paid and the credit was completed; also returned when the payment callback had already completed the order concurrently.
+  </ParamField>
+</Expandable>
+</ResponseField>
+
+## Error messages
+
+| Condition | Description |
+| --- | --- |
+| Invalid parameters | The JSON body is missing, malformed, or `trade_no` is empty |
+| Order not found | No order exists for `trade_no`, or it belongs to another user and the caller is not an administrator |
+| Online order check is not supported for this payment method | The order was created with a provider other than Epay, for example Stripe |
+| Only pending orders can be checked | The order is neither pending nor already successful, for example `expired` or `failed` |
+| Payment information is not configured | The Epay gateway address, merchant ID or key is missing on the server |
+| Failed to query the payment gateway, please try again later | The gateway query failed, or a paid response lacked the data needed for crediting; see server logs |
+| Order amount or payment method does not match the payment gateway, please contact the administrator | The gateway-side amount or payment channel differs from the local order; manual review is required |
+| Database error, please try again later | Loading or crediting the order failed; see server logs |

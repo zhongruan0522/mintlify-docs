@@ -1,0 +1,133 @@
+---
+title: Get My Tickets
+description: List the current user's tickets with pagination, status filter and keyword search, most recently updated first.
+api: "GET /api/ticket/"
+---
+
+Retrieve a paginated list of the tickets created by the current user, ordered by most recently updated first. Results can be filtered by status and searched by ticket id or title keyword.
+
+Requires a logged-in user (**User** permissions). See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url 'https://your-nookmux-domain/api/ticket/?p=1&page_size=10&status=all' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1'
+```
+
+</RequestExample>
+
+### Query parameters
+
+<ParamField path="query.p" type="integer" default="1">
+  Page number.
+</ParamField>
+
+<ParamField path="query.page_size" type="integer" default="10">
+  Items per page, capped at 100. The pagination helper also accepts the legacy aliases `ps` and `size`.
+</ParamField>
+
+<ParamField path="query.status" type="string" default="all">
+  Filter by ticket status: `all`, `pending`, `processing`, or `completed`. Any other value fails the request.
+</ParamField>
+
+<ParamField path="query.keyword" type="string">
+  Search keyword, trimmed before matching. An integer keyword matches tickets whose `id` equals it or whose `title` contains it; any other keyword matches tickets whose title contains it. `%`, `_` and `!` are matched literally.
+</ParamField>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": {
+    "page": 1,
+    "page_size": 10,
+    "total": 2,
+    "items": [
+      {
+        "id": 3,
+        "title": "Billing question",
+        "type": "question",
+        "status": "processing",
+        "created_at": 1748000000,
+        "updated_at": 1748086400
+      },
+      {
+        "id": 1,
+        "title": "API returns 500",
+        "type": "bug",
+        "status": "completed",
+        "created_at": 1747000000,
+        "updated_at": 1747900000
+      }
+    ]
+  }
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+  Whether the request succeeded.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  Error description when `success` is `false`; empty otherwise.
+</ResponseField>
+
+<ResponseField name="data.page" type="integer" required>
+  Current page number.
+</ResponseField>
+
+<ResponseField name="data.page_size" type="integer" required>
+  Page size applied to the query.
+</ResponseField>
+
+<ResponseField name="data.total" type="integer" required>
+  Total number of the user's tickets matching the filters.
+</ResponseField>
+
+<ResponseField name="data.items" type="array" required>
+  Tickets on the current page, ordered by `updated_at` descending, then by `id` descending.
+
+  <Expandable title="ticket summary structure">
+    <ResponseField name="id" type="integer" required>
+      Ticket id.
+    </ResponseField>
+    <ResponseField name="title" type="string" required>
+      Ticket title.
+    </ResponseField>
+    <ResponseField name="type" type="string" required>
+      Ticket type: `bug`, `feature`, `question`, or `other`.
+    </ResponseField>
+    <ResponseField name="status" type="string" required>
+      Ticket status: `pending`, `processing`, or `completed`.
+    </ResponseField>
+    <ResponseField name="created_at" type="integer" required>
+      Unix timestamp (seconds) of creation.
+    </ResponseField>
+    <ResponseField name="updated_at" type="integer" required>
+      Unix timestamp (seconds) of the last update, refreshed by new messages and status changes.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<Note>
+  Management endpoints return HTTP `200` even on business failures; always check the `success` field. List failures, including an invalid `status` value, are all returned with the localized database-error message.
+</Note>
+
+## Error messages
+
+| Condition | Description |
+| --- | --- |
+| Database error, please try again later | `status` is not `all`, `pending`, `processing`, or `completed`, or counting/listing the tickets failed; see server logs |

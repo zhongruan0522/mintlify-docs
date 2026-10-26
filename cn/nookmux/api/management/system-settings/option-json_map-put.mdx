@@ -1,0 +1,87 @@
+---
+title: 写入 JSON 映射配置项
+description: 在 JSON 映射型系统选项内新增、更新或重命名单个条目。
+api: "PUT /api/option/json_map"
+---
+
+在 JSON 对象型系统选项中插入或替换一个条目。支持的键集合与[获取 JSON 映射配置项](/cn/nookmux/api/management/system-settings/option-json_map-get)一致：MiniMax 重定向选项与计价选项。当提供与 `map_key` 不同的非空 `old_map_key` 时执行重命名：旧条目必须存在，且新键下不能已有条目。变更后整个选项会重新序列化、校验，并通过选项存储持久化（写库并刷新内存），同时以选项更新类型记入管理员审计日志。
+
+需要**超级管理员（Root）**权限。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
+
+## 请求
+
+<RequestExample>
+
+```bash cURL
+curl --request PUT \
+  --url 'https://your-nookmux-domain/api/option/json_map' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1' \
+  --header 'Content-Type: application/json' \
+  --data '{
+  "key": "ModelRatio",
+  "map_key": "gpt-4o",
+  "value": "2.5"
+}'
+```
+
+</RequestExample>
+
+### 请求体
+
+<ParamField path="body.key" type="string" required>
+  要修改的选项键。必须是受支持的 JSON 映射键之一：`minimax.model_redirect`、`minimax.emotion_redirect`、`minimax.tone_word_redirect`、`ModelPrice`、`ModelRatio`、`CacheRatio`、`CreateCacheRatio`、`CompletionRatio`、`AudioRatio`、`AudioCompletionRatio`、`ContextPricing`。
+</ParamField>
+
+<ParamField path="body.map_key" type="string" required>
+  JSON 对象内的条目键，去除首尾空白后不能为空。条目已存在时替换其值。
+</ParamField>
+
+<ParamField path="body.old_map_key" type="string">
+  重命名条目时的旧条目键。为空或等于 `map_key` 时忽略；否则 `old_map_key` 下的条目必须存在，且 `map_key` 不能已被占用。
+</ParamField>
+
+<ParamField path="body.value" type="string" required>
+  新的条目值。MiniMax 选项为普通映射字符串（去除首尾空白）；计价选项必须是合法 JSON 文档，例如数字倍率条目传 `"2.5"`。
+</ParamField>
+
+## 响应
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": ""
+}
+```
+
+</ResponseExample>
+
+### 响应字段
+
+<ResponseField name="success" type="boolean" required>
+  条目是否写入成功。
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  `success` 为 `false` 时的错误描述；成功时为空字符串。
+</ResponseField>
+
+<Note>
+  计价选项在写入后会整体重新校验：多数键必须保持为数字组成的 JSON 对象，`ContextPricing` 按其专用结构校验；MiniMax 选项按各自的取值规则校验。请求体形态错误（JSON 缺失或非法、`map_key` 为空、`value` 不是合法 JSON、`key` 不受支持）返回 HTTP `400`；重命名冲突与整体校验失败返回 HTTP `200` 加 `success: false` 和本地化的 `message`。
+</Note>
+
+## 错误说明
+
+| 条件 | 说明 |
+| --- | --- |
+| 无效的参数 | HTTP `400`；JSON 请求体缺失或格式错误 |
+| 映射键不能为空 | HTTP `400`；`map_key` 去除空白后为空 |
+| 映射值必须是合法 JSON | HTTP `400`；`key` 为计价选项且 `value` 不是合法 JSON |
+| 不支持的 JSON 映射配置项 | HTTP `400`；`key` 不是受支持的 JSON 映射选项键 |
+| 原映射项不存在 | HTTP `200` 加 `success: false`；请求重命名但 `old_map_key` 下没有条目 |
+| 映射键已存在 | HTTP `200` 加 `success: false`；请求重命名但 `map_key` 下已有条目 |
+| `JSON 映射配置解析失败: {Error}` | HTTP `200` 加 `success: false`；计价选项重新序列化或校验失败 |
+| `MiniMax 设置失败: {Error}` | HTTP `200` 加 `success: false`；MiniMax 选项值校验失败 |
+| 数据库错误，请稍后重试 | HTTP `200` 加 `success: false`；选项持久化失败，详见服务端日志 |

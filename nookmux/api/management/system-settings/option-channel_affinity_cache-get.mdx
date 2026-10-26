@@ -1,0 +1,85 @@
+---
+title: Get Channel Affinity Cache Stats
+description: Inspect entry counts of the channel affinity cache, broken down by rule.
+api: "GET /api/option/channel_affinity_cache"
+---
+
+Returns entry-count statistics for the channel affinity cache, which pins requests matching an affinity rule to the same upstream channel (for example per Codex or Claude Code trace identity). Counts are broken down per configured rule that enables `include_rule_name`; entries that cannot be attributed to any such rule are counted as `unknown`.
+
+Requires **Root** (super administrator) permissions. See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url 'https://your-nookmux-domain/api/option/channel_affinity_cache' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1'
+```
+
+</RequestExample>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": {
+    "enabled": true,
+    "total": 128,
+    "unknown": 0,
+    "by_rule_name": {
+      "claude code trace": 64,
+      "codex trace": 64
+    },
+    "cache_capacity": 100000,
+    "cache_algo": "lru"
+  }
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+  Whether the statistics were read.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  Error description when `success` is `false`; empty otherwise.
+</ResponseField>
+
+<ResponseField name="data" type="object" required>
+  Cache statistics.
+
+  <Expandable title="data structure">
+    <ResponseField name="enabled" type="boolean" required>
+      Whether channel affinity routing is enabled in `channel_affinity_setting`.
+    </ResponseField>
+    <ResponseField name="total" type="integer" required>
+      Total number of entries currently in the cache.
+    </ResponseField>
+    <ResponseField name="unknown" type="integer" required>
+      Entries whose cache key could not be mapped back to a configured rule that enables `include_rule_name`.
+    </ResponseField>
+    <ResponseField name="by_rule_name" type="object" required>
+      Entry count per rule name (string keys, integer values). Every configured rule that enables `include_rule_name` is listed, initialized at `0`, so rules without cached entries still appear.
+    </ResponseField>
+    <ResponseField name="cache_capacity" type="integer" required>
+      Capacity of the in-memory main cache, for example `100000` for the default `max_entries`. Reported as `0` when the cache is Redis-backed.
+    </ResponseField>
+    <ResponseField name="cache_algo" type="string" required>
+      Eviction algorithm of the main cache, `lru` for the in-memory default. Reported as `redis` when the cache is Redis-backed.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<Note>
+  Rule names and affinity behavior come from the `channel_affinity_setting` option; only rules that enable `include_rule_name` key their cache entries by rule name, which is why they are the only ones counted in `by_rule_name`. Failures while listing cache keys are logged server-side and reported as zero entries rather than failing the request.
+</Note>

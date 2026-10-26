@@ -1,0 +1,76 @@
+---
+title: 删除 JSON 映射配置项
+description: 删除 JSON 映射型系统选项中的单个条目。
+api: "DELETE /api/option/json_map"
+---
+
+从 JSON 对象型系统选项中移除一个条目。支持的键集合与[获取 JSON 映射配置项](/cn/nookmux/api/management/system-settings/option-json_map-get)一致：MiniMax 重定向选项与计价选项。删除后整个选项会重新序列化、校验，并通过选项存储持久化（写库并刷新内存），同时以选项更新类型记入管理员审计日志。
+
+需要**超级管理员（Root）**权限。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
+
+## 请求
+
+<RequestExample>
+
+```bash cURL
+curl --request DELETE \
+  --url 'https://your-nookmux-domain/api/option/json_map' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1' \
+  --header 'Content-Type: application/json' \
+  --data '{
+  "key": "ModelRatio",
+  "map_key": "gpt-4o"
+}'
+```
+
+</RequestExample>
+
+### 请求体
+
+<ParamField path="body.key" type="string" required>
+  要修改的选项键。必须是受支持的 JSON 映射键之一：`minimax.model_redirect`、`minimax.emotion_redirect`、`minimax.tone_word_redirect`、`ModelPrice`、`ModelRatio`、`CacheRatio`、`CreateCacheRatio`、`CompletionRatio`、`AudioRatio`、`AudioCompletionRatio`、`ContextPricing`。
+</ParamField>
+
+<ParamField path="body.map_key" type="string" required>
+  要删除的条目键，去除首尾空白后不能为空。
+</ParamField>
+
+## 响应
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": ""
+}
+```
+
+</ResponseExample>
+
+### 响应字段
+
+<ResponseField name="success" type="boolean" required>
+  条目是否删除成功。
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  `success` 为 `false` 时的错误描述；成功时为空字符串。
+</ResponseField>
+
+<Note>
+  删除最后一个条目后选项保留为空 JSON 对象 `{}`，选项本身不会被移除。请求体形态错误（JSON 缺失或非法、`map_key` 为空、`key` 不受支持）返回 HTTP `400`；条目不存在与整体校验失败返回 HTTP `200` 加 `success: false` 和本地化的 `message`。
+</Note>
+
+## 错误说明
+
+| 条件 | 说明 |
+| --- | --- |
+| 无效的参数 | HTTP `400`；JSON 请求体缺失或格式错误 |
+| 映射键不能为空 | HTTP `400`；`map_key` 去除空白后为空 |
+| 不支持的 JSON 映射配置项 | HTTP `400`；`key` 不是受支持的 JSON 映射选项键 |
+| 映射项不存在 | HTTP `200` 加 `success: false`；`map_key` 下没有条目 |
+| `JSON 映射配置解析失败: {Error}` | HTTP `200` 加 `success: false`；计价选项重新序列化或校验失败 |
+| `MiniMax 设置失败: {Error}` | HTTP `200` 加 `success: false`；MiniMax 选项值校验失败 |
+| 数据库错误，请稍后重试 | HTTP `200` 加 `success: false`；选项持久化失败，详见服务端日志 |

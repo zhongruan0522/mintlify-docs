@@ -1,0 +1,152 @@
+---
+title: 获取工单详情
+description: 按 id 获取单张工单及其完整消息时间线，工单所有者与管理员可访问。
+api: "GET /api/ticket/{id}"
+---
+
+按 id 获取单张工单，包含完整消息时间线。消息按消息 id 升序排列；`message` 条目包含发送者与文本，`status` 条目记录一次状态变更。
+
+需要登录（**User** 权限）。只有工单所有者与管理员可以查看该工单。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
+
+## 请求
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url 'https://your-nookmux-domain/api/ticket/3' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1'
+```
+
+</RequestExample>
+
+### 路径参数
+
+<ParamField path="id" type="integer" required>
+  工单 id，正整数。
+</ParamField>
+
+## 响应
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": {
+    "id": 3,
+    "title": "Billing question",
+    "type": "question",
+    "status": "processing",
+    "created_at": 1748000000,
+    "updated_at": 1748172800,
+    "closed_at": 0,
+    "messages": [
+      {
+        "id": 5,
+        "type": "message",
+        "role": "user",
+        "username": "alice",
+        "content": "I was charged twice for the same request.",
+        "time": 1748000000
+      },
+      {
+        "id": 6,
+        "type": "message",
+        "role": "admin",
+        "username": "root",
+        "content": "We are looking into the double charge.",
+        "time": 1748086400
+      },
+      {
+        "id": 7,
+        "type": "status",
+        "role": "admin",
+        "username": "root",
+        "value": "processing",
+        "time": 1748172800
+      }
+    ]
+  }
+}
+```
+
+</ResponseExample>
+
+### 响应字段
+
+<ResponseField name="success" type="boolean" required>
+  请求是否成功。
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  `success` 为 `false` 时的错误描述；成功时为空字符串。
+</ResponseField>
+
+<ResponseField name="data" type="object" required>
+  工单及其消息时间线。
+
+  <Expandable title="工单详情结构">
+    <ResponseField name="id" type="integer" required>
+      工单 id。
+    </ResponseField>
+    <ResponseField name="title" type="string" required>
+      工单标题。
+    </ResponseField>
+    <ResponseField name="type" type="string" required>
+      工单类型：`bug`、`feature`、`question` 或 `other`。
+    </ResponseField>
+    <ResponseField name="status" type="string" required>
+      工单状态：`pending`、`processing` 或 `completed`。
+    </ResponseField>
+    <ResponseField name="created_at" type="integer" required>
+      创建时间的 Unix 时间戳（秒）。
+    </ResponseField>
+    <ResponseField name="updated_at" type="integer" required>
+      最近一次更新时间的 Unix 时间戳（秒），新消息与状态变更都会刷新该值。
+    </ResponseField>
+    <ResponseField name="closed_at" type="integer" required>
+      工单完成时间的 Unix 时间戳（秒）；未完成时为 `0`。
+    </ResponseField>
+    <ResponseField name="messages" type="array" required>
+      消息时间线，按消息 id 升序排列。
+
+      <Expandable title="消息结构">
+        <ResponseField name="id" type="integer" required>
+          消息条目 id。
+        </ResponseField>
+        <ResponseField name="type" type="string" required>
+          条目类型：`message` 为会话消息，`status` 为状态变更记录。
+        </ResponseField>
+        <ResponseField name="role" type="string" required>
+          发送者角色，由发送者账号角色推导：管理员为 `admin`，否则为 `user`。
+        </ResponseField>
+        <ResponseField name="username" type="string" required>
+          产生该条目的账号名称。
+        </ResponseField>
+        <ResponseField name="content" type="string">
+          条目文本；仅当 `type` 为 `message` 时存在。
+        </ResponseField>
+        <ResponseField name="value" type="string">
+          状态变更的目标状态（`pending`、`processing` 或 `completed`）；仅当 `type` 为 `status` 时存在。
+        </ResponseField>
+        <ResponseField name="time" type="integer" required>
+          条目产生时间的 Unix 时间戳（秒）。
+        </ResponseField>
+      </Expandable>
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<Note>
+  管理接口在业务失败时同样返回 HTTP `200`，必须以 `success` 字段判断结果。详情类失败（工单不存在、无权访问等）均以本地化的数据库错误文案返回，具体原因仅记录在服务端日志中。
+</Note>
+
+## 错误说明
+
+| 条件 | 说明 |
+| --- | --- |
+| 无效的工单编号 | `id` 不是正整数 |
+| 数据库错误，请稍后重试 | 不存在该 id 的工单、调用者既不是工单所有者也不是管理员，或查询工单及其消息失败，详见服务端日志 |

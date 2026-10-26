@@ -1,0 +1,241 @@
+---
+title: 获取用量排行榜
+description: 获取指定周期的模型与供应商 token 用量排行榜快照及历史序列。
+api: "GET /api/rankings"
+---
+
+返回指定周期的用量排行榜快照，数据由预聚合的 `quota_data` token 用量计算：按消耗 token 排名的模型与供应商、相对上一周期升降幅最大的模型，以及供图表使用的分桶历史序列。
+
+该接口受顶部导航模块配置中 `rankings` 模块的开关控制。默认模块启用且公开：无需鉴权，若调用者携带登录会话则自动识别其身份；若模块配置为需要登录，则强制校验登录（User 权限）。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
+
+## 请求
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url 'https://your-nookmux-domain/api/rankings?period=week'
+```
+
+</RequestExample>
+
+### 查询参数
+
+<ParamField path="period" type="string" default="week">
+  排行周期：`today`、`week`、`month`、`year` 或 `all`。周期按服务端启动时区（`TZ`）下的自然日历周期计算，并非滚动窗口；`week` 从周一开始，`all` 无下界。
+</ParamField>
+
+## 响应
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": {
+    "models": [
+      {
+        "rank": 1,
+        "previous_rank": 2,
+        "model_name": "gpt-4o",
+        "vendor": "OpenAI",
+        "category": "all",
+        "total_tokens": 12345678,
+        "share": 0.3532,
+        "growth_pct": 12.34
+      }
+    ],
+    "vendors": [
+      {
+        "rank": 1,
+        "vendor": "OpenAI",
+        "total_tokens": 12345678,
+        "share": 0.3532,
+        "growth_pct": 12.34,
+        "models_count": 3,
+        "top_model": "gpt-4o"
+      }
+    ],
+    "top_movers": [
+      {
+        "model_name": "claude-sonnet-4",
+        "vendor": "Anthropic",
+        "rank_delta": 3,
+        "current_rank": 2,
+        "growth_pct": 42.5
+      }
+    ],
+    "top_droppers": [],
+    "models_history": {
+      "points": [
+        {
+          "ts": "2026-10-19T16:00:00Z",
+          "label": "Oct 20",
+          "model": "gpt-4o",
+          "vendor": "OpenAI",
+          "tokens": 123456
+        }
+      ],
+      "models": [
+        { "name": "gpt-4o", "vendor": "OpenAI", "total": 12345678 },
+        { "name": "Others", "vendor": "Various", "total": 1000 }
+      ],
+      "buckets": 7
+    },
+    "vendor_share_history": {
+      "points": [
+        {
+          "ts": "2026-10-19T16:00:00Z",
+          "label": "Oct 20",
+          "vendor": "OpenAI",
+          "share": 0.5,
+          "tokens": 500000
+        }
+      ],
+      "vendors": [
+        { "name": "OpenAI", "total": 12345678, "share": 0.3532 },
+        { "name": "Others", "total": 1000, "share": 0.0001 }
+      ],
+      "buckets": 7
+    }
+  }
+}
+```
+
+</ResponseExample>
+
+### 响应字段
+
+<ResponseField name="success" type="boolean" required>
+  请求是否成功。
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  `success` 为 `false` 时的错误描述；成功时为空字符串。
+</ResponseField>
+
+<ResponseField name="data" type="object" required>
+  所请求周期的排行榜快照。
+
+  <Expandable title="排行榜结构">
+    <ResponseField name="models" type="array" required>
+      周期内按总 token 数排名的模型，数量受配置的模型数上限（`rankings_model_limit`，默认 20）限制。
+
+      <Expandable title="排名模型结构">
+        <ResponseField name="rank" type="integer" required>
+          周期内当前排名，用量最多的模型为 `1`。
+        </ResponseField>
+        <ResponseField name="previous_rank" type="integer">
+          上一个自然周期内的排名；模型在该周期无排名或周期为 `all` 时省略。
+        </ResponseField>
+        <ResponseField name="model_name" type="string" required>
+          模型名。
+        </ResponseField>
+        <ResponseField name="vendor" type="string" required>
+          来自模型元数据的供应商显示名；无启用的模型元数据匹配时为 `Unknown`。
+        </ResponseField>
+        <ResponseField name="vendor_icon" type="string">
+          供应商元数据中的图标 URL；未设置时省略。
+        </ResponseField>
+        <ResponseField name="model_icon" type="string">
+          模型元数据中的图标 URL；未设置时省略。
+        </ResponseField>
+        <ResponseField name="category" type="string" required>
+          恒为 `all`。
+        </ResponseField>
+        <ResponseField name="total_tokens" type="integer" required>
+          该模型周期内消耗的总 token 数。
+        </ResponseField>
+        <ResponseField name="share" type="number" required>
+          占周期内全部 token 的份额，取值 `0` 到 `1` 之间，保留 4 位小数。
+        </ResponseField>
+        <ResponseField name="growth_pct" type="number" required>
+          相对上一周期的 token 增长百分比，保留 4 位小数；上一周期无用量时为 `100`。周期为 `all` 时恒为 `0`。
+        </ResponseField>
+      </Expandable>
+    </ResponseField>
+    <ResponseField name="vendors" type="array" required>
+      按总 token 数排名的供应商，数量受配置的供应商数上限（`rankings_vendor_limit`，默认 5）限制。
+
+      <Expandable title="排名供应商结构">
+        <ResponseField name="rank" type="integer" required>
+          周期内当前排名，用量最多的供应商为 `1`。
+        </ResponseField>
+        <ResponseField name="vendor" type="string" required>
+          供应商显示名；无启用的模型元数据匹配时为 `Unknown`。
+        </ResponseField>
+        <ResponseField name="vendor_icon" type="string">
+          供应商图标 URL；未设置时省略。
+        </ResponseField>
+        <ResponseField name="total_tokens" type="integer" required>
+          该供应商旗下模型周期内消耗的总 token 数。
+        </ResponseField>
+        <ResponseField name="share" type="number" required>
+          占周期内全部 token 的份额，取值 `0` 到 `1` 之间，保留 4 位小数。
+        </ResponseField>
+        <ResponseField name="growth_pct" type="number" required>
+          相对上一周期的 token 增长百分比；上一周期无用量时为 `100`。周期为 `all` 时恒为 `0`。
+        </ResponseField>
+        <ResponseField name="models_count" type="integer" required>
+          该供应商在周期内有用量的不同模型数。
+        </ResponseField>
+        <ResponseField name="top_model" type="string" required>
+          该供应商周期内用量最多的模型。
+        </ResponseField>
+      </Expandable>
+    </ResponseField>
+    <ResponseField name="top_movers" type="array" required>
+      相对上一周期排名上升最多的模型，最多 6 条。字段与 `models` 条目相同，另含 `rank_delta`（正整数）与 `current_rank`、`growth_pct`，不含聚合计数字段。
+    </ResponseField>
+    <ResponseField name="top_droppers" type="array" required>
+      相对上一周期排名下降最多的模型，最多 6 条；`rank_delta` 为负数。
+    </ResponseField>
+    <ResponseField name="models_history" type="object" required>
+      头部模型的分桶 token 序列，供历史图表使用。
+
+      <Expandable title="models_history 结构">
+        <ResponseField name="points" type="array" required>
+          每个桶内有用量的模型一条：`ts`（桶起点的 RFC 3339 UTC 时间戳）、`label`（按周期格式化的人类可读桶标签）、`model`、`vendor` 与 `tokens`。
+        </ResponseField>
+        <ResponseField name="models" type="array" required>
+          序列成员：token 用量最多的头部模型（`name`、`vendor`、`total`），其余模型有用量时追加一条聚合它们的 `Others` 条目。
+        </ResponseField>
+        <ResponseField name="buckets" type="integer" required>
+          序列中的时间桶数量。
+        </ResponseField>
+      </Expandable>
+    </ResponseField>
+    <ResponseField name="vendor_share_history" type="object" required>
+      分桶的供应商份额序列。
+
+      <Expandable title="vendor_share_history 结构">
+        <ResponseField name="points" type="array" required>
+          每个桶内有用量的供应商一条：`ts`（桶起点的 RFC 3339 UTC 时间戳）、`label`（按周期格式化的人类可读桶标签）、`vendor`、`share`（占该桶 token 的份额）与 `tokens`。
+        </ResponseField>
+        <ResponseField name="vendors" type="array" required>
+          序列成员：token 用量最多的头部供应商（`name`、`total`、`share`），其余供应商有用量时追加一条聚合它们的 `Others` 条目。
+        </ResponseField>
+        <ResponseField name="buckets" type="integer" required>
+          序列中的时间桶数量。
+        </ResponseField>
+      </Expandable>
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<Note>
+  桶大小随周期变化：`today` 按小时、`week` 与 `month` 按天、`year` 按周、`all` 按 30 天。
+
+  快照按周期与配置缓存 `rankings_refresh_interval` 秒（默认 300 秒，下限 60 秒）；重新计算额度数据会使缓存失效。
+
+  当看板配置关闭排行榜功能时，端点返回 `success: true`、`message` 为 `排行榜功能已禁用`，`data` 为仅含空 `models` 与 `vendors` 数组的对象，而不是报错。
+</Note>
+
+## 错误说明
+
+| 条件 | 说明 |
+| --- | --- |
+| rankings is disabled | 顶部导航模块设置中关闭 rankings 模块时返回 HTTP `403` 与该消息 |
+| 需要登录 | rankings 模块配置为需要登录且调用者未认证时的标准鉴权错误（HTTP `401`） |
+| 数据库错误，请稍后重试 | 构建快照失败；`period` 值未知时也返回该错误；详见服务端日志 |

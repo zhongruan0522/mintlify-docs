@@ -1,0 +1,105 @@
+---
+title: 查询 GLM 账户资金报告
+description: 查询智谱账户资金报告，并把可用余额落库到渠道。
+api: "GET /api/channel/glm/account_report/{id}"
+---
+
+查询渠道背后智谱账户的资金报告：当前余额、累计充值、系统赠金、累计消耗、活跃可用余额与冻结余额。渠道必须是智谱类型（`type` 为 `26`，`ChannelTypeZhipu_v4`），不要求是套餐渠道。金额为人民币原值。
+
+成功时，NookMux 还会把可用余额（缺失时回退为当前余额）以人民币记为渠道余额并落库，与余额更新端点的行为一致。
+
+需要**管理员**权限。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
+
+## 请求
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url 'https://your-nookmux-domain/api/channel/glm/account_report/1' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1'
+```
+
+</RequestExample>
+
+### 路径参数
+
+<ParamField path="id" type="integer" required>
+渠道 ID。
+</ParamField>
+
+## 响应
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "data": {
+    "balance": 18.52,
+    "recharge_amount": 100.0,
+    "give_amount": 10.0,
+    "total_spend_amount": 91.48,
+    "available_balance": 18.52,
+    "frozen_balance": 0.0
+  },
+  "balance": 18.52,
+  "currency": "CNY"
+}
+```
+
+</ResponseExample>
+
+### 响应字段
+
+<ResponseField name="success" type="boolean" required>
+请求是否成功。
+</ResponseField>
+
+<ResponseField name="data" type="object" required>
+资金报告。金额为人民币原值；各项金额在上游未返回时为 `null`。
+
+<Expandable title="data 结构">
+  <ResponseField name="balance" type="number" required>
+    当前余额。可能为 `null`。
+  </ResponseField>
+  <ResponseField name="recharge_amount" type="number" required>
+    累计现金充值。可能为 `null`。
+  </ResponseField>
+  <ResponseField name="give_amount" type="number" required>
+    系统赠金。可能为 `null`。
+  </ResponseField>
+  <ResponseField name="total_spend_amount" type="number" required>
+    累计现金消耗。可能为 `null`。
+  </ResponseField>
+  <ResponseField name="available_balance" type="number" required>
+    活跃可用余额，不含冻结金额。可能为 `null`。
+  </ResponseField>
+  <ResponseField name="frozen_balance" type="number" required>
+    冻结余额。可能为 `null`。
+  </ResponseField>
+</Expandable>
+</ResponseField>
+
+<ResponseField name="balance" type="number" required>
+落库到渠道记录的余额值：优先取 `available_balance`，缺失时取 `balance`。
+</ResponseField>
+
+<ResponseField name="currency" type="string" required>
+落库余额的币种；恒为 `CNY`。
+</ResponseField>
+
+<Note>
+管理接口在业务失败时同样返回 HTTP `200`，必须以 `success` 字段判断结果。本端点成功时返回 `success`、`data`、`balance` 与 `currency`（不含 `message` 字段）；失败时返回 `success: false` 与本地化的 `message`。
+</Note>
+
+## 错误说明
+
+| 条件 | message 文案 | 说明 |
+| --- | --- | --- |
+| 参数错误 | `参数错误` | 路径中的 `id` 缺失或不是整数 |
+| 渠道不存在 | `渠道不存在` | 渠道不存在或加载失败 |
+| 尚未实现 | `尚未实现` | 渠道类型不是智谱（`type` 非 `26`） |
+| 渠道密钥无效 | `渠道 API Key 无效或认证失败，请检查 Key 配置` | 上游拒绝该密钥 |
+| 查询额度失败 | `查询额度失败: {{.Error}}` | 上游请求、响应解析或余额选取失败；`{{.Error}}` 为底层错误详情 |

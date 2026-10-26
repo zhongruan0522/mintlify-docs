@@ -1,0 +1,85 @@
+---
+title: 获取渠道亲和缓存统计
+description: 查看渠道亲和缓存的条目数量统计，按规则分组。
+api: "GET /api/option/channel_affinity_cache"
+---
+
+返回渠道亲和缓存的条目数量统计。渠道亲和缓存会把命中亲和规则的请求固定到同一上游渠道（例如按 Codex 或 Claude Code 的 trace 标识）。统计按启用了 `include_rule_name` 的已配置规则分组；无法归因到任何此类规则的条目计入 `unknown`。
+
+需要**超级管理员（Root）**权限。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
+
+## 请求
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url 'https://your-nookmux-domain/api/option/channel_affinity_cache' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1'
+```
+
+</RequestExample>
+
+## 响应
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": {
+    "enabled": true,
+    "total": 128,
+    "unknown": 0,
+    "by_rule_name": {
+      "claude code trace": 64,
+      "codex trace": 64
+    },
+    "cache_capacity": 100000,
+    "cache_algo": "lru"
+  }
+}
+```
+
+</ResponseExample>
+
+### 响应字段
+
+<ResponseField name="success" type="boolean" required>
+  统计是否读取成功。
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  `success` 为 `false` 时的错误描述；成功时为空字符串。
+</ResponseField>
+
+<ResponseField name="data" type="object" required>
+  缓存统计。
+
+  <Expandable title="data 结构">
+    <ResponseField name="enabled" type="boolean" required>
+      `channel_affinity_setting` 中的渠道亲和路由是否启用。
+    </ResponseField>
+    <ResponseField name="total" type="integer" required>
+      缓存中的条目总数。
+    </ResponseField>
+    <ResponseField name="unknown" type="integer" required>
+      缓存键无法回溯到任何启用 `include_rule_name` 的已配置规则的条目数。
+    </ResponseField>
+    <ResponseField name="by_rule_name" type="object" required>
+      按规则名分组的条目数（键为字符串，值为整数）。所有启用 `include_rule_name` 的已配置规则都会列出且初始值为 `0`，因此没有缓存条目的规则也会出现。
+    </ResponseField>
+    <ResponseField name="cache_capacity" type="integer" required>
+      内存主缓存的容量，默认 `max_entries` 为 `100000`。缓存走 Redis 时为 `0`。
+    </ResponseField>
+    <ResponseField name="cache_algo" type="string" required>
+      主缓存淘汰算法，内存默认为 `lru`。缓存走 Redis 时为 `redis`。
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<Note>
+  规则名与亲和行为来自 `channel_affinity_setting` 选项；只有启用 `include_rule_name` 的规则才会把规则名编入缓存键，因此只有它们会计入 `by_rule_name`。列出缓存键失败时会在服务端记日志，并按零条目返回而不是让请求失败。
+</Note>

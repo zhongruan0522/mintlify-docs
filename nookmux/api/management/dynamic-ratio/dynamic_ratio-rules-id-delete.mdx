@@ -1,0 +1,67 @@
+---
+title: Delete Dynamic Ratio Rule
+description: Delete a dynamic ratio rule by ID and refresh the runtime rule cache.
+api: "DELETE /api/dynamic_ratio/rules/{id}"
+---
+
+Delete a dynamic ratio rule by ID. After a successful deletion the runtime rule cache is refreshed immediately and the deletion is recorded in the audit log.
+
+Requires **Root** permissions. See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request DELETE \
+  --url 'https://your-nookmux-domain/api/dynamic_ratio/rules/3' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1'
+```
+
+</RequestExample>
+
+### Path parameters
+
+<ParamField path="id" type="integer" required>
+ID of the rule to delete.
+</ParamField>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": null
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+Whether the rule was deleted.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+Error description when `success` is `false`; empty otherwise.
+</ResponseField>
+
+<ResponseField name="data" type="null" required>
+Always `null`; the endpoint returns no data.
+</ResponseField>
+
+<Note>
+Management endpoints return HTTP `200` even on business failures; always check the `success` field. Deleting a rule that no longer exists still reports success.
+</Note>
+
+## Error messages
+
+| Condition | Description |
+| --- | --- |
+| Invalid rule ID | `id` is not an integer |
+| Database error, please try again later | The deletion failed; see server logs |

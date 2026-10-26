@@ -1,0 +1,96 @@
+---
+title: Get GLM Plan Usage
+description: Retrieve GLM coding-plan usage chart data, proxied verbatim from the GLM upstream.
+api: "GET /api/channel/plan/glm/usage/{id}"
+---
+
+Retrieve usage chart data for a GLM coding-plan channel. NookMux forwards the request to the GLM upstream with the channel's first key and the channel's configured proxy, then passes the upstream JSON through verbatim. The channel's plan must be `glm-coding-plan` or `glm-coding-plan-international`; the upstream domain follows the plan region (`bigmodel.cn` for the domestic plan, `api.z.ai` for the international plan).
+
+Requires **Admin** permissions. See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url 'https://your-nookmux-domain/api/channel/plan/glm/usage/1?type=model&startTime=2026-10-01%2000:00:00&endTime=2026-10-26%2023:59:59' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1'
+```
+
+</RequestExample>
+
+### Path parameters
+
+<ParamField path="id" type="integer" required>
+Channel id.
+</ParamField>
+
+### Query parameters
+
+<ParamField path="type" type="string" default="model">
+Usage data type: `model` (per-model usage detail), `tool`, or `performance`. Any other value is rejected by the upstream call with a usage query failure.
+</ParamField>
+
+<ParamField path="startTime" type="string">
+Window start in `YYYY-MM-DD HH:MM:SS` (URL-encode the space as `%20` or `+`). Validated only when both `startTime` and `endTime` are present; the window must not exceed 31 days.
+</ParamField>
+
+<ParamField path="endTime" type="string">
+Window end in `YYYY-MM-DD HH:MM:SS`. Must not be earlier than `startTime`; the window must not exceed 31 days.
+</ParamField>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "code": 200,
+  "msg": "操作成功",
+  "success": true,
+  "data": {}
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<Note>
+Unlike other management endpoints, this endpoint does **not** wrap the result in the `{"success","message","data"}` envelope. The response body is the raw GLM upstream JSON, returned verbatim with `Content-Type: application/json`. Only the `code`, `msg`, and `success` fields of the upstream shell are known to NookMux (it reads `code` to detect upstream authentication failure); the `data` payload — the chart series and summary metrics with hour/day granularity chosen by the upstream — is defined entirely by the GLM upstream and is neither modeled nor reshaped by NookMux.
+</Note>
+
+<ResponseField name="code" type="integer" required>
+Upstream business status code. The value `1000` indicates an authentication failure and is converted by NookMux into a standard error response before any passthrough.
+</ResponseField>
+
+<ResponseField name="msg" type="string" required>
+Upstream status message.
+</ResponseField>
+
+<ResponseField name="success" type="boolean" required>
+Upstream success flag.
+</ResponseField>
+
+<ResponseField name="data" type="object" required>
+Usage chart payload defined by the GLM upstream. Its shape varies with `type` and the requested window and is not modeled by NookMux.
+</ResponseField>
+
+<Note>
+Management endpoints return HTTP `200` even on business failures; always check the `success` flag of the body. Errors detected by NookMux (invalid id, non-GLM plan, invalid time range, invalid key, upstream failure) are returned as the standard envelope with `success: false` and a localized `message`, not as passthrough bodies.
+</Note>
+
+## Error messages
+
+| Condition | message | Description |
+| --- | --- | --- |
+| Invalid parameters | `Invalid parameters` | `id` in the path is missing or not an integer |
+| Channel not found | `Channel not found` | The channel does not exist or could not be loaded |
+| Usage query unsupported | `This channel does not support usage query` | The channel plan is neither `glm-coding-plan` nor `glm-coding-plan-international` |
+| Invalid time format | `Invalid time format, expected YYYY-MM-DD HH:MM:SS` | `startTime` or `endTime` cannot be parsed |
+| End before start | `End time cannot be earlier than start time` | `endTime` is earlier than `startTime` |
+| Time range too long | `Query time range cannot exceed 31 days` | The window between `startTime` and `endTime` exceeds 31 days |
+| Channel key invalid | `The channel API key is invalid or authentication failed. Please check the key configuration` | The upstream rejected the key |
+| Usage query failed | `Failed to query usage: {{.Error}}` | The upstream request failed, including an unsupported `type`; `{{.Error}}` carries the underlying error |

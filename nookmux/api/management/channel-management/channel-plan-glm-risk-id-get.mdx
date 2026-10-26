@@ -1,0 +1,78 @@
+---
+title: Get GLM Plan Risk Status
+description: Check whether the GLM account behind a plan channel is flagged for risk control.
+api: "GET /api/channel/plan/glm/risk/{id}"
+---
+
+Check whether the GLM account behind a plan channel is flagged for risk control by the upstream. The channel must be a plan channel whose plan is `glm-coding-plan` or `glm-coding-plan-international`. NookMux calls the Zhipu risk-customer endpoint with the channel's first key and the channel's configured proxy, and reports `is_risk` from the upstream response: any upstream `data` value other than an explicit `false` is treated as flagged.
+
+Requires **Admin** permissions. See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url 'https://your-nookmux-domain/api/channel/plan/glm/risk/1' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1'
+```
+
+</RequestExample>
+
+### Path parameters
+
+<ParamField path="id" type="integer" required>
+Channel id.
+</ParamField>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "data": {
+    "is_risk": false,
+    "raw_msg": "操作成功"
+  }
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+Whether the request succeeded.
+</ResponseField>
+
+<ResponseField name="data" type="object" required>
+Risk check result.
+
+<Expandable title="data structure">
+  <ResponseField name="is_risk" type="boolean" required>
+    Whether the upstream flags the account as a risk customer. Any upstream `data` value other than an explicit `false` yields `true`.
+  </ResponseField>
+  <ResponseField name="raw_msg" type="string">
+    Upstream status message, kept verbatim. Omitted when empty.
+  </ResponseField>
+</Expandable>
+</ResponseField>
+
+<Note>
+Management endpoints return HTTP `200` even on business failures; always check the `success` field. On success this endpoint returns only `success` and `data` (no `message` field); failures return `success: false` with a localized `message`.
+</Note>
+
+## Error messages
+
+| Condition | message | Description |
+| --- | --- | --- |
+| Invalid parameters | `Invalid parameters` | `id` in the path is missing or not an integer |
+| Channel not found | `Channel not found` | The channel does not exist or could not be loaded |
+| Not a plan channel | `This channel is not a plan channel` | `channel_info.is_plan` is `false` |
+| Risk check unsupported | `This channel does not support risk check` | The channel plan is neither `glm-coding-plan` nor `glm-coding-plan-international` |
+| Channel key invalid | `The channel API key is invalid or authentication failed. Please check the key configuration` | The upstream rejected the key |
+| Risk check failed | `Risk check failed: {{.Error}}` | The upstream request failed; `{{.Error}}` carries the underlying error |

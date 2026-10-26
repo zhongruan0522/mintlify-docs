@@ -1,0 +1,277 @@
+---
+title: Get Channel Plan Quota
+description: Retrieve the live quota usage of a plan-backed channel from its upstream vendor.
+api: "GET /api/channel/plan/quota/{id}"
+---
+
+Retrieve the live quota usage of a plan channel from its upstream vendor. The channel must be a plan channel (its base URL is a built-in plan address, recorded as `channel_info.is_plan` and `channel_info.plan_name`). The shape of `data` depends on the channel's plan:
+
+- `glm-coding-plan` / `glm-coding-plan-international`: the aggregated GLM plan structure.
+- `kimi-coding-plan`: a tier list from the Kimi upstream.
+- `minimax-coding-plan` / `minimax-coding-plan-international`: a tier list from the MiniMax upstream.
+- Any other plan name: a stub with `quota_supported: false`, because live quota query is not implemented for that plan.
+
+The request is sent upstream with the first key of the channel and goes through the channel's configured proxy when one is set.
+
+Requires **Admin** permissions. See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url 'https://your-nookmux-domain/api/channel/plan/quota/1' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1'
+```
+
+</RequestExample>
+
+### Path parameters
+
+<ParamField path="id" type="integer" required>
+Channel id.
+</ParamField>
+
+## Response
+
+The example shows the response for a GLM coding plan (token-based V2 plan).
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "data": {
+    "plan_name": "glm-coding-plan",
+    "plan_version": "V2",
+    "is_credit_plan": false,
+    "product_level": "Pro",
+    "product_name": "GLM Coding Plan Pro",
+    "effective_date": "2026-01-01 00:00:00",
+    "expiry_date": "2027-01-01 00:00:00",
+    "auto_renew": true,
+    "token_limit": {
+      "percentage": 12,
+      "next_reset_time": "2026-10-26T12:00:00Z",
+      "status": "充裕"
+    },
+    "weekly_limit": {
+      "percentage": 35,
+      "next_reset_time": "2026-11-01T00:00:00Z",
+      "status": "适中"
+    },
+    "mcp_tool_limit": {
+      "percentage": 5,
+      "current_usage": "10/200",
+      "next_reset_time": "2026-10-26T12:00:00Z",
+      "status": "充裕",
+      "tools": [
+        {
+          "name": "联网搜索",
+          "usage": 8
+        },
+        {
+          "name": "网页读取",
+          "usage": 2
+        }
+      ]
+    }
+  }
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+Whether the request succeeded.
+</ResponseField>
+
+<ResponseField name="data" type="object" required>
+Plan quota data. The structure depends on the channel's `plan_name`; see the variants below.
+</ResponseField>
+
+<Expandable title="glm plan data structure">
+
+Returned when `plan_name` is `glm-coding-plan` or `glm-coding-plan-international`.
+
+<ResponseField name="plan_name" type="string" required>
+Plan identifier set by NookMux from the channel's plan: `glm-coding-plan` or `glm-coding-plan-international`.
+</ResponseField>
+<ResponseField name="plan_version" type="string">
+Plan generation derived from the upstream limit entries: `V1` (5-hour quota only), `V2` (5-hour plus weekly quota, token-billed), `V3` (credit-billed).
+</ResponseField>
+<ResponseField name="is_credit_plan" type="boolean" required>
+Whether the plan is a credit-billed V3 plan.
+</ResponseField>
+<ResponseField name="product_level" type="string" required>
+Plan tier derived from the upstream product name: `Lite`, `Pro`, `Max`, or `Standard` as fallback.
+</ResponseField>
+<ResponseField name="product_name" type="string" required>
+Upstream product name.
+</ResponseField>
+<ResponseField name="effective_date" type="string" required>
+Start of the current billing period, as reported by the upstream subscription.
+</ResponseField>
+<ResponseField name="expiry_date" type="string" required>
+Next renewal time, as reported by the upstream subscription.
+</ResponseField>
+<ResponseField name="auto_renew" type="boolean" required>
+Whether the subscription auto-renews.
+</ResponseField>
+<ResponseField name="token_limit" type="object">
+5-hour token quota. Present when the upstream returns a 5-hour limit entry.
+
+<Expandable title="token_limit structure">
+  <ResponseField name="percentage" type="integer" required>
+    Used percentage, 0-100.
+  </ResponseField>
+  <ResponseField name="next_reset_time" type="string">
+    Quota reset time, normalized to RFC3339. Omitted when the upstream sends none.
+  </ResponseField>
+  <ResponseField name="status" type="string" required>
+    Usage pressure computed by the server: `充裕` (below 50%), `适中` (50-79%), `紧张` (80% and above).
+  </ResponseField>
+</Expandable>
+</ResponseField>
+<ResponseField name="weekly_limit" type="object">
+Weekly token quota, present when the plan includes one (V2 plans). Same structure as `token_limit`.
+</ResponseField>
+<ResponseField name="credit_limit" type="object">
+5-hour credit quota of a credit-billed V3 plan.
+
+<Expandable title="credit_limit structure">
+  <ResponseField name="percentage" type="integer" required>
+    Used percentage, 0-100.
+  </ResponseField>
+  <ResponseField name="current_value" type="integer" required>
+    Credits already used in the window.
+  </ResponseField>
+  <ResponseField name="usage" type="integer" required>
+    Total credits of the window.
+  </ResponseField>
+  <ResponseField name="next_reset_time" type="string">
+    Quota reset time, normalized to RFC3339. Omitted when the upstream sends none.
+  </ResponseField>
+  <ResponseField name="status" type="string" required>
+    Usage pressure computed by the server: `充裕`, `适中`, or `紧张`.
+  </ResponseField>
+</Expandable>
+</ResponseField>
+<ResponseField name="credit_weekly_limit" type="object">
+Weekly credit quota of a credit-billed V3 plan. Same structure as `credit_limit`.
+</ResponseField>
+<ResponseField name="mcp_tool_limit" type="object">
+MCP tool quota.
+
+<Expandable title="mcp_tool_limit structure">
+  <ResponseField name="percentage" type="integer" required>
+    Used percentage, 0-100.
+  </ResponseField>
+  <ResponseField name="current_usage" type="string">
+    Used/total tool calls, for example `10/200`.
+  </ResponseField>
+  <ResponseField name="next_reset_time" type="string">
+    Quota reset time, normalized to RFC3339. Omitted when the upstream sends none.
+  </ResponseField>
+  <ResponseField name="status" type="string" required>
+    Usage pressure computed by the server: `充裕`, `适中`, or `紧张`.
+  </ResponseField>
+  <ResponseField name="tools" type="object[]">
+    Per-tool usage. `name` is a display name mapped by the server (`联网搜索`, `网页读取`, `开源仓库`) or the raw upstream model code when unmapped; `usage` is the call count.
+  </ResponseField>
+</Expandable>
+</ResponseField>
+
+</Expandable>
+
+<Expandable title="kimi plan data structure">
+
+Returned when `plan_name` is `kimi-coding-plan`.
+
+<ResponseField name="plan_name" type="string" required>
+Plan identifier: `kimi-coding-plan`.
+</ResponseField>
+<ResponseField name="tiers" type="object[]" required>
+Quota tiers of the plan.
+
+<Expandable title="tier structure">
+  <ResponseField name="name" type="string" required>
+    Tier identifier: `five_hour` or `weekly_limit`.
+  </ResponseField>
+  <ResponseField name="percentage" type="integer" required>
+    Used percentage, 0-100.
+  </ResponseField>
+  <ResponseField name="used" type="number" required>
+    Used amount.
+  </ResponseField>
+  <ResponseField name="limit" type="number" required>
+    Total amount.
+  </ResponseField>
+  <ResponseField name="remaining" type="number" required>
+    Remaining amount.
+  </ResponseField>
+  <ResponseField name="resets_at" type="string">
+    Reset time in RFC3339. Omitted when the upstream sends none.
+  </ResponseField>
+  <ResponseField name="status" type="string" required>
+    Usage pressure: `充裕`, `适中`, or `紧张`.
+  </ResponseField>
+</Expandable>
+</ResponseField>
+<ResponseField name="credential" type="string" required>
+Upstream credential state: `valid`, `expired`, or `error`.
+</ResponseField>
+
+</Expandable>
+
+<Expandable title="minimax plan data structure">
+
+Returned when `plan_name` is `minimax-coding-plan` or `minimax-coding-plan-international`. Same structure as the kimi plan data: `plan_name`, `tiers` (`five_hour` / `weekly_limit` entries with `percentage`, `used`, `limit`, `remaining`, optional `resets_at`, `status`), and `credential` (`valid` / `expired` / `error`).
+
+</Expandable>
+
+<Expandable title="unsupported plan data structure">
+
+Returned for plan channels whose plan has no live quota query implemented.
+
+```json
+{
+  "plan_name": "ollama-coding-plan",
+  "quota_supported": false,
+  "channel_id": 1,
+  "channel_name": "my-plan-channel"
+}
+```
+
+<ResponseField name="plan_name" type="string" required>
+Plan identifier taken from the channel.
+</ResponseField>
+<ResponseField name="quota_supported" type="boolean" required>
+Always `false` in this variant.
+</ResponseField>
+<ResponseField name="channel_id" type="integer" required>
+Channel id.
+</ResponseField>
+<ResponseField name="channel_name" type="string" required>
+Channel name.
+</ResponseField>
+
+</Expandable>
+
+<Note>
+Management endpoints return HTTP `200` even on business failures; always check the `success` field. On success this endpoint returns only `success` and `data` (no `message` field); failures return `success: false` with a localized `message`.
+</Note>
+
+## Error messages
+
+| Condition | message | Description |
+| --- | --- | --- |
+| Invalid parameters | `Invalid parameters` | `id` in the path is missing or not an integer |
+| Channel not found | `Channel not found` | The channel does not exist or could not be loaded |
+| Not a plan channel | `This channel is not a plan channel` | `channel_info.is_plan` is `false` |
+| Channel key invalid | `The channel API key is invalid or authentication failed. Please check the key configuration` | The upstream rejected the key (GLM plans) |
+| Quota query failed | `Failed to query quota: {{.Error}}` | The upstream request or response parsing failed; `{{.Error}}` carries the underlying error |

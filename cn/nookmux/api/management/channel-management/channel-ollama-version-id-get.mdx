@@ -1,0 +1,74 @@
+---
+title: 获取 Ollama 版本
+description: 查询渠道背后 Ollama 服务的版本。
+api: "GET /api/channel/ollama/version/{id}"
+---
+
+查询渠道背后 Ollama 服务的版本。仅接受 Ollama（`4`）类型的渠道。
+
+版本信息读取自渠道上游的 `/api/version` 接口，超时时间为 10 秒。上游调用走渠道配置的代理（settings 中的 `proxy`），多 Key 渠道使用第一个密钥。渠道设置了 `base_url` 时覆盖内置默认地址（`http://localhost:11434`）。
+
+需要**管理员（Admin）**权限。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
+
+## 请求
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url 'https://your-nookmux-domain/api/channel/ollama/version/1' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1'
+```
+
+</RequestExample>
+
+### 路径参数
+
+<ParamField path="id" type="integer" required>
+  要查询的 Ollama 渠道 ID。
+</ParamField>
+
+## 响应
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "data": {
+    "version": "0.12.6"
+  }
+}
+```
+
+</ResponseExample>
+
+### 响应字段
+
+<ResponseField name="success" type="boolean" required>
+  版本是否获取成功。
+</ResponseField>
+
+<ResponseField name="data" type="object" required>
+  Ollama 服务端返回的版本信息。
+
+  <Expandable title="data 结构">
+    <ResponseField name="version" type="string" required>
+      Ollama 服务端上报的版本字符串，例如 `0.12.6`。
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<Note>
+上游调用之前的失败（ID 格式错误、渠道不存在、渠道类型不是 Ollama）返回真实的 HTTP 状态码（`400`、`404`），而版本请求本身失败时返回 HTTP `200` 且 `success: false`，附本地化的 `message`。成功响应不包含 `message` 字段。
+</Note>
+
+## 错误说明
+
+| 条件 | 说明 |
+| --- | --- |
+| ID 无效 | HTTP 400 —— 路径中的 `id` 不是整数 |
+| 渠道不存在 | HTTP 404 —— 给定的 `id` 不存在 |
+| 此操作仅支持 Ollama 渠道 | HTTP 400 —— 渠道类型不是 Ollama |
+| 获取Ollama版本失败 | HTTP 200 且 `success: false` —— 版本请求失败或未返回版本 |

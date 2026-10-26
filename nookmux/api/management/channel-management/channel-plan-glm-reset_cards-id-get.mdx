@@ -1,0 +1,106 @@
+---
+title: Get GLM Reset Cards
+description: Retrieve the quota reset cards available to a GLM coding plan, grouped by reset type.
+api: "GET /api/channel/plan/glm/reset_cards/{id}"
+---
+
+Retrieve the quota reset cards available to a GLM coding plan. The channel must be a plan channel whose plan is `glm-coding-plan` or `glm-coding-plan-international`; the upstream domain follows the plan region (`bigmodel.cn` for the domestic plan, `api.z.ai` for the international plan). The upstream is queried for personal accounts only (`targetType` `PERSONAL`, fixed by the server).
+
+Cards are normalized the same way the GLM web console does: unused cards and cards expired within the last 7 days are kept, earlier expired cards are dropped; available cards are sorted by `expireTime` ascending and the first one is flagged `priority`. Use [Use GLM Reset Card](/nookmux/api/management/channel-management/channel-plan-glm-reset_cards-id-use-post) to consume a card.
+
+Requires **Admin** permissions. See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url 'https://your-nookmux-domain/api/channel/plan/glm/reset_cards/1' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1'
+```
+
+</RequestExample>
+
+### Path parameters
+
+<ParamField path="id" type="integer" required>
+Channel id.
+</ParamField>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "data": {
+    "fiveHourResets": [
+      {
+        "recordId": 1001,
+        "expireTime": "2026-11-01 00:00:00",
+        "available": true,
+        "priority": true
+      },
+      {
+        "recordId": 1002,
+        "expireTime": "2026-11-15 00:00:00",
+        "available": false
+      }
+    ],
+    "weekResets": []
+  }
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+Whether the request succeeded.
+</ResponseField>
+
+<ResponseField name="data" type="object" required>
+Reset cards grouped by reset type.
+
+<Expandable title="data structure">
+  <ResponseField name="fiveHourResets" type="object[]" required>
+    Cards that reset the 5-hour quota; empty when none. See the card structure below.
+  </ResponseField>
+  <ResponseField name="weekResets" type="object[]" required>
+    Cards that reset the weekly quota (which also resets the 5-hour quota); empty when none. Same card structure.
+    <Expandable title="card structure">
+      <ResponseField name="recordId" type="integer" required>
+        Card record id, passed to the use endpoint as `recordId`.
+      </ResponseField>
+      <ResponseField name="expireTime" type="string" required>
+        Card expiry time, `YYYY-MM-DD HH:MM:SS` or RFC3339 as sent by the upstream.
+      </ResponseField>
+      <ResponseField name="available" type="boolean" required>
+        Whether the card is still usable.
+      </ResponseField>
+      <ResponseField name="priority" type="boolean">
+        Set to `true` on the first available card (soonest expiry) of its group; omitted otherwise.
+      </ResponseField>
+    </Expandable>
+  </ResponseField>
+</Expandable>
+</ResponseField>
+
+<Note>
+Management endpoints return HTTP `200` even on business failures; always check the `success` field. On success this endpoint returns only `success` and `data` (no `message` field); failures return `success: false` with a localized `message`.
+</Note>
+
+## Error messages
+
+| Condition | message | Description |
+| --- | --- | --- |
+| Invalid parameters | `Invalid parameters` | `id` in the path is missing or not an integer |
+| Channel not found | `Channel not found` | The channel does not exist or could not be loaded |
+| Not a plan channel | `This channel is not a plan channel` | `channel_info.is_plan` is `false` |
+| Reset card query unsupported | `This channel does not support reset card query` | The channel plan is neither `glm-coding-plan` nor `glm-coding-plan-international` |
+| Channel key invalid | `The channel API key is invalid or authentication failed. Please check the key configuration` | The upstream rejected the key |
+| Reset card query failed | `Reset card query failed: {{.Error}}` | The upstream request or response parsing failed; `{{.Error}}` carries the underlying error |

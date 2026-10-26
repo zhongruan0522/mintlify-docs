@@ -1,0 +1,64 @@
+---
+title: 获取系统信息
+description: 获取当前 NookMux 实例的构建版本指纹。
+api: "GET /api/status/system_info"
+---
+
+返回当前 NookMux 实例的构建版本。版本信息属于管理语义，由本端点单独下发，不进入匿名可达的 `/api/status`。
+
+需要**管理员（Admin）**权限。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
+
+## 请求
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url 'https://your-nookmux-domain/api/status/system_info' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1'
+```
+
+</RequestExample>
+
+## 响应
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": {
+    "version": "v1.2.3"
+  }
+}
+```
+
+</ResponseExample>
+
+### 响应字段
+
+<ResponseField name="success" type="boolean" required>
+  请求是否成功。
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  `success` 为 `false` 时的错误描述；成功时为空字符串。
+</ResponseField>
+
+<ResponseField name="data" type="object" required>
+  构建版本指纹。
+
+  <Expandable title="系统信息结构">
+    <ResponseField name="version" type="string" required>
+      构建时注入的版本号；默认为 git commit 哈希，未打标签的开发构建中可能为空字符串。
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+## 错误说明
+
+| 条件 | 说明 |
+| --- | --- |
+| 鉴权失败 | 调用者不是管理员时的标准鉴权错误（HTTP `401`） |

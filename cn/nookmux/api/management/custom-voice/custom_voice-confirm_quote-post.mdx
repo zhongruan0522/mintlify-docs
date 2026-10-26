@@ -1,0 +1,93 @@
+---
+title: 查询定制音色确认报价
+description: 查询确认定制音色将扣减的额度，不执行扣费。
+api: "POST /api/custom_voice/confirm_quote"
+---
+
+返回确认指定定制音色时将扣减的额度。只能查询当前用户自己的 `preview`（试听中）记录。查询不扣费、不改变音色状态。
+
+额度按定制音色功能配置的扣费模型计算：优先按模型价格（按次扣一次），否则按每千 token 倍率折算，再乘以定制音色分组配置的分组倍率（配置了动态倍率时一并乘入）。计费配置缺失或价格为零时直接失败，绝不返回零费用报价。
+
+需要**用户（User）**权限（任意已登录账号）。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
+
+## 请求
+
+<RequestExample>
+
+```bash cURL
+curl --request POST \
+  --url 'https://your-nookmux-domain/api/custom_voice/confirm_quote' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1' \
+  --header 'Content-Type: application/json' \
+  --data '{
+  "voice_id": "my-custom-voice-01"
+}'
+```
+
+</RequestExample>
+
+### 请求体
+
+<ParamField path="body.voice_id" type="string" required>
+  此前通过试听接口创建的待确认（试听中）记录的音色 ID。
+</ParamField>
+
+## 响应
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": {
+    "voice_id": "my-custom-voice-01",
+    "quota_cost": 50000
+  }
+}
+```
+
+</ResponseExample>
+
+### 响应字段
+
+<ResponseField name="success" type="boolean" required>
+  报价是否计算成功。
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  `success` 为 `false` 时的错误描述；成功时为空字符串。
+</ResponseField>
+
+<ResponseField name="data" type="object" required>
+  报价结果。
+
+  <Expandable title="data 结构">
+    <ResponseField name="voice_id" type="string" required>
+      被报价的音色 ID。
+    </ResponseField>
+    <ResponseField name="quota_cost" type="integer" required>
+      确认该音色将扣减的额度（钱包额度单位）。
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<Note>
+管理接口在业务失败时同样返回 HTTP `200`，必须以 `success` 字段判断结果。JSON 请求体缺失或格式错误时返回 HTTP `400`。超过 7 天的试听记录会在查询前被自动清理，无法再报价。
+</Note>
+
+## 错误说明
+
+| 条件 | 说明 |
+| --- | --- |
+| 无效的参数（HTTP 400） | JSON 请求体缺失或格式错误 |
+| 音色ID不能为空 | `voice_id` 去除首尾空白后为空 |
+| 定制音色功能未开启，请联系管理员 | 定制音色功能开关未开启 |
+| 计费模型未配置，请联系管理员 | 定制音色扣费模型 ID 为空 |
+| 音色校验失败，请稍后重试 | 过期试听清理失败 |
+| 音色ID不合规 | `voice_id` 没有对应记录 |
+| 该音色无需确认或已处理 | 记录不处于 `preview`（试听中）状态 |
+| 无权操作该音色 | 记录属于其他用户 |
+| 所选计费模型暂不可用，请联系管理员 | 扣费模型无计费配置（fail closed，绝不免费） |
+| 所选计费模型价格无效，请联系管理员 | 计算出的额度不为正数 |

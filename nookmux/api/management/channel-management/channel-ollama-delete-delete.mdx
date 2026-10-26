@@ -1,0 +1,76 @@
+---
+title: Delete Ollama Model
+description: Delete a model from an Ollama channel's upstream server.
+api: "DELETE /api/channel/ollama/delete"
+---
+
+Delete a model from the Ollama server behind a channel. Only channels of type Ollama (`4`) are accepted.
+
+The deletion is issued to the channel's upstream `/api/delete` endpoint. The upstream call goes through the proxy configured on the channel (settings `proxy`) and uses the first key of a multi-key channel. The channel's `base_url` overrides the built-in default (`http://localhost:11434`) when set. This does not touch the NookMux channel itself or its `models` list; it only removes the model file from the Ollama server. The operation is recorded in the audit log.
+
+Requires **Admin** permissions. See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request DELETE \
+  --url 'https://your-nookmux-domain/api/channel/ollama/delete' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1' \
+  --header 'Content-Type: application/json' \
+  --data '{
+  "channel_id": 1,
+  "model_name": "llama3.1:8b"
+}'
+```
+
+</RequestExample>
+
+### Body
+
+<ParamField path="body.channel_id" type="integer" required>
+  Id of the Ollama channel whose upstream server holds the model.
+</ParamField>
+
+<ParamField path="body.model_name" type="string" required>
+  Model tag to delete, as understood by the Ollama server, for example `llama3.1:8b`.
+</ParamField>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "Model llama3.1:8b deleted successfully"
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+  Whether the model was deleted.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  Localized status text on success; error description when `success` is `false`.
+</ResponseField>
+
+<Note>
+Although this is a `DELETE` request, the parameters are passed as a JSON body, not in the URL. Like the other Ollama endpoints, failures are reported with real HTTP status codes (`400`, `404`, `500`) instead of always returning `200`, and no `data` field is returned on success.
+</Note>
+
+## Error messages
+
+| Condition | Description |
+| --- | --- |
+| Invalid request parameters | HTTP 400 — the JSON body is malformed |
+| Channel ID and model name are required | HTTP 400 — `channel_id` or `model_name` is missing |
+| Channel not found | HTTP 404 — no channel exists with the given `channel_id` |
+| Ollama channels only | HTTP 400 — the channel type is not Ollama |
+| Failed to delete model | HTTP 500 — the upstream delete request failed or returned a non-200 status |

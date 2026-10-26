@@ -1,0 +1,93 @@
+---
+title: 获取供应商列表
+description: 用任意 Base URL 拉取 OpenRouter 供应商列表，无需先保存渠道。
+api: "POST /api/channel/fetch_providers"
+---
+
+直接提交 Base URL 与渠道类型拉取 OpenRouter 供应商列表，无需已保存的渠道。这是渠道表单中供应商选择器的创建期辅助接口。
+
+请求 `{base_url}/v1/providers` 接口；`base_url` 为空时使用内置的 OpenRouter 地址（`https://openrouter.ai/api`）。仅接受 OpenRouter 类型常量（`20`）。目标 URL 会按拉取安全设置（SSRF 防护、内网 IP 放行、域名与 IP 过滤、端口白名单）校验；由于渠道尚未保存，不应用渠道代理。
+
+需要**超级管理员（Root）**权限。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
+
+## 请求
+
+<RequestExample>
+
+```bash cURL
+curl --request POST \
+  --url 'https://your-nookmux-domain/api/channel/fetch_providers' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1' \
+  --header 'Content-Type: application/json' \
+  --data '{
+  "base_url": "https://openrouter.ai/api",
+  "type": 20
+}'
+```
+
+</RequestExample>
+
+### 请求体
+
+<ParamField path="body.base_url" type="string">
+  上游 Base URL。为空时使用内置的 OpenRouter 地址。
+</ParamField>
+
+<ParamField path="body.type" type="integer" required>
+  渠道类型常量；必须是 OpenRouter 常量（`20`），否则请求被拒绝。
+</ParamField>
+
+## 响应
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": [
+    {
+      "slug": "openai",
+      "name": "OpenAI",
+      "headquarters": "San Francisco, CA, USA",
+      "privacy_policy_url": "https://openai.com/policies/privacy-policy/"
+    },
+    {
+      "slug": "anthropic",
+      "name": "Anthropic"
+    }
+  ]
+}
+```
+
+</ResponseExample>
+
+### 响应字段
+
+<ResponseField name="success" type="boolean" required>
+  供应商列表是否拉取成功。
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  `success` 为 `false` 时的错误描述；成功时为空字符串。
+</ResponseField>
+
+<ResponseField name="data" type="array" required>
+  上游返回的供应商条目列表；结构与[获取上游供应商列表](/cn/nookmux/api/management/channel-management/channel-fetch_providers-id-get)相同。
+</ResponseField>
+
+<Note>
+与多数管理接口不同，本接口并不总是返回 HTTP `200`：URL 校验失败返回 `400`，请求传输失败返回 `500`，响应体同样为 `{ success, message }` 结构。其余业务失败返回 `200` 且 `success: false`。
+</Note>
+
+## 错误说明
+
+| 条件 | 说明 |
+| --- | --- |
+| 请求无效 | HTTP 200 且 `success: false` —— JSON 请求体格式错误 |
+| 此操作仅支持 OpenRouter 渠道 | HTTP 200 且 `success: false` —— `type` 不是 OpenRouter 常量 |
+| URL 被拒绝 | HTTP 400 —— 目标 URL 违反拉取安全设置 |
+| 上游请求失败 | HTTP 500 —— 构造或发送上游请求失败 |
+| 获取供应商失败 | HTTP 200 且 `success: false` —— 上游返回非 200 状态码或响应体读取失败 |
+| 解析响应失败 | HTTP 200 且 `success: false` —— 上游响应不是预期的 JSON |

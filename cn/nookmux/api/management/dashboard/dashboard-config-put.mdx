@@ -1,0 +1,161 @@
+---
+title: 更新仪表板配置
+description: 按字段校验并部分更新仪表板配置。
+api: "PUT /api/dashboard/config"
+---
+
+部分更新仪表板配置。请求体为扁平 JSON 对象，只需携带要修改的键；每个键会先做取值范围校验，再以 `dashboard_config.<key>` 选项落库并立即生效。
+
+需要**管理员（Admin）**权限。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
+
+## 请求
+
+<RequestExample>
+
+```bash cURL
+curl --request PUT \
+  --url 'https://your-nookmux-domain/api/dashboard/config' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1' \
+  --header 'Content-Type: application/json' \
+  --data '{
+  "rankings_model_limit": 50,
+  "uptime_kuma_refresh_interval": 120
+}'
+```
+
+</RequestExample>
+
+### 请求体
+
+请求体为扁平 JSON 对象，只发送需要更新的键。以下为已定义的配置项及其约束；各键含义与默认值参见[获取仪表板配置](/cn/nookmux/api/management/dashboard/dashboard-config-get)。
+
+<ParamField path="body.quota_data_enabled" type="boolean">
+是否启用配额数据（时间序列）面板。
+</ParamField>
+
+<ParamField path="body.user_analytics_enabled" type="boolean">
+是否启用用户分析（用户排行/趋势）面板。
+</ParamField>
+
+<ParamField path="body.rankings_enabled" type="boolean">
+是否启用排行榜面板。
+</ParamField>
+
+<ParamField path="body.media_convert_stats_enabled" type="boolean">
+是否启用图片/视频转 URL 统计面板。
+</ParamField>
+
+<ParamField path="body.quota_data_track_tokens" type="boolean">
+是否随配额数据记录 token 用量。
+</ParamField>
+
+<ParamField path="body.quota_data_track_by_model" type="boolean">
+是否按模型维度聚合配额数据。
+</ParamField>
+
+<ParamField path="body.quota_data_track_by_user" type="boolean">
+是否按用户维度聚合配额数据。
+</ParamField>
+
+<ParamField path="body.api_info_enabled" type="boolean">
+是否启用 API 信息面板。
+</ParamField>
+
+<ParamField path="body.uptime_kuma_enabled" type="boolean">
+是否启用 Uptime Kuma 面板。
+</ParamField>
+
+<ParamField path="body.announcements_enabled" type="boolean">
+是否启用公告面板。
+</ParamField>
+
+<ParamField path="body.faq_enabled" type="boolean">
+是否启用 FAQ 面板。
+</ParamField>
+
+<ParamField path="body.quota_data_refresh_interval" type="integer">
+配额数据刷新间隔（秒），60-86400。
+</ParamField>
+
+<ParamField path="body.user_analytics_refresh_interval" type="integer">
+用户分析刷新间隔（秒），60-86400。
+</ParamField>
+
+<ParamField path="body.rankings_refresh_interval" type="integer">
+排行榜刷新间隔（秒），60-86400。
+</ParamField>
+
+<ParamField path="body.uptime_kuma_refresh_interval" type="integer">
+Uptime Kuma 刷新间隔（秒），30-3600。
+</ParamField>
+
+<ParamField path="body.default_time_range_days" type="integer">
+仪表板默认查询时间范围（天），1-365，且不得超过当前生效的 `max_time_range_days`。
+</ParamField>
+
+<ParamField path="body.max_time_range_days" type="integer">
+仪表板最大查询时间范围（天），1-365。
+</ParamField>
+
+<ParamField path="body.rankings_model_limit" type="integer">
+排行榜保留的模型数量，1-100。
+</ParamField>
+
+<ParamField path="body.rankings_vendor_limit" type="integer">
+排行榜保留的供应商数量，1-50。
+</ParamField>
+
+<ParamField path="body.user_analytics_top_n" type="integer">
+用户排行保留的用户数量，1-100。
+</ParamField>
+
+<Note>
+JSON 数字按浮点读取并以整数存储，请发送整数值。未在上方列出的键会被接受并落库，但不会影响仪表板配置。修改 `rankings_refresh_interval`、`user_analytics_refresh_interval` 或 `uptime_kuma_refresh_interval` 会立即失效对应缓存数据。开启审计后，本次更新会写入审计日志（模块 `dashboard_config`）。
+</Note>
+
+## 响应
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "配置已更新",
+  "data": {
+    "rankings_model_limit": 50,
+    "uptime_kuma_refresh_interval": 120
+  }
+}
+```
+
+</ResponseExample>
+
+### 响应字段
+
+<ResponseField name="success" type="boolean" required>
+配置项是否更新成功。
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+`success` 为 `true` 时的本地化成功描述；为 `false` 时的错误描述。
+</ResponseField>
+
+<ResponseField name="data" type="object">
+  本次更新的键到已生效值的映射：数值字段为整数，开关字段为布尔值。
+
+  <Expandable title="data 结构">
+    <ResponseField name="<key>" type="integer | boolean">
+      请求体中发送的每个键对应一项，值为校验并落库后的取值。
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+## 错误说明
+
+| 条件 | 说明 |
+| --- | --- |
+| 请求体非法 | 请求体不是合法的 JSON 对象，`message` 为 `请求参数格式错误: {错误详情}` |
+| 无更新项 | 请求体中没有任何键，`message` 为 `没有需要更新的配置项` |
+| 字段校验失败 | 取值超出允许范围，`message` 为本地化的约束文案，例如 `排行榜模型数量必须在 1-100 之间` |
+| 数据库错误 | 配置项落库失败，`message` 为 `更新配置失败: {错误详情}`，详见服务端日志 |

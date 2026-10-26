@@ -1,0 +1,56 @@
+---
+title: Clear Disk Cache
+description: Delete disk cache files that have been inactive for more than ten minutes.
+api: "DELETE /api/performance/disk_cache"
+---
+
+Deletes inactive files from the disk cache directory. A cache file is only deleted when it has not been used for more than 10 minutes, so files backing in-flight requests are never removed. The operation is recorded in the audit log.
+
+Requires **Root** (super administrator) permissions. See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request DELETE \
+  --url 'https://your-nookmux-domain/api/performance/disk_cache' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1'
+```
+
+</RequestExample>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "Inactive disk cache has been cleared"
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+  Whether the inactive disk cache files were cleared.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  Confirmation text on success, localized according to the caller's language preference; error description when `success` is `false`.
+</ResponseField>
+
+<Note>
+Management endpoints return HTTP `200` even on business failures; always check the `success` field.
+</Note>
+
+## Error messages
+
+| Condition | Description |
+| --- | --- |
+| Database error, please try again later | The cleanup failed (`success: false`); the underlying error is written to the server log |
+| Authentication failed | Standard authentication errors (HTTP `401`) when the caller is not a root user |

@@ -1,0 +1,153 @@
+---
+title: Update Voice
+description: Update an existing voice record by ID.
+api: "PUT /api/custom_voice/voices/{id}"
+---
+
+Updates the voice record with the given primary key ID. Fields are applied partially: `voice_id` and `type` are applied only when non-empty; `redirect_id` and `allowed` are always overwritten (an empty `redirect_id` clears the redirect); `remark` is overwritten only when non-empty and cannot be cleared to an empty string.
+
+Changing `voice_id` to a new non-empty value that differs from the current one requires the new ID to be unused; duplicates are rejected with a generic invalid-ID error. `updated_at` is refreshed by the server.
+
+Requires **Root** permissions. See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request PUT \
+  --url 'https://your-nookmux-domain/api/custom_voice/voices/3' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1' \
+  --header 'Content-Type: application/json' \
+  --data '{
+  "voice_id": "official-voice-001",
+  "type": "created",
+  "redirect_id": "minimax-voice-1111",
+  "allowed": false,
+  "remark": "Temporarily disabled"
+}'
+```
+
+</RequestExample>
+
+### Path parameters
+
+<ParamField path="id" type="integer" required>
+  Primary key of the voice record.
+</ParamField>
+
+### Body
+
+All body fields are optional; see the partial-update rules above.
+
+<ParamField path="body.voice_id" type="string">
+  New external voice ID, trimmed before use. Applied only when non-empty and different from the current value; must not be used by another record.
+</ParamField>
+
+<ParamField path="body.type" type="string">
+  New voice type: `preview` or `created`. Applied only when non-empty.
+</ParamField>
+
+<ParamField path="body.redirect_id" type="string">
+  Real upstream voice ID to send to the provider; trimmed and always applied. Set to an empty string to clear the redirect and send `voice_id` itself upstream.
+</ParamField>
+
+<ParamField path="body.allowed" type="boolean">
+  Whether the voice may be used for TTS; always applied. Effective for `created` records only.
+</ParamField>
+
+<ParamField path="body.remark" type="string">
+  Free-form remark, up to 255 characters. Applied only when non-empty.
+</ParamField>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": {
+    "id": 3,
+    "created_at": 1735689000,
+    "updated_at": 1735776000,
+    "type": "created",
+    "operator_id": 1,
+    "operator_kind": "admin",
+    "voice_id": "official-voice-001",
+    "quota_cost": 0,
+    "redirect_id": "minimax-voice-1111",
+    "allowed": false,
+    "remark": "Temporarily disabled"
+  }
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+  Whether the voice record was updated.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  Error description when `success` is `false`; empty otherwise.
+</ResponseField>
+
+<ResponseField name="data" type="object" required>
+  The updated voice record.
+
+  <Expandable title="voice structure">
+    <ResponseField name="id" type="integer" required>
+      Primary key of the record.
+    </ResponseField>
+    <ResponseField name="created_at" type="integer" required>
+      Creation time as a Unix timestamp in seconds.
+    </ResponseField>
+    <ResponseField name="updated_at" type="integer" required>
+      Last update time as a Unix timestamp in seconds; refreshed by this update.
+    </ResponseField>
+    <ResponseField name="type" type="string" required>
+      Voice type: `preview` or `created`.
+    </ResponseField>
+    <ResponseField name="operator_id" type="integer" required>
+      ID of the original operator; not changed by this update.
+    </ResponseField>
+    <ResponseField name="operator_kind" type="string" required>
+      Operator kind: `user` or `admin`; not changed by this update.
+    </ResponseField>
+    <ResponseField name="voice_id" type="string" required>
+      External voice ID referenced by TTS requests.
+    </ResponseField>
+    <ResponseField name="quota_cost" type="integer" required>
+      Quota charged when the voice was confirmed; `0` when never confirmed.
+    </ResponseField>
+    <ResponseField name="redirect_id" type="string" required>
+      Real upstream voice ID; empty means `voice_id` is sent upstream.
+    </ResponseField>
+    <ResponseField name="allowed" type="boolean" required>
+      Whether the voice may be used for TTS.
+    </ResponseField>
+    <ResponseField name="remark" type="string" required>
+      Free-form remark; may be empty.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<Note>
+Management endpoints return HTTP `200` even on business failures; always check the `success` field. This endpoint additionally returns HTTP `400` when `id` is not a valid integer or the JSON body is malformed, and HTTP `404` when the record does not exist. Successful updates are recorded in the admin audit log (voice module).
+</Note>
+
+## Error messages
+
+| Condition | Description |
+| --- | --- |
+| Invalid voice ID (HTTP 400) | `id` is not a valid integer |
+| Invalid parameters (HTTP 400) | The JSON body is missing or malformed |
+| Invalid voice type | `type` is non-empty but neither `preview` nor `created` |
+| Voice does not exist (HTTP 404) | No record exists with the given `id` |
+| Invalid voice ID | The new `voice_id` is already used by another record (reported as invalid, not as a duplicate) |
+| Database error, please try again later | The duplicate check, the record lookup, or the update failed; see server logs |

@@ -1,0 +1,154 @@
+---
+title: 获取审计日志
+description: 分页查询管理员操作审计日志，支持按模块、操作类型、操作人和时间范围筛选。
+api: "GET /api/audit/"
+---
+
+分页查询审计日志。审计日志记录管理员对系统资源的新增、修改和删除操作，结果按 `id` 降序排列。`username`、`module`、`action_type` 为精确匹配；`start_timestamp` 与 `end_timestamp` 用于限定记录时间范围。
+
+需要**管理员（Admin）**权限。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
+
+<Note>
+审计日志默认关闭，需要管理员在系统设置中开启后才会产生记录，且仅记录已启用模块的操作。只读操作不会被审计。
+</Note>
+
+## 请求
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url 'https://your-nookmux-domain/api/audit/?module=channel&action_type=update&p=1&page_size=20' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1'
+```
+
+</RequestExample>
+
+### 查询参数
+
+<ParamField path="query.username" type="string">
+按执行操作的管理员用户名精确匹配。
+</ParamField>
+
+<ParamField path="query.module" type="string">
+按审计模块精确匹配。取值：`option`、`channel`、`user`、`token`、`redemption`、`model`、`vendor`、`dynamic_ratio`、`prefill_group`、`db`、`performance`、`log`、`setup`、`dashboard_config`、`voice`。参见[获取审计模块列表](/cn/nookmux/api/management/audit/audit-modules-get)。
+</ParamField>
+
+<ParamField path="query.action_type" type="string">
+按操作类型精确匹配：`create`（新增）、`update`（修改）、`delete`（删除）。
+</ParamField>
+
+<ParamField path="query.start_timestamp" type="integer">
+`created_at` 的下界，Unix 时间戳（秒，含边界）。非数字取值会被忽略，即不设下界。
+</ParamField>
+
+<ParamField path="query.end_timestamp" type="integer">
+`created_at` 的上界，Unix 时间戳（秒，含边界）。非数字取值会被忽略，即不设上界。
+</ParamField>
+
+<ParamField path="query.p" type="integer" default="1">
+页码，从 1 开始。小于 1 时按 1 处理。
+</ParamField>
+
+<ParamField path="query.page_size" type="integer" default="20">
+每页条数。小于 1 或大于 100 时回退为 20。
+</ParamField>
+
+## 响应
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": {
+    "items": [
+      {
+        "id": 42,
+        "created_at": 1761000000,
+        "username": "root",
+        "ip": "203.0.113.10",
+        "module": "dashboard_config",
+        "action_type": "update",
+        "description": "更新仪表板配置",
+        "before_data": "{\"rankings_model_limit\":\"20\"}",
+        "after_data": "{\"rankings_model_limit\":\"50\"}"
+      }
+    ],
+    "page": 1,
+    "page_size": 20,
+    "total": 1
+  }
+}
+```
+
+</ResponseExample>
+
+### 响应字段
+
+<ResponseField name="success" type="boolean" required>
+是否成功返回审计日志。
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+`success` 为 `false` 时的错误描述；成功时为空字符串。
+</ResponseField>
+
+<ResponseField name="data" type="object">
+  <Expandable title="data 结构">
+    <ResponseField name="items" type="object[]">
+      当前页符合条件的审计日志条目，按 `id` 降序排列。
+
+      <Expandable title="条目结构">
+        <ResponseField name="id" type="integer" required>
+          审计日志 ID。
+        </ResponseField>
+        <ResponseField name="created_at" type="integer" required>
+          记录时间，Unix 时间戳（秒）。
+        </ResponseField>
+        <ResponseField name="username" type="string" required>
+          执行操作的管理员用户名。
+        </ResponseField>
+        <ResponseField name="ip" type="string" required>
+          操作来源客户端 IP；审计设置未开启 IP 记录时为空字符串。
+        </ResponseField>
+        <ResponseField name="module" type="string" required>
+          被审计的模块，例如 `dashboard_config`。
+        </ResponseField>
+        <ResponseField name="action_type" type="string" required>
+          操作类型：`create`（新增）、`update`（修改）、`delete`（删除）。
+        </ResponseField>
+        <ResponseField name="description" type="string" required>
+          服务端写入的操作描述。
+        </ResponseField>
+        <ResponseField name="before_data" type="string">
+          操作前数据的 JSON 字符串；更新操作仅保留发生变化的字段。仅当审计设置开启差异记录时写入；为空时省略。
+        </ResponseField>
+        <ResponseField name="after_data" type="string">
+          操作后数据的 JSON 字符串；更新操作仅保留发生变化的字段。仅当审计设置开启差异记录时写入；为空时省略。
+        </ResponseField>
+      </Expandable>
+    </ResponseField>
+    <ResponseField name="total" type="integer" required>
+      符合筛选条件的总条数。
+    </ResponseField>
+    <ResponseField name="page" type="integer" required>
+      当前页码，从 1 开始。
+    </ResponseField>
+    <ResponseField name="page_size" type="integer" required>
+      实际生效的每页条数。
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<Note>
+更新操作中 `before_data` 与 `after_data` 仅保留发生变化的字段；新增或删除操作则保存服务端为该操作写入的完整快照。敏感值在落库前已脱敏：字段名含 `key`、`password`、`token`、`secret`、`credential`、`authorization`、`private_key`、`dsn` 的值被替换为 `[REDACTED]`，URL 或数据库 DSN 中内嵌的口令被替换为 `***`。
+</Note>
+
+## 错误说明
+
+| 条件 | 说明 |
+| --- | --- |
+| 数据库错误 | 查询失败，`message` 为 `获取审计日志失败: {错误详情}`，详见服务端日志 |

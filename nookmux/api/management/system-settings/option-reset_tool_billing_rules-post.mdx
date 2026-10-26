@@ -1,0 +1,56 @@
+---
+title: Reset Tool Billing Rules
+description: Restore the tool_billing_setting.rules option to the built-in default tool billing rule set.
+api: "POST /api/option/reset_tool_billing_rules"
+---
+
+Resets the `tool_billing_setting.rules` option to the built-in default rule set (the one used when tool billing rules have never been customized). The default JSON is persisted through the option store (database write plus in-memory refresh), so per-call pricing for tools such as web search and image generation immediately falls back to defaults. The action is recorded in the admin audit log as an option update.
+
+No request body is required.
+
+Requires **Root** (super administrator) permissions. See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request POST \
+  --url 'https://your-nookmux-domain/api/option/reset_tool_billing_rules' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1'
+```
+
+</RequestExample>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "Tool billing rules reset successfully",
+  "data": null
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+  Whether the reset completed.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  `Tool billing rules reset successfully` on success; the raw error text when `success` is `false`.
+</ResponseField>
+
+<ResponseField name="data" type="null" required>
+  Always `null`; the endpoint returns no payload.
+</ResponseField>
+
+<Note>
+  Customized tool billing rules are overwritten without confirmation; restore them manually via `PUT /api/option/` if needed. A persist failure returns HTTP `200` with `success: false` and the raw error text in `message`, and the audit entry is written only after the reset succeeds.
+</Note>

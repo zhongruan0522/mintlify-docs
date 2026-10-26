@@ -1,0 +1,78 @@
+---
+title: 查询 GLM 套餐风控状态
+description: 检查套餐渠道背后的 GLM 账号是否被上游风控标记。
+api: "GET /api/channel/plan/glm/risk/{id}"
+---
+
+检查套餐渠道背后的 GLM 账号是否被上游风控标记。渠道必须是套餐为 `glm-coding-plan` 或 `glm-coding-plan-international` 的套餐渠道。NookMux 使用渠道的第一个密钥、经渠道配置的代理调用智谱风控客户接口，并按上游响应判定 `is_risk`：上游 `data` 不是显式 `false` 时一律视为已风控。
+
+需要**管理员**权限。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
+
+## 请求
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url 'https://your-nookmux-domain/api/channel/plan/glm/risk/1' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1'
+```
+
+</RequestExample>
+
+### 路径参数
+
+<ParamField path="id" type="integer" required>
+渠道 ID。
+</ParamField>
+
+## 响应
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "data": {
+    "is_risk": false,
+    "raw_msg": "操作成功"
+  }
+}
+```
+
+</ResponseExample>
+
+### 响应字段
+
+<ResponseField name="success" type="boolean" required>
+请求是否成功。
+</ResponseField>
+
+<ResponseField name="data" type="object" required>
+风控检测结果。
+
+<Expandable title="data 结构">
+  <ResponseField name="is_risk" type="boolean" required>
+    上游是否将该账号标记为风控客户。上游 `data` 不是显式 `false` 时均为 `true`。
+  </ResponseField>
+  <ResponseField name="raw_msg" type="string">
+    上游状态消息，原样保留。为空时省略。
+  </ResponseField>
+</Expandable>
+</ResponseField>
+
+<Note>
+管理接口在业务失败时同样返回 HTTP `200`，必须以 `success` 字段判断结果。本端点成功时仅返回 `success` 与 `data`（不含 `message` 字段）；失败时返回 `success: false` 与本地化的 `message`。
+</Note>
+
+## 错误说明
+
+| 条件 | message 文案 | 说明 |
+| --- | --- | --- |
+| 参数错误 | `参数错误` | 路径中的 `id` 缺失或不是整数 |
+| 渠道不存在 | `渠道不存在` | 渠道不存在或加载失败 |
+| 非套餐渠道 | `该渠道不是套餐渠道` | `channel_info.is_plan` 为 `false` |
+| 不支持风控检测 | `该渠道不支持风控检测` | 渠道套餐不是 `glm-coding-plan` 或 `glm-coding-plan-international` |
+| 渠道密钥无效 | `渠道 API Key 无效或认证失败，请检查 Key 配置` | 上游拒绝该密钥 |
+| 风控检测失败 | `风控检测失败: {{.Error}}` | 上游请求失败；`{{.Error}}` 为底层错误详情 |
