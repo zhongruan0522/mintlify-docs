@@ -1,7 +1,98 @@
 ---
 title: Create Redemption Code
+description: Batch-create redemption codes in one atomic call and receive the generated keys.
 api: "POST /api/redemption/"
 ---
 
-👨‍💼 Requires Admin Permissions
+Create one or more redemption codes in a single call. Each code gets a server-generated key (a 32-character UUID without dashes); the creation is wrapped in a transaction, so the whole batch either succeeds or is rolled back. The generated keys are returned once, in `data`, and cannot be read again from list or detail endpoints.
 
+Requires **Admin** permissions. See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request POST \
+  --url 'https://your-nookmux-domain/api/redemption/' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1' \
+  --header 'Content-Type: application/json' \
+  --data '{
+  "name": "welcome-bonus",
+  "count": 3,
+  "quota": 100,
+  "expired_time": 0
+}'
+```
+
+</RequestExample>
+
+### Body
+
+<ParamField path="body.name" type="string" required>
+  Name shared by all codes in this batch. Between 1 and 20 characters (rune count).
+</ParamField>
+
+<ParamField path="body.count" type="integer" required>
+  Number of codes to generate. Between 1 and 100; create more codes by calling this endpoint again in batches.
+</ParamField>
+
+<ParamField path="body.quota" type="integer" default="100">
+  Quota credited to the user who redeems each code. Falls back to the default of 100 when omitted.
+</ParamField>
+
+<ParamField path="body.expired_time" type="integer" default="0">
+  Unix timestamp (seconds) after which the codes can no longer be redeemed; `0` means no expiry. When non-zero, it must not be earlier than the current time.
+</ParamField>
+
+<Note>
+Only `name`, `count`, `quota` and `expired_time` are used. The server generates each key, records the creating administrator from the access token, and sets the creation timestamp itself; any other fields in the body are ignored.
+</Note>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": [
+    "a1b2c3d4e5f60718293a4b5c6d7e8f90",
+    "0f9e8d7c6b5a49382716053c4d5e6f70",
+    "f0e1d2c3b4a5968778695a4b3c2d1e0f"
+  ]
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+  Whether the codes were created.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  Error description when `success` is `false`; empty otherwise.
+</ResponseField>
+
+<ResponseField name="data" type="array" required>
+  The generated redemption keys, as many entries as `count`. This is the only response that exposes the full keys.
+</ResponseField>
+
+<Note>
+Management endpoints return HTTP `200` even on business failures; always check the `success` field. The batch is inserted inside a transaction; if any insert fails, no code from the batch is written.
+</Note>
+
+## Error messages
+
+| Condition | Description |
+| --- | --- |
+| Invalid request body | The JSON body is missing or malformed |
+| Name length invalid | `name` is empty or longer than 20 characters |
+| Count not positive | `count` is 0 or negative |
+| Count exceeds limit | `count` is greater than 100 |
+| Expire time invalid | `expired_time` is non-zero and earlier than the current time |
+| Create failed | The batch insert failed inside the transaction; no code is written, see server logs |

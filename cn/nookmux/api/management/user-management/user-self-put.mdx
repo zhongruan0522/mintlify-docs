@@ -1,7 +1,83 @@
 ---
 title: 更新当前用户信息
+description: 更新当前用户的用户名、显示名称与密码，改密需校验原密码。
 api: "PUT /api/user/self"
 ---
 
-🔐 需要登录（User权限）
+更新发起请求用户自己的资料。仅 `username`、`display_name`、`password` 会被持久化；修改密码时还须提供当前密码。
 
+需要**用户（User）**权限（任意登录用户）。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
+
+## 请求
+
+<RequestExample>
+
+```bash cURL
+curl --request PUT \
+  --url 'https://your-nookmux-domain/api/user/self' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 2' \
+  --header 'Content-Type: application/json' \
+  --data '{
+  "username": "alice",
+  "display_name": "Alice",
+  "original_password": "current-password",
+  "password": "new-password"
+}'
+```
+
+</RequestExample>
+
+### 请求体
+
+<ParamField path="body.username" type="string">
+新用户名，最长 20 字符。必须保持唯一；留空时保持当前用户名不变。
+</ParamField>
+
+<ParamField path="body.display_name" type="string">
+新显示名称，最长 20 字符。留空时保持当前显示名称不变。
+</ParamField>
+
+<ParamField path="body.original_password" type="string">
+当前密码，只要提供了 `password` 就会校验。仅当账号尚无密码（例如仅通过 OAuth 绑定的账号首次设置密码）时才允许为空。
+</ParamField>
+
+<ParamField path="body.password" type="string">
+新密码，8 到 20 字符。省略或留空时保持当前密码不变。
+</ParamField>
+
+## 响应
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": ""
+}
+```
+
+</ResponseExample>
+
+### 响应字段
+
+<ResponseField name="success" type="boolean" required>
+资料是否更新成功。
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+`success` 为 `false` 时的错误描述；成功时为空字符串。
+</ResponseField>
+
+<Note>
+仅上述字段会被写入；请求绑定的用户结构中的其他字段同样参与长度校验但会被忽略。空字段不会写入数据库，省略的字段保持原值。角色、额度、分组与备注由管理员用户接口管理。更新成功后会失效该用户的安全敏感缓存。
+</Note>
+
+## 错误说明
+
+| 条件 | 说明 |
+| --- | --- |
+| 参数非法 | JSON 请求体缺失或格式错误 |
+| 输入非法 | 校验失败，例如 `username` 超过 20 字符或 `password` 不在 8-20 字符范围内 |
+| 原密码错误 | `original_password` 与当前密码不匹配（且账号已设置过密码） |
+| 数据库错误 | 更新失败，包括用户名与已有用户冲突，详见服务端日志 |

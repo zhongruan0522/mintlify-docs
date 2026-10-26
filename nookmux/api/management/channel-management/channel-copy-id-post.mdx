@@ -1,7 +1,80 @@
 ---
 title: Copy Channel
+description: Clone an existing channel, including its upstream key.
 api: "POST /api/channel/copy/{id}"
 ---
 
-👨‍💼 Requires Administrator Privileges (Admin)
+Clone an existing channel. The copy keeps every field of the source channel, including its key, but gets a new id and creation time; the last test time and response time are reset. The copy is created together with its routing abilities, the in-memory channel cache is reloaded, and the operation is recorded in the admin audit log.
 
+Requires **Admin** permissions. See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request POST \
+  --url 'https://your-nookmux-domain/api/channel/copy/1?suffix=-copy&reset_balance=true' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1'
+```
+
+</RequestExample>
+
+### Path parameters
+
+<ParamField path="id" type="integer" required>
+  Id of the channel to copy.
+</ParamField>
+
+### Query parameters
+
+<ParamField path="query.suffix" type="string" default="_复制">
+  Suffix appended to the source channel name for the copy.
+</ParamField>
+
+<ParamField path="query.reset_balance" type="boolean" default="true">
+  When `true`, the copy starts with `balance` and `used_quota` reset to `0`. Any value that is not a valid boolean keeps the default.
+</ParamField>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": {
+    "id": 42
+  }
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+  Whether the channel was copied.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  Error description when `success` is `false`; empty otherwise.
+</ResponseField>
+
+<ResponseField name="data.id" type="integer" required>
+  Id of the newly created channel.
+</ResponseField>
+
+<Note>
+  Management endpoints return HTTP `200` even on business failures; always check the `success` field.
+</Note>
+
+## Error messages
+
+| Condition | Description |
+| --- | --- |
+| Invalid channel id | `id` in the path is not an integer |
+| Copy source failed | The source channel could not be loaded, including when it does not exist |
+| Copy failed | Inserting the copy failed; see server logs |

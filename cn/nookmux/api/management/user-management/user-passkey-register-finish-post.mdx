@@ -1,7 +1,82 @@
 ---
 title: 完成注册Passkey
+description: 提交 WebAuthn 认证器证明响应，保存新的 Passkey 凭据。
 api: "POST /api/user/passkey/register/finish"
 ---
 
-🔐 需要登录（User权限）
+完成 Passkey 注册流程的后半段。服务端校验浏览器认证器生成的证明与 `POST /api/user/passkey/register/begin` 发起的挑战值是否匹配，校验通过后为当前用户保存该凭据。
 
+需要**用户（User）**权限（任意登录用户）。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
+
+## 请求
+
+<RequestExample>
+
+```bash cURL
+curl --request POST \
+  --url 'https://your-nookmux-domain/api/user/passkey/register/finish' \
+  --header 'Cookie: session={session_cookie}' \
+  --header 'New-Api-User: 1' \
+  --header 'Content-Type: application/json' \
+  --data '{
+  "id": "R2dpSmY4Q3JEektWWXRHcw",
+  "rawId": "R2dpSmY4Q3JEektWWXRHcw",
+  "type": "public-key",
+  "response": {
+    "clientDataJSON": "eyJjaGFsbGVuZ2UiOiJoSzBkRjJ2UTh4TjNtWjdiVDF3WTVjUjlqTDRwQTZzRCIsIm9yaWdpbiI6Imh0dHBzOi8veW91ci1ub29rbXV4LWRvbWFpbiIsInR5cGUiOiJ3ZWJhdXRobi5jcmVhdGUifQ",
+    "attestationObject": "o2NmbXQvZGVmYXVsdC1mb3JtYXQ...",
+    "transports": ["internal"]
+  }
+}'
+```
+
+</RequestExample>
+
+### 请求体
+
+<ParamField path="body" type="object" required>
+浏览器返回的证明数据，遵循标准 WebAuthn `PublicKeyCredential<AttestationResponse>` 结构：顶层 `id`、`rawId`、`type`，以及 `response` 对象（至少含 `clientDataJSON` 与 `attestationObject`）。请求体由服务端的 WebAuthn 库直接解析，协议字段以 WebAuthn 标准为准，而非 NookMux 自定义。
+</ParamField>
+
+## 响应
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "Passkey registered successfully",
+  "data": null
+}
+```
+
+</ResponseExample>
+
+### 响应字段
+
+<ResponseField name="success" type="boolean" required>
+凭据是否注册成功。
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+`success` 为 `true` 时为本地化的成功提示；否则为错误描述。
+</ResponseField>
+
+<ResponseField name="data" type="null">
+本接口恒为 `null`。
+</ResponseField>
+
+<Note>
+请求必须与 `begin` 调用处于同一会话：挑战值从服务端会话中读取且一次性消费，再次提交会失败，需重新调用 `begin`。`begin` 阶段保存的设备名会随凭据一并存储。落库前会重新检查 Passkey 数量上限；启用 2FA 时还会重新检查 2FA 方式的二次验证。
+</Note>
+
+## 错误说明
+
+| 条件 | 说明 |
+| --- | --- |
+| 管理员未启用 Passkey 登录 | 服务端设置中未启用 Passkey 功能 |
+| 未登录 / 用户被禁用 | 会话无法解析，返回 HTTP `401` |
+| 需先完成安全验证 | 已启用 2FA 但没有有效的 2FA 方式二次验证 |
+| 达到 Passkey 数量上限 | `begin` 与 `finish` 之间绑定数量达到了上限 |
+| 无法创建 Passkey 凭据 | 当前会话没有进行中的注册挑战（缺失或已被消费），或证明校验未通过，详见服务端日志 |
+| 数据库错误 | 凭据落库失败，详见服务端日志 |

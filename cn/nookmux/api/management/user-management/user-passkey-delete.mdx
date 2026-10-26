@@ -1,7 +1,76 @@
 ---
 title: 删除Passkey
+description: 在通过二次安全验证后，按 ID 解绑单个 Passkey 凭据，或解绑当前用户的全部 Passkey。
 api: "DELETE /api/user/passkey"
 ---
 
-🔐 需要登录（User权限）
+解绑当前用户的 Passkey（WebAuthn）凭据。带 `/{id}` 调用时只删除该凭据，且凭据必须属于调用者本人；不带路径段调用（`DELETE /api/user/passkey`）时删除当前用户的全部 Passkey。
 
+需要**用户（User）**权限（任意登录用户）。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
+
+## 请求
+
+<RequestExample>
+
+```bash cURL
+curl --request DELETE \
+  --url 'https://your-nookmux-domain/api/user/passkey/1' \
+  --header 'Cookie: session={session_cookie}' \
+  --header 'New-Api-User: 1'
+```
+
+</RequestExample>
+
+### 路径参数
+
+<ParamField path="path.id" type="integer">
+要删除的 Passkey 凭据 ID。可选：省略该段（调用 `DELETE /api/user/passkey`）时删除当前用户的全部 Passkey。
+</ParamField>
+
+## 响应
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "Passkey has been unbound",
+  "data": null
+}
+```
+
+</ResponseExample>
+
+### 响应字段
+
+<ResponseField name="success" type="boolean" required>
+Passkey 是否删除成功。
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+`success` 为 `true` 时为本地化的成功提示；否则为错误描述。
+</ResponseField>
+
+<ResponseField name="data" type="null">
+本接口恒为 `null`。
+</ResponseField>
+
+<Note>
+调用前需要完成绑定到当前用户、且不超过 5 分钟的二次安全验证：
+
+- 启用 2FA 时，需通过 `2fa` 方式验证（`POST /api/verify`，携带 TOTP 验证码或备用码）。
+- 未启用 2FA 时，需至少绑定一个 Passkey，并通过 `passkey` 方式验证：依次完成 `POST /api/user/passkey/verify/begin` 与 `POST /api/user/passkey/verify/finish`，再调用 `POST /api/verify` 并传 `{"method": "passkey"}`。
+
+参见[通用安全验证](/cn/nookmux/api/management/security-verification/verify-post)。与其他 Passkey 接口相同，本接口从服务端会话 Cookie 解析用户，仅用 Access Token 鉴权会被拒绝并返回 HTTP `401`。
+</Note>
+
+## 错误说明
+
+| 条件 | 说明 |
+| --- | --- |
+| 未登录 / 用户被禁用 | 会话无法解析，返回 HTTP `401` |
+| 需先完成安全验证 | 当前用户没有有效的二次安全验证（`2fa` 或 `passkey` 方式，5 分钟内） |
+| 用户未绑定 Passkey | 未启用 2FA 时删除要求至少绑定一个 Passkey，但当前没有任何绑定 |
+| 无效的 Passkey ID | 路径中的 `{id}` 不是整数 |
+| 无权删除该 Passkey | 凭据属于其他用户，返回 HTTP `403` |
+| 数据库错误 | 加载或删除凭据失败，详见服务端日志 |

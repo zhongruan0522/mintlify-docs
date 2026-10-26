@@ -1,7 +1,67 @@
 ---
 title: 获取标签模型
+description: 返回指定标签下模型数量最多的渠道的模型列表。
 api: "GET /api/channel/tag/models"
 ---
 
-👨‍💼 需要管理员权限（Admin）
+返回用于代表某个标签的模型列表。在携带该标签的全部渠道中，本接口选取 `models` 字符串中条目最多的渠道，并返回其逗号分隔的模型串；没有任何渠道定义模型时返回空字符串。
 
+需要**管理员（Admin）**权限。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
+
+## 请求
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url 'https://your-nookmux-domain/api/channel/tag/models?tag=openai-pool' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1'
+```
+
+</RequestExample>
+
+### 查询参数
+
+<ParamField path="tag" type="string" required>
+要查询的标签，按标签精确匹配。
+</ParamField>
+
+## 响应
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": "gpt-4o,gpt-4o-mini,gpt-4.1"
+}
+```
+
+</ResponseExample>
+
+### 响应字段
+
+<ResponseField name="success" type="boolean" required>
+查询是否执行成功。
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+`success` 为 `false` 时的错误描述；成功时为空字符串。
+</ResponseField>
+
+<ResponseField name="data" type="string" required>
+该标签下模型数量最多的渠道的逗号分隔模型名；不存在这样的渠道或均未定义模型时为空字符串。
+</ResponseField>
+
+<Note>
+与多数管理接口不同，本接口并非总是返回 HTTP `200`：缺少 `tag` 时返回 HTTP `400`，数据库错误时返回 HTTP `500`，两者均携带 `success: false` 的响应体。
+</Note>
+
+## 错误说明
+
+| 条件 | 说明 |
+| --- | --- |
+| 标签必填 | 缺少 `tag` 查询参数（HTTP 400） |
+| 数据库错误 | 加载渠道失败，返回原始错误信息（HTTP 500） |

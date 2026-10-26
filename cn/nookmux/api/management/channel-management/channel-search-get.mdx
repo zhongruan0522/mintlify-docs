@@ -1,7 +1,258 @@
 ---
 title: 搜索渠道
+description: 按关键词、分组、模型、状态与类型搜索渠道，支持按标签聚合模式。
 api: "GET /api/channel/search"
 ---
 
-👨‍💼 需要管理员权限（Admin）
+按关键词与字段级过滤条件组合搜索渠道，返回一页渠道对象以及跨页聚合信息（`total`、`type_counts`）。开启 `tag_mode` 时，先解析匹配的标签，再把各标签下的全部渠道作为一个聚合结果集返回。
 
+需要**管理员（Admin）**权限。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
+
+## 请求
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url 'https://your-nookmux-domain/api/channel/search?keyword=openai&status=enabled&p=1&page_size=20' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1'
+```
+
+</RequestExample>
+
+### 查询参数
+
+<ParamField path="keyword" type="string">
+通用关键词。渠道满足以下任一条件即命中：`id` 等于关键词（当关键词为整数时）、`name` 或 `base_url` 包含关键词、已存密钥与关键词完全相等。始终与 `model` 条件取 AND。
+</ParamField>
+
+<ParamField path="group" type="string">
+渠道必须服务的用户分组（与渠道的逗号分隔分组列表匹配）。留空、`all` 或 `null` 表示不过滤。
+</ParamField>
+
+<ParamField path="model" type="string">
+必须出现在渠道 `models` 列表中的模型名（子串匹配）。
+</ParamField>
+
+<ParamField path="status" type="string">
+状态过滤：`enabled` 或 `1` 只返回启用渠道；`disabled` 或 `0` 只返回非启用渠道；其他值或省略返回全部。
+</ParamField>
+
+<ParamField path="type" type="integer">
+精确的渠道类型过滤，例如 `1` 表示 OpenAI。省略返回全部类型。
+</ParamField>
+
+<ParamField path="id" type="integer">
+精确的渠道 ID 过滤，仅当大于 `0` 时生效。
+</ParamField>
+
+<ParamField path="name" type="string">
+名称过滤（子串匹配）。
+</ParamField>
+
+<ParamField path="tag" type="string">
+标签过滤（子串匹配）。
+</ParamField>
+
+<ParamField path="id_sort" type="boolean" default="false">
+排序方式：`true` 按渠道 ID 降序；`false` 按名称（不区分大小写）升序、再按 ID 升序。标签模式下忽略该参数，渠道固定按优先级降序、同标签内权重降序排列。
+</ParamField>
+
+<ParamField path="tag_mode" type="boolean" default="false">
+标签聚合模式：`true` 时先解析匹配过滤条件的标签，再返回携带这些标签的全部渠道（受 `group` 约束），状态/类型过滤与分页在内存中完成。
+</ParamField>
+
+<ParamField path="p" type="integer" default="1">
+页码，从 `1` 开始。
+</ParamField>
+
+<ParamField path="page_size" type="integer" default="20">
+每页条数。小于等于 `0` 时回退为 `20`；大于 `500` 时截断为 `500`。
+</ParamField>
+
+## 响应
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": {
+    "items": [
+      {
+        "id": 1,
+        "type": 1,
+        "key": "",
+        "openai_organization": null,
+        "test_model": "gpt-4o-mini",
+        "status": 1,
+        "name": "my-openai",
+        "weight": 5,
+        "created_time": 1718100000,
+        "test_time": 1718200000,
+        "response_time": 845,
+        "base_url": "",
+        "other": "",
+        "balance": 12.34,
+        "balance_updated_time": 1718250000,
+        "models": "gpt-4o,gpt-4o-mini",
+        "group": "default",
+        "used_quota": 5000,
+        "model_mapping": null,
+        "status_code_mapping": "",
+        "priority": 10,
+        "auto_ban": 1,
+        "other_info": "",
+        "tag": "openai-pool",
+        "setting": null,
+        "param_override": null,
+        "header_override": null,
+        "remark": "",
+        "channel_info": {
+          "is_multi_key": false,
+          "multi_key_size": 0,
+          "multi_key_status_list": null,
+          "multi_key_polling_index": 0,
+          "multi_key_mode": "",
+          "is_plan": false,
+          "plan_name": ""
+        },
+        "settings": ""
+      }
+    ],
+    "total": 1,
+    "type_counts": {
+      "1": 1
+    }
+  }
+}
+```
+
+</ResponseExample>
+
+### 响应字段
+
+<ResponseField name="success" type="boolean" required>
+搜索是否执行成功。
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+`success` 为 `false` 时的错误描述；成功时为空字符串。
+</ResponseField>
+
+<ResponseField name="data.items" type="array" required>
+当前页的渠道对象数组。`key` 字段始终为空字符串（查询时不选取已存密钥），`channel_info` 中的多 Key 禁用原因/时间明细会被剥离。
+
+  <Expandable title="channel 结构">
+    <ResponseField name="id" type="integer">
+      渠道 ID。
+    </ResponseField>
+    <ResponseField name="type" type="integer">
+      渠道类型常量，例如 `1` 表示 OpenAI。
+    </ResponseField>
+    <ResponseField name="key" type="string">
+      搜索结果中始终为空字符串。
+    </ResponseField>
+    <ResponseField name="name" type="string">
+      渠道显示名称。
+    </ResponseField>
+    <ResponseField name="status" type="integer">
+      渠道状态：`1` 启用，`2` 手动禁用，`3` 自动禁用。
+    </ResponseField>
+    <ResponseField name="models" type="string">
+      逗号分隔的模型列表。
+    </ResponseField>
+    <ResponseField name="group" type="string">
+      可使用该渠道的分组，逗号分隔。
+    </ResponseField>
+    <ResponseField name="base_url" type="string">
+      自定义上游 Base URL。
+    </ResponseField>
+    <ResponseField name="model_mapping" type="string">
+      模型名重定向映射的 JSON 对象字符串。
+    </ResponseField>
+    <ResponseField name="priority" type="integer">
+      路由优先级。
+    </ResponseField>
+    <ResponseField name="weight" type="integer">
+      负载均衡权重。
+    </ResponseField>
+    <ResponseField name="tag" type="string">
+      渠道所属标签。
+    </ResponseField>
+    <ResponseField name="test_model" type="string">
+      渠道测试所用模型。
+    </ResponseField>
+    <ResponseField name="balance" type="number">
+      最近一次查询到的上游余额。
+    </ResponseField>
+    <ResponseField name="balance_updated_time" type="integer">
+      最近一次余额刷新的 Unix 时间戳。
+    </ResponseField>
+    <ResponseField name="used_quota" type="integer">
+      该渠道已消耗的额度。
+    </ResponseField>
+    <ResponseField name="response_time" type="integer">
+      最近一次测试的响应时间，单位毫秒。
+    </ResponseField>
+    <ResponseField name="test_time" type="integer">
+      最近一次渠道测试的 Unix 时间戳。
+    </ResponseField>
+    <ResponseField name="created_time" type="integer">
+      渠道创建的 Unix 时间戳。
+    </ResponseField>
+    <ResponseField name="auto_ban" type="integer">
+      是否开启连续失败自动禁用：`1` 启用，`0` 关闭。
+    </ResponseField>
+    <ResponseField name="channel_info" type="object">
+      多 Key 与套餐元数据。搜索结果中 `multi_key_disabled_reason` 与 `multi_key_disabled_time` 映射会被剥离；完整 `channel_info` 结构参见[更新渠道](/cn/nookmux/api/management/channel-management/channel-put)。
+    </ResponseField>
+    <ResponseField name="other" type="string">
+      渠道类型的附加选项（例如 Vertex AI 区域）。
+    </ResponseField>
+    <ResponseField name="settings" type="string">
+      额外设置 JSON，例如 Azure 的 API 版本。
+    </ResponseField>
+    <ResponseField name="setting" type="string">
+      渠道运行时设置 JSON。
+    </ResponseField>
+    <ResponseField name="param_override" type="string">
+      请求参数覆盖 JSON。
+    </ResponseField>
+    <ResponseField name="header_override" type="string">
+      上游请求头覆盖 JSON。
+    </ResponseField>
+    <ResponseField name="status_code_mapping" type="string">
+      上游状态码映射 JSON。
+    </ResponseField>
+    <ResponseField name="openai_organization" type="string">
+      OpenAI organization 头的值。
+    </ResponseField>
+    <ResponseField name="remark" type="string">
+      自由备注。
+    </ResponseField>
+    <ResponseField name="other_info" type="string">
+      服务端维护的附加运行信息。
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="data.total" type="integer" required>
+匹配过滤条件的渠道总数（含 `type` 过滤）。标签模式下为内存中完成状态/类型过滤后的渠道数。
+</ResponseField>
+
+<ResponseField name="data.type_counts" type="object" required>
+渠道类型到匹配渠道数的映射；统计发生在状态过滤之后、`type` 过滤之前，因此计数覆盖当前结果集的全部类型。
+</ResponseField>
+
+<Note>
+管理接口在业务失败时同样返回 HTTP `200`，必须以 `success` 字段判断结果。非标签模式下过滤、计数与分页下推到数据库；标签模式下各标签的渠道集合聚合后在内存中过滤。
+</Note>
+
+## 错误说明
+
+| 条件 | 说明 |
+| --- | --- |
+| 数据库错误 | 搜索查询失败，`message` 返回原始错误信息 |

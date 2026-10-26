@@ -1,7 +1,140 @@
 ---
 title: Create Vendor
+description: Create a vendor metadata entry referenced by models.
 api: "POST /api/vendors/"
 ---
 
-👨‍💼 Admin privileges required
+Creates a vendor metadata entry. Model entries reference a vendor through `vendor_id`, and vendor fields such as the icon, data-retention window, and training opt-out flag are shown to end users on the pricing page.
 
+The vendor name must be non-empty and unique among non-deleted vendors. `id`, `created_time`, and `updated_time` are assigned by the server; the created record is returned in `data`.
+
+Requires **Admin** permissions. See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request POST \
+  --url 'https://your-nookmux-domain/api/vendors/' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1' \
+  --header 'Content-Type: application/json' \
+  --data '{
+  "name": "OpenAI",
+  "description": "OpenAI models",
+  "icon": "openai",
+  "data_retention_days": 30,
+  "training_opt_out": true,
+  "status": 1
+}'
+```
+
+</RequestExample>
+
+### Body
+
+<ParamField path="body.name" type="string" required>
+  Vendor name, unique among non-deleted vendors; limited to 128 characters. Must not be empty.
+</ParamField>
+
+<ParamField path="body.description" type="string">
+  Free-form description.
+</ParamField>
+
+<ParamField path="body.icon" type="string">
+  Icon name from `@lobehub/icons`, rendered by the frontend; limited to 128 characters.
+</ParamField>
+
+<ParamField path="body.data_retention_days" type="integer">
+  Data-retention window in days shown on the pricing page (`0` means no retention). Omit to leave unset.
+</ParamField>
+
+<ParamField path="body.training_opt_out" type="boolean">
+  Whether requests to this vendor are excluded from upstream model training by default (shown on the pricing page). Omit to leave unset.
+</ParamField>
+
+<ParamField path="body.status" type="integer" default="1">
+  Reserved status field; `1` means enabled.
+</ParamField>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": {
+    "id": 3,
+    "name": "OpenAI",
+    "description": "OpenAI models",
+    "icon": "openai",
+    "data_retention_days": 30,
+    "training_opt_out": true,
+    "status": 1,
+    "created_time": 1735689600,
+    "updated_time": 1735689600
+  }
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+  Whether the vendor was created.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  Error description when `success` is `false`; empty otherwise.
+</ResponseField>
+
+<ResponseField name="data" type="object" required>
+  The created vendor record.
+
+  <Expandable title="vendor structure">
+    <ResponseField name="id" type="integer" required>
+      Vendor ID assigned by the server.
+    </ResponseField>
+    <ResponseField name="name" type="string" required>
+      Vendor name.
+    </ResponseField>
+    <ResponseField name="description" type="string">
+      Free-form description; omitted when empty.
+    </ResponseField>
+    <ResponseField name="icon" type="string">
+      Icon name from `@lobehub/icons`, rendered by the frontend; omitted when empty.
+    </ResponseField>
+    <ResponseField name="data_retention_days" type="integer">
+      Data-retention window in days; omitted when unset.
+    </ResponseField>
+    <ResponseField name="training_opt_out" type="boolean">
+      Whether requests to this vendor are excluded from upstream model training by default; omitted when unset.
+    </ResponseField>
+    <ResponseField name="status" type="integer" required>
+      Reserved status field; `1` means enabled.
+    </ResponseField>
+    <ResponseField name="created_time" type="integer" required>
+      Creation time as a Unix timestamp in seconds, set by the server.
+    </ResponseField>
+    <ResponseField name="updated_time" type="integer" required>
+      Last update time as a Unix timestamp in seconds, set by the server.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<Note>
+Management endpoints return HTTP `200` even on business failures; always check the `success` field. Successful creation is recorded in the admin audit log (vendor module).
+</Note>
+
+## Error messages
+
+| Condition | Description |
+| --- | --- |
+| Invalid request body | The JSON body is missing or malformed |
+| Vendor name cannot be empty | `name` is an empty string |
+| Vendor name already exists | A non-deleted vendor with the same name already exists |
+| Database error, please try again later | The duplicate-name check or the insert failed; see server logs |

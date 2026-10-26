@@ -1,7 +1,67 @@
 ---
 title: Get Tag Models
+description: Return the model list of the channel carrying the widest model set for a tag.
 api: "GET /api/channel/tag/models"
 ---
 
-👨‍💼 Requires Admin Permissions
+Return the model list used to represent a tag. Among all channels carrying the given tag, the endpoint picks the channel whose `models` string contains the most entries and returns that comma-separated string; an empty string is returned when no channel with the tag exposes any models.
 
+Requires **Admin** permissions. See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url 'https://your-nookmux-domain/api/channel/tag/models?tag=openai-pool' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1'
+```
+
+</RequestExample>
+
+### Query parameters
+
+<ParamField path="tag" type="string" required>
+Tag to look up. Channels are matched by exact tag equality.
+</ParamField>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": "gpt-4o,gpt-4o-mini,gpt-4.1"
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+Whether the lookup was executed.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+Error description when `success` is `false`; empty otherwise.
+</ResponseField>
+
+<ResponseField name="data" type="string" required>
+Comma-separated model names of the channel with the most models among the channels carrying the tag; an empty string when there is no such channel or none of them defines models.
+</ResponseField>
+
+<Note>
+Unlike most management endpoints, this one does not always return HTTP `200`: a missing `tag` yields HTTP `400` and a database failure yields HTTP `500`, both with a `success: false` body.
+</Note>
+
+## Error messages
+
+| Condition | Description |
+| --- | --- |
+| Tag required | The `tag` query parameter is missing (HTTP 400) |
+| Database error | Loading the channels failed; the raw error message is returned (HTTP 500) |

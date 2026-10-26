@@ -1,7 +1,325 @@
 ---
 title: 更新渠道
+description: 更新一个已存在的上游渠道，多 Key 渠道支持密钥覆盖或追加。
 api: "PUT /api/channel/"
 ---
 
-👨‍💼 需要管理员权限（Admin）
+更新一个已存在的渠道。请求体即渠道对象本身；只有非零值字段会被写入，不想修改的字段可以省略或传零值。服务端维护的元数据（`channel_info`）始终沿用数据库中已保存的值，响应返回更新后的渠道，且密钥被清空。
 
+需要**管理员（Admin）**权限。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
+
+## 请求
+
+<RequestExample>
+
+```bash cURL
+curl --request PUT \
+  --url 'https://your-nookmux-domain/api/channel/' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1' \
+  --header 'Content-Type: application/json' \
+  --data '{
+  "id": 1,
+  "name": "my-openai",
+  "models": "gpt-4o,gpt-4o-mini",
+  "group": "default,premium",
+  "priority": 10,
+  "weight": 5,
+  "status": 1
+}'
+```
+
+</RequestExample>
+
+### 请求体
+
+<ParamField path="body.id" type="integer" required>
+要更新的渠道 ID，不能为 `0`。
+</ParamField>
+
+<ParamField path="body.multi_key_mode" type="string">
+多 Key 渠道的新轮询策略：`random` 或 `polling`。仅在非空时生效；其他值会被拒绝。
+</ParamField>
+
+<ParamField path="body.key_mode" type="string">
+多 Key 渠道下 `key` 的应用方式：`replace`（默认行为，省略时相同）覆盖已存的密钥列表；`append` 先去除首尾空白并去重，再把新密钥合并进现有列表。单 Key 渠道忽略该字段。
+</ParamField>
+
+<ParamField path="body" type="object">
+要更新的渠道字段，结构与[添加渠道](/cn/nookmux/api/management/channel-management/channel-post)中的 `channel` 对象一致。以下为可编辑字段；`created_time`、`balance`、`used_quota`、`channel_info` 等服务端维护字段由服务端填充。
+
+  <Expandable title="channel 结构">
+    <ParamField path="type" type="integer">
+      渠道类型常量，例如 `1` 表示 OpenAI。省略或传未知值时沿用已存类型。
+    </ParamField>
+    <ParamField path="name" type="string">
+      渠道显示名称。省略时保持不变。
+    </ParamField>
+    <ParamField path="key" type="string">
+      上游 API 密钥。多 Key 渠道用换行分隔多个密钥；`key_mode: append` 时新密钥会合并进现有列表。省略或传空保持已存密钥不变。
+    </ParamField>
+    <ParamField path="base_url" type="string">
+      自定义上游 Base URL。留空时使用渠道类型内置的接口地址。
+    </ParamField>
+    <ParamField path="models" type="string">
+      该渠道支持的模型名列表，逗号分隔。
+    </ParamField>
+    <ParamField path="group" type="string">
+      可使用该渠道的用户分组，逗号分隔。
+    </ParamField>
+    <ParamField path="model_mapping" type="string">
+      模型名重定向的 JSON 对象，例如 `{"gpt-4o": "gpt-4o-2024-08-06"}`。
+    </ParamField>
+    <ParamField path="priority" type="integer">
+      路由优先级。多个渠道提供同一模型时优先使用数值更大的渠道。
+    </ParamField>
+    <ParamField path="weight" type="integer">
+      同优先级渠道之间的负载均衡权重。
+    </ParamField>
+    <ParamField path="status" type="integer">
+      渠道状态：`1` 启用，`2` 手动禁用，`3` 自动禁用。
+    </ParamField>
+    <ParamField path="test_model" type="string">
+      渠道测试所用的模型；当渠道不便暴露模型列表时用于连通性测试。
+    </ParamField>
+    <ParamField path="tag" type="string">
+      可选的渠道标签，用于控制台分组展示。
+    </ParamField>
+    <ParamField path="other" type="string">
+      渠道类型的附加选项。Vertex AI 渠道必须为含 `default` 键的区域 JSON 对象。
+    </ParamField>
+    <ParamField path="settings" type="string">
+      额外设置的 JSON 对象，例如 Azure 的 API 版本。
+    </ParamField>
+    <ParamField path="setting" type="string">
+      渠道运行时设置的 JSON 对象。
+    </ParamField>
+    <ParamField path="param_override" type="string">
+      请求转发上游前的参数覆盖 JSON 对象。
+    </ParamField>
+    <ParamField path="header_override" type="string">
+      追加或覆盖发往上游的请求头的 JSON 对象。
+    </ParamField>
+    <ParamField path="status_code_mapping" type="string">
+      上游 HTTP 状态码到 NookMux 返回状态码的映射 JSON 对象。
+    </ParamField>
+    <ParamField path="auto_ban" type="integer">
+      上游连续失败后是否自动禁用渠道：`1` 启用，`0` 关闭。
+    </ParamField>
+    <ParamField path="openai_organization" type="string">
+      OpenAI 类型渠道的 organization 头（`OpenAI-Organization`）。
+    </ParamField>
+    <ParamField path="remark" type="string">
+      自由备注，最长 255 字符。
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+## 响应
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": {
+    "id": 1,
+    "type": 1,
+    "key": "",
+    "openai_organization": null,
+    "test_model": "gpt-4o-mini",
+    "status": 1,
+    "name": "my-openai",
+    "weight": 5,
+    "created_time": 1718100000,
+    "test_time": 1718200000,
+    "response_time": 845,
+    "base_url": "",
+    "other": "",
+    "balance": 12.34,
+    "balance_updated_time": 1718250000,
+    "models": "gpt-4o,gpt-4o-mini",
+    "group": "default,premium",
+    "used_quota": 5000,
+    "model_mapping": null,
+    "status_code_mapping": "",
+    "priority": 10,
+    "auto_ban": 1,
+    "other_info": "",
+    "tag": "openai-pool",
+    "setting": null,
+    "param_override": null,
+    "header_override": null,
+    "remark": "",
+    "channel_info": {
+      "is_multi_key": false,
+      "multi_key_size": 0,
+      "multi_key_status_list": null,
+      "multi_key_polling_index": 0,
+      "multi_key_mode": "",
+      "is_plan": false,
+      "plan_name": ""
+    },
+    "settings": "",
+    "multi_key_mode": null,
+    "key_mode": null
+  }
+}
+```
+
+</ResponseExample>
+
+### 响应字段
+
+<ResponseField name="success" type="boolean" required>
+渠道是否更新成功。
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+`success` 为 `false` 时的错误描述；成功时为空字符串。
+</ResponseField>
+
+<ResponseField name="data" type="object">
+更新后的渠道。`key` 始终返回空字符串，`channel_info` 中的多 Key 禁用原因/时间明细会被剥离；`multi_key_mode` 与 `key_mode` 为请求字段的回显。
+
+  <Expandable title="channel 结构">
+    <ResponseField name="id" type="integer">
+      渠道 ID。
+    </ResponseField>
+    <ResponseField name="type" type="integer">
+      渠道类型常量。
+    </ResponseField>
+    <ResponseField name="key" type="string">
+      始终为空字符串；本接口不会返回已存密钥。
+    </ResponseField>
+    <ResponseField name="name" type="string">
+      渠道显示名称。
+    </ResponseField>
+    <ResponseField name="status" type="integer">
+      渠道状态：`1` 启用，`2` 手动禁用，`3` 自动禁用。
+    </ResponseField>
+    <ResponseField name="models" type="string">
+      逗号分隔的模型列表。
+    </ResponseField>
+    <ResponseField name="group" type="string">
+      可使用该渠道的分组，逗号分隔。
+    </ResponseField>
+    <ResponseField name="base_url" type="string">
+      自定义上游 Base URL，使用内置地址时为空。
+    </ResponseField>
+    <ResponseField name="model_mapping" type="string">
+      模型名重定向映射的 JSON 对象字符串。
+    </ResponseField>
+    <ResponseField name="priority" type="integer">
+      路由优先级。
+    </ResponseField>
+    <ResponseField name="weight" type="integer">
+      负载均衡权重。
+    </ResponseField>
+    <ResponseField name="tag" type="string">
+      渠道所属标签。
+    </ResponseField>
+    <ResponseField name="test_model" type="string">
+      渠道测试所用模型。
+    </ResponseField>
+    <ResponseField name="balance" type="number">
+      最近一次查询到的上游余额，币种以渠道上报为准。
+    </ResponseField>
+    <ResponseField name="balance_updated_time" type="integer">
+      最近一次余额刷新的 Unix 时间戳。
+    </ResponseField>
+    <ResponseField name="used_quota" type="integer">
+      该渠道已消耗的额度。
+    </ResponseField>
+    <ResponseField name="response_time" type="integer">
+      最近一次测试的响应时间，单位毫秒。
+    </ResponseField>
+    <ResponseField name="test_time" type="integer">
+      最近一次渠道测试的 Unix 时间戳。
+    </ResponseField>
+    <ResponseField name="created_time" type="integer">
+      渠道创建的 Unix 时间戳。
+    </ResponseField>
+    <ResponseField name="auto_ban" type="integer">
+      是否开启连续失败自动禁用：`1` 启用，`0` 关闭。
+    </ResponseField>
+    <ResponseField name="other" type="string">
+      渠道类型的附加选项（例如 Vertex AI 区域）。
+    </ResponseField>
+    <ResponseField name="settings" type="string">
+      额外设置 JSON，例如 Azure 的 API 版本。
+    </ResponseField>
+    <ResponseField name="setting" type="string">
+      渠道运行时设置 JSON。
+    </ResponseField>
+    <ResponseField name="param_override" type="string">
+      请求参数覆盖 JSON。
+    </ResponseField>
+    <ResponseField name="header_override" type="string">
+      上游请求头覆盖 JSON。
+    </ResponseField>
+    <ResponseField name="status_code_mapping" type="string">
+      上游状态码映射 JSON。
+    </ResponseField>
+    <ResponseField name="openai_organization" type="string">
+      OpenAI organization 头的值。
+    </ResponseField>
+    <ResponseField name="remark" type="string">
+      自由备注。
+    </ResponseField>
+    <ResponseField name="other_info" type="string">
+      服务端维护的附加运行信息。
+    </ResponseField>
+    <ResponseField name="multi_key_mode" type="string">
+      请求中 `multi_key_mode` 的回显；未发送时为 `null`。
+    </ResponseField>
+    <ResponseField name="key_mode" type="string">
+      请求中 `key_mode` 的回显；未发送时为 `null`。
+    </ResponseField>
+    <ResponseField name="channel_info" type="object">
+      多 Key 与套餐元数据，沿用数据库中已保存的值。
+
+      <Expandable title="channel_info 结构">
+        <ResponseField name="is_multi_key" type="boolean">
+          渠道是否聚合了多个密钥。
+        </ResponseField>
+        <ResponseField name="multi_key_size" type="integer">
+          多 Key 渠道的密钥数量。
+        </ResponseField>
+        <ResponseField name="multi_key_status_list" type="object">
+          密钥索引到状态（`1` 启用、`2` 手动禁用、`3` 自动禁用）的映射；未出现的条目为启用。
+        </ResponseField>
+        <ResponseField name="multi_key_mode" type="string">
+          轮询策略：`random` 或 `polling`。
+        </ResponseField>
+        <ResponseField name="multi_key_polling_index" type="integer">
+          `polling` 策略当前使用的索引。
+        </ResponseField>
+        <ResponseField name="is_plan" type="boolean">
+          渠道是否指向套餐类上游。
+        </ResponseField>
+        <ResponseField name="plan_name" type="string">
+          套餐渠道的套餐标识。
+        </ResponseField>
+      </Expandable>
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<Note>
+管理接口在业务失败时同样返回 HTTP `200`，必须以 `success` 字段判断结果。补丁式更新未携带 `type` 或 `settings` 时会继承已存值；Vertex AI 的 `other` 区域配置同理，因此无关字段的编辑不会因校验失败而被拒。多 Key 渠道在 `key_mode: append` 下，Vertex AI 渠道若 `key` 以 `[` 开头，会按 JSON 数组解析新密钥。
+</Note>
+
+## 错误说明
+
+| 条件 | 说明 |
+| --- | --- |
+| 请求体非法 | JSON 缺失或格式错误 |
+| 渠道 ID 非法 | `id` 缺失或为 `0` |
+| 渠道不存在 | 给定 `id` 的渠道不存在 |
+| 渠道设置非法 | `settings` 不是合法的 JSON 对象 |
+| 渠道类型非法 | `type` 未知或已不再支持 |
+| Vertex AI 区域非法 | `other` 缺失、不是合法 JSON 或缺少 `default` 键 |
+| 多 Key 模式非法 | `multi_key_mode` 非空但不是 `random` 或 `polling` |
+| 数据库错误 | 渠道落库失败，详见服务端日志 |

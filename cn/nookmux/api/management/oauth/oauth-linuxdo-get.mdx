@@ -1,11 +1,133 @@
 ---
 title: LinuxDO OAuth登录
+description: Linux DO 登录与账号绑定的 OAuth 回调，带最低信任等级校验。
 api: "GET /api/oauth/linuxdo"
 ---
 
-🔓 无需鉴权（OAuth回调）
+Linux DO OAuth 回调。NookMux 通过统一的 `GET /api/oauth/{provider}` 路由注册 Linux DO，此处 `provider=linuxdo`；用户在 Linux DO 完成授权后由浏览器重定向到本端点。端点根据调用方会话完成两种流程：
 
-实际运行时由通用路由 `GET /api/oauth/{provider}` 处理，此处 `provider=linuxdo`。
-必须携带由 `GET /api/oauth/state` 生成并保存在同一会话中的 `state`，以及 LinuxDO
-回调返回的 `code`。当前项目只注册了 `github` 和 `linuxdo` 两个 provider。
+- 未登录：查找或创建与该 Linux DO 身份关联的 NookMux 账号并登录（响应会设置登录会话 Cookie）。Linux DO 账号的信任等级须达到配置的最低值，登录才能继续。
+- 同一浏览器会话中已登录：将该 Linux DO 身份绑定到当前账号，返回 `action: "bind"`。
 
+在把用户重定向到 Linux DO 之前，前端必须先在同一会话中调用[生成 OAuth State](/cn/nookmux/api/management/oauth/oauth-state-get)，该调用返回的 `state` 必须经 Linux DO 原样回传到本端点。
+
+本端点为**公开（Public）**接口，无需访问令牌，但挂载了更严格的限流（CriticalRateLimit）。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
+
+## 请求
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url 'https://your-nookmux-domain/api/oauth/linuxdo?code=ld-oauth-code-xxxxxxxxxxxx&state=abc123def456'
+```
+
+</RequestExample>
+
+### 路径参数
+
+<ParamField path="provider" type="string" required>
+  OAuth 提供商名称。Linux DO 为 `linuxdo`。当前 NookMux 注册了两个提供商：`github` 与 `linuxdo`。
+</ParamField>
+
+### 查询参数
+
+<ParamField path="state" type="string" required>
+  由 `GET /api/oauth/state` 生成并保存在该会话中的 CSRF state。必须与会话 Cookie 中的值一致，否则返回 HTTP `403`。
+</ParamField>
+
+<ParamField path="code" type="string" required>
+  Linux DO 返回的授权码。服务端用它交换访问令牌并获取用户信息。
+</ParamField>
+
+<ParamField path="error" type="string">
+  授权失败时 Linux DO 传入的错误码。存在时端点直接返回 `success: false`，不再请求 Linux DO。
+</ParamField>
+
+<ParamField path="error_description" type="string">
+  Linux DO 传入的可读错误描述。`error` 存在时原样回填到 `message` 字段。
+</ParamField>
+
+## 响应
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": {
+    "id": 42,
+    "username": "linuxdoer_123456",
+    "display_name": "LinuxDOer",
+    "role": 1,
+    "status": 1,
+    "group": "default"
+  }
+}
+```
+
+</ResponseExample>
+
+### 响应字段
+
+<ResponseField name="success" type="boolean" required>
+  登录或绑定是否成功。
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  `success` 为 `false` 时的错误描述；绑定流程成功时为 `绑定成功`。
+</ResponseField>
+
+<ResponseField name="data" type="object" required>
+  内容随流程不同。
+
+  <Expandable title="登录 data 结构">
+    <ResponseField name="id" type="integer" required>
+      登录账号的用户 ID。
+    </ResponseField>
+    <ResponseField name="username" type="string" required>
+      登录用户名。新注册的 OAuth 用户由提供商用户名与提供商用户 ID 拼接生成。
+    </ResponseField>
+    <ResponseField name="display_name" type="string" required>
+      账号显示名称。
+    </ResponseField>
+    <ResponseField name="role" type="integer" required>
+      角色：`1` 普通用户，`10` 管理员，`100` 超级管理员。
+    </ResponseField>
+    <ResponseField name="status" type="integer" required>
+      账号状态：`1` 启用。
+    </ResponseField>
+    <ResponseField name="group" type="string" required>
+      账号所属用户分组。
+    </ResponseField>
+  </Expandable>
+
+  <Expandable title="绑定 data 结构">
+    <ResponseField name="action" type="string" required>
+      绑定流程恒为 `bind`，表示该 Linux DO 身份已附加到当前登录账号。
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<Note>
+  该接口挂载了更严格的限流（CriticalRateLimit）。登录成功时响应同时会设置控制台各端点使用的会话 Cookie。与多数管理接口不同，本端点有两种失败场景使用非 200 状态码：提供商未知返回 HTTP `400`，`state` 缺失或不匹配返回 HTTP `403`。管理员需先启用 Linux DO 登录，且 Linux DO 账号的信任等级不得低于配置的最低值。
+</Note>
+
+## 错误说明
+
+| 条件 | 说明 |
+| --- | --- |
+| 未知的 OAuth 提供商 | `provider` 未注册；HTTP `400` |
+| state 参数为空或不匹配 | `state` 缺失或与会话不一致；HTTP `403` |
+| 管理员未开启通过 Linux DO 登录以及注册 | Linux DO OAuth 未配置或未启用 |
+| 提供商错误 | Linux DO 传入 `error`/`error_description`；`error_description` 原样回填到 `message` |
+| 无法连接至 Linux DO 服务器，请稍后重试 | 交换令牌或获取资料时无法连接 Linux DO |
+| Linux DO 获取 Token 失败，请检查设置 | 授权码交换失败，例如授权码无效 |
+| Linux DO 获取用户信息为空，请检查设置 | 资料响应中没有有效的用户 ID |
+| Linux DO 信任等级未达到管理员设置的最低信任等级 | Linux DO 信任等级低于配置的最低值 |
+| 管理员关闭了新用户注册 | 没有匹配账号且自助注册已关闭 |
+| 用户已注销 | 关联账号已不存在 |
+| 用户已被封禁 | 关联账号未启用 |
+| 该 Linux DO 账户已被绑定 | 该 Linux DO 身份已被其他用户绑定 |
+| 数据库错误，请稍后重试 | 账号或绑定落库失败，详见服务端日志 |

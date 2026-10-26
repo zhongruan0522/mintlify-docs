@@ -1,7 +1,177 @@
 ---
 title: Manage Multiple Keys
+description: Inspect, enable, disable, and delete the individual keys of a multi-key channel.
 api: "POST /api/channel/multi_key/manage"
 ---
 
-👨‍💼 Admin privileges required
+Manage the individual keys of a multi-key channel through a single action-based endpoint: query key statuses with pagination and statistics, manually disable or re-enable single keys or all keys at once, delete a single key, or remove all auto-disabled keys. Only channels created in multi-key mode (`is_multi_key: true`) can be managed here.
 
+Requires **Admin** permissions. See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request POST \
+  --url 'https://your-nookmux-domain/api/channel/multi_key/manage' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1' \
+  --header 'Content-Type: application/json' \
+  --data '{
+  "channel_id": 1,
+  "action": "get_key_status",
+  "page": 1,
+  "page_size": 50
+}'
+```
+
+</RequestExample>
+
+### Body
+
+<ParamField path="body.channel_id" type="integer" required>
+ID of the multi-key channel to manage.
+</ParamField>
+
+<ParamField path="body.action" type="string" required>
+Operation to perform:
+
+- `get_key_status`: return the key status list with pagination and overall statistics.
+- `disable_key`: manually disable the key at `key_index` (status becomes `2`).
+- `enable_key`: re-enable the key at `key_index` and drop its disabled time and reason.
+- `enable_all_keys`: re-enable every key of the channel.
+- `disable_all_keys`: manually disable every currently enabled key.
+- `delete_key`: remove the key at `key_index` from the channel; the remaining keys are re-indexed.
+- `delete_disabled_keys`: remove every auto-disabled key (status `3`) from the channel.
+</ParamField>
+
+<ParamField path="body.key_index" type="integer">
+Index of the key to operate on, zero-based. Required for `disable_key`, `enable_key`, and `delete_key`; ignored otherwise. Must be within `0` to `multi_key_size - 1`.
+</ParamField>
+
+<ParamField path="body.page" type="integer" default="1">
+Page number for `get_key_status`; values of `0` or less fall back to `1`.
+</ParamField>
+
+<ParamField path="body.page_size" type="integer" default="50">
+Page size for `get_key_status`; values of `0` or less fall back to `50`.
+</ParamField>
+
+<ParamField path="body.status" type="integer">
+Filter for `get_key_status`: `1` enabled, `2` manually disabled, `3` auto-disabled. Omit to return keys of all statuses. The pagination applies to the filtered list; the statistics always cover all keys.
+</ParamField>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": {
+    "keys": [
+      {
+        "index": 0,
+        "status": 1,
+        "key_preview": "sk-xxxx1234..."
+      },
+      {
+        "index": 1,
+        "status": 3,
+        "disabled_time": 1718100000,
+        "reason": "quota used up",
+        "key_preview": "sk-xxxx5678..."
+      }
+    ],
+    "total": 8,
+    "page": 1,
+    "page_size": 50,
+    "total_pages": 1,
+    "enabled_count": 5,
+    "manual_disabled_count": 1,
+    "auto_disabled_count": 2
+  }
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+Whether the action was executed.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+Error description when `success` is `false`; a localized confirmation for mutating actions; empty for `get_key_status`.
+</ResponseField>
+
+<ResponseField name="data" type="object">
+Present only for `get_key_status` (the key status page) and `delete_disabled_keys` (an integer count of removed keys).
+
+  <Expandable title="get_key_status data structure">
+    <ResponseField name="keys" type="array">
+      Key status entries of the current page, after the optional `status` filter.
+
+      <Expandable title="key status structure">
+        <ResponseField name="index" type="integer">
+          Zero-based index of the key within the channel.
+        </ResponseField>
+        <ResponseField name="status" type="integer">
+          Key status: `1` enabled, `2` manually disabled, `3` auto-disabled.
+        </ResponseField>
+        <ResponseField name="disabled_time" type="integer">
+          Unix timestamp when the key was disabled; present only for disabled keys.
+        </ResponseField>
+        <ResponseField name="reason" type="string">
+          Why the key was disabled; present only for disabled keys.
+        </ResponseField>
+        <ResponseField name="key_preview" type="string">
+          First 10 characters of the key, suffixed with `...` when the key is longer. Never the full key.
+        </ResponseField>
+      </Expandable>
+    </ResponseField>
+    <ResponseField name="total" type="integer">
+      Number of keys matching the `status` filter.
+    </ResponseField>
+    <ResponseField name="page" type="integer">
+      Current page number, clamped to `total_pages`.
+    </ResponseField>
+    <ResponseField name="page_size" type="integer">
+      Effective page size.
+    </ResponseField>
+    <ResponseField name="total_pages" type="integer">
+      Number of pages for the filtered list, at least `1`.
+    </ResponseField>
+    <ResponseField name="enabled_count" type="integer">
+      Number of enabled keys across all keys of the channel.
+    </ResponseField>
+    <ResponseField name="manual_disabled_count" type="integer">
+      Number of manually disabled keys across all keys of the channel.
+    </ResponseField>
+    <ResponseField name="auto_disabled_count" type="integer">
+      Number of auto-disabled keys across all keys of the channel.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<Note>
+Management endpoints return HTTP `200` even on business failures; always check the `success` field. Mutating actions run under a per-channel lock, so concurrent calls for the same channel are serialized; the channel cache is refreshed after each mutation. Deleting a key re-indexes the remaining keys, and preserving key statuses requires at least one key to remain: `delete_key` refuses to remove the last key of a channel.
+</Note>
+
+## Error messages
+
+| Condition | Description |
+| --- | --- |
+| Invalid request body | The JSON body is missing or malformed |
+| Channel not found | No channel exists with the given `channel_id` |
+| Not a multi-key channel | `channel_info.is_multi_key` is `false` for the channel |
+| Key index required | `key_index` is missing for `disable_key`, `enable_key`, or `delete_key` |
+| Key index out of range | `key_index` is negative or not smaller than `multi_key_size` |
+| Last key cannot be deleted | `delete_key` targets the only remaining key |
+| No keys to disable | `disable_all_keys` finds no currently enabled key |
+| No auto-disabled keys to delete | `delete_disabled_keys` finds no auto-disabled key |
+| Operation unsupported | `action` is not one of the listed values |
+| Database error | Persisting the change failed; see server logs |

@@ -1,7 +1,69 @@
 ---
 title: 管理员完成充值
+description: 手动完成一笔待支付的在线充值订单并给用户入账，带订单级互斥与幂等处理。
 api: "POST /api/user/topup/complete"
 ---
 
-👨‍💼 需要管理员权限（Admin）
+手动完成一笔待支付的在线充值订单并为用户入账，例如支付网关回调丢失的场景。调用期间订单会被加锁以防止并发补单；订单已是 `success` 时直接返回成功，不会重复入账。
 
+入账额度按渠道计算：Stripe 订单按 `money` 乘以额度单位换算入账，其他订单按 `amount` 乘以换算入账（默认 500,000 额度折合 $1）。入账后会为该用户记录一条充值日志。
+
+需要**管理员（Admin）**权限。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
+
+## 请求
+
+<RequestExample>
+
+```bash cURL
+curl --request POST \
+  --url 'https://your-nookmux-domain/api/user/topup/complete' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1' \
+  --header 'Content-Type: application/json' \
+  --data '{
+  "trade_no": "USR2NOab12cd1761234567"
+}'
+```
+
+</RequestExample>
+
+### 请求体
+
+<ParamField path="body.trade_no" type="string" required>
+要补单的充值订单号，可通过 `GET /api/user/topup` 获取。
+</ParamField>
+
+## 响应
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": null
+}
+```
+
+</ResponseExample>
+
+### 响应字段
+
+<ResponseField name="success" type="boolean" required>
+订单是否已完成（或此前已完成）。
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+`success` 为 `false` 时的错误描述；成功时为空字符串。
+</ResponseField>
+
+<ResponseField name="data" type="null">
+本接口恒为 `null`。
+</ResponseField>
+
+## 错误说明
+
+| 条件 | 说明 |
+| --- | --- |
+| 参数非法 | JSON 请求体缺失、格式错误，或 `trade_no` 为空 |
+| 数据库错误 | 补单失败：订单不存在、订单状态既非 `pending` 也非 `success`、入账额度超出平台整数范围，或数据库写入失败。以上情况均通过通用数据库错误消息返回，具体原因见服务端日志 |

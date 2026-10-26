@@ -1,7 +1,60 @@
 ---
 title: 获取邀请码
+description: 返回当前用户的邀请码，对尚无邀请码的历史账号会即时生成一个。
 api: "GET /api/user/aff"
 ---
 
-🔐 需要登录（User权限）
+返回当前登录用户的邀请码。新用户注册时填写该邀请码即成为本用户的被邀请人并触发邀请奖励。若账号尚未生成邀请码，接口会先生成一个 4 位随机邀请码并保存，再返回。
 
+需要**用户（User）**权限（任意登录用户）。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
+
+## 请求
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url 'https://your-nookmux-domain/api/user/aff' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1'
+```
+
+</RequestExample>
+
+## 响应
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": "ab12"
+}
+```
+
+</ResponseExample>
+
+### 响应字段
+
+<ResponseField name="success" type="boolean" required>
+是否成功返回邀请码。
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+`success` 为 `false` 时的错误描述；成功时为空字符串。
+</ResponseField>
+
+<ResponseField name="data" type="string">
+当前用户的邀请码，长度 4 个字符。
+</ResponseField>
+
+<Note>
+新用户的邀请码通常在注册时自动生成。本接口只会为邀请码为空的历史账号即时补生成。
+</Note>
+
+## 错误说明
+
+| 条件 | 说明 |
+| --- | --- |
+| 数据库错误 | 加载用户信息或保存新生成的邀请码失败 |

@@ -1,7 +1,121 @@
 ---
 title: Search Models
+description: Search model metadata by keyword and vendor filter with pagination.
 api: "GET /api/models/search"
 ---
 
-👨‍💼 Requires Admin Permissions
+Search model metadata records with a keyword and a vendor filter, returning one page of enriched model entries plus the total number of matches. The keyword matches `model_name` and `tags`; the vendor filter accepts either a vendor ID or a vendor name fragment.
 
+Requires **Admin** permissions. See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url 'https://your-nookmux-domain/api/models/search?keyword=gpt&vendor=1&p=1&page_size=10' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1'
+```
+
+</RequestExample>
+
+### Query parameters
+
+<ParamField path="keyword" type="string">
+Keyword matched against `model_name` and `tags` (substring match). Empty disables the keyword filter.
+</ParamField>
+
+<ParamField path="vendor" type="string">
+Vendor filter. An integer value filters by vendor ID; any other value matches vendors whose name contains the string. Empty disables the filter.
+</ParamField>
+
+<ParamField path="p" type="integer" default="1">
+Page number, starting at `1`.
+</ParamField>
+
+<ParamField path="page_size" type="integer" default="10">
+Page size, capped at `100`. The legacy aliases `ps` and `size` are accepted when `page_size` is absent.
+</ParamField>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": {
+    "page": 1,
+    "page_size": 10,
+    "total": 1,
+    "items": [
+      {
+        "id": 42,
+        "model_name": "gpt-4o",
+        "description": "OpenAI flagship multimodal model",
+        "icon": "openai",
+        "tags": "llm,chat",
+        "vendor_id": 1,
+        "endpoints": "[\"openai\",\"anthropic\"]",
+        "context_length": 128000,
+        "max_output_tokens": 16384,
+        "input_modalities": ["text", "image"],
+        "output_modalities": ["text"],
+        "knowledge_cutoff": "2023-10",
+        "release_date": "2024-05-13",
+        "parameter_count": "unknown",
+        "status": 1,
+        "created_time": 1715587200,
+        "updated_time": 1718100000,
+        "name_rule": 0,
+        "bound_channels": [
+          { "name": "my-openai", "type": 1 }
+        ],
+        "enable_groups": ["default"],
+        "quota_types": [0]
+      }
+    ]
+  }
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+Whether the search was executed.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+Error description when `success` is `false`; empty otherwise.
+</ResponseField>
+
+<ResponseField name="data.page" type="integer" required>
+Current page number.
+</ResponseField>
+
+<ResponseField name="data.page_size" type="integer" required>
+Page size applied to this request.
+</ResponseField>
+
+<ResponseField name="data.total" type="integer" required>
+Total number of records matching the filters.
+</ResponseField>
+
+<ResponseField name="data.items" type="array" required>
+Page of model metadata entries, sorted by ID descending and enriched with binding information. The field structure is identical to [Get All Model Metadata](/nookmux/api/management/model-management/models-get).
+</ResponseField>
+
+<Note>
+Management endpoints return HTTP `200` even on business failures; always check the `success` field.
+</Note>
+
+## Error messages
+
+| Condition | Description |
+| --- | --- |
+| Database error | The search query failed; see server logs |

@@ -1,7 +1,117 @@
 ---
 title: Get All Quota Data
+description: Query the pre-aggregated usage dashboard (quota data) for all users, optionally filtered by username.
 api: "GET /api/data/"
 ---
 
-👨‍💼 Requires Admin Permissions (Admin)
+Returns the pre-aggregated dashboard dataset used by the console quota charts. Rows are aggregated per model name and hourly time bucket across all users; pass `username` to restrict the aggregation to one user. The underlying `quota_data` table is flushed periodically from request logs, so recent usage may lag by the configured export interval.
 
+Requires **Admin** permissions. See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url 'https://your-nookmux-domain/api/data/?start_timestamp=1735689600&end_timestamp=1738368000' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1'
+```
+
+</RequestExample>
+
+### Query parameters
+
+<ParamField path="start_timestamp" type="integer">
+  Unix timestamp (seconds) of the range start, compared against the hourly bucket timestamps. Optional; omit or pass `0` to skip the lower bound.
+</ParamField>
+
+<ParamField path="end_timestamp" type="integer">
+  Unix timestamp (seconds) of the range end. Optional; omit or pass `0` to skip the upper bound.
+</ParamField>
+
+<ParamField path="username" type="string">
+  Restrict the aggregation to a single username. Optional; when omitted, rows are aggregated across all users.
+</ParamField>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": [
+    {
+      "id": 0,
+      "user_id": 0,
+      "username": "",
+      "model_name": "gpt-4o",
+      "created_at": 1769472000,
+      "token_used": 12345,
+      "count": 10,
+      "fail_count": 1,
+      "quota": 5000
+    }
+  ]
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+  Whether the query succeeded.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  Error description when `success` is `false`; empty otherwise.
+</ResponseField>
+
+<ResponseField name="data" type="array" required>
+  Aggregated usage rows, one per `model_name` and hourly `created_at` bucket.
+
+  <Expandable title="quota data row structure">
+    <ResponseField name="model_name" type="string" required>
+      Model name the row aggregates.
+    </ResponseField>
+    <ResponseField name="created_at" type="integer" required>
+      Unix timestamp (seconds) of the hourly bucket.
+    </ResponseField>
+    <ResponseField name="count" type="integer" required>
+      Number of successful requests in the bucket.
+    </ResponseField>
+    <ResponseField name="fail_count" type="integer" required>
+      Number of failed requests in the bucket.
+    </ResponseField>
+    <ResponseField name="token_used" type="integer" required>
+      Total tokens consumed in the bucket.
+    </ResponseField>
+    <ResponseField name="quota" type="integer" required>
+      Total quota consumed in the bucket.
+    </ResponseField>
+    <ResponseField name="id" type="integer" required>
+      Always `0`: rows are aggregated, so the row identity is not populated.
+    </ResponseField>
+    <ResponseField name="user_id" type="integer" required>
+      Always `0`: this endpoint aggregates across users.
+    </ResponseField>
+    <ResponseField name="username" type="string" required>
+      Always empty: this endpoint aggregates across users.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<Note>
+  When the quota-data dashboard is disabled in the dashboard configuration, the endpoint returns `success: true` with the message `Quota data is disabled` and an empty `data` array instead of an error. When both timestamps are provided, the range must not exceed the configured maximum (31 days by default); the rejection message text is fixed regardless of the configured maximum.
+</Note>
+
+## Error messages
+
+| Condition | Description |
+| --- | --- |
+| The time range cannot exceed 1 month | `end_timestamp - start_timestamp` exceeds the configured maximum query window |
+| Database error, please try again later | Querying `quota_data` failed; see server logs |

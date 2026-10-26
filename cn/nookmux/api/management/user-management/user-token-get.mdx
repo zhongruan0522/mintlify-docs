@@ -1,7 +1,62 @@
 ---
 title: 生成访问令牌
+description: 为当前用户生成新的系统访问令牌，替换原有令牌。
 api: "GET /api/user/token"
 ---
 
-🔐 需要登录（User权限）
+为当前用户生成新的系统访问令牌并写入账号，替换原有令牌。该令牌配合 `Authorization: Bearer` 请求头与 `New-Api-User` 头用于管理接口的鉴权。
 
+需要**用户（User）**权限（任意登录用户）。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
+
+## 请求
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url 'https://your-nookmux-domain/api/user/token' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 2'
+```
+
+</RequestExample>
+
+## 响应
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": "nF8w3Yh2VtqLxKdR9sZm4Pb6CgJ5TaE1"
+}
+```
+
+</ResponseExample>
+
+### 响应字段
+
+<ResponseField name="success" type="boolean" required>
+令牌是否生成成功。
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+`success` 为 `false` 时的错误描述；成功时为空字符串。
+</ResponseField>
+
+<ResponseField name="data" type="string" required>
+新生成的访问令牌，为随机生成的字符串。
+</ResponseField>
+
+<Note>
+生成新令牌会使原有令牌立即失效。该令牌以用户自身的权限级别访问管理接口，须妥善保管；`GET /api/user/self` 等其他接口不会返回它。
+</Note>
+
+## 错误说明
+
+| 条件 | 说明 |
+| --- | --- |
+| 生成失败 | 生成随机密钥失败 |
+| 数据库错误 | 加载用户或保存令牌失败，详见服务端日志 |
+| 令牌重复 | 随机生成的令牌已存在于其他账号（概率极低），请重试 |

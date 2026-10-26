@@ -49,3 +49,6 @@ temp/
 
 .claude/
 .spec-workflow/
+
+# Mintlify build artifacts
+src/

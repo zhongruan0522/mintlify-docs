@@ -1,7 +1,186 @@
 ---
 title: 获取令牌使用情况
+description: 查询 Authorization 头中所携带令牌密钥的额度与用量汇总。
 api: "GET /api/usage/token/"
 ---
 
-🔑 需要令牌认证（TokenAuth）
+返回请求所携带的 API 令牌的限额模式、消耗情况与重置时间。该接口直接用令牌密钥本身鉴权——`Authorization` 头必须携带令牌密钥（例如 `sk-xxxx`），而不是管理用的系统访问令牌。
 
+令牌由只读令牌鉴权中间件解析。管理接口的通用鉴权模型参见[身份认证](/cn/nookmux/api/management/auth)。
+
+<Note>
+该路由挂载了严格限流（CriticalRateLimit）。与其他管理接口不同：成功响应的外层字段是 `code` 而不是 `success`，鉴权失败返回 HTTP `401` / `403` 而不是 `200`。
+</Note>
+
+## 请求
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url 'https://your-nookmux-domain/api/usage/token/' \
+  --header 'Authorization: Bearer sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
+```
+
+</RequestExample>
+
+### 请求头
+
+<ParamField path="header.Authorization" type="string" required>
+  API 令牌密钥，格式为 `Bearer sk-xxxx`。
+</ParamField>
+
+## 响应
+
+<ResponseExample>
+
+```json 200
+{
+  "code": true,
+  "message": "Authorized",
+  "data": {
+    "object": "token_usage",
+    "name": "my-token",
+    "total_granted": 500000,
+    "total_used": 0,
+    "total_available": 500000,
+    "unlimited_quota": false,
+    "model_limits": {},
+    "model_limits_enabled": false,
+    "expires_at": 0,
+    "quota_type": 1,
+    "created_time": 1748000000,
+    "accessed_time": 1748086400,
+    "window_hours": 0,
+    "window_quota": 0,
+    "window_used_quota": 0,
+    "window_start_hour": 0,
+    "window_start_time": 0,
+    "window_next_reset_time": 0,
+    "cycle_days": 0,
+    "cycle_quota": 0,
+    "cycle_used_quota": 0,
+    "cycle_start_time": 0,
+    "cycle_next_reset_time": 0
+  }
+}
+```
+
+</ResponseExample>
+
+### 响应字段
+
+<ResponseField name="code" type="boolean" required>
+  旧版成功标志；令牌鉴权通过时为 `true`。该接口成功响应的外层字段是 `code` 而不是 `success`。
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  成功时为 `Authorized`；否则为错误描述。
+</ResponseField>
+
+<ResponseField name="data.object" type="string" required>
+  固定值 `token_usage`。
+</ResponseField>
+
+<ResponseField name="data.name" type="string" required>
+  令牌显示名称。
+</ResponseField>
+
+<ResponseField name="data.total_granted" type="integer" required>
+  当前生效限制的授予额度：类型 `0`、`1` 为永久额度（`remain_quota + used_quota`），类型 `2` 为窗口额度，类型 `3` 为窗口与周期中更具约束力的一侧。
+</ResponseField>
+
+<ResponseField name="data.total_used" type="integer" required>
+  与 `total_granted` 同一口径的已消耗额度。达到重置条件的窗口/周期计数按 `0` 上报。
+</ResponseField>
+
+<ResponseField name="data.total_available" type="integer" required>
+  与 `total_granted` 同一口径的剩余额度，不会为负。
+</ResponseField>
+
+<ResponseField name="data.unlimited_quota" type="boolean" required>
+  是否为无限额度令牌。
+</ResponseField>
+
+<ResponseField name="data.model_limits" type="object" required>
+  该令牌允许调用的模型名到 `true` 的映射；未配置限制时为空对象。
+</ResponseField>
+
+<ResponseField name="data.model_limits_enabled" type="boolean" required>
+  是否对该令牌启用 `model_limits` 模型限制。
+</ResponseField>
+
+<ResponseField name="data.expires_at" type="integer" required>
+  令牌过期时间的 Unix 时间戳（秒）；永不过期时为 `0`。
+</ResponseField>
+
+<ResponseField name="data.quota_type" type="integer" required>
+  生效的限额模式：`0` 无限额度，`1` 永久限额，`2` 时段限额，`3` 时段+周期限额。未设置 `quota_type` 的旧令牌在非无限额度时按 `1` 上报。
+</ResponseField>
+
+<ResponseField name="data.created_time" type="integer" required>
+  令牌创建时间的 Unix 时间戳（秒）。
+</ResponseField>
+
+<ResponseField name="data.accessed_time" type="integer" required>
+  密钥最近一次使用时间的 Unix 时间戳（秒）。
+</ResponseField>
+
+<ResponseField name="data.window_hours" type="integer" required>
+  每个额度窗口的时长（小时）。
+</ResponseField>
+
+<ResponseField name="data.window_quota" type="integer" required>
+  每个窗口的额度。
+</ResponseField>
+
+<ResponseField name="data.window_used_quota" type="integer" required>
+  当前窗口已用额度。
+</ResponseField>
+
+<ResponseField name="data.window_start_hour" type="integer" required>
+  窗口对齐的小时（`0`-`23`）。
+</ResponseField>
+
+<ResponseField name="data.window_start_time" type="integer" required>
+  当前窗口开始时间的 Unix 时间戳（秒）。
+</ResponseField>
+
+<ResponseField name="data.window_next_reset_time" type="integer" required>
+  当前窗口结束（窗口额度重置）的 Unix 时间戳（秒）；限额模式不含窗口（`quota_type` 为 `0` 或 `1`）时为 `0`。
+</ResponseField>
+
+<ResponseField name="data.cycle_days" type="integer" required>
+  每个额度周期的天数。
+</ResponseField>
+
+<ResponseField name="data.cycle_quota" type="integer" required>
+  每个周期的额度。
+</ResponseField>
+
+<ResponseField name="data.cycle_used_quota" type="integer" required>
+  当前周期已用额度。
+</ResponseField>
+
+<ResponseField name="data.cycle_start_time" type="integer" required>
+  当前周期开始时间的 Unix 时间戳（秒）。
+</ResponseField>
+
+<ResponseField name="data.cycle_next_reset_time" type="integer" required>
+  当前周期结束（周期额度重置）的 Unix 时间戳（秒）；限额模式不含周期（`quota_type` 不为 `3`）时为 `0`。
+</ResponseField>
+
+<Note>
+  窗口与周期的重置时间由服务端按锚点计算（窗口按 `window_start_hour` 对齐固定网格；周期从 `cycle_start_time` 起算），客户端无需自行实现锚点逻辑。
+</Note>
+
+## 错误说明
+
+| 条件 | 状态码 | 说明 |
+| --- | --- | --- |
+| 缺少 Authorization 请求头 | `401` | 未携带 `Authorization` 请求头 |
+| 无效的 Bearer 令牌 | `401` | 请求头不是 `Bearer <key>` 格式 |
+| 无效令牌 | `401` | 密钥未匹配到任何令牌 |
+| 用户被封禁 | `403` | 令牌所属用户已被禁用 |
+| 获取令牌信息失败 | `200` | 时段/周期模式下的令牌重载失败；以 `success: false` 返回 |
+| 数据库错误 | `500` | 加载令牌所属用户缓存失败 |

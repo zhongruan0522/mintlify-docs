@@ -1,7 +1,60 @@
 ---
 title: Delete Disabled Channels
+description: Delete every channel that is currently disabled, manually or automatically.
 api: "DELETE /api/channel/disabled"
 ---
 
-👨‍💼 Admin privileges required
+Delete all channels whose status is manually disabled (`2`) or auto-disabled (`3`) in a single operation. Enabled channels are never touched. After deletion the in-memory channel cache is reloaded and the operation is recorded in the admin audit log.
 
+Requires **Admin** permissions. See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request DELETE \
+  --url 'https://your-nookmux-domain/api/channel/disabled' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1'
+```
+
+</RequestExample>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": 7
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+  Whether the deletion succeeded.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  Error description when `success` is `false`; empty otherwise.
+</ResponseField>
+
+<ResponseField name="data" type="integer" required>
+  Number of channels deleted.
+</ResponseField>
+
+<Note>
+  Management endpoints return HTTP `200` even on business failures; always check the `success` field. When no channel is disabled, `data` is `0`.
+</Note>
+
+## Error messages
+
+| Condition | Description |
+| --- | --- |
+| Database error | Deleting the disabled channels failed; see server logs |

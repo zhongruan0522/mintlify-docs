@@ -1,7 +1,105 @@
 ---
 title: 开始注册Passkey
+description: 发起 WebAuthn 注册流程，获取用于绑定新 Passkey 的创建参数。
 api: "POST /api/user/passkey/register/begin"
 ---
 
-🔐 需要登录（User权限）
+为当前用户发起 WebAuthn 注册流程的前半段。服务端生成挑战值（challenge）、把用户已绑定的凭据加入排除列表，将挑战值和可选的设备名存入会话，并返回浏览器传给 `navigator.credentials.create()` 的创建参数。
 
+需要**用户（User）**权限（任意登录用户）。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
+
+## 请求
+
+<RequestExample>
+
+```bash cURL
+curl --request POST \
+  --url 'https://your-nookmux-domain/api/user/passkey/register/begin' \
+  --header 'Cookie: session={session_cookie}' \
+  --header 'New-Api-User: 1' \
+  --header 'Content-Type: application/json' \
+  --data '{
+  "device_name": "MacBook Touch ID"
+}'
+```
+
+</RequestExample>
+
+### 请求体
+
+<ParamField path="body.device_name" type="string">
+新凭据的友好名称，展示在 Passkey 列表中。可选：前后空白会被去除，最长 255 字符；省略或为空时不存储设备名。
+</ParamField>
+
+## 响应
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": {
+    "options": {
+      "publicKey": {
+        "challenge": "hK0dF2vQ8xN3mZ7bT1wY5cR9jL4pA6sD",
+        "rp": {
+          "id": "your-nookmux-domain",
+          "name": "NookMux"
+        },
+        "user": {
+          "id": "Mg",
+          "name": "alice",
+          "displayName": "alice"
+        },
+        "pubKeyCredParams": [
+          {
+            "type": "public-key",
+            "alg": -7
+          }
+        ],
+        "excludeCredentials": [],
+        "attestation": "none"
+      }
+    }
+  }
+}
+```
+
+</ResponseExample>
+
+### 响应字段
+
+<ResponseField name="success" type="boolean" required>
+注册流程是否成功发起。
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+`success` 为 `false` 时的错误描述；成功时为空字符串。
+</ResponseField>
+
+<ResponseField name="data.options" type="object" required>
+遵循标准 WebAuthn `PublicKeyCredentialCreationOptions` 结构的创建参数：服务端生成的 `challenge`、依赖方信息（`rp`）、用户实体（`user`）、可接受的算法参数（`pubKeyCredParams`），以及列出该用户已绑定凭据的 `excludeCredentials`（让认证器跳过它们）。上例为 condensed 结构示意，协议内部字段以 WebAuthn 标准与服务端 Passkey 设置为准。
+</ResponseField>
+
+<Note>
+调用本接口前需满足：
+
+- 服务端 Passkey 设置中已启用 Passkey 功能。
+- 用户持有有效的会话登录；仅用 Access Token 鉴权会被拒绝并返回 HTTP `401`。
+- 启用 2FA 时，需先完成不超过 5 分钟的 `2fa` 方式二次验证（`POST /api/verify`）。
+- 已绑定 Passkey 数量须低于 `max_passkeys`（可通过 `GET /api/user/passkey` 查询）。
+
+挑战值与设备名保存在服务端会话中，因此 `POST /api/user/passkey/register/finish` 必须在同一会话中发起，且会将其消费掉。
+</Note>
+
+## 错误说明
+
+| 条件 | 说明 |
+| --- | --- |
+| 管理员未启用 Passkey 登录 | 服务端设置中未启用 Passkey 功能 |
+| 未登录 / 用户被禁用 | 会话无法解析，返回 HTTP `401` |
+| 需先完成安全验证 | 已启用 2FA 但没有有效的 2FA 方式二次验证 |
+| 达到 Passkey 数量上限 | 用户绑定的 Passkey 已达上限 |
+| 无法创建 Passkey 凭据 | 构建 WebAuthn 依赖方、生成注册流程或保存会话状态失败，详见服务端日志 |
+| 数据库错误 | 统计或加载已绑定凭据失败，详见服务端日志 |

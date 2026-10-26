@@ -1,7 +1,99 @@
 ---
 title: 编辑标签渠道
+description: 批量编辑同一标签下的渠道，支持重命名标签并覆盖共享配置。
 api: "PUT /api/channel/tag"
 ---
 
-👨‍💼 需要管理员权限（Admin）
+批量编辑携带指定标签的全部渠道：重命名标签，或一次性更新共享的模型映射、模型列表、分组、参数覆盖与请求头覆盖。只有发送的字段才会被应用；修改 `models` 或 `groups` 会重建受影响渠道路由能力。
 
+需要**管理员（Admin）**权限。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
+
+## 请求
+
+<RequestExample>
+
+```bash cURL
+curl --request PUT \
+  --url 'https://your-nookmux-domain/api/channel/tag' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1' \
+  --header 'Content-Type: application/json' \
+  --data '{
+  "tag": "openai-pool",
+  "new_tag": "openai-main",
+  "models": "gpt-4o,gpt-4o-mini",
+  "groups": "default,premium",
+  "model_mapping": "{\"gpt-4o\": \"gpt-4o-2024-08-06\"}",
+  "param_override": "{\"max_tokens\": 4096}",
+  "header_override": "{\"X-Custom\": \"value\"}"
+}'
+```
+
+</RequestExample>
+
+### 请求体
+
+<ParamField path="body.tag" type="string" required>
+标识要编辑渠道的标签，按标签精确匹配。
+</ParamField>
+
+<ParamField path="body.new_tag" type="string">
+新的标签值。仅在存在且与 `tag` 不同时应用，相当于给全部匹配渠道重命名标签。
+</ParamField>
+
+<ParamField path="body.model_mapping" type="string">
+模型名重定向的 JSON 对象。仅在存在且非空时应用。
+</ParamField>
+
+<ParamField path="body.models" type="string">
+逗号分隔的模型列表。仅在存在且非空时应用；会重建受影响渠道路由能力。
+</ParamField>
+
+<ParamField path="body.groups" type="string">
+可使用这些渠道的用户分组，逗号分隔。仅在存在且非空时应用；会重建受影响渠道路由能力。
+</ParamField>
+
+<ParamField path="body.param_override" type="string">
+请求转发上游前的参数覆盖 JSON 对象。只要存在即应用；传空字符串清除覆盖，非空值必须是合法 JSON。
+</ParamField>
+
+<ParamField path="body.header_override" type="string">
+追加或覆盖发往上游的请求头的 JSON 对象。只要存在即应用；传空字符串清除覆盖，非空值必须是合法 JSON。
+</ParamField>
+
+## 响应
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": ""
+}
+```
+
+</ResponseExample>
+
+### 响应字段
+
+<ResponseField name="success" type="boolean" required>
+渠道是否更新成功。
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+`success` 为 `false` 时的错误描述；成功时为空字符串。
+</ResponseField>
+
+<Note>
+管理接口在业务失败时同样返回 HTTP `200`，必须以 `success` 字段判断结果。变更完成后渠道缓存会立即刷新。`models` 或 `groups` 变更时为每个受影响渠道重建路由能力；其他编辑只更新能力记录的标签。
+</Note>
+
+## 错误说明
+
+| 条件 | 说明 |
+| --- | --- |
+| 请求体非法 | JSON 缺失或格式错误 |
+| 标签必填 | `tag` 为空 |
+| 参数覆盖非法 | `param_override` 非空但不是合法 JSON |
+| 请求头覆盖非法 | `header_override` 非空但不是合法 JSON |
+| 数据库错误 | 变更落库失败，详见服务端日志 |

@@ -1,7 +1,153 @@
 ---
 title: Manage User Status
+description: Enable, disable, delete, promote, demote a user, or adjust the user's quota in one call.
 api: "POST /api/user/manage"
 ---
 
-👨‍💼 Admin privileges required
+Performs a management action on a single user. Supported actions are `disable`, `enable`, `delete` (soft delete), `promote`, `demote`, and `add_quota`. A non-root admin can only act on users with a strictly lower role. Quota adjustments and every successful action are recorded in the audit log.
 
+Requires **Admin** permissions. See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request POST \
+  --url 'https://your-nookmux-domain/api/user/manage' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1' \
+  --header 'Content-Type: application/json' \
+  --data '{
+  "id": 2,
+  "action": "disable",
+  "remark": "violation of terms"
+}'
+```
+
+</RequestExample>
+
+### Body
+
+<ParamField path="body.id" type="integer" required>
+ID of the target user.
+</ParamField>
+
+<ParamField path="body.action" type="string" required>
+Action to perform:
+
+- `disable`: set the account status to disabled (`2`). The root account cannot be disabled.
+- `enable`: set the account status to enabled (`1`).
+- `delete`: soft-delete the account. The root account cannot be deleted.
+- `promote`: promote a common user to admin (role `10`). Only the root admin can promote.
+- `demote`: demote an admin to common user (role `1`). The root account cannot be demoted.
+- `add_quota`: adjust the user's quota as specified by `mode` and `value`.
+</ParamField>
+
+<ParamField path="body.mode" type="string">
+Quota adjustment mode, required when `action` is `add_quota`:
+
+- `add`: add `value` to the current quota.
+- `subtract`: subtract `value` from the current quota; rejected when `value` exceeds the current quota.
+- `override`: set the quota to `value`; rejected when `value` exceeds the platform upper limit of 100,000,000 units (500,000 quota per unit by default).
+</ParamField>
+
+<ParamField path="body.value" type="integer">
+Quota amount for `add_quota`, in quota units (500,000 quota equals $1 by default). Must not be negative.
+</ParamField>
+
+<ParamField path="body.remark" type="string">
+Optional ban note for the `disable` action, stored in the user's `remark` field. Leading and trailing whitespace is trimmed and the length is limited to 255 characters.
+</ParamField>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": {
+    "id": 0,
+    "username": "",
+    "original_password": "",
+    "display_name": "",
+    "role": 1,
+    "status": 2,
+    "email": "",
+    "github_id": "",
+    "verification_code": "",
+    "quota": 0,
+    "used_quota": 0,
+    "request_count": 0,
+    "group": "",
+    "aff_code": "",
+    "aff_count": 0,
+    "aff_quota": 0,
+    "aff_history_quota": 0,
+    "inviter_id": 0,
+    "DeletedAt": null,
+    "linux_do_id": "",
+    "stripe_customer": "",
+    "image_converted_count": 0,
+    "video_converted_count": 0,
+    "created_at": 0,
+    "last_login_at": 0
+  }
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+Whether the action was applied.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+Error description when `success` is `false`; empty otherwise.
+</ResponseField>
+
+<ResponseField name="data" type="object">
+  <Expandable title="data structure">
+    <ResponseField name="role" type="integer" required>
+      Role of the target user after the action. Populated for all actions except `add_quota`.
+    </ResponseField>
+    <ResponseField name="status" type="integer" required>
+      Status of the target user after the action. Populated for all actions except `add_quota`.
+    </ResponseField>
+    <ResponseField name="id" type="integer" required>
+      User ID. Populated only for the `add_quota` action.
+    </ResponseField>
+    <ResponseField name="username" type="string" required>
+      Username. Populated only for the `add_quota` action.
+    </ResponseField>
+    <ResponseField name="quota" type="integer" required>
+      Quota after the adjustment. Populated only for the `add_quota` action.
+    </ResponseField>
+    <ResponseField name="used_quota" type="integer" required>
+      Consumed quota. Populated only for the `add_quota` action.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<Note>
+The `data` object uses the user structure; the fields not listed above are always returned as zero values. For `add_quota`, `role` and `status` are zero; for every other action, `id`, `username`, `quota`, and `used_quota` are zero.
+</Note>
+
+## Error messages
+
+| Condition | Description |
+| --- | --- |
+| Invalid parameters | The JSON body is malformed, `action` or `mode` is unknown, or `value` is negative |
+| Remark too long | `remark` exceeds 255 characters |
+| User does not exist | No user matches `id` |
+| No permission | The caller is not root and the target user has the same or a higher role |
+| Cannot disable super administrator | `action` is `disable` and the target is the root user |
+| Cannot delete super administrator | `action` is `delete` and the target is the root user |
+| Cannot promote | `action` is `promote` and the caller is not root, or the target is already an admin |
+| Cannot demote | `action` is `demote` and the target is root or already a common user |
+| Quota out of range | `subtract` exceeds the current quota, `add` would overflow, or `override` exceeds the upper limit |
+| Database error | Persisting the change failed; see server logs |

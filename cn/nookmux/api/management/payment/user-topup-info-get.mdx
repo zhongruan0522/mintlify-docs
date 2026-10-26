@@ -1,7 +1,106 @@
 ---
 title: 获取充值信息
+description: 控制台充值页配置——可用支付方式、最低充值数量、预设金额选项与折扣。
 api: "GET /api/user/topup/info"
 ---
 
-🔐 需要登录（User权限）
+返回控制台充值页渲染所需的全部配置：可用的支付方式、在线（易支付）与 Stripe 充值是否可用、最低充值数量、预设金额选项与折扣，以及站外手动充值链接。
 
+需要**用户（User）**权限（任意已登录账号）。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
+
+## 请求
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url 'https://your-nookmux-domain/api/user/topup/info' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1'
+```
+
+</RequestExample>
+
+## 响应
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": {
+    "enable_online_topup": true,
+    "enable_stripe_topup": true,
+    "pay_methods": [
+      { "name": "支付宝", "color": "rgba(var(--semi-blue-5), 1)", "type": "alipay" },
+      { "name": "微信", "color": "rgba(var(--semi-green-5), 1)", "type": "wxpay" },
+      { "name": "Stripe", "type": "stripe", "color": "rgba(var(--semi-purple-5), 1)", "min_topup": "1" }
+    ],
+    "min_topup": 1,
+    "stripe_min_topup": 1,
+    "amount_options": [10, 20, 50, 100, 200, 500],
+    "discount": {},
+    "topup_link": ""
+  }
+}
+```
+
+</ResponseExample>
+
+### 响应字段
+
+<ResponseField name="success" type="boolean" required>
+充值配置是否返回成功。
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+`success` 为 `false` 时的错误描述；成功时为空字符串。
+</ResponseField>
+
+<ResponseField name="data.enable_online_topup" type="boolean" required>
+易支付在线充值是否可用：网关地址、商户 ID 与密钥均已配置。
+</ResponseField>
+
+<ResponseField name="data.enable_stripe_topup" type="boolean" required>
+Stripe 充值是否可用：Stripe API 密钥、Webhook Secret 与价格 ID 均已配置。
+</ResponseField>
+
+<ResponseField name="data.pay_methods" type="array" required>
+管理员配置的支付方式列表；当 Stripe 已启用且配置列表中尚无 Stripe 时，自动追加一条 `stripe` 条目。
+
+<Expandable title="pay_methods 条目结构">
+  <ParamField path="name" type="string" required>
+    支付方式显示名称。
+  </ParamField>
+  <ParamField path="type" type="string" required>
+    渠道类型，发起支付时作为 `payment_method` 使用。
+  </ParamField>
+  <ParamField path="color" type="string">
+    支付方式徽标的显示颜色。
+  </ParamField>
+  <ParamField path="min_topup" type="string">
+    该支付方式的最低充值数量（如已配置）。
+  </ParamField>
+</Expandable>
+</ResponseField>
+
+<ResponseField name="data.min_topup" type="integer" required>
+易支付在线充值的最低充值数量。
+</ResponseField>
+
+<ResponseField name="data.stripe_min_topup" type="integer" required>
+Stripe 充值的最低充值数量。
+</ResponseField>
+
+<ResponseField name="data.amount_options" type="array" required>
+充值页提供的预设充值数量，整数数组。
+</ResponseField>
+
+<ResponseField name="data.discount" type="object" required>
+按充值数量配置的预设折扣：键为数量（序列化为字符串）、值为折扣系数，例如 `{"100": 0.9}` 表示充值 100 打九折。未配置折扣时为空对象。
+</ResponseField>
+
+<ResponseField name="data.topup_link" type="string" required>
+站外手动充值链接；未配置时为空字符串。
+</ResponseField>

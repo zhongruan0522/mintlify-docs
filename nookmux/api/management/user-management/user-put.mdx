@@ -1,7 +1,102 @@
 ---
 title: Update User
+description: Update the profile fields of one user, including username, password, quota, and group.
 api: "PUT /api/user/"
 ---
 
-👨‍💼 Requires Admin Permissions (Admin)
+Updates the editable fields of a single user. Only the fields listed below are persisted: a non-empty `password` replaces the old one, and `quota` is only changed when provided. The caller's role must be strictly higher than both the target user's current role and the requested role, unless the caller is the root admin.
 
+Requires **Admin** permissions. See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request PUT \
+  --url 'https://your-nookmux-domain/api/user/' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1' \
+  --header 'Content-Type: application/json' \
+  --data '{
+  "id": 2,
+  "username": "alice",
+  "display_name": "Alice",
+  "quota": 1000000,
+  "group": "default",
+  "remark": "trusted user"
+}'
+```
+
+</RequestExample>
+
+### Body
+
+<ParamField path="body.id" type="integer" required>
+ID of the target user. Must not be `0`.
+</ParamField>
+
+<ParamField path="body.username" type="string">
+New username, up to 20 characters.
+</ParamField>
+
+<ParamField path="body.password" type="string">
+New password, 8 to 20 characters. When empty or omitted, the password stays unchanged.
+</ParamField>
+
+<ParamField path="body.display_name" type="string">
+New display name, up to 20 characters.
+</ParamField>
+
+<ParamField path="body.role" type="integer">
+Requested role, validated against the caller's permissions but not persisted by this endpoint. Change roles through the `promote` and `demote` actions of `POST /api/user/manage`.
+</ParamField>
+
+<ParamField path="body.quota" type="integer">
+New quota in quota units (500,000 quota equals $1 by default). When omitted, the current quota is kept.
+</ParamField>
+
+<ParamField path="body.group" type="string">
+New user group, for example `default`.
+</ParamField>
+
+<ParamField path="body.remark" type="string">
+Admin remark, up to 255 characters.
+</ParamField>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": ""
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+Whether the user was updated.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+Error description when `success` is `false`; empty otherwise.
+</ResponseField>
+
+<Note>
+This endpoint returns no `data` field. When the quota changes, the adjustment is recorded in the user's management log, and every update is recorded in the audit log.
+</Note>
+
+## Error messages
+
+| Condition | Description |
+| --- | --- |
+| Invalid parameters | The JSON body is malformed or `id` is missing or `0` |
+| Invalid input | Field constraints are violated (`username` up to 20 characters, `password` 8 to 20 characters when set, `display_name` up to 20 characters, `remark` up to 255 characters) |
+| No permission | The caller is not root and the target user has the same or a higher role |
+| Cannot create higher level user | `role` is equal to or higher than the caller's role |
+| Database error | Loading or updating the user failed |

@@ -1,23 +1,74 @@
 ---
 title: Bind Email
+description: Bind an email address to the current logged-in account with an email verification code.
 api: "POST /api/oauth/email/bind"
 ---
 
-The current runtime implementation is `POST /api/oauth/email/bind`.
+Binds an email address to the currently logged-in account. The verification code must be issued beforehand for the same email address through `GET /api/verification`. Only the JSON body form is accepted; the legacy `GET /api/oauth/email/bind?email=...&code=...` call pattern is no longer supported.
 
-This endpoint binds an email address to the currently logged-in account, and it no longer accepts the old GET query parameter form.
+Requires **User** permissions. See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
 
-Request body:
+## Request
 
-```json
-{
+<RequestExample>
+
+```bash cURL
+curl --request POST \
+  --url 'https://your-nookmux-domain/api/oauth/email/bind' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1' \
+  --header 'Content-Type: application/json' \
+  --data '{
   "email": "user@example.com",
   "code": "123456"
+}'
+```
+
+</RequestExample>
+
+### Body
+
+<ParamField path="body.email" type="string" required>
+  Email address to bind. Surrounding whitespace is trimmed and the value must not be empty.
+</ParamField>
+
+<ParamField path="body.code" type="string" required>
+  Email verification code issued by `GET /api/verification` for the same email address. Surrounding whitespace is trimmed and the value must not be empty.
+</ParamField>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": ""
 }
 ```
 
-Notes:
+</ResponseExample>
 
-- A valid login session is required.
-- The verification code must first be issued through `/api/verification` for the same email.
-- Do not use the old `GET /api/oauth/email/bind?email=...&code=...` call pattern.
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+  Whether the email was bound to the account.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  Error description when `success` is `false`; empty otherwise.
+</ResponseField>
+
+<Note>
+  This endpoint is protected by a stricter rate limit (CriticalRateLimit) and by the anonymous request body size limit (oversized bodies are rejected with HTTP `413`). The account is resolved from the login session created at sign-in, so the browser console session is the normal caller. If the account was banned after login, the session is cleared and the bind is rejected.
+</Note>
+
+## Error messages
+
+| Condition | Description |
+| --- | --- |
+| Invalid request body | The JSON body is missing or malformed, or `email`/`code` is empty after trimming |
+| Verification code is incorrect or has expired | No valid verification code matches this email address |
+| Not logged in | No user id found in the login session (HTTP 401) |
+| User has been banned | The account status is no longer enabled; the session is cleared |
+| Database error, please try again later | Loading the user or saving the email failed; see server logs |

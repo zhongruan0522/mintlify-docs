@@ -1,7 +1,153 @@
 ---
 title: 管理用户状态
+description: 一次调用完成用户的启用、禁用、删除、提升、降级或额度调整。
 api: "POST /api/user/manage"
 ---
 
-👨‍💼 需要管理员权限（Admin）
+对单个用户执行管理动作。支持 `disable`（禁用）、`enable`（启用）、`delete`（软删除）、`promote`（提升为管理员）、`demote`（降级为普通用户）和 `add_quota`（额度调整）。非超级管理员只能操作角色等级严格低于自己的用户。额度调整及所有成功的动作都会写入审计日志。
 
+需要**管理员（Admin）**权限。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
+
+## 请求
+
+<RequestExample>
+
+```bash cURL
+curl --request POST \
+  --url 'https://your-nookmux-domain/api/user/manage' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1' \
+  --header 'Content-Type: application/json' \
+  --data '{
+  "id": 2,
+  "action": "disable",
+  "remark": "violation of terms"
+}'
+```
+
+</RequestExample>
+
+### 请求体
+
+<ParamField path="body.id" type="integer" required>
+目标用户 ID。
+</ParamField>
+
+<ParamField path="body.action" type="string" required>
+要执行的动作：
+
+- `disable`：将账号状态置为禁用（`2`）。超级管理员账号不能被禁用。
+- `enable`：将账号状态置为启用（`1`）。
+- `delete`：软删除账号。超级管理员账号不能被删除。
+- `promote`：将普通用户提升为管理员（角色 `10`）。仅超级管理员可提升。
+- `demote`：将管理员降级为普通用户（角色 `1`）。超级管理员账号不能被降级。
+- `add_quota`：按 `mode` 与 `value` 调整用户额度。
+</ParamField>
+
+<ParamField path="body.mode" type="string">
+额度调整模式，`action` 为 `add_quota` 时必填：
+
+- `add`：在当前额度上增加 `value`。
+- `subtract`：从当前额度中减去 `value`；`value` 超过当前额度时拒绝。
+- `override`：将额度直接设为 `value`；`value` 超过平台上限（100,000,000 单位，默认每单位 500,000 额度）时拒绝。
+</ParamField>
+
+<ParamField path="body.value" type="integer">
+`add_quota` 的额度数量（默认 500,000 额度折合 $1）。不得为负数。
+</ParamField>
+
+<ParamField path="body.remark" type="string">
+`disable` 动作可选的封禁备注，写入用户的 `remark` 字段。首尾空白会被裁剪，长度上限 255 字符。
+</ParamField>
+
+## 响应
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": {
+    "id": 0,
+    "username": "",
+    "original_password": "",
+    "display_name": "",
+    "role": 1,
+    "status": 2,
+    "email": "",
+    "github_id": "",
+    "verification_code": "",
+    "quota": 0,
+    "used_quota": 0,
+    "request_count": 0,
+    "group": "",
+    "aff_code": "",
+    "aff_count": 0,
+    "aff_quota": 0,
+    "aff_history_quota": 0,
+    "inviter_id": 0,
+    "DeletedAt": null,
+    "linux_do_id": "",
+    "stripe_customer": "",
+    "image_converted_count": 0,
+    "video_converted_count": 0,
+    "created_at": 0,
+    "last_login_at": 0
+  }
+}
+```
+
+</ResponseExample>
+
+### 响应字段
+
+<ResponseField name="success" type="boolean" required>
+动作是否执行成功。
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+`success` 为 `false` 时的错误描述；成功时为空字符串。
+</ResponseField>
+
+<ResponseField name="data" type="object">
+  <Expandable title="data 结构">
+    <ResponseField name="role" type="integer" required>
+      动作执行后目标用户的角色。除 `add_quota` 外的所有动作会填充。
+    </ResponseField>
+    <ResponseField name="status" type="integer" required>
+      动作执行后目标用户的状态。除 `add_quota` 外的所有动作会填充。
+    </ResponseField>
+    <ResponseField name="id" type="integer" required>
+      用户 ID。仅 `add_quota` 动作会填充。
+    </ResponseField>
+    <ResponseField name="username" type="string" required>
+      用户名。仅 `add_quota` 动作会填充。
+    </ResponseField>
+    <ResponseField name="quota" type="integer" required>
+      调整后的额度。仅 `add_quota` 动作会填充。
+    </ResponseField>
+    <ResponseField name="used_quota" type="integer" required>
+      已消耗额度。仅 `add_quota` 动作会填充。
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<Note>
+`data` 对象采用 user 结构；上表未列出的字段恒以零值返回。`add_quota` 时 `role` 与 `status` 为零值；其余动作时 `id`、`username`、`quota`、`used_quota` 为零值。
+</Note>
+
+## 错误说明
+
+| 条件 | 说明 |
+| --- | --- |
+| 参数非法 | JSON 格式错误、`action` 或 `mode` 取值未知、`value` 为负数 |
+| 备注过长 | `remark` 超过 255 字符 |
+| 用户不存在 | `id` 未匹配到任何用户 |
+| 无权限 | 调用者不是超级管理员，且目标用户为同级或更高级 |
+| 无法禁用超级管理员 | `action` 为 `disable` 且目标为超级管理员 |
+| 无法删除超级管理员 | `action` 为 `delete` 且目标为超级管理员 |
+| 无法提升 | `action` 为 `promote` 且调用者不是超级管理员，或目标已是管理员 |
+| 无法降级 | `action` 为 `demote` 且目标为超级管理员或已是普通用户 |
+| 额度超出范围 | `subtract` 超过当前额度、`add` 会整数溢出、或 `override` 超过上限 |
+| 数据库错误 | 变更落库失败，详见服务端日志 |

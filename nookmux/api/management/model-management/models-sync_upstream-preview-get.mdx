@@ -1,7 +1,106 @@
 ---
 title: Preview Upstream Model Synchronization
+description: Preview which models an upstream sync would create and which existing entries have conflicting fields.
 api: "GET /api/models/sync_upstream/preview"
 ---
 
-👨‍💼 Admin privileges required
+Preview the differences between the local model metadata and the upstream metadata repository before running [Sync Upstream Models](/nookmux/api/management/model-management/models-sync_upstream-post). The response lists the missing models that the upstream also knows (creation candidates) and, for existing entries, the fields whose stored values differ from upstream. Nothing is written.
 
+Requires **Admin** permissions. See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url 'https://your-nookmux-domain/api/models/sync_upstream/preview?locale=en' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1'
+```
+
+</RequestExample>
+
+### Query parameters
+
+<ParamField path="locale" type="string">
+Language of the upstream catalog: `en`, `zh` or `ja`. Any other value, or omitting it, selects the default non-localized catalog files.
+</ParamField>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "data": {
+    "missing": ["gpt-4o", "o3"],
+    "conflicts": [
+      {
+        "model_name": "claude-3-7-sonnet",
+        "fields": [
+          { "field": "icon", "local": "", "upstream": "anthropic" },
+          { "field": "status", "local": 0, "upstream": 1 }
+        ]
+      }
+    ],
+    "source": {
+      "locale": "en",
+      "models_url": "https://basellm.github.io/llm-metadata/api/i18n/en/newapi/models.json",
+      "vendors_url": "https://basellm.github.io/llm-metadata/api/i18n/en/newapi/vendors.json"
+    }
+  }
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+Whether the preview was computed.
+</ResponseField>
+
+<ResponseField name="data.missing" type="array of string" required>
+Names of locally missing models that also exist upstream; these are the candidates a sync run would create.
+</ResponseField>
+
+<ResponseField name="data.conflicts" type="array of object" required>
+Existing entries whose stored fields differ from upstream. Only entries participating in official sync are compared.
+
+  <Expandable title="conflict structure">
+    <ResponseField name="model_name" type="string">
+      Name of the local model entry.
+    </ResponseField>
+    <ResponseField name="fields" type="array of object">
+      Fields whose local and upstream values differ.
+
+      <Expandable title="conflict field structure">
+        <ResponseField name="field" type="string">
+          Compared field: `icon`, `tags`, `vendor`, `name_rule` or `status`. Vendor is compared by vendor name.
+        </ResponseField>
+        <ResponseField name="local" type="string | integer">
+          Value currently stored locally. String for `icon`, `tags` and `vendor`; integer for `name_rule` and `status`.
+        </ResponseField>
+        <ResponseField name="upstream" type="string | integer">
+          Value provided by the upstream catalog, same type as `local`.
+        </ResponseField>
+      </Expandable>
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="data.source" type="object" required>
+Description of the upstream source that was used: `locale` (echoes the request), `models_url` and `vendors_url` (the fetched upstream URLs).
+</ResponseField>
+
+<Note>
+Management endpoints return HTTP `200` even on business failures; always check the `success` field. The success payload of this endpoint does not include a `message` field. The upstream repository defaults to `https://basellm.github.io/llm-metadata` and can be redirected with the `SYNC_UPSTREAM_BASE` environment variable.
+</Note>
+
+## Error messages
+
+| Condition | Description |
+| --- | --- |
+| Failed to fetch upstream models: ... | Fetching the upstream catalog failed after retries; `message` includes the cause, and the top-level `locale` and `source_urls` fields describe the attempted source |

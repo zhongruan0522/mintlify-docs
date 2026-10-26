@@ -1,7 +1,113 @@
 ---
 title: Update User Settings
+description: Replace the current user's quota warning notification settings for email, webhook, Bark, or Gotify.
 api: "PUT /api/user/setting"
 ---
 
-🔐 Login Required (User Permission)
+Replaces the notification settings of the current user. The settings drive the quota warning notification: choose a notification type and its required targets, and NookMux notifies the user when the remaining quota falls below the configured threshold.
 
+Requires **User** permission (any logged-in user). See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request PUT \
+  --url 'https://your-nookmux-domain/api/user/setting' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 2' \
+  --header 'Content-Type: application/json' \
+  --data '{
+  "notify_type": "webhook",
+  "quota_warning_threshold": 10,
+  "webhook_url": "https://example.com/webhook/quota-warning",
+  "webhook_secret": "my-webhook-secret"
+}'
+```
+
+</RequestExample>
+
+### Body
+
+<ParamField path="body.notify_type" type="string" required>
+Notification type: `email`, `webhook`, `bark`, or `gotify`.
+</ParamField>
+
+<ParamField path="body.quota_warning_threshold" type="number" required>
+Quota warning threshold; must be greater than `0`.
+</ParamField>
+
+<ParamField path="body.webhook_url" type="string">
+Target URL for `webhook` notifications. Required when `notify_type` is `webhook`; must be a parseable URL.
+</ParamField>
+
+<ParamField path="body.webhook_secret" type="string">
+Optional secret attached to `webhook` notifications; stored only for the `webhook` type.
+</ParamField>
+
+<ParamField path="body.notification_email" type="string">
+Notification email address for the `email` type; optional, but when provided it must contain `@`.
+</ParamField>
+
+<ParamField path="body.bark_url" type="string">
+Bark push URL. Required when `notify_type` is `bark`; must be a parseable URL starting with `http://` or `https://`.
+</ParamField>
+
+<ParamField path="body.gotify_url" type="string">
+Gotify server URL. Required when `notify_type` is `gotify`; must be a parseable URL starting with `http://` or `https://`.
+</ParamField>
+
+<ParamField path="body.gotify_token" type="string">
+Gotify application token. Required when `notify_type` is `gotify`.
+</ParamField>
+
+<ParamField path="body.gotify_priority" type="integer">
+Gotify message priority from `0` to `10`; values outside the range fall back to `5`.
+</ParamField>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "Settings updated",
+  "data": null
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+Whether the settings were saved.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+Localized success message when `success` is `true`; error description otherwise.
+</ResponseField>
+
+<ResponseField name="data" type="null">
+Always `null` for this endpoint.
+</ResponseField>
+
+<Note>
+The request replaces the whole settings object: fields that do not belong to the selected `notify_type` are dropped, so switching the type clears the targets of the previous type. The current values are readable through `GET /api/user/self` in the `setting` field.
+</Note>
+
+## Error messages
+
+| Condition | Description |
+| --- | --- |
+| Invalid parameters | The JSON body is missing or malformed |
+| Invalid warning type | `notify_type` is not `email`, `webhook`, `bark`, or `gotify` |
+| Threshold must be greater than zero | `quota_warning_threshold` is `0` or negative |
+| Webhook URL cannot be empty / Invalid Webhook URL | `webhook` type without `webhook_url`, or the URL cannot be parsed |
+| Invalid email address | `email` type with a non-empty `notification_email` that lacks `@` |
+| Bark URL invalid | `bark` type without `bark_url`, with an unparseable URL, or one that does not start with `http://` or `https://` |
+| Gotify configuration invalid | `gotify` type without `gotify_url` or `gotify_token`, with an unparseable URL, or one that does not start with `http://` or `https://` |
+| Database error | Loading the user failed; see server logs |
+| Update failed | Saving the settings failed; see server logs |

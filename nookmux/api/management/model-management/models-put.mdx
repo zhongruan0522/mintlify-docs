@@ -1,7 +1,177 @@
 ---
 title: Update Model Metadata
+description: Update a model metadata entry with a full field replacement, or update only its status in status-only mode.
 api: "PUT /api/models/"
 ---
 
-👨‍💼 Admin privileges required
+Update a model metadata entry. In the default full-update mode every persisted field is overwritten with the value from the request body, so fields omitted from the body are reset to their zero values. With `status_only=true` only the `status` field is written, which protects the other fields from being cleared by accident. After a successful update the pricing cache is refreshed and the change is recorded in the audit log.
 
+Requires **Admin** permissions. See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request PUT \
+  --url 'https://your-nookmux-domain/api/models/' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1' \
+  --header 'Content-Type: application/json' \
+  --data '{
+  "id": 43,
+  "model_name": "gpt-4o-mini",
+  "description": "Affordable and intelligent small model",
+  "icon": "openai",
+  "tags": "llm,chat",
+  "vendor_id": 1,
+  "endpoints": "[\"openai\"]",
+  "context_length": 128000,
+  "max_output_tokens": 16384,
+  "input_modalities": ["text", "image"],
+  "output_modalities": ["text"],
+  "knowledge_cutoff": "2023-10",
+  "release_date": "2024-07-18",
+  "parameter_count": "unknown",
+  "status": 1,
+  "name_rule": 0
+}'
+```
+
+</RequestExample>
+
+### Query parameters
+
+<ParamField path="status_only" type="string" default="">
+Set to `true` to update only the `status` field; all other body fields are then ignored. Any other value (or omitting the parameter) performs a full update.
+</ParamField>
+
+### Body
+
+<ParamField path="body.id" type="integer" required>
+ID of the model metadata record to update. Must not be `0`.
+</ParamField>
+
+<ParamField path="body.model_name" type="string">
+Model name. Must remain unique among the other entries; checked in full-update mode only.
+</ParamField>
+
+<ParamField path="body.description" type="string">
+Free-form description of the model.
+</ParamField>
+
+<ParamField path="body.icon" type="string">
+Icon identifier displayed in the console.
+</ParamField>
+
+<ParamField path="body.tags" type="string">
+Comma-separated tags.
+</ParamField>
+
+<ParamField path="body.vendor_id" type="integer">
+ID of the vendor the model belongs to; `0` means no vendor. Vendor records are managed by the [vendors endpoints](/nookmux/api/management/vendors/vendors-get).
+</ParamField>
+
+<ParamField path="body.endpoints" type="string">
+Supported endpoint types as a JSON array string, for example `"[\"openai\",\"anthropic\"]"`. Possible values: `openai`, `openai-response`, `openai-response-compact`, `anthropic`, `gemini`, `jina-rerank`, `image-generation`, `embeddings`.
+</ParamField>
+
+<ParamField path="body.context_length" type="integer" default="0">
+Context window size in tokens.
+</ParamField>
+
+<ParamField path="body.max_output_tokens" type="integer" default="0">
+Maximum number of output tokens.
+</ParamField>
+
+<ParamField path="body.input_modalities" type="array of string">
+Accepted input modalities, for example `["text","image"]`.
+</ParamField>
+
+<ParamField path="body.output_modalities" type="array of string">
+Output modalities, for example `["text"]`.
+</ParamField>
+
+<ParamField path="body.capabilities" type="array of string">
+Free-form capability labels of the model.
+</ParamField>
+
+<ParamField path="body.knowledge_cutoff" type="string">
+Knowledge cutoff date of the model.
+</ParamField>
+
+<ParamField path="body.release_date" type="string">
+Release date of the model.
+</ParamField>
+
+<ParamField path="body.parameter_count" type="string">
+Parameter count description.
+</ParamField>
+
+<ParamField path="body.status" type="integer" default="1">
+Model status: `1` enabled, `0` disabled. This is the only field written when `status_only=true`.
+</ParamField>
+
+<ParamField path="body.name_rule" type="integer" default="0">
+How `model_name` matches concrete models: `0` exact match, `1` prefix match, `2` contains match, `3` suffix match.
+</ParamField>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": {
+    "id": 43,
+    "model_name": "gpt-4o-mini",
+    "description": "Affordable and intelligent small model",
+    "icon": "openai",
+    "tags": "llm,chat",
+    "vendor_id": 1,
+    "endpoints": "[\"openai\"]",
+    "context_length": 128000,
+    "max_output_tokens": 16384,
+    "input_modalities": ["text", "image"],
+    "output_modalities": ["text"],
+    "knowledge_cutoff": "2023-10",
+    "release_date": "2024-07-18",
+    "parameter_count": "unknown",
+    "status": 1,
+    "created_time": 1718100000,
+    "updated_time": 1718100600,
+    "name_rule": 0
+  }
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+Whether the update was applied.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+Error description when `success` is `false`; empty otherwise.
+</ResponseField>
+
+<ResponseField name="data" type="object" required>
+Echo of the model object from the request body (with the fields it contained). The persisted fields are those listed above; see [Get All Model Metadata](/nookmux/api/management/model-management/models-get) for the field semantics.
+</ResponseField>
+
+<Note>
+Management endpoints return HTTP `200` even on business failures; always check the `success` field. In full-update mode an omitted optional field is written as its zero value, so always send the complete entry; in status-only mode only `id` and `status` are required.
+</Note>
+
+## Error messages
+
+| Condition | Description |
+| --- | --- |
+| Invalid request body | The JSON body is missing or malformed |
+| Missing model ID | `id` is missing or `0` |
+| Model name already exists | Another record uses the same `model_name` (full-update mode) |
+| Database error | Loading the current record (a nonexistent `id` also lands here) or saving the update failed |

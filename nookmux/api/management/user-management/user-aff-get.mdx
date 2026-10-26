@@ -1,7 +1,60 @@
 ---
 title: Get Invitation Code
+description: Return the invitation code of the current user, generating one on the fly for legacy accounts without a code.
 api: "GET /api/user/aff"
 ---
 
-🔐 Login Required (User Permission)
+Returns the invitation code of the currently logged-in user. New users can enter this code during registration to become invitees of this user and trigger invitation rewards. If the account has no invitation code yet, a random 4-character code is generated and saved before being returned.
 
+Requires **User** permission (any logged-in user). See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url 'https://your-nookmux-domain/api/user/aff' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1'
+```
+
+</RequestExample>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": "ab12"
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+Whether the invitation code was returned.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+Error description when `success` is `false`; empty otherwise.
+</ResponseField>
+
+<ResponseField name="data" type="string">
+The invitation code of the current user, 4 characters long.
+</ResponseField>
+
+<Note>
+An invitation code is normally generated automatically at registration. This endpoint only generates a new code for legacy accounts whose code is empty.
+</Note>
+
+## Error messages
+
+| Condition | Description |
+| --- | --- |
+| Database error | Loading the user or saving a newly generated code failed |

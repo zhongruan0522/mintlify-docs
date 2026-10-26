@@ -1,7 +1,54 @@
 ---
 title: Get All Groups
+description: List the names of all user groups defined in the group ratio configuration.
 api: "GET /api/group/"
 ---
 
-👨‍💼 Requires Administrator Permissions (Admin)
+List the names of all user groups defined in the group ratio configuration. Groups connect users and channels: a channel's `group` field declares which groups can use it, and each user is assigned to a group. A fresh installation ships with the groups `default`, `vip`, and `svip`.
 
+Requires **Admin** permissions. See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url 'https://your-nookmux-domain/api/group/' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1'
+```
+
+</RequestExample>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": ["default", "vip", "svip"]
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+  Whether the request succeeded.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  Error description when `success` is `false`; empty otherwise.
+</ResponseField>
+
+<ResponseField name="data" type="array" required>
+  Array of user group names taken from the group ratio configuration. The list is built from an in-memory map, so the order of the names is not guaranteed.
+</ResponseField>
+
+<Note>
+Management endpoints return HTTP `200` even on business failures; always check the `success` field. This endpoint has no failure path beyond authentication.
+</Note>

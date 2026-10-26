@@ -1,7 +1,66 @@
 ---
 title: 生成OAuth State
+description: 生成与会话绑定的 state 参数，供 OAuth 登录回调做 CSRF 防护。
 api: "GET /api/oauth/state"
 ---
 
-🔓 无需鉴权
+生成用于 OAuth CSRF 防护的随机 state 参数并存入调用方会话。前端在把用户重定向到提供商授权页之前调用本端点；返回的 state 需在提供商回跳时作为 `state` 查询参数传给 [GitHub OAuth 登录](/cn/nookmux/api/management/oauth/oauth-github-get)或 [LinuxDO OAuth 登录](/cn/nookmux/api/management/oauth/oauth-linuxdo-get)。state 缺失或与会话不一致时，回调端点返回 HTTP `403` 拒绝请求。
 
+可选传入邀请（`aff`）码；它会保存在同一会话中，并在后续 OAuth 流程创建新账号时记为邀请人。
+
+本端点为**公开（Public）**接口，无需访问令牌，但挂载了更严格的限流（CriticalRateLimit）。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
+
+## 请求
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url 'https://your-nookmux-domain/api/oauth/state?aff=abc123'
+```
+
+</RequestExample>
+
+### 查询参数
+
+<ParamField path="aff" type="string">
+  邀请（affiliate）码。提供时保存到会话中；若后续 OAuth 回调注册了新账号，则记为该账号的邀请人。
+</ParamField>
+
+## 响应
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": "a1b2c3d4e5f6"
+}
+```
+
+</ResponseExample>
+
+### 响应字段
+
+<ResponseField name="success" type="boolean" required>
+  state 是否生成并保存成功。
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  `success` 为 `false` 时的错误描述；成功时为空字符串。
+</ResponseField>
+
+<ResponseField name="data" type="string" required>
+  生成的 state 值（12 位随机字符串）。传给提供商，并在同一会话的 OAuth 回调中原样带回。
+</ResponseField>
+
+<Note>
+  该接口挂载了更严格的限流（CriticalRateLimit）。state 仅在生成它的会话内有效；必须使用与 OAuth 回调相同的浏览器会话（Cookie）来生成。
+</Note>
+
+## 错误说明
+
+| 条件 | 说明 |
+| --- | --- |
+| 数据库错误，请稍后重试 | 会话保存失败，详见服务端日志 |

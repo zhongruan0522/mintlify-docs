@@ -1,7 +1,61 @@
 ---
 title: Delete Channel
+description: Delete one channel and its routing abilities by id.
 api: "DELETE /api/channel/{id}"
 ---
 
-👨‍💼 Requires Admin Permissions
+Delete a single channel. The channel row and its routing abilities are removed in one database operation, the in-memory channel cache is reloaded, and the deletion is recorded in the admin audit log.
 
+Requires **Admin** permissions. See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request DELETE \
+  --url 'https://your-nookmux-domain/api/channel/1' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1'
+```
+
+</RequestExample>
+
+### Path parameters
+
+<ParamField path="id" type="integer" required>
+  Id of the channel to delete.
+</ParamField>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": ""
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+  Whether the channel was deleted.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  Error description when `success` is `false`; empty otherwise.
+</ResponseField>
+
+<Note>
+  Management endpoints return HTTP `200` even on business failures; always check the `success` field. Deleting a non-existent id still succeeds.
+</Note>
+
+## Error messages
+
+| Condition | Description |
+| --- | --- |
+| Database error | Deleting the channel or its abilities failed; see server logs |

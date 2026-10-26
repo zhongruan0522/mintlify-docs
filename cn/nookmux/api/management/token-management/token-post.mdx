@@ -1,7 +1,166 @@
 ---
 title: 创建令牌
+description: 为当前用户创建一个新的 API 令牌，完整密钥仅在响应中返回一次。
 api: "POST /api/token/"
 ---
 
-🔐 需要登录（User权限）
+为当前用户创建一个新的 API 令牌。令牌密钥由服务端生成（站点密钥前缀，默认 `sk-`，加 48 位随机字符），仅在本次响应中完整返回一次。每个用户最多持有 1000 个令牌。
 
+需要登录（**User** 权限）。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
+
+## 请求
+
+<RequestExample>
+
+```bash cURL
+curl --request POST \
+  --url 'https://your-nookmux-domain/api/token/' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1' \
+  --header 'Content-Type: application/json' \
+  --data '{
+  "name": "my-token",
+  "expired_time": -1,
+  "quota_type": 1,
+  "remain_quota": 500000,
+  "unlimited_quota": false,
+  "group": "default",
+  "cross_group_retry": false,
+  "model_limits_enabled": false,
+  "model_limits": "",
+  "model_mapping": null,
+  "allow_ips": null
+}'
+```
+
+</RequestExample>
+
+### 请求体
+
+<ParamField path="body.name" type="string" required>
+  令牌显示名称，最长 50 字符。
+</ParamField>
+
+<ParamField path="body.expired_time" type="integer" default="-1">
+  令牌过期时间的 Unix 时间戳（秒）。`-1` 表示永不过期。
+</ParamField>
+
+<ParamField path="body.quota_type" type="integer" default="0">
+  限额模式：
+
+  - `0`：无限额度（强制 `unlimited_quota` 为 `true`）。
+  - `1`：永久限额（`remain_quota` 只减不补）。
+  - `2`：时段限额（`window_hours` / `window_quota` / `window_start_hour`）。
+  - `3`：时段+周期限额（时段字段加上 `cycle_days` / `cycle_quota`）。
+
+  兼容旧逻辑：`0` 且 `unlimited_quota: false` 时按 `1` 处理。其他取值会被拒绝。
+</ParamField>
+
+<ParamField path="body.unlimited_quota" type="boolean">
+  是否为无限额度令牌。由服务端按 `quota_type` 覆盖：`0` 强制为 `true`，`1`-`3` 强制为 `false`。
+</ParamField>
+
+<ParamField path="body.remain_quota" type="integer">
+  永久限额令牌的总额度。要求不小于 `0` 且不超过服务端上限（1,000,000,000 个额度单位，按默认 500,000 额度/单位折合 5 × 10^14）。仅在 `quota_type` 为 `1` 时校验。
+</ParamField>
+
+<ParamField path="body.window_hours" type="integer">
+  每个额度窗口的时长（小时），至少为 `1`。`quota_type` 为 `2`、`3` 时生效。
+</ParamField>
+
+<ParamField path="body.window_quota" type="integer">
+  每个窗口的额度，必须大于 `0`。`quota_type` 为 `2`、`3` 时生效。
+</ParamField>
+
+<ParamField path="body.window_start_hour" type="integer" default="0">
+  窗口对齐的小时（`0`-`23`）。`quota_type` 为 `2`、`3` 时生效。
+</ParamField>
+
+<ParamField path="body.cycle_days" type="integer">
+  每个额度周期的天数，至少为 `1`。`quota_type` 为 `3` 时生效。
+</ParamField>
+
+<ParamField path="body.cycle_quota" type="integer">
+  每个周期的额度，必须大于 `0`。`quota_type` 为 `3` 时生效。
+</ParamField>
+
+<ParamField path="body.model_limits_enabled" type="boolean" default="false">
+  是否对该令牌启用 `model_limits` 模型限制。
+</ParamField>
+
+<ParamField path="body.model_limits" type="string">
+  该令牌可调用的模型名列表，逗号分隔。
+</ParamField>
+
+<ParamField path="body.model_mapping" type="string">
+  令牌级模型重定向的 JSON 对象，例如 `{"gpt-4o": "gpt-4o-2024-08-06"}`。键与值必须为非空字符串、最长 256 字符，且不得包含 `:`、`/`、制表符、回车、换行或空格；整体不超过 64 KB。`null` 或空字符串表示不配置重定向。
+</ParamField>
+
+<ParamField path="body.allow_ips" type="string">
+  令牌密钥的 IP 白名单，换行分隔。`null` 或空表示不限制。
+</ParamField>
+
+<ParamField path="body.group" type="string">
+  令牌用于渠道选择的分组。为空表示跟随用户分组；特殊值 `auto` 表示自动分组排序。
+</ParamField>
+
+<ParamField path="body.cross_group_retry" type="boolean">
+  重试时是否允许跨到下一个分组。仅 `group` 为 `auto` 时生效。
+</ParamField>
+
+<ParamField path="body.id / body.key / body.status / body.created_time / body.accessed_time / body.used_quota" type="any">
+  服务端维护字段。请求体中的取值会被忽略：`key` 由服务端生成，`user_id` 取自当前登录用户，`status` 初始为启用（`1`），用量计数从 `0` 开始。
+</ParamField>
+
+## 响应
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": {
+    "key": "sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+  }
+}
+```
+
+</ResponseExample>
+
+### 响应字段
+
+<ResponseField name="success" type="boolean" required>
+  令牌是否创建成功。
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  `success` 为 `false` 时的错误描述；成功时为空字符串。
+</ResponseField>
+
+<ResponseField name="data.key" type="string" required>
+  完整令牌密钥（站点密钥前缀，默认 `sk-`，加 48 位随机字符）。仅在此返回一次；列表与详情接口返回的均为脱敏密钥。
+</ResponseField>
+
+<Note>
+  管理接口在业务失败时同样返回 HTTP `200`，必须以 `success` 字段判断结果。
+</Note>
+
+## 错误说明
+
+| 条件 | 说明 |
+| --- | --- |
+| 请求体非法 | JSON 缺失或格式错误 |
+| 令牌名称过长 | `name` 超过 50 字符 |
+| 模型重定向配置格式错误 | `model_mapping` 不是键值均为非空字符串的 JSON 对象、包含无法安全承载的字符（`:` `/` 空白）、名称超过 256 字符，或整体超过 64 KB |
+| 额度值不能为负数 | `quota_type` 为 `1` 但 `remain_quota` 为负数 |
+| 额度值超出有效范围 | `remain_quota` 超过服务端上限 |
+| 窗口时长必须大于等于 1 小时 | `quota_type` 为 `2` 或 `3` 但 `window_hours` 小于 `1` |
+| 窗口额度必须大于 0 | `quota_type` 为 `2` 或 `3` 但 `window_quota` 不为正 |
+| 窗口起始小时必须在 0-23 之间 | `window_start_hour` 不在 `0`-`23` 范围内 |
+| 周期天数必须大于等于 1 | `quota_type` 为 `3` 但 `cycle_days` 小于 `1` |
+| 周期总额度必须大于 0 | `quota_type` 为 `3` 但 `cycle_quota` 不为正 |
+| 无效的限额类型 | （兼容旧逻辑后）`quota_type` 不是 `0`、`1`、`2`、`3` 之一 |
+| 已达到最大令牌数量限制 | 该用户已持有 1000 个令牌 |
+| 生成令牌失败 | 生成随机密钥失败 |
+| 数据库错误 | 令牌落库失败，详见服务端日志 |

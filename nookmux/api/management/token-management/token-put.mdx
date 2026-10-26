@@ -1,7 +1,199 @@
 ---
 title: Update Token
+description: Update a token owned by the current user, either in full or as a status-only change.
 api: "PUT /api/token/"
 ---
 
-🔐 Login Required (User Permission)
+Update a token owned by the current user. Without `status_only` the editable fields are replaced in full; with `status_only` only the `status` field is changed. The response returns the updated token with a masked `key`.
 
+Requires a logged-in user (**User** permissions). See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request PUT \
+  --url 'https://your-nookmux-domain/api/token/' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1' \
+  --header 'Content-Type: application/json' \
+  --data '{
+  "id": 3,
+  "name": "my-token",
+  "expired_time": -1,
+  "quota_type": 1,
+  "remain_quota": 500000,
+  "unlimited_quota": false,
+  "group": "default",
+  "cross_group_retry": false,
+  "model_limits_enabled": false,
+  "model_limits": "",
+  "model_mapping": null,
+  "allow_ips": null
+}'
+```
+
+</RequestExample>
+
+### Query parameters
+
+<ParamField path="query.status_only" type="string">
+  Any non-empty value switches the endpoint to status-only mode: only `body.status` is written and every other body field is ignored.
+</ParamField>
+
+### Body
+
+<ParamField path="body.id" type="integer" required>
+  Id of the token to update. The token must belong to the current user.
+</ParamField>
+
+<ParamField path="body.status" type="integer">
+  New status: `1` enabled, `2` disabled, `3` expired, `4` quota exhausted. Only applied in `status_only` mode. Enabling (`1`) an expired token whose `expired_time` has passed, or an exhausted token without remaining quota, is rejected.
+</ParamField>
+
+<ParamField path="body.name" type="string">
+  Display name of the token, at most 50 characters. Replaced in full-update mode.
+</ParamField>
+
+<ParamField path="body.expired_time" type="integer">
+  Unix timestamp (seconds) when the token expires; `-1` means never expires. Replaced in full-update mode.
+</ParamField>
+
+<ParamField path="body.quota_type" type="integer">
+  Quota mode, same semantics as in [Create Token](/nookmux/api/management/token-management/token-post): `0` unlimited, `1` permanent quota, `2` time-window quota, `3` time-window plus cycle quota; `0` with `unlimited_quota: false` is treated as `1`. Unlike creation, unknown values are not rejected here — validation only covers the parameter constraints of types `1`-`3`.
+</ParamField>
+
+<ParamField path="body.unlimited_quota" type="boolean">
+  Whether the token has unlimited quota. Overridden by the server according to `quota_type`.
+</ParamField>
+
+<ParamField path="body.remain_quota" type="integer">
+  Total quota of a permanent-quota token; must not be negative and must not exceed the server-side upper bound. Only validated for `quota_type` `1`.
+</ParamField>
+
+<ParamField path="body.window_hours" type="integer">
+  Length of each quota window in hours, at least `1`. Effective for `quota_type` `2` and `3`.
+</ParamField>
+
+<ParamField path="body.window_quota" type="integer">
+  Quota granted per window, must be greater than `0`. Effective for `quota_type` `2` and `3`.
+</ParamField>
+
+<ParamField path="body.window_start_hour" type="integer">
+  Hour of day (`0`-`23`) the window grid is aligned to. Effective for `quota_type` `2` and `3`.
+</ParamField>
+
+<ParamField path="body.cycle_days" type="integer">
+  Length of each quota cycle in days, at least `1`. Effective for `quota_type` `3`.
+</ParamField>
+
+<ParamField path="body.cycle_quota" type="integer">
+  Quota granted per cycle, must be greater than `0`. Effective for `quota_type` `3`.
+</ParamField>
+
+<ParamField path="body.model_limits_enabled" type="boolean">
+  Whether `model_limits` is enforced for this token.
+</ParamField>
+
+<ParamField path="body.model_limits" type="string">
+  Comma-separated list of model names the token may call.
+</ParamField>
+
+<ParamField path="body.model_mapping" type="string">
+  JSON object of token-level model redirects, with the same validation rules as in [Create Token](/nookmux/api/management/token-management/token-post). `null` or an empty string clears the redirect.
+</ParamField>
+
+<ParamField path="body.allow_ips" type="string">
+  Newline-separated IP whitelist for the token key. `null` or empty means no restriction.
+</ParamField>
+
+<ParamField path="body.group" type="string">
+  Group used for channel selection. Empty means the token follows the user's group; `auto` enables automatic group ordering.
+</ParamField>
+
+<ParamField path="body.cross_group_retry" type="boolean">
+  Whether retry may cross to the next group. Only effective when `group` is `auto`.
+</ParamField>
+
+<ParamField path="body.key / body.created_time / body.accessed_time / body.used_quota" type="any">
+  Not updatable: `key`, timestamps and the usage counters are never taken from the request body.
+</ParamField>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": {
+    "id": 3,
+    "user_id": 1,
+    "key": "***************************************************",
+    "status": 1,
+    "name": "my-token",
+    "created_time": 1748000000,
+    "accessed_time": 1748086400,
+    "expired_time": -1,
+    "remain_quota": 500000,
+    "unlimited_quota": false,
+    "model_limits_enabled": false,
+    "model_limits": "",
+    "model_mapping": null,
+    "allow_ips": null,
+    "used_quota": 0,
+    "group": "default",
+    "cross_group_retry": false,
+    "quota_type": 1,
+    "window_hours": 0,
+    "window_quota": 0,
+    "window_start_hour": 0,
+    "cycle_days": 0,
+    "cycle_quota": 0,
+    "window_used_quota": 0,
+    "window_start_time": 0,
+    "cycle_used_quota": 0,
+    "cycle_start_time": 0
+  }
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+  Whether the token was updated.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  Error description when `success` is `false`; empty otherwise.
+</ResponseField>
+
+<ResponseField name="data" type="object" required>
+  The updated token object. Same structure as in [Get Specified Token](/nookmux/api/management/token-management/token-id-get); the `key` is masked.
+</ResponseField>
+
+<Note>
+In full-update mode, when `quota_type` or the window/cycle parameters change, the runtime window and cycle usage counters are reset to `0` so the new limits start from a clean state. Validation failures are reported as `success: false` with a localized `message`.
+</Note>
+
+## Error messages
+
+| Condition | Description |
+| --- | --- |
+| Invalid request body | The JSON body is missing or malformed |
+| Token name too long | `name` exceeds 50 characters |
+| Invalid model mapping | `model_mapping` fails the same validation as in Create Token |
+| Quota value cannot be negative | `quota_type` is `1` but `remain_quota` is negative |
+| Quota value exceeds valid range | `remain_quota` exceeds the server-side upper bound |
+| Window duration must be at least 1 hour | `quota_type` is `2` or `3` but `window_hours` is below `1` |
+| Window quota must be greater than 0 | `quota_type` is `2` or `3` but `window_quota` is not positive |
+| Window start hour must be between 0 and 23 | `window_start_hour` is outside `0`-`23` |
+| Cycle days must be at least 1 | `quota_type` is `3` but `cycle_days` is below `1` |
+| Cycle total quota must be greater than 0 | `quota_type` is `3` but `cycle_quota` is not positive |
+| Token has expired and cannot be enabled | Enabling a token whose `expired_time` has already passed |
+| Token quota is exhausted and cannot be enabled | Enabling an exhausted token with no remaining quota and no unlimited quota |
+| Database error | No token with `body.id` belongs to the current user, or persisting the update failed; see server logs |

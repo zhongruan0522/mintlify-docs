@@ -1,0 +1,73 @@
+---
+title: Reset Token Key
+description: Regenerate the key of a token owned by the current user; only the key changes and the new full key is returned in the response.
+api: "PUT /api/token/{id}/key"
+---
+
+Regenerate the key of a single token owned by the current user. Only the `key` field changes — the token's name, quota, model limits and all other attributes stay untouched. Concurrent resets of the same token are serialized by a per-token lock and the token cache is swapped inside the lock, so only one valid key exists at any time; the old key stops working as soon as the reset completes. The newly generated full key is returned in the response, and the reset is recorded in the audit logs.
+
+Requires a logged-in user (**User** permissions). See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
+
+<Note>
+  This endpoint is protected by a stricter rate limit (CriticalRateLimit).
+</Note>
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request PUT \
+  --url 'https://your-nookmux-domain/api/token/3/key' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1'
+```
+
+</RequestExample>
+
+### Path parameters
+
+<ParamField path="id" type="integer" required>
+  Token id.
+</ParamField>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": {
+    "key": "sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+  }
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+  Whether the key was reset.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  Error description when `success` is `false`; empty otherwise.
+</ResponseField>
+
+<ResponseField name="data.key" type="string" required>
+  The newly generated full token key (site key prefix, `sk-` by default, plus 48 random characters). The previous key is invalid from this moment on.
+</ResponseField>
+
+<Note>
+Management endpoints return HTTP `200` even on business failures; always check the `success` field.
+</Note>
+
+## Error messages
+
+| Condition | Description |
+| --- | --- |
+| Invalid parameters | `id` is not an integer |
+| Database error | No token with this id belongs to the current user, generating the new key failed, or persisting it failed; see server logs |

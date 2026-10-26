@@ -1,7 +1,60 @@
 ---
 title: 获取用户可用模型
+description: 列出当前用户可通过网关调用的模型名。
 api: "GET /api/user/models"
 ---
 
-🔐 需要登录（User权限）
+返回当前登录用户可用的模型名列表：用户所在分组可用的全部分组中，由已启用渠道提供的模型去重合并结果。渠道状态禁用后其模型不再出现在列表中。
 
+需要**用户（User）**权限（任意登录用户）。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
+
+## 请求
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url 'https://your-nookmux-domain/api/user/models' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1'
+```
+
+</RequestExample>
+
+## 响应
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": [
+    "deepseek-chat",
+    "gpt-4o",
+    "gpt-4o-mini"
+  ]
+}
+```
+
+</ResponseExample>
+
+### 响应字段
+
+<ResponseField name="success" type="boolean" required>
+是否成功返回模型列表。
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+`success` 为 `false` 时的错误描述；成功时为空字符串。
+</ResponseField>
+
+<ResponseField name="data" type="string[]">
+当前用户可用、去重后的模型名列表。
+</ResponseField>
+
+## 错误说明
+
+| 条件 | 说明 |
+| --- | --- |
+| 数据库错误 | 从缓存或数据库加载用户信息失败 |

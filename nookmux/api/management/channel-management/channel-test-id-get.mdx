@@ -1,7 +1,92 @@
 ---
 title: Test Specific Channel
+description: Send a live test request through a single channel and report latency and errors.
 api: "GET /api/channel/test/{id}"
 ---
 
-👨‍💼 Requires Admin Permissions
+Test a single channel by sending one real request through the relay pipeline to the channel's upstream, then report success, the upstream error (if any), and the time the request consumed. The channel's stored response time is refreshed with the measured latency.
 
+Requires **Admin** permissions. See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url 'https://your-nookmux-domain/api/channel/test/1?model=gpt-4o-mini' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1'
+```
+
+</RequestExample>
+
+### Path parameters
+
+<ParamField path="id" type="integer" required>
+ID of the channel to test.
+</ParamField>
+
+### Query parameters
+
+<ParamField path="model" type="string">
+Model to test with. Defaults to the channel's `test_model`, then the first entry of the channel's `models` list, and finally `gpt-4o-mini`.
+</ParamField>
+
+<ParamField path="endpoint_type" type="string">
+Relay endpoint to exercise: `openai`, `openai-response`, `openai-response-compact`, `anthropic`, `gemini`, `jina-rerank`, `image-generation`, or `embeddings`. Unknown values fall back to the OpenAI format. When omitted, the endpoint is auto-detected from the model name (rerank, embedding, codex, and compact-suffixed models use their dedicated paths; models ending with the compact suffix are normalized to it).
+</ParamField>
+
+<ParamField path="stream" type="boolean" default="false">
+Run the test as a streaming request.
+</ParamField>
+
+<ParamField path="tool" type="boolean" default="false">
+Force the test request to use a deterministic tool call. Rejected when the channel or model does not support tools for testing.
+</ParamField>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "time": 1.845
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+Whether the test request completed without errors.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+Upstream or local error description when `success` is `false`; empty otherwise.
+</ResponseField>
+
+<ResponseField name="time" type="number" required>
+Time the test request consumed, in seconds.
+</ResponseField>
+
+<ResponseField name="error_code" type="string">
+NookMux error code for the failure; present only when `success` is `false` and an error code is available.
+</ResponseField>
+
+<Note>
+Management endpoints return HTTP `200` even on business failures; always check the `success` field. This response is not wrapped in a `data` field. The test runs under the calling admin user (falling back to the root user), so it follows the same relay and billing pipeline as normal traffic. Midjourney, Midjourney-Plus, and Suno channel types cannot be tested. The channel's `response_time` is updated asynchronously after the response is returned.
+</Note>
+
+## Error messages
+
+| Condition | Description |
+| --- | --- |
+| Channel ID format error | The path `id` is not an integer |
+| Test not supported for channel type | The channel type (Midjourney, Midjourney-Plus, Suno) cannot be tested |
+| Tool test not supported | `tool` is `true` but the channel or model does not support it |
+| Upstream request failed | The relayed request failed; `message` carries the error and `error_code` the code when available |
+| Database error | Resolving the test user or loading the channel failed |

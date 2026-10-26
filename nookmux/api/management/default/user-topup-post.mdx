@@ -1,7 +1,75 @@
 ---
 title: Redeem Code
+description: Redeem a redemption code and credit its quota to the current account.
 api: "POST /api/user/topup"
 ---
 
-🔐 Login Required (User Permission)
+Redeems a redemption (top-up) code and credits the code's quota to the current account. The redemption runs in a database transaction that locks the code row and atomically flips its status to used, so a code can only be redeemed once even under concurrent requests; the quota is added to the user balance and a top-up log entry is recorded.
 
+Requests from the same user are serialized by an in-flight lock: while one redemption is still processing, further attempts from the same account are rejected immediately.
+
+Requires **User** permissions. This endpoint is protected by a stricter rate limit (CriticalRateLimit). See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request POST \
+  --url 'https://your-nookmux-domain/api/user/topup' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1' \
+  --header 'Content-Type: application/json' \
+  --data '{
+  "key": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+}'
+```
+
+</RequestExample>
+
+### Body
+
+<ParamField path="body.key" type="string" required>
+  Redemption code to redeem.
+</ParamField>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": 100000
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+  Whether the code was redeemed.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  Error description when `success` is `false`; empty otherwise.
+</ResponseField>
+
+<ResponseField name="data" type="integer" required>
+  Quota amount credited to the account by this code.
+</ResponseField>
+
+<Note>
+  This endpoint is protected by a stricter rate limit (CriticalRateLimit). All redemption failures — unknown code, already-used code, expired code — are reported through the same unified message; check the server logs to distinguish them.
+</Note>
+
+## Error messages
+
+| Condition | Description |
+| --- | --- |
+| Invalid request body | The JSON body is missing or malformed |
+| Top-up is processing, please try again later | Another redemption from the same user is still in flight |
+| Redemption failed, please try again later | The code is invalid, already used, or expired |
+| Database error, please try again later | The redemption transaction or quota update failed; see server logs |

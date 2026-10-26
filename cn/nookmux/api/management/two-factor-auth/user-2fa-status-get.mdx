@@ -1,7 +1,72 @@
 ---
 title: 获取2FA状态
+description: 查询当前登录账号两步验证的启用与锁定状态，以及剩余备用码数量。
 api: "GET /api/user/2fa/status"
 ---
 
-🔐 需要登录（User权限）
+返回当前登录账号的两步验证状态：是否已启用、验证是否被临时锁定，以及启用状态下的剩余备用码数量。
 
+需要**用户（User）**权限（任意登录用户）。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
+
+## 请求
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url 'https://your-nookmux-domain/api/user/2fa/status' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1'
+```
+
+</RequestExample>
+
+## 响应
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": {
+    "enabled": true,
+    "locked": false,
+    "backup_codes_remaining": 4
+  }
+}
+```
+
+</ResponseExample>
+
+### 响应字段
+
+<ResponseField name="success" type="boolean" required>
+状态是否返回成功。
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+`success` 为 `false` 时的错误描述；成功时为空字符串。
+</ResponseField>
+
+<ResponseField name="data.enabled" type="boolean" required>
+该账号是否已启用 2FA。从未设置或已禁用时为 `false`。
+</ResponseField>
+
+<ResponseField name="data.locked" type="boolean" required>
+2FA 验证是否因连续验证失败而被临时锁定。
+</ResponseField>
+
+<ResponseField name="data.backup_codes_remaining" type="integer">
+未使用的备用码数量。仅在 2FA 已启用时返回。
+</ResponseField>
+
+<Note>
+连续 5 次验证失败后，2FA 验证将被锁定 300 秒；锁定期内 `locked` 为 `true`，验证请求会被拒绝。2FA 未启用时不返回 `backup_codes_remaining` 字段。
+</Note>
+
+## 错误说明
+
+| 条件 | 说明 |
+| --- | --- |
+| 数据库错误 | 读取 2FA 记录失败，详见服务端日志 |

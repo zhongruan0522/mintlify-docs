@@ -1,7 +1,156 @@
 ---
 title: Get User Top-up Records
+description: Paginated list of the current user's online top-up orders, searchable by order number.
 api: "GET /api/user/topup/self"
 ---
 
-🔐 Login Required (User Permission)
+Returns the current user's online top-up orders, newest first, with pagination and an optional keyword search on the order number.
 
+Requires **User** permissions (any logged-in account). See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
+
+<Note>
+History is limited to the most recent 30 days, except that pending orders are always visible regardless of age, so orders whose payment callback was lost can still be found and checked.
+</Note>
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url 'https://your-nookmux-domain/api/user/topup/self?p=1&page_size=10&keyword=USR1NO' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1'
+```
+
+</RequestExample>
+
+### Query parameters
+
+<ParamField path="p" type="integer" default="1">
+Page number, starting at 1.
+</ParamField>
+
+<ParamField path="page_size" type="integer" default="10">
+Page size, capped at 100. The legacy aliases `ps` and `size` are also accepted when `page_size` is absent.
+</ParamField>
+
+<ParamField path="keyword" type="string">
+Keyword matched against the order number (`trade_no`). When omitted, the full list is returned.
+</ParamField>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": {
+    "page": 1,
+    "page_size": 10,
+    "total": 2,
+    "items": [
+      {
+        "id": 1024,
+        "user_id": 1,
+        "amount": 10,
+        "money": 73,
+        "trade_no": "USR1NOAb12cd1730000000",
+        "payment_method": "alipay",
+        "payment_provider": "epay",
+        "create_time": 1730000000,
+        "complete_time": 1730000100,
+        "status": "success"
+      },
+      {
+        "id": 1023,
+        "user_id": 1,
+        "amount": 10,
+        "money": 80,
+        "trade_no": "ref_a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0",
+        "payment_method": "stripe",
+        "payment_provider": "stripe",
+        "create_time": 1729990000,
+        "complete_time": 0,
+        "status": "pending"
+      }
+    ]
+  }
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+Whether the records were loaded.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+Error description when `success` is `false`; empty otherwise.
+</ResponseField>
+
+<ResponseField name="data" type="object" required>
+Pagination envelope.
+
+<Expandable title="data structure">
+  <ParamField path="page" type="integer" required>
+    Current page number.
+  </ParamField>
+  <ParamField path="page_size" type="integer" required>
+    Page size actually applied (after defaulting and the 100 cap).
+  </ParamField>
+  <ParamField path="total" type="integer" required>
+    Total number of matching records.
+  </ParamField>
+  <ParamField path="items" type="array" required>
+    Top-up orders of the current page, ordered by `id` descending.
+  </ParamField>
+</Expandable>
+</ResponseField>
+
+<ResponseField name="data.items[]" type="object" required>
+One top-up order record.
+
+<Expandable title="top-up order structure">
+  <ParamField path="id" type="integer" required>
+    Record ID.
+  </ParamField>
+  <ParamField path="user_id" type="integer" required>
+    ID of the user the order belongs to (the current user).
+  </ParamField>
+  <ParamField path="amount" type="integer" required>
+    Top-up quantity of the order.
+  </ParamField>
+  <ParamField path="money" type="number" required>
+    Payable amount computed at order creation.
+  </ParamField>
+  <ParamField path="trade_no" type="string" required>
+    Order number. Epay orders use the `USR{user_id}NO...` form; Stripe orders use a `ref_`-prefixed hash.
+  </ParamField>
+  <ParamField path="payment_method" type="string" required>
+    Payment channel of the order, for example `alipay`, `wxpay` or `stripe`.
+  </ParamField>
+  <ParamField path="payment_provider" type="string" required>
+    Payment provider: `epay` for Epay orders, `stripe` for Stripe orders.
+  </ParamField>
+  <ParamField path="create_time" type="integer" required>
+    Order creation time as a Unix timestamp in seconds.
+  </ParamField>
+  <ParamField path="complete_time" type="integer" required>
+    Completion time as a Unix timestamp in seconds; `0` while the order is not completed.
+  </ParamField>
+  <ParamField path="status" type="string" required>
+    Order status: `pending`, `success`, `expired` or `failed`.
+  </ParamField>
+</Expandable>
+</ResponseField>
+
+## Error messages
+
+| Condition | Description |
+| --- | --- |
+| Database error | Loading the records failed; see server logs |

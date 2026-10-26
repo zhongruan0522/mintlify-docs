@@ -1,7 +1,153 @@
 ---
 title: 更新兑换码
+description: 更新兑换码的名称、额度与过期时间，或用 status_only 模式仅更新状态。
 api: "PUT /api/redemption/"
 ---
 
-👨‍💼 需要管理员权限（Admin）
+更新一个已存在的兑换码。默认更新 `name`、`quota` 与 `expired_time`；当查询参数 `status_only` 为非空值时，仅应用请求体中的 `status`，其余字段忽略。响应返回更新后的兑换码，`key` 字段恒脱敏为空字符串。
 
+需要**管理员（Admin）**权限。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
+
+## 请求
+
+<RequestExample>
+
+```bash cURL
+curl --request PUT \
+  --url 'https://your-nookmux-domain/api/redemption/' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1' \
+  --header 'Content-Type: application/json' \
+  --data '{
+  "id": 42,
+  "name": "welcome-bonus-v2",
+  "quota": 200,
+  "expired_time": 1750000000
+}'
+```
+
+</RequestExample>
+
+### 查询参数
+
+<ParamField path="query.status_only" type="string">
+  仅更新状态模式。为任意非空值时，只应用请求体中的 `status` 字段，忽略 `name`、`quota` 与 `expired_time`；省略或为空时，应用 `name`、`quota` 与 `expired_time`，忽略 `status`。
+</ParamField>
+
+### 请求体
+
+<ParamField path="body.id" type="integer" required>
+  待更新兑换码的 id。服务端按该 id 加载存量记录；记录不存在时更新失败。
+</ParamField>
+
+<ParamField path="body.name" type="string">
+  新名称。仅在未设置 `status_only` 时生效。
+</ParamField>
+
+<ParamField path="body.quota" type="integer">
+  新的兑换额度。仅在未设置 `status_only` 时生效。
+</ParamField>
+
+<ParamField path="body.expired_time" type="integer">
+  新的过期时间，Unix 时间戳（秒）；`0` 表示永不过期。仅在未设置 `status_only` 时生效。非 0 时不得早于当前时间。
+</ParamField>
+
+<ParamField path="body.status" type="integer">
+  新状态：`1` 启用，`2` 禁用，`3` 已使用。仅在设置了 `status_only` 时生效。
+</ParamField>
+
+<Note>
+存储层按非零值语义更新：默认模式下取零值的字段（空 `name`、`0` 额度、`0` 过期时间）保持原值不变。
+</Note>
+
+## 响应
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": {
+    "id": 42,
+    "user_id": 1,
+    "key": "",
+    "status": 1,
+    "name": "welcome-bonus-v2",
+    "quota": 200,
+    "created_time": 1748000000,
+    "redeemed_time": 0,
+    "count": 0,
+    "used_user_id": 0,
+    "DeletedAt": null,
+    "expired_time": 1750000000
+  }
+}
+```
+
+</ResponseExample>
+
+### 响应字段
+
+<ResponseField name="success" type="boolean" required>
+  更新是否成功。
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  `success` 为 `false` 时的错误描述；成功时为空字符串。
+</ResponseField>
+
+<ResponseField name="data" type="object" required>
+  更新后的兑换码对象，`key` 脱敏为空字符串。
+
+  <Expandable title="redemption 结构">
+    <ResponseField name="id" type="integer" required>
+      兑换码 id。
+    </ResponseField>
+    <ResponseField name="user_id" type="integer" required>
+      创建该兑换码的管理员用户 id。
+    </ResponseField>
+    <ResponseField name="key" type="string" required>
+      兑换码密钥。本接口恒返回空字符串；完整密钥需通过 `GET /api/redemption/{id}/key` 按需获取。
+    </ResponseField>
+    <ResponseField name="status" type="integer" required>
+      兑换码状态：`1` 启用，`2` 禁用，`3` 已使用。
+    </ResponseField>
+    <ResponseField name="name" type="string" required>
+      兑换码名称。
+    </ResponseField>
+    <ResponseField name="quota" type="integer" required>
+      兑换成功后给兑换用户充入的额度。
+    </ResponseField>
+    <ResponseField name="created_time" type="integer" required>
+      创建时间的 Unix 时间戳（秒）。
+    </ResponseField>
+    <ResponseField name="redeemed_time" type="integer" required>
+      兑换时间的 Unix 时间戳（秒）；未兑换时为 `0`。
+    </ResponseField>
+    <ResponseField name="count" type="integer" required>
+      单次创建请求批量生成的个数。仅用于创建请求，响应中恒为 `0`。
+    </ResponseField>
+    <ResponseField name="used_user_id" type="integer" required>
+      兑换该码的用户 id；未兑换时为 `0`。
+    </ResponseField>
+    <ResponseField name="DeletedAt" type="string" required>
+      软删除标记；软删除记录不会出现在查询结果中，因此恒为 `null`。
+    </ResponseField>
+    <ResponseField name="expired_time" type="integer" required>
+      过期时间的 Unix 时间戳（秒），超过该时间不可再兑换；`0` 表示永不过期。
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<Note>
+管理接口在业务失败时同样返回 HTTP `200`，必须以 `success` 字段判断结果。
+</Note>
+
+## 错误说明
+
+| 条件 | 说明 |
+| --- | --- |
+| 请求体非法 | JSON 缺失或格式错误 |
+| 过期时间非法 | `expired_time` 非 0 且早于当前时间（仅默认模式） |
+| 数据库错误 | 不存在该 `id` 的兑换码，或更新落库失败，详见服务端日志 |

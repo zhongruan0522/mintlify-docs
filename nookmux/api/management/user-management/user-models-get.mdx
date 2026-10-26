@@ -1,7 +1,60 @@
 ---
 title: Get User Available Models
+description: List the model names the current user can invoke through the gateway.
 api: "GET /api/user/models"
 ---
 
-🔐 Login Required (User Permission)
+Returns the model names currently usable by the logged-in user: the deduplicated union of the models served by enabled channels across all groups usable from the user's own group. Models disabled by channel status are excluded.
 
+Requires **User** permission (any logged-in user). See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url 'https://your-nookmux-domain/api/user/models' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1'
+```
+
+</RequestExample>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": [
+    "deepseek-chat",
+    "gpt-4o",
+    "gpt-4o-mini"
+  ]
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+Whether the model list was returned.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+Error description when `success` is `false`; empty otherwise.
+</ResponseField>
+
+<ResponseField name="data" type="string[]">
+Deduplicated list of model names available to the current user.
+</ResponseField>
+
+## Error messages
+
+| Condition | Description |
+| --- | --- |
+| Database error | Loading the user from the cache or database failed |

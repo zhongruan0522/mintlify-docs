@@ -1,7 +1,87 @@
 ---
 title: Start Passkey Login
+description: Start a discoverable passkey (WebAuthn) login ceremony and return the assertion options.
 api: "POST /api/user/passkey/login/begin"
 ---
 
-🔓 No Authentication Required
+First step of passkey login. Starts a discoverable (resident-key) WebAuthn authentication ceremony: the server generates a single-use challenge, stores it in the server-side session, and returns the request options to pass to `navigator.credentials.get()`. Complete the ceremony with `POST /api/user/passkey/login/finish` using the same session cookie. The challenge is enforced with a 2-minute timeout.
 
+This endpoint is **Public** — no authentication is required. See [Authentication](/nookmux/api/management/auth) for how management API requests are authenticated.
+
+<Note>
+Passkey login must be enabled by the administrator. This endpoint applies a stricter per-IP rate limit (CriticalRateLimit) and limits the anonymous request body size (oversized bodies are rejected with HTTP `413`). No request body is read.
+</Note>
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request POST \
+  --url 'https://your-nookmux-domain/api/user/passkey/login/begin'
+```
+
+</RequestExample>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": {
+    "options": {
+      "publicKey": {
+        "challenge": "k3oU9xQ0ZjX2vB7nM1cS4eF6gH8iJ0kL2mN4oP6qR8s",
+        "timeout": 120000,
+        "rpId": "your-nookmux-domain",
+        "userVerification": "preferred"
+      }
+    }
+  }
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+Whether the ceremony was started and the challenge session stored.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+Error description when `success` is `false`; empty otherwise.
+</ResponseField>
+
+<ResponseField name="data.options" type="object" required>
+Standard WebAuthn `CredentialAssertion` for a discoverable login. `allowCredentials` is omitted so the browser can pick any resident credential of this relying party.
+
+<Expandable title="options.publicKey structure">
+  <ResponseField name="challenge" type="string" required>
+    URL-safe base64 challenge to sign. Single-use; consumed by the finish step.
+  </ResponseField>
+  <ResponseField name="timeout" type="integer">
+    Ceremony timeout in milliseconds (120000 = 2 minutes).
+  </ResponseField>
+  <ResponseField name="rpId" type="string">
+    Relying party ID the credential must be scoped to.
+  </ResponseField>
+  <ResponseField name="userVerification" type="string">
+    User verification requirement, for example `preferred` or `required`.
+  </ResponseField>
+</Expandable>
+</ResponseField>
+
+<Note>
+The inner `publicKey` fields follow the WebAuthn specification (`PublicKeyCredentialRequestOptions`); NookMux does not extend the protocol.
+</Note>
+
+## Error messages
+
+| Condition | Description |
+| --- | --- |
+| Passkey login disabled | Passkey login is not enabled by the administrator |
+| Database error | The WebAuthn instance could not be built, the ceremony could not be started, or the challenge session could not be saved |

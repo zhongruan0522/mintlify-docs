@@ -1,7 +1,52 @@
 ---
 title: Get Model List
+description: Fetch the built-in model catalog grouped by channel type, used by the dashboard model pickers.
 api: "GET /api/models"
 ---
 
-🔐 Login Required (User Permission)
+Returns the built-in model list for every supported channel type. The response maps each channel type constant (for example `1` for OpenAI) to the array of model names that the channel type's adaptor supports out of the box. This catalog is compiled at server startup and does not reflect the channels actually configured on the deployment; use the pricing endpoint for the models actually served.
 
+Requires **User** permissions (any logged-in account). See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url 'https://your-nookmux-domain/api/models' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1'
+```
+
+</RequestExample>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "data": {
+    "1": ["gpt-4o", "gpt-4o-mini"],
+    "14": ["claude-3-5-sonnet-20241022"]
+  }
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+  Whether the request succeeded.
+</ResponseField>
+
+<ResponseField name="data" type="object" required>
+  Map of channel type constant (serialized as a string key, for example `"1"` for OpenAI) to the array of built-in model names supported by that channel type's adaptor.
+</ResponseField>
+
+<Note>
+  This response does not include the standard `message` field. The channel type constants are the same values used when creating channels (see the channel creation endpoint); types without a registered adaptor have no entry in this map.
+</Note>

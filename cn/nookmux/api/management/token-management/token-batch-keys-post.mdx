@@ -1,0 +1,78 @@
+---
+title: 批量获取令牌密钥
+description: 一次调用获取当前用户名下多个令牌的完整密钥；任一 id 无效时整个请求失败。
+api: "POST /api/token/batch/keys"
+---
+
+一次调用获取当前用户名下多个令牌的完整密钥。列表与详情接口返回的密钥均为脱敏星号；要重新读取已有令牌的完整密钥，只能使用本接口与 `POST /api/token/{id}/key`。
+
+与批量删除不同，本接口不会静默跳过未知的 id：令牌会逐个查询，第一个无法在当前用户名下命中的 id 会使整个请求失败，不返回任何密钥。
+
+需要登录（**User** 权限）。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
+
+## 请求
+
+<RequestExample>
+
+```bash cURL
+curl --request POST \
+  --url 'https://your-nookmux-domain/api/token/batch/keys' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1' \
+  --header 'Content-Type: application/json' \
+  --data '{
+  "ids": [1, 3]
+}'
+```
+
+</RequestExample>
+
+### 请求体
+
+<ParamField path="body.ids" type="integer[]" required>
+  需要返回完整密钥的令牌 id 列表，必须为非空数组；仅匹配当前用户名下的令牌。
+</ParamField>
+
+## 响应
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": {
+    "keys": {
+      "1": "sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+      "3": "sk-yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy"
+    }
+  }
+}
+```
+
+</ResponseExample>
+
+### 响应字段
+
+<ResponseField name="success" type="boolean" required>
+  是否成功返回完整密钥。
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  `success` 为 `false` 时的错误描述；成功时为空字符串。
+</ResponseField>
+
+<ResponseField name="data.keys" type="object" required>
+  令牌 id 到完整密钥的映射（站点密钥前缀，默认 `sk-`，加 48 位随机串）。id 会以字符串形式作为 JSON 对象键序列化。
+</ResponseField>
+
+<Note>
+管理接口在业务失败时同样返回 HTTP `200`，必须以 `success` 字段判断结果。
+</Note>
+
+## 错误说明
+
+| 条件 | 说明 |
+| --- | --- |
+| 参数非法 | JSON 请求体格式错误或 `ids` 为空 |
+| 数据库错误 | 任一 id 未在当前用户名下命中令牌，或查询失败；此时不返回任何密钥；详见服务端日志 |

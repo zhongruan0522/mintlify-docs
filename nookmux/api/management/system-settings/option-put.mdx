@@ -1,7 +1,76 @@
 ---
 title: Update System Options
+description: Write a single system option by key, with per-key validation and audit logging.
 api: "PUT /api/option/"
 ---
 
-👑 Requires Super Administrator (Root) Privileges
+Updates one system option. Each call writes a single `key`/`value` pair: the value is persisted to the database and the in-memory option map is refreshed, so the change takes effect immediately without a restart. Certain keys undergo server-side validation before the write (for example ratio JSON must parse, `RetryTimes` must be a non-negative integer below 100), and a fixed set of removed legacy keys is rejected outright.
 
+The change is recorded in the admin audit log; values of sensitive keys are redacted in the audit entry.
+
+Requires **Root** (super administrator) permissions. See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request PUT \
+  --url 'https://your-nookmux-domain/api/option/' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1' \
+  --header 'Content-Type: application/json' \
+  --data '{
+  "key": "SystemName",
+  "value": "My NookMux"
+}'
+```
+
+</RequestExample>
+
+### Body
+
+<ParamField path="body.key" type="string" required>
+  Option key to write, for example `SystemName`. Keys of removed legacy features (WeChat login, OIDC, Creem payments, old chat links, `ImageRatio`, `ExposeRatioEnabled`, `global.third_party_multimodal_*`, `quota_setting.enable_free_model_pre_consume`, `minimax.voice_whitelist`, `minimax.voice_redirect`) are rejected.
+</ParamField>
+
+<ParamField path="body.value" type="string | boolean | number" required>
+  New option value. Strings are stored as-is; booleans and numbers are serialized to their string form. Other JSON types are rejected.
+</ParamField>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": ""
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+  Whether the option was written.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  Error description when `success` is `false`; empty otherwise.
+</ResponseField>
+
+<Note>
+  Body-shape errors are reported before the unified wrapper and use real HTTP status codes: malformed JSON or an unsupported value type returns HTTP `400`, and removed legacy keys return HTTP `404`. Per-key validation failures (invalid ratio JSON, `RetryTimes` out of range, enabling an OAuth provider without its client id configured, and similar) return HTTP `200` with `success: false` and a localized `message`. Enabling `EmailDomainRestrictionEnabled` requires a non-empty email domain whitelist; enabling `TurnstileCheckEnabled` requires a configured Turnstile site key.
+</Note>
+
+## Error messages
+
+| Condition | Description |
+| --- | --- |
+| Invalid parameters | The JSON body is missing or malformed; HTTP `400` |
+| Option value must be a string, boolean, or number | `value` is not one of the accepted JSON types; HTTP `400` |
+| This option has been removed | `key` belongs to a removed legacy feature or a setting migrated elsewhere (voice options moved to voice management); HTTP `404` |
+| Per-key validation failure | The value does not satisfy the key's rules (for example invalid `GroupRatio` JSON, `RetryTimes` outside `0-99`, enabling retry with `RetryTimes <= 0`, OAuth/provider toggles without required configuration); HTTP `200` with `success: false` |
+| Database error, please try again later | Persisting the option failed; see server logs |

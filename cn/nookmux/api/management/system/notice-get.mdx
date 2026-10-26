@@ -1,7 +1,48 @@
 ---
 title: 获取公告
+description: 获取控制台内容设置中配置的公告内容。
 api: "GET /api/notice"
 ---
 
-🔓 无需鉴权
+返回管理员在控制台内容设置中配置的公告内容。该值以原始字符串（通常为 Markdown）返回，渲染由前端完成；未配置时返回空字符串。
 
+该接口为公开接口，无需鉴权。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
+
+## 请求
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url 'https://your-nookmux-domain/api/notice'
+```
+
+</RequestExample>
+
+## 响应
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": "## 公告\n今晚将进行服务维护。"
+}
+```
+
+</ResponseExample>
+
+### 响应字段
+
+<ResponseField name="success" type="boolean" required>
+  请求是否成功。
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  `success` 为 `false` 时的错误描述；成功时为空字符串。
+</ResponseField>
+
+<ResponseField name="data" type="string" required>
+  控制台内容设置中配置的公告内容，原始字符串。未配置时为空字符串。
+</ResponseField>

@@ -1,7 +1,94 @@
 ---
 title: 获取Uptime Kuma状态
+description: 获取由已配置的 Uptime Kuma 状态页聚合出的监控可用性数据。
 api: "GET /api/uptime/status"
 ---
 
-🔓 无需鉴权
+返回数据看板 Uptime Kuma 面板所需的服务可用性数据。服务端读取控制台内容设置中配置的 Uptime Kuma 分组，并行请求各分组的 Uptime Kuma 实例（状态页与心跳 API），并按分组聚合监控名称、最新心跳状态与 24 小时可用率。未配置分组时 `data` 为空数组。
 
+需要登录（**User** 权限，任意已登录账号）。强制登录是因为该请求会让服务端向已配置的 Uptime Kuma 实例发起内网请求。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
+
+## 请求
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url 'https://your-nookmux-domain/api/uptime/status' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1'
+```
+
+</RequestExample>
+
+## 响应
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": [
+    {
+      "categoryName": "核心服务",
+      "monitors": [
+        {
+          "name": "API Gateway",
+          "uptime": 0.9995,
+          "status": 1,
+          "group": "Public"
+        }
+      ]
+    }
+  ]
+}
+```
+
+</ResponseExample>
+
+### 响应字段
+
+<ResponseField name="success" type="boolean" required>
+  请求是否成功。
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  `success` 为 `false` 时的错误描述；成功时为空字符串。
+</ResponseField>
+
+<ResponseField name="data" type="array" required>
+  每个已配置的 Uptime Kuma 分组一个条目，按配置顺序排列。
+
+  <Expandable title="分组结构">
+    <ParamField path="categoryName" type="string" required>
+      控制台内容设置中配置的分组显示名。
+    </ParamField>
+    <ParamField path="monitors" type="array" required>
+      该分组下的监控项。Uptime Kuma 实例不可达或返回非 200 响应时为空数组。
+    </ParamField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="data[].monitors[]" type="object">
+  从 Uptime Kuma 实例聚合出的监控条目。
+
+  <Expandable title="监控结构">
+    <ParamField path="name" type="string" required>
+      Uptime Kuma 状态页发布的监控项名称。
+    </ParamField>
+    <ParamField path="uptime" type="number" required>
+      Uptime Kuma 上报的 24 小时可用率（0 到 1 之间）。实例未上报该监控项时为 `0`。
+    </ParamField>
+    <ParamField path="status" type="integer" required>
+      来自 Uptime Kuma 实例的最新心跳状态整数。无心跳数据时为 `0`。
+    </ParamField>
+    <ParamField path="group" type="string">
+      该监控项在 Uptime Kuma 状态页中所属公共分组的名称。为空时省略。
+    </ParamField>
+  </Expandable>
+</ResponseField>
+
+<Note>
+  每个上游 Uptime Kuma 请求的超时为 10 秒，整体聚合的超时为 30 秒；实例不可达的分组会以空 `monitors` 数组返回，而不是让整个请求失败。该面板仅在数据看板开启 Uptime Kuma 面板后启用。
+</Note>

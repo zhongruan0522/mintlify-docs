@@ -1,7 +1,53 @@
 ---
 title: Get Enabled Model List
+description: List the distinct model names that currently have at least one enabled channel.
 api: "GET /api/channel/models_enabled"
 ---
 
-👨‍💼 Admin permissions required
+Return the distinct model names that currently have at least one enabled routing ability, that is, the models that can actually be served by enabled channels right now. The list is taken from the `abilities` routing table.
 
+Requires **Admin** permissions. See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url 'https://your-nookmux-domain/api/channel/models_enabled' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1'
+```
+
+</RequestExample>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "data": [
+    "gpt-4o",
+    "gpt-4o-mini",
+    "claude-3-5-sonnet-20241022"
+  ]
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+  Whether the request succeeded.
+</ResponseField>
+
+<ResponseField name="data" type="array" required>
+  Distinct model names with at least one enabled channel ability. `null` when the routing table is empty.
+</ResponseField>
+
+<Note>
+  Management endpoints return HTTP `200` even on business failures; always check the `success` field. On success no `message` field is included. The static adaptor catalog is available at [Get Channel Model List](/nookmux/api/management/channel-management/channel-models-get).
+</Note>

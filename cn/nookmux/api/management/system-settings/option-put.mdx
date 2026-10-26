@@ -1,7 +1,76 @@
 ---
 title: 更新系统选项
+description: 按键写入单个系统选项，带逐键校验与审计记录。
 api: "PUT /api/option/"
 ---
 
-👑 需要超级管理员权限（Root）
+更新一个系统选项。每次调用写入一对 `key`/`value`：值先落库，随后刷新内存选项表，变更无需重启即生效。部分键在写入前会做服务端校验（例如倍率 JSON 必须可解析、`RetryTimes` 必须是小于 100 的非负整数），另有一批固定已废弃的旧键会被直接拒绝。
 
+变更会记入管理员审计日志；敏感键的值在审计条目中脱敏。
+
+需要**超级管理员（Root）**权限。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
+
+## 请求
+
+<RequestExample>
+
+```bash cURL
+curl --request PUT \
+  --url 'https://your-nookmux-domain/api/option/' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1' \
+  --header 'Content-Type: application/json' \
+  --data '{
+  "key": "SystemName",
+  "value": "My NookMux"
+}'
+```
+
+</RequestExample>
+
+### 请求体
+
+<ParamField path="body.key" type="string" required>
+  要写入的选项键，例如 `SystemName`。已废弃的旧功能键（微信登录、OIDC、Creem 支付、旧聊天链接、`ImageRatio`、`ExposeRatioEnabled`、`global.third_party_multimodal_*`、`quota_setting.enable_free_model_pre_consume`、`minimax.voice_whitelist`、`minimax.voice_redirect`）会被拒绝。
+</ParamField>
+
+<ParamField path="body.value" type="string | boolean | number" required>
+  新的选项值。字符串按原样存储；布尔与数值序列化为字符串形式。其他 JSON 类型会被拒绝。
+</ParamField>
+
+## 响应
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": ""
+}
+```
+
+</ResponseExample>
+
+### 响应字段
+
+<ResponseField name="success" type="boolean" required>
+  选项是否写入成功。
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  `success` 为 `false` 时的错误描述；成功时为空字符串。
+</ResponseField>
+
+<Note>
+  请求体形状类错误在统一包装之前返回，使用真实 HTTP 状态码：JSON 缺失/格式错误或值类型不支持返回 HTTP `400`，已废弃旧键返回 HTTP `404`。逐键校验失败（倍率 JSON 非法、`RetryTimes` 超出 `0-99`、未配置客户端 ID 就启用 OAuth 提供商等）返回 HTTP `200` 且 `success: false`，`message` 为本地化描述。启用 `EmailDomainRestrictionEnabled` 要求邮箱域名白名单非空；启用 `TurnstileCheckEnabled` 要求已配置 Turnstile 站点密钥。
+</Note>
+
+## 错误说明
+
+| 条件 | 说明 |
+| --- | --- |
+| 无效的参数 | JSON 请求体缺失或格式错误；HTTP `400` |
+| 配置值必须是字符串、布尔值或数字 | `value` 不是受支持的 JSON 类型；HTTP `400` |
+| 该配置已移除 | `key` 属于已废弃的旧功能或已迁移的设置（音色配置已迁移到音色管理）；HTTP `404` |
+| 逐键校验失败 | 值不满足该键的规则（例如 `GroupRatio` JSON 非法、`RetryTimes` 超出 `0-99`、重试开启但 `RetryTimes <= 0`、OAuth/提供商开关缺少必需配置）；HTTP `200` 且 `success: false` |
+| 数据库错误，请稍后重试 | 选项落库失败，详见服务端日志 |

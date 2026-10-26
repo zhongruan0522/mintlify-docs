@@ -1,7 +1,61 @@
 ---
 title: Delete Redemption Code
+description: Soft-delete a single redemption code by id.
 api: "DELETE /api/redemption/{id}"
 ---
 
-👨‍💼 Requires Admin Permissions (Admin)
+Delete a single redemption code by its id. The deletion is a soft delete: the row is marked as deleted and no longer appears in listings, searches or detail queries.
 
+Requires **Admin** permissions. See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request DELETE \
+  --url 'https://your-nookmux-domain/api/redemption/42' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1'
+```
+
+</RequestExample>
+
+### Path parameters
+
+<ParamField path="id" type="integer" required>
+  Id of the redemption code to delete.
+</ParamField>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": ""
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+  Whether the code was deleted.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  Error description when `success` is `false`; empty otherwise.
+</ResponseField>
+
+<Note>
+Management endpoints return HTTP `200` even on business failures; always check the `success` field. This response carries no `data` field.
+</Note>
+
+## Error messages
+
+| Condition | Description |
+| --- | --- |
+| Database error | `id` is missing, not a number, or no redemption code exists with it; see server logs |

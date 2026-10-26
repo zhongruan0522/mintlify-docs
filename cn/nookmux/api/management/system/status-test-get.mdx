@@ -1,7 +1,65 @@
 ---
 title: 测试系统状态
+description: 健康检查接口：探测数据库连通性并返回实时 HTTP 连接统计。
 api: "GET /api/status/test"
 ---
 
-👨‍💼 需要管理员权限（Admin）
+站点健康检查：探测数据库连通性，成功时返回统计中间件当前跟踪的活跃 HTTP 连接数。与其他管理接口不同，数据库探测失败时返回 HTTP `503` 而非 `200`。
 
+需要**管理员**权限。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
+
+## 请求
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url 'https://your-nookmux-domain/api/status/test' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1'
+```
+
+</RequestExample>
+
+## 响应
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "Server is running",
+  "http_stats": {
+    "active_connections": 12
+  }
+}
+```
+
+</ResponseExample>
+
+### 响应字段
+
+<ResponseField name="success" type="boolean" required>
+  数据库连通性探测是否成功。
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  状态描述：成功时为 `Server is running`，失败时为 `Database connection failed`。消息按调用者语言偏好本地化。
+</ResponseField>
+
+<ResponseField name="http_stats" type="object">
+  实时 HTTP 统计；仅成功时出现。
+
+  <Expandable title="http_stats 结构">
+    <ParamField path="active_connections" type="integer" required>
+      当前经过统计中间件的在途请求数。
+    </ParamField>
+  </Expandable>
+</ResponseField>
+
+## 错误说明
+
+| 条件 | 说明 |
+| --- | --- |
+| 数据库连接失败 | 数据库探测失败时随 HTTP `503` 返回，详见服务端日志 |
+| 鉴权失败 | 调用者不是管理员时返回标准鉴权错误（HTTP `401`） |

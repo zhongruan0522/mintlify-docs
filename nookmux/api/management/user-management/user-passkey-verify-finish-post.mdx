@@ -1,7 +1,82 @@
 ---
 title: Complete Passkey Verification
+description: Submit the WebAuthn assertion response and mark the session ready for step-up secure verification.
 api: "POST /api/user/passkey/verify/finish"
 ---
 
-🔐 Login Required (User Permission)
+Completes the second half of the passkey step-up verification. The server verifies the assertion produced by the browser authenticator against the challenge started by `POST /api/user/passkey/verify/begin`, refreshes the credential's last-used time, and marks the session as ready for finalizing step-up secure verification.
 
+Requires **User** permission (any logged-in user). See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request POST \
+  --url 'https://your-nookmux-domain/api/user/passkey/verify/finish' \
+  --header 'Cookie: session={session_cookie}' \
+  --header 'New-Api-User: 1' \
+  --header 'Content-Type: application/json' \
+  --data '{
+  "id": "R2dpSmY4Q3JEektWWXRHcw",
+  "rawId": "R2dpSmY4Q3JEektWWXRHcw",
+  "type": "public-key",
+  "response": {
+    "clientDataJSON": "eyJjaGFsbGVuZ2UiOiJoSzBkRjJ2UTh4TjNtWjdiVDF3WTVjUjlqTDRwQTZzRCIsIm9yaWdpbiI6Imh0dHBzOi8veW91ci1ub29rbXV4LWRvbWFpbiIsInR5cGUiOiJ3ZWJhdXRobi5nZXQifQ",
+    "authenticatorData": "SZYN5YgOjGh0NBcPZHZgW4_krrmihjLHmVzzuoMdl2MFAAAAAQ",
+    "signature": "MEUCIQDk...F3Zg",
+    "userHandle": "Mg"
+  }
+}'
+```
+
+</RequestExample>
+
+### Body
+
+<ParamField path="body" type="object" required>
+The assertion returned by the browser, following the standard WebAuthn `PublicKeyCredential<AssertionResponse>` structure: top-level `id`, `rawId`, `type`, and a `response` object containing `clientDataJSON`, `authenticatorData`, `signature`, and `userHandle`. The body is parsed directly by the server's WebAuthn library, so the protocol fields are defined by the WebAuthn standard rather than by NookMux.
+</ParamField>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "Passkey verification successful",
+  "data": null
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+Whether the assertion was verified.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+Localized success message when `success` is `true`; error description otherwise.
+</ResponseField>
+
+<ResponseField name="data" type="null">
+Always `null` for this endpoint.
+</ResponseField>
+
+<Note>
+A successful assertion alone does not yet satisfy step-up secure verification. The session is only marked "passkey ready"; within 60 seconds, call `POST /api/verify` with `{"method": "passkey"}` to finalize it. The finalized verification is then valid for 5 minutes and unlocks passkey operations such as deleting passkeys on accounts without 2FA. See [Universal secure verification](/nookmux/api/management/security-verification/verify-post).
+</Note>
+
+## Error messages
+
+| Condition | Description |
+| --- | --- |
+| Passkey login is not enabled by administrator | The passkey feature is disabled in the server settings |
+| Not logged in / user disabled | The session cannot be resolved; returned as HTTP `401` |
+| This user has not bound a Passkey | There is no credential to verify with |
+| Database error | Loading the credentials, reading the ceremony state (missing or already consumed challenge), or verifying the assertion failed; see server logs |
+| Failed to save verification state | Writing the verification marker to the session failed |

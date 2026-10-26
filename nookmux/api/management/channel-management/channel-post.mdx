@@ -1,7 +1,161 @@
 ---
-title: Add Channel
+title: Add channel
+description: Create one or more upstream channels in a single call, with support for batch and multi-key modes.
 api: "POST /api/channel/"
 ---
 
-👨‍💼 Requires Admin Permissions
+Create one or more upstream channels. The `mode` field controls how the key list in `channel.key` is interpreted: `single` creates one channel with one key, `batch` creates one channel per line of the key list, and `multi_to_single` aggregates all keys into one multi-key channel.
 
+Requires **Admin** permissions. See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request POST \
+  --url 'https://your-nookmux-domain/api/channel/' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1' \
+  --header 'Content-Type: application/json' \
+  --data '{
+  "mode": "single",
+  "channel": {
+    "type": 1,
+    "name": "my-openai",
+    "key": "sk-xxxxxxxxxxxxxxxxxxxx",
+    "base_url": "",
+    "models": "gpt-4o,gpt-4o-mini",
+    "group": "default",
+    "priority": 0,
+    "weight": 0
+  }
+}'
+```
+
+</RequestExample>
+
+### Body
+
+<ParamField path="body.mode" type="string" default="single">
+  Channel creation mode:
+
+  - `single`: one channel with the single key in `channel.key`.
+  - `batch`: one channel per non-empty line of `channel.key` (line-separated keys).
+  - `multi_to_single`: one multi-key channel whose `channel.key` holds all keys (line-separated; Vertex AI JSON credentials use a JSON array instead).
+</ParamField>
+
+<ParamField path="body.multi_key_mode" type="string">
+  Polling strategy for `multi_to_single` mode: `random` or `polling`. Required when `mode` is `multi_to_single`; ignored otherwise.
+</ParamField>
+
+<ParamField path="body.batch_add_set_key_prefix_2_name" type="boolean" default="false">
+  In `batch` mode with more than one key, append the first 8 characters of each key to the channel name to keep generated channels distinguishable.
+</ParamField>
+
+<ParamField path="body.channel" type="object" required>
+  The channel definition. The fields below are the ones typically set at creation; server-managed fields such as `id`, `created_time`, `balance`, and `channel_info` are filled by the server and can be omitted.
+
+  <Expandable title="channel structure">
+    <ParamField path="type" type="integer" required>
+      Channel type constant, for example `1` for OpenAI. The full mapping is defined in the console channel editor (Console → Channels → Add).
+    </ParamField>
+    <ParamField path="name" type="string" required>
+      Display name of the channel.
+    </ParamField>
+    <ParamField path="key" type="string" required>
+      Upstream API key. Its interpretation depends on `mode`; see above. Multi-key channels separate keys with newlines.
+    </ParamField>
+    <ParamField path="base_url" type="string">
+      Custom upstream base URL. Leave empty to use the built-in endpoint for the channel type.
+    </ParamField>
+    <ParamField path="models" type="string" required>
+      Comma-separated list of model names served by this channel. Each name is limited to 255 characters.
+    </ParamField>
+    <ParamField path="group" type="string" default="default">
+      Comma-separated user groups that can use this channel.
+    </ParamField>
+    <ParamField path="model_mapping" type="string">
+      JSON object mapping requested model names to upstream model names, for example `{"gpt-4o": "gpt-4o-2024-08-06"}`.
+    </ParamField>
+    <ParamField path="priority" type="integer" default="0">
+      Routing priority. Channels with a higher value are preferred when multiple channels serve the same model.
+    </ParamField>
+    <ParamField path="weight" type="integer" default="0">
+      Load-balancing weight among channels of equal priority.
+    </ParamField>
+    <ParamField path="status" type="integer" default="1">
+      Initial status: `1` enabled, `2` manually disabled, `3` auto-disabled.
+    </ParamField>
+    <ParamField path="test_model" type="string">
+      Model used by the channel test endpoint when the channel does not expose its model list.
+    </ParamField>
+    <ParamField path="tag" type="string">
+      Optional tag for grouping channels in the console.
+    </ParamField>
+    <ParamField path="other" type="string">
+      Channel-type-specific options. For Vertex AI it must be a JSON object of regions containing a `default` key.
+    </ParamField>
+    <ParamField path="settings" type="string">
+      JSON object of extra settings, such as the Azure API version.
+    </ParamField>
+    <ParamField path="setting" type="string">
+      JSON object of channel runtime settings.
+    </ParamField>
+    <ParamField path="param_override" type="string">
+      JSON object that overrides request parameters before the request is forwarded upstream.
+    </ParamField>
+    <ParamField path="header_override" type="string">
+      JSON object that adds or overrides headers sent upstream.
+    </ParamField>
+    <ParamField path="status_code_mapping" type="string">
+      JSON object mapping upstream HTTP status codes to codes returned by NookMux.
+    </ParamField>
+    <ParamField path="auto_ban" type="integer" default="1">
+      Whether the channel is automatically disabled after repeated upstream failures: `1` enabled, `0` disabled.
+    </ParamField>
+    <ParamField path="openai_organization" type="string">
+      OpenAI organization header (`OpenAI-Organization`) for OpenAI-type channels.
+    </ParamField>
+    <ParamField path="remark" type="string">
+      Free-form remark, up to 255 characters.
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": ""
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+  Whether the channels were created.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  Error description when `success` is `false`; empty otherwise.
+</ResponseField>
+
+<Note>
+  Management endpoints return HTTP `200` even on business failures; always check the `success` field. Validation errors (unknown channel type, invalid multi-key mode, Vertex AI region missing) are reported through `success: false` with a localized `message`.
+</Note>
+
+## Error messages
+
+| Condition | Description |
+| --- | --- |
+| Invalid request body | The JSON body is missing or malformed |
+| Channel type invalid | `type` is unknown or no longer supported |
+| Multi-key mode invalid | `mode` is `multi_to_single` but `multi_key_mode` is not `random` or `polling` |
+| Add mode unsupported | `mode` is not one of `single`, `batch`, `multi_to_single` |
+| Database error | Persisting the channels failed; see server logs |

@@ -1,7 +1,113 @@
 ---
 title: 更新用户设置
+description: 替换当前用户的额度预警通知设置，支持邮件、Webhook、Bark 与 Gotify。
 api: "PUT /api/user/setting"
 ---
 
-🔐 需要登录（User权限）
+替换当前用户的通知设置。该设置驱动额度预警通知：选择通知类型并填写其必需的目标后，剩余额度低于配置阈值时 NookMux 会通知用户。
 
+需要**用户（User）**权限（任意登录用户）。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
+
+## 请求
+
+<RequestExample>
+
+```bash cURL
+curl --request PUT \
+  --url 'https://your-nookmux-domain/api/user/setting' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 2' \
+  --header 'Content-Type: application/json' \
+  --data '{
+  "notify_type": "webhook",
+  "quota_warning_threshold": 10,
+  "webhook_url": "https://example.com/webhook/quota-warning",
+  "webhook_secret": "my-webhook-secret"
+}'
+```
+
+</RequestExample>
+
+### 请求体
+
+<ParamField path="body.notify_type" type="string" required>
+通知类型：`email`、`webhook`、`bark` 或 `gotify`。
+</ParamField>
+
+<ParamField path="body.quota_warning_threshold" type="number" required>
+额度预警阈值；必须大于 `0`。
+</ParamField>
+
+<ParamField path="body.webhook_url" type="string">
+`webhook` 类型的通知目标 URL。`notify_type` 为 `webhook` 时必填，且必须为可解析的 URL。
+</ParamField>
+
+<ParamField path="body.webhook_secret" type="string">
+可选的 Webhook 通知密钥；仅在 `webhook` 类型下存储。
+</ParamField>
+
+<ParamField path="body.notification_email" type="string">
+`email` 类型的通知邮箱；可选，但填写时必须包含 `@`。
+</ParamField>
+
+<ParamField path="body.bark_url" type="string">
+Bark 推送 URL。`notify_type` 为 `bark` 时必填，且必须为以 `http://` 或 `https://` 开头的可解析 URL。
+</ParamField>
+
+<ParamField path="body.gotify_url" type="string">
+Gotify 服务器地址。`notify_type` 为 `gotify` 时必填，且必须为以 `http://` 或 `https://` 开头的可解析 URL。
+</ParamField>
+
+<ParamField path="body.gotify_token" type="string">
+Gotify 应用令牌。`notify_type` 为 `gotify` 时必填。
+</ParamField>
+
+<ParamField path="body.gotify_priority" type="integer">
+Gotify 消息优先级，取值 `0` 到 `10`；超出范围时回退为 `5`。
+</ParamField>
+
+## 响应
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "Settings updated",
+  "data": null
+}
+```
+
+</ResponseExample>
+
+### 响应字段
+
+<ResponseField name="success" type="boolean" required>
+设置是否保存成功。
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+`success` 为 `true` 时为本地化的成功提示；否则为错误描述。
+</ResponseField>
+
+<ResponseField name="data" type="null">
+本接口恒为 `null`。
+</ResponseField>
+
+<Note>
+请求会整体替换设置对象：不属于所选 `notify_type` 的字段会被丢弃，切换类型即清除上一类型的目标。当前值可通过 `GET /api/user/self` 的 `setting` 字段读取。
+</Note>
+
+## 错误说明
+
+| 条件 | 说明 |
+| --- | --- |
+| 参数非法 | JSON 请求体缺失或格式错误 |
+| 无效的预警类型 | `notify_type` 不是 `email`、`webhook`、`bark` 或 `gotify` |
+| 阈值必须大于零 | `quota_warning_threshold` 为 `0` 或负数 |
+| Webhook地址不能为空 / 无效的Webhook地址 | `webhook` 类型未提供 `webhook_url`，或 URL 无法解析 |
+| 无效的邮箱地址 | `email` 类型填写的 `notification_email` 不包含 `@` |
+| Bark地址非法 | `bark` 类型未提供 `bark_url`、URL 无法解析，或未以 `http://` 或 `https://` 开头 |
+| Gotify配置非法 | `gotify` 类型未提供 `gotify_url` 或 `gotify_token`、URL 无法解析，或未以 `http://` 或 `https://` 开头 |
+| 数据库错误 | 加载用户失败，详见服务端日志 |
+| 更新失败 | 保存设置失败，详见服务端日志 |

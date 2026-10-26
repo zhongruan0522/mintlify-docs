@@ -1,7 +1,67 @@
 ---
 title: Fix Channel Capability
+description: Rebuild the routing ability table from the current channel configuration.
 api: "POST /api/channel/fix"
 ---
 
-👨‍💼 Requires Administrator Privileges (Admin)
+Rebuild the routing ability (`abilities`) table. The table is truncated, then abilities are re-created for every existing channel in chunks. Use this after importing or manually editing channels so that model routing matches the channel configuration again. The in-memory channel cache is reloaded when the rebuild finishes.
 
+Requires **Admin** permissions. See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request POST \
+  --url 'https://your-nookmux-domain/api/channel/fix' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1'
+```
+
+</RequestExample>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": {
+    "success": 42,
+    "fails": 0
+  }
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+  Whether the rebuild ran.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  Error description when `success` is `false`; empty otherwise.
+</ResponseField>
+
+<ResponseField name="data.success" type="integer" required>
+  Number of channels whose abilities were rebuilt successfully.
+</ResponseField>
+
+<ResponseField name="data.fails" type="integer" required>
+  Number of channels whose abilities could not be rebuilt.
+</ResponseField>
+
+<Note>
+  Management endpoints return HTTP `200` even on business failures; always check the `success` field. Only one rebuild can run at a time; a second concurrent request is rejected with a database error message.
+</Note>
+
+## Error messages
+
+| Condition | Description |
+| --- | --- |
+| Database error | Truncating the ability table, loading channels, or another rebuild already running |

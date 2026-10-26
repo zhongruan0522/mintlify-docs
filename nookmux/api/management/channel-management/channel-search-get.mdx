@@ -1,7 +1,258 @@
 ---
 title: Search Channels
+description: Search channels with keyword, group, model, status and type filters, with optional tag-aggregation mode.
 api: "GET /api/channel/search"
 ---
 
-👨‍💼 Requires Admin Permissions
+Search channels with combined keyword and field-level filters, returning a page of channel objects plus cross-page aggregates (`total`, `type_counts`). With `tag_mode` enabled the search first resolves matching tags and returns the channels of each tag as one aggregated result set.
 
+Requires **Admin** permissions. See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url 'https://your-nookmux-domain/api/channel/search?keyword=openai&status=enabled&p=1&page_size=20' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1'
+```
+
+</RequestExample>
+
+### Query parameters
+
+<ParamField path="keyword" type="string">
+General keyword. A channel matches when its `id` equals the keyword (when the keyword is an integer), its `name` or `base_url` contains it, or its stored key equals it exactly. Always combined with the `model` condition.
+</ParamField>
+
+<ParamField path="group" type="string">
+User group the channels must serve (matched against the channel's comma-separated group list). Empty, `all`, or `null` disables the filter.
+</ParamField>
+
+<ParamField path="model" type="string">
+Model name that must appear in the channel's `models` list (substring match).
+</ParamField>
+
+<ParamField path="status" type="string">
+Status filter: `enabled` or `1` returns only enabled channels; `disabled` or `0` returns only non-enabled channels; any other value (or omitted) returns all.
+</ParamField>
+
+<ParamField path="type" type="integer">
+Exact channel type filter, for example `1` for OpenAI. Omit to return all types.
+</ParamField>
+
+<ParamField path="id" type="integer">
+Exact channel ID filter. Only applied when greater than `0`.
+</ParamField>
+
+<ParamField path="name" type="string">
+Name filter (substring match).
+</ParamField>
+
+<ParamField path="tag" type="string">
+Tag filter (substring match).
+</ParamField>
+
+<ParamField path="id_sort" type="boolean" default="false">
+Sort order: `true` sorts by channel ID descending; `false` sorts by name (case-insensitive) ascending, then by ID ascending. Ignored in tag mode, where channels are always ordered by priority descending, then weight descending within each tag.
+</ParamField>
+
+<ParamField path="tag_mode" type="boolean" default="false">
+Tag aggregation mode: `true` resolves the tags matching the filters first, then returns all channels carrying those tags (respecting `group`), with status/type filtering and pagination applied in memory.
+</ParamField>
+
+<ParamField path="p" type="integer" default="1">
+Page number, starting at `1`.
+</ParamField>
+
+<ParamField path="page_size" type="integer" default="20">
+Page size. Values of `0` or less fall back to `20`; values above `500` are capped at `500`.
+</ParamField>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": {
+    "items": [
+      {
+        "id": 1,
+        "type": 1,
+        "key": "",
+        "openai_organization": null,
+        "test_model": "gpt-4o-mini",
+        "status": 1,
+        "name": "my-openai",
+        "weight": 5,
+        "created_time": 1718100000,
+        "test_time": 1718200000,
+        "response_time": 845,
+        "base_url": "",
+        "other": "",
+        "balance": 12.34,
+        "balance_updated_time": 1718250000,
+        "models": "gpt-4o,gpt-4o-mini",
+        "group": "default",
+        "used_quota": 5000,
+        "model_mapping": null,
+        "status_code_mapping": "",
+        "priority": 10,
+        "auto_ban": 1,
+        "other_info": "",
+        "tag": "openai-pool",
+        "setting": null,
+        "param_override": null,
+        "header_override": null,
+        "remark": "",
+        "channel_info": {
+          "is_multi_key": false,
+          "multi_key_size": 0,
+          "multi_key_status_list": null,
+          "multi_key_polling_index": 0,
+          "multi_key_mode": "",
+          "is_plan": false,
+          "plan_name": ""
+        },
+        "settings": ""
+      }
+    ],
+    "total": 1,
+    "type_counts": {
+      "1": 1
+    }
+  }
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+Whether the search was executed.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+Error description when `success` is `false`; empty otherwise.
+</ResponseField>
+
+<ResponseField name="data.items" type="array" required>
+Page of channel objects. The `key` field is always an empty string (the stored key is never selected), and multi-key disabled-reason/time details are stripped from `channel_info`.
+
+  <Expandable title="channel structure">
+    <ResponseField name="id" type="integer">
+      Channel ID.
+    </ResponseField>
+    <ResponseField name="type" type="integer">
+      Channel type constant, for example `1` for OpenAI.
+    </ResponseField>
+    <ResponseField name="key" type="string">
+      Always an empty string in search results.
+    </ResponseField>
+    <ResponseField name="name" type="string">
+      Display name of the channel.
+    </ResponseField>
+    <ResponseField name="status" type="integer">
+      Channel status: `1` enabled, `2` manually disabled, `3` auto-disabled.
+    </ResponseField>
+    <ResponseField name="models" type="string">
+      Comma-separated model list.
+    </ResponseField>
+    <ResponseField name="group" type="string">
+      Comma-separated groups that can use the channel.
+    </ResponseField>
+    <ResponseField name="base_url" type="string">
+      Custom upstream base URL.
+    </ResponseField>
+    <ResponseField name="model_mapping" type="string">
+      Model name redirect mapping as a JSON object string.
+    </ResponseField>
+    <ResponseField name="priority" type="integer">
+      Routing priority.
+    </ResponseField>
+    <ResponseField name="weight" type="integer">
+      Load-balancing weight.
+    </ResponseField>
+    <ResponseField name="tag" type="string">
+      Tag the channel belongs to.
+    </ResponseField>
+    <ResponseField name="test_model" type="string">
+      Model used by channel tests.
+    </ResponseField>
+    <ResponseField name="balance" type="number">
+      Last known upstream balance.
+    </ResponseField>
+    <ResponseField name="balance_updated_time" type="integer">
+      Unix timestamp of the last balance refresh.
+    </ResponseField>
+    <ResponseField name="used_quota" type="integer">
+      Quota consumed through this channel.
+    </ResponseField>
+    <ResponseField name="response_time" type="integer">
+      Last measured test response time in milliseconds.
+    </ResponseField>
+    <ResponseField name="test_time" type="integer">
+      Unix timestamp of the last channel test.
+    </ResponseField>
+    <ResponseField name="created_time" type="integer">
+      Unix timestamp of channel creation.
+    </ResponseField>
+    <ResponseField name="auto_ban" type="integer">
+      Whether auto-disable on repeated failures is on: `1` enabled, `0` disabled.
+    </ResponseField>
+    <ResponseField name="channel_info" type="object">
+      Multi-key and plan metadata. In search results the `multi_key_disabled_reason` and `multi_key_disabled_time` maps are stripped; see [Update Channel](/nookmux/api/management/channel-management/channel-put) for the full `channel_info` structure.
+    </ResponseField>
+    <ResponseField name="other" type="string">
+      Channel-type-specific options (for example Vertex AI regions).
+    </ResponseField>
+    <ResponseField name="settings" type="string">
+      Extra settings JSON, such as the Azure API version.
+    </ResponseField>
+    <ResponseField name="setting" type="string">
+      Channel runtime settings JSON.
+    </ResponseField>
+    <ResponseField name="param_override" type="string">
+      Request parameter override JSON.
+    </ResponseField>
+    <ResponseField name="header_override" type="string">
+      Upstream header override JSON.
+    </ResponseField>
+    <ResponseField name="status_code_mapping" type="string">
+      Upstream status code mapping JSON.
+    </ResponseField>
+    <ResponseField name="openai_organization" type="string">
+      OpenAI organization header value.
+    </ResponseField>
+    <ResponseField name="remark" type="string">
+      Free-form remark.
+    </ResponseField>
+    <ResponseField name="other_info" type="string">
+      Additional runtime info kept by the server.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="data.total" type="integer" required>
+Total number of channels matching the filters, including the `type` filter. In tag mode this is the number of channels after in-memory status/type filtering.
+</ResponseField>
+
+<ResponseField name="data.type_counts" type="object" required>
+Map of channel type to the number of matching channels, counted after the status filter but before the `type` filter, so the counts cover all types of the current result set.
+</ResponseField>
+
+<Note>
+Management endpoints return HTTP `200` even on business failures; always check the `success` field. In non-tag mode the filtering, counting and pagination are pushed down to the database; in tag mode the per-tag channel sets are aggregated and filtered in memory.
+</Note>
+
+## Error messages
+
+| Condition | Description |
+| --- | --- |
+| Database error | The search query failed; the raw error message is returned in `message` |

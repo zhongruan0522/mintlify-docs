@@ -1,7 +1,126 @@
 ---
 title: 用户登录
+description: 使用用户名和密码登录并创建会话；启用两步验证的账号将进入两步验证流程。
 api: "POST /api/user/login"
 ---
 
-🔓 无需鉴权
+使用用户名（或账号绑定的邮箱）与密码进行登录。成功后服务端创建登录会话、返回账号基本信息，并设置用于鉴权接口的 `session` Cookie。若账号开启了两步验证（2FA），本步骤不会创建登录会话，而是在会话中写入短时效的待验证登录态，客户端需继续调用 `POST /api/user/login/2fa` 完成登录。
 
+本接口为 **Public（公开）**——无需鉴权。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
+
+<Note>
+本接口挂载了更严格的按 IP 限流（CriticalRateLimit），并对匿名请求体大小做了限制，超限返回 HTTP `413`。当服务端开启 Cloudflare Turnstile 人机验证时，必须携带有效的 `turnstile` 查询令牌（当前会话已通过校验的除外）。
+</Note>
+
+## 请求
+
+<RequestExample>
+
+```bash cURL
+curl --request POST \
+  --url 'https://your-nookmux-domain/api/user/login?turnstile=XXXX.DUMMY.TOKEN.XXXX' \
+  --header 'Content-Type: application/json' \
+  --data '{
+  "username": "alice",
+  "password": "your-password"
+}'
+```
+
+</RequestExample>
+
+### 查询参数
+
+<ParamField path="turnstile" type="string">
+Cloudflare Turnstile 令牌。仅当服务端开启 Turnstile 人机验证且当前会话尚未通过校验时必填。
+</ParamField>
+
+### 请求体
+
+<ParamField path="body.username" type="string" required>
+用户名或账号绑定的邮箱，两者均可匹配登录。
+</ParamField>
+
+<ParamField path="body.password" type="string" required>
+账号密码。
+</ParamField>
+
+## 响应
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": {
+    "id": 1,
+    "username": "alice",
+    "display_name": "alice",
+    "role": 1,
+    "status": 1,
+    "group": "default"
+  }
+}
+```
+
+</ResponseExample>
+
+### 响应字段
+
+<ResponseField name="success" type="boolean" required>
+凭据是否被接受。
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+`success` 为 `false` 时的错误描述；成功时为空字符串。
+</ResponseField>
+
+<ResponseField name="data" type="object" required>
+一步完成登录时返回的账号信息。以下字段仅出现在该分支。
+
+<Expandable title="data 结构">
+  <ResponseField name="id" type="integer" required>
+    用户 ID。
+  </ResponseField>
+  <ResponseField name="username" type="string" required>
+    用户名。
+  </ResponseField>
+  <ResponseField name="display_name" type="string" required>
+    显示名称。
+  </ResponseField>
+  <ResponseField name="role" type="integer" required>
+    角色：`1` 普通用户，`10` 管理员，`100` 超级管理员（Root）。
+  </ResponseField>
+  <ResponseField name="status" type="integer" required>
+    账号状态：`1` 启用，`2` 禁用。
+  </ResponseField>
+  <ResponseField name="group" type="string" required>
+    所属用户分组。
+  </ResponseField>
+</Expandable>
+</ResponseField>
+
+<Note>
+当账号开启两步验证时，本步骤成功但不会创建登录会话，响应为：
+
+```json
+{
+  "success": true,
+  "message": "请输入两步验证码",
+  "data": {
+    "require_2fa": true
+  }
+}
+```
+
+请在 5 分钟内携带同一个会话 Cookie 调用 `POST /api/user/login/2fa` 完成登录。
+</Note>
+
+## 错误说明
+
+| 条件 | 说明 |
+| --- | --- |
+| 密码登录已关闭 | 管理员关闭了密码登录 |
+| 参数无效 | 请求体不是合法 JSON，或 `username` / `password` 为空 |
+| 登录服务暂不可用 | 校验凭据时发生数据库错误 |
+| 用户名或密码错误 | 凭据错误、账号不存在，或账号已被封禁禁用 |

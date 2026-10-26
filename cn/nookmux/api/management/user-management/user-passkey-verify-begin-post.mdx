@@ -1,7 +1,79 @@
 ---
 title: 开始验证Passkey
+description: 为已登录用户发起用于二次安全验证的 WebAuthn 断言流程。
 api: "POST /api/user/passkey/verify/begin"
 ---
 
-🔐 需要登录（User权限）
+为已登录用户发起 WebAuthn 断言流程的前半段，用于二次（安全）验证而非登录。服务端针对用户已绑定的 Passkey 生成挑战值并存入会话，返回浏览器传给 `navigator.credentials.get()` 的断言参数。
 
+需要**用户（User）**权限（任意登录用户）。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
+
+## 请求
+
+<RequestExample>
+
+```bash cURL
+curl --request POST \
+  --url 'https://your-nookmux-domain/api/user/passkey/verify/begin' \
+  --header 'Cookie: session={session_cookie}' \
+  --header 'New-Api-User: 1'
+```
+
+</RequestExample>
+
+## 响应
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": {
+    "options": {
+      "publicKey": {
+        "challenge": "hK0dF2vQ8xN3mZ7bT1wY5cR9jL4pA6sD",
+        "timeout": 60000,
+        "rpId": "your-nookmux-domain",
+        "allowCredentials": [
+          {
+            "id": "R2dpSmY4Q3JEektWWXRHcw",
+            "type": "public-key",
+            "transports": ["internal"]
+          }
+        ],
+        "userVerification": "preferred"
+      }
+    }
+  }
+}
+```
+
+</ResponseExample>
+
+### 响应字段
+
+<ResponseField name="success" type="boolean" required>
+验证流程是否成功发起。
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+`success` 为 `false` 时的错误描述；成功时为空字符串。
+</ResponseField>
+
+<ResponseField name="data.options" type="object" required>
+遵循标准 WebAuthn `PublicKeyCredentialRequestOptions` 结构的断言参数：服务端生成的 `challenge`、依赖方 ID（`rpId`）、覆盖用户已绑定 Passkey 的 `allowCredentials`，以及来自服务端 Passkey 设置的用户验证偏好（`userVerification`）。上例为 condensed 结构示意，协议内部字段以 WebAuthn 标准为准。
+</ResponseField>
+
+<Note>
+服务端 Passkey 设置中须已启用该功能，且用户至少绑定了一个 Passkey。挑战值保存在服务端会话中，因此 `POST /api/user/passkey/verify/finish` 必须在同一会话中发起，且会将其消费掉。仅用 Access Token 鉴权会被拒绝并返回 HTTP `401`。
+</Note>
+
+## 错误说明
+
+| 条件 | 说明 |
+| --- | --- |
+| 管理员未启用 Passkey 登录 | 服务端设置中未启用 Passkey 功能 |
+| 未登录 / 用户被禁用 | 会话无法解析，返回 HTTP `401` |
+| 用户未绑定 Passkey | 没有可用于验证的凭据 |
+| 数据库错误 | 加载凭据、生成断言流程或保存会话状态失败，详见服务端日志 |

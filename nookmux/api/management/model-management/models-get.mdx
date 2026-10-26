@@ -1,7 +1,220 @@
 ---
 title: Get All Model Metadata
+description: List model metadata entries with pagination, enriched binding information, and per-vendor model counts.
 api: "GET /api/models/"
 ---
 
-👨‍💼 Requires Admin Permissions (Admin)
+List all model metadata records with pagination. Every returned entry is enriched with binding information: the enabled channels serving the model, the user groups allowed to use it, its billing modes, its supported endpoint types, and for rule-based entries the concrete model names matched by the rule. `vendor_counts` additionally aggregates the number of models per vendor over all records, independent of pagination.
 
+Requires **Admin** permissions. See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url 'https://your-nookmux-domain/api/models/?p=1&page_size=10' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1'
+```
+
+</RequestExample>
+
+### Query parameters
+
+<ParamField path="p" type="integer" default="1">
+Page number, starting at `1`.
+</ParamField>
+
+<ParamField path="page_size" type="integer" default="10">
+Page size, capped at `100`. The legacy aliases `ps` and `size` are accepted when `page_size` is absent.
+</ParamField>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": {
+    "items": [
+      {
+        "id": 42,
+        "model_name": "gpt-4o",
+        "description": "OpenAI flagship multimodal model",
+        "icon": "openai",
+        "tags": "llm,chat",
+        "vendor_id": 1,
+        "endpoints": "[\"openai\",\"anthropic\"]",
+        "context_length": 128000,
+        "max_output_tokens": 16384,
+        "input_modalities": ["text", "image"],
+        "output_modalities": ["text"],
+        "knowledge_cutoff": "2023-10",
+        "release_date": "2024-05-13",
+        "parameter_count": "unknown",
+        "status": 1,
+        "created_time": 1715587200,
+        "updated_time": 1718100000,
+        "name_rule": 0,
+        "bound_channels": [
+          { "name": "my-openai", "type": 1 }
+        ],
+        "enable_groups": ["default"],
+        "quota_types": [0]
+      },
+      {
+        "id": 41,
+        "model_name": "gpt-3.5",
+        "icon": "openai",
+        "vendor_id": 1,
+        "status": 1,
+        "created_time": 1715587100,
+        "updated_time": 1718100000,
+        "name_rule": 1,
+        "endpoints": "[\"openai\"]",
+        "enable_groups": ["default"],
+        "quota_types": [0, 1],
+        "matched_models": ["gpt-3.5-turbo", "gpt-3.5-turbo-16k"],
+        "matched_count": 2
+      }
+    ],
+    "total": 128,
+    "page": 1,
+    "page_size": 10,
+    "vendor_counts": {
+      "1": 42,
+      "2": 17
+    }
+  }
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+Whether the query was executed.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+Error description when `success` is `false`; empty otherwise.
+</ResponseField>
+
+<ResponseField name="data.items" type="array" required>
+Page of model metadata entries, sorted by ID descending and enriched with binding information.
+
+  <Expandable title="model structure">
+    <ResponseField name="id" type="integer" required>
+      Model metadata record ID.
+    </ResponseField>
+    <ResponseField name="model_name" type="string" required>
+      Model name; how it matches concrete models is determined by `name_rule`.
+    </ResponseField>
+    <ResponseField name="description" type="string">
+      Free-form description of the model.
+    </ResponseField>
+    <ResponseField name="icon" type="string">
+      Icon identifier displayed in the console.
+    </ResponseField>
+    <ResponseField name="tags" type="string">
+      Comma-separated tags.
+    </ResponseField>
+    <ResponseField name="vendor_id" type="integer">
+      ID of the vendor the model belongs to; `0` means no vendor. Vendor records are managed by the [vendors endpoints](/nookmux/api/management/vendors/vendors-get).
+    </ResponseField>
+    <ResponseField name="endpoints" type="string">
+      Supported endpoint types as a JSON array string, for example `"[\"openai\",\"anthropic\"]"`. Possible values: `openai`, `openai-response`, `openai-response-compact`, `anthropic`, `gemini`, `jina-rerank`, `image-generation`, `embeddings`. Filled from the pricing cache when the stored value is empty.
+    </ResponseField>
+    <ResponseField name="context_length" type="integer">
+      Context window size in tokens.
+    </ResponseField>
+    <ResponseField name="max_output_tokens" type="integer">
+      Maximum number of output tokens.
+    </ResponseField>
+    <ResponseField name="input_modalities" type="array of string">
+      Accepted input modalities, for example `["text","image"]`.
+    </ResponseField>
+    <ResponseField name="output_modalities" type="array of string">
+      Output modalities, for example `["text"]`.
+    </ResponseField>
+    <ResponseField name="capabilities" type="array of string">
+      Free-form capability labels of the model.
+    </ResponseField>
+    <ResponseField name="knowledge_cutoff" type="string">
+      Knowledge cutoff date of the model.
+    </ResponseField>
+    <ResponseField name="release_date" type="string">
+      Release date of the model.
+    </ResponseField>
+    <ResponseField name="parameter_count" type="string">
+      Parameter count description.
+    </ResponseField>
+    <ResponseField name="status" type="integer" required>
+      Model status: `1` enabled, `0` disabled.
+    </ResponseField>
+    <ResponseField name="name_rule" type="integer" required>
+      How `model_name` matches concrete models: `0` exact match, `1` prefix match, `2` contains match, `3` suffix match.
+    </ResponseField>
+    <ResponseField name="created_time" type="integer" required>
+      Unix timestamp of record creation.
+    </ResponseField>
+    <ResponseField name="updated_time" type="integer" required>
+      Unix timestamp of the last update.
+    </ResponseField>
+    <ResponseField name="bound_channels" type="array of object">
+      Enabled channels serving this model; omitted when no enabled channel provides it.
+
+      <Expandable title="bound channel structure">
+        <ResponseField name="name" type="string">
+          Channel display name.
+        </ResponseField>
+        <ResponseField name="type" type="integer">
+          Channel type constant, for example `1` for OpenAI.
+        </ResponseField>
+      </Expandable>
+    </ResponseField>
+    <ResponseField name="enable_groups" type="array of string">
+      User groups allowed to use the model, aggregated from the pricing entries.
+    </ResponseField>
+    <ResponseField name="quota_types" type="array of integer">
+      Billing modes found in the model's pricing entries: `0` usage-based, `1` per-call.
+    </ResponseField>
+    <ResponseField name="matched_models" type="array of string">
+      Present only for rule-based entries (`name_rule` is not `0`): concrete model names matched by the rule.
+    </ResponseField>
+    <ResponseField name="matched_count" type="integer">
+      Present only for rule-based entries: number of matched models.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="data.total" type="integer" required>
+Total number of model metadata records.
+</ResponseField>
+
+<ResponseField name="data.page" type="integer" required>
+Current page number.
+</ResponseField>
+
+<ResponseField name="data.page_size" type="integer" required>
+Page size applied to this request.
+</ResponseField>
+
+<ResponseField name="data.vendor_counts" type="object" required>
+Map of vendor ID to the number of models belonging to that vendor, counted over all records rather than the current page. Entries without a vendor are counted under `"0"`.
+</ResponseField>
+
+<Note>
+Management endpoints return HTTP `200` even on business failures; always check the `success` field. For rule-based entries (`name_rule` is not `0`) the `bound_channels`, `enable_groups`, `quota_types` and `endpoints` values are unions over all pricing entries whose model name matches the rule.
+</Note>
+
+## Error messages
+
+| Condition | Description |
+| --- | --- |
+| Database error | Listing the models or counting them failed; see server logs |

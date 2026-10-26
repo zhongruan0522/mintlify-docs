@@ -1,7 +1,91 @@
 ---
 title: Get Specific Model
+description: Retrieve a single model metadata entry by ID with its enriched binding information.
 api: "GET /api/models/{id}"
 ---
 
-👨‍💼 Requires Admin Permissions
+Retrieve one model metadata record by ID. The returned entry is enriched with binding information: the enabled channels serving the model, the user groups allowed to use it, its billing modes, its supported endpoint types, and for rule-based entries the concrete model names matched by the rule.
 
+Requires **Admin** permissions. See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url 'https://your-nookmux-domain/api/models/42' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1'
+```
+
+</RequestExample>
+
+### Path parameters
+
+<ParamField path="id" type="integer" required>
+Model metadata record ID.
+</ParamField>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": {
+    "id": 42,
+    "model_name": "gpt-4o",
+    "description": "OpenAI flagship multimodal model",
+    "icon": "openai",
+    "tags": "llm,chat",
+    "vendor_id": 1,
+    "endpoints": "[\"openai\",\"anthropic\"]",
+    "context_length": 128000,
+    "max_output_tokens": 16384,
+    "input_modalities": ["text", "image"],
+    "output_modalities": ["text"],
+    "knowledge_cutoff": "2023-10",
+    "release_date": "2024-05-13",
+    "parameter_count": "unknown",
+    "status": 1,
+    "created_time": 1715587200,
+    "updated_time": 1718100000,
+    "name_rule": 0,
+    "bound_channels": [
+      { "name": "my-openai", "type": 1 }
+    ],
+    "enable_groups": ["default"],
+    "quota_types": [0]
+  }
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+Whether the query was executed.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+Error description when `success` is `false`; empty otherwise.
+</ResponseField>
+
+<ResponseField name="data" type="object" required>
+Model metadata entry with binding information. The field structure is identical to [Get All Model Metadata](/nookmux/api/management/model-management/models-get).
+</ResponseField>
+
+<Note>
+Management endpoints return HTTP `200` even on business failures; always check the `success` field.
+</Note>
+
+## Error messages
+
+| Condition | Description |
+| --- | --- |
+| Invalid parameters | `id` is not an integer |
+| Database error | No record with this ID exists, or the query failed |

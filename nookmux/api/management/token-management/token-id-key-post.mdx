@@ -1,0 +1,73 @@
+---
+title: Get Token Key
+description: Return the full key of a token owned by the current user; list and detail endpoints only return a masked key.
+api: "POST /api/token/{id}/key"
+---
+
+Return the full key of a single token (site key prefix, `sk-` by default, plus 48 random characters). List and detail endpoints always return a masked key; this endpoint reveals the full key. Only tokens owned by the current user can be accessed.
+
+Requires a logged-in user (**User** permissions). See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
+
+<Note>
+  This endpoint is protected by a stricter rate limit (CriticalRateLimit).
+</Note>
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request POST \
+  --url 'https://your-nookmux-domain/api/token/3/key' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1'
+```
+
+</RequestExample>
+
+### Path parameters
+
+<ParamField path="id" type="integer" required>
+  Token id.
+</ParamField>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": {
+    "key": "sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+  }
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+  Whether the key was returned.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  Error description when `success` is `false`; empty otherwise.
+</ResponseField>
+
+<ResponseField name="data.key" type="string" required>
+  The full token key (site key prefix, `sk-` by default, plus 48 random characters).
+</ResponseField>
+
+<Note>
+Management endpoints return HTTP `200` even on business failures; always check the `success` field.
+</Note>
+
+## Error messages
+
+| Condition | Description |
+| --- | --- |
+| Invalid parameters | `id` is not an integer |
+| Database error | No token with this id belongs to the current user, or the query failed; see server logs |

@@ -1,7 +1,101 @@
 ---
 title: User Registration
+description: Create a new account with a username and password.
 api: "POST /api/user/register"
 ---
 
-🔓 No Authentication Required
+Registers a new common-user account. Both new-user registration and password registration must be enabled by the administrator. When email verification is enabled, a verification code obtained from `GET /api/verification` must be supplied. The display name is initialized to the username; server-managed account fields (role, quota, group, and so on) are set by the server and any client-supplied values are ignored.
 
+This endpoint is **Public** — no authentication is required. See [Authentication](/nookmux/api/management/auth) for how management API requests are authenticated.
+
+<Note>
+This endpoint applies a stricter per-IP rate limit (CriticalRateLimit) and limits the anonymous request body size (oversized bodies are rejected with HTTP `413`). When Cloudflare Turnstile verification is enabled on the server, a valid `turnstile` query token must be supplied (unless the current session has already passed the check).
+</Note>
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request POST \
+  --url 'https://your-nookmux-domain/api/user/register?turnstile=XXXX.DUMMY.TOKEN.XXXX' \
+  --header 'Content-Type: application/json' \
+  --data '{
+  "username": "alice",
+  "password": "your-password",
+  "email": "user@example.com",
+  "verification_code": "123456",
+  "aff_code": "a1b2"
+}'
+```
+
+</RequestExample>
+
+### Query parameters
+
+<ParamField path="turnstile" type="string">
+Cloudflare Turnstile token. Required only when Turnstile verification is enabled on the server and the current session has not already passed the check.
+</ParamField>
+
+### Body
+
+<ParamField path="body.username" type="string" required>
+Login name, at most 20 characters. Must not collide with an existing or soft-deleted account, nor with an already used email address.
+</ParamField>
+
+<ParamField path="body.password" type="string" required>
+Password, 8 to 20 characters. Stored as a bcrypt hash.
+</ParamField>
+
+<ParamField path="body.email" type="string">
+Email address, at most 50 characters. Required when email verification is enabled.
+</ParamField>
+
+<ParamField path="body.verification_code" type="string">
+6-digit code from `GET /api/verification`. Required when email verification is enabled.
+</ParamField>
+
+<ParamField path="body.aff_code" type="string">
+Invitation code of the inviter. When it resolves to an existing user, that user becomes the inviter of the new account.
+</ParamField>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": ""
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+Whether the account was created.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+Error description when `success` is `false`; empty otherwise.
+</ResponseField>
+
+<Note>
+When the server is configured to generate a default token for new users, a non-expiring initial API token with unlimited quota is created automatically together with the account.
+</Note>
+
+## Error messages
+
+| Condition | Description |
+| --- | --- |
+| Registration disabled | New-user registration has been turned off by the administrator |
+| Password registration disabled | Only third-party (OAuth) registration is allowed |
+| Invalid input | Input failed validation, for example a username longer than 20 characters or a password shorter than 8 |
+| Email verification required | Email verification is enabled but `email` or `verification_code` is missing |
+| Verification code incorrect | The code is wrong or expired |
+| Username already exists | The username or email is already used by an existing or soft-deleted account |
+| Registration failed | The account was created but its ID could not be read back |
+| Default token generation failed | The automatic initial token could not be generated |
+| Database error | Persisting the account or checking for duplicates failed |

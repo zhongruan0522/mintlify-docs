@@ -1,7 +1,72 @@
 ---
 title: Get 2FA Status
+description: Check whether two-factor authentication is enabled or locked for the logged-in account and how many backup codes remain.
 api: "GET /api/user/2fa/status"
 ---
 
-🔐 Login Required (User Permission)
+Returns the two-factor authentication state of the logged-in account: whether it is enabled, whether verification is temporarily locked, and — while 2FA is enabled — how many unused backup codes remain.
 
+Requires **User** permission (any logged-in user). See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url 'https://your-nookmux-domain/api/user/2fa/status' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1'
+```
+
+</RequestExample>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": {
+    "enabled": true,
+    "locked": false,
+    "backup_codes_remaining": 4
+  }
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+Whether the status was returned.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+Error description when `success` is `false`; empty otherwise.
+</ResponseField>
+
+<ResponseField name="data.enabled" type="boolean" required>
+Whether 2FA is enabled for the account. `false` when 2FA has never been set up or was disabled.
+</ResponseField>
+
+<ResponseField name="data.locked" type="boolean" required>
+Whether 2FA verification is temporarily locked after repeated failed verifications.
+</ResponseField>
+
+<ResponseField name="data.backup_codes_remaining" type="integer">
+Number of unused backup codes. Only returned while 2FA is enabled.
+</ResponseField>
+
+<Note>
+Verification is locked for 300 seconds after 5 consecutive failed verification attempts; while locked, `locked` is `true` and verification requests are rejected. `backup_codes_remaining` is omitted when 2FA is not enabled.
+</Note>
+
+## Error messages
+
+| Condition | Description |
+| --- | --- |
+| Database error | Loading the 2FA record failed; see server logs |

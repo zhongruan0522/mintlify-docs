@@ -1,7 +1,84 @@
 ---
 title: Epay Callback
+description: Asynchronous payment-result callback for Epay top-up orders, authenticated by MD5 parameter signature.
 api: "GET /api/user/epay/notify"
 ---
 
-🔓 No Authentication Required (Payment Callback)
+Asynchronous payment-result callback that the Epay gateway calls after the user completes (or abandons) a payment. NookMux verifies the MD5 signature of the parameters with the merchant key and, for successful trades, credits the matching top-up order under an order lock with payment-method and amount validation and an atomic status flip.
 
+This endpoint is **Public** — no authentication. It is called by the Epay gateway's servers; requests are authenticated through the parameter signature. See [Authentication](/nookmux/api/management/auth) for how management API requests are authenticated.
+
+<Note>
+The same handler is also mounted on `POST /api/user/epay/notify`, where the parameters are read from the form body instead of the query string. The response is plain text, not the standard JSON envelope: the body is `success` or `fail`, and the gateway retries deliveries that receive `fail`.
+</Note>
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url 'https://your-nookmux-domain/api/user/epay/notify?out_trade_no=USR1NOAb12cd1730000000&trade_no=2026102612000000&type=alipay&name=TUC10&money=73.00&trade_status=TRADE_SUCCESS&sign=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx&sign_type=MD5'
+```
+
+</RequestExample>
+
+### Query parameters
+
+Standard Epay V1 callback parameters. All non-empty parameters except `sign` and `sign_type` are sorted and joined into the signature string; the signature is an MD5 digest of that string salted with the merchant key.
+
+<ParamField path="out_trade_no" type="string" required>
+Merchant order number created by `POST /api/user/pay`. Used to locate the top-up order to credit.
+</ParamField>
+
+<ParamField path="trade_no" type="string">
+Order number assigned by the Epay gateway.
+</ParamField>
+
+<ParamField path="type" type="string">
+Payment channel used for the order, for example `alipay` or `wxpay`. Must match the order's recorded payment method.
+</ParamField>
+
+<ParamField path="name" type="string">
+Product name of the order, for example `TUC10` for a 10-unit top-up.
+</ParamField>
+
+<ParamField path="money" type="string">
+Amount paid. Must match the order's recorded amount, compared at two decimal places.
+</ParamField>
+
+<ParamField path="trade_status" type="string" required>
+Trade status. `TRADE_SUCCESS` triggers crediting; any other status is acknowledged without crediting.
+</ParamField>
+
+<ParamField path="sign" type="string" required>
+MD5 signature over the sorted parameter string.
+</ParamField>
+
+<ParamField path="sign_type" type="string">
+Signature algorithm; `MD5`.
+</ParamField>
+
+## Response
+
+<ResponseExample>
+
+```text 200
+success
+```
+
+</ResponseExample>
+
+The body is the plain word `success` or `fail` with HTTP 200; there is no JSON envelope and no response fields.
+
+- `success`: the order was credited; or the order had already been processed by an earlier delivery (duplicate callback); or the trade status is a non-success status that needs no retry.
+- `fail`: the parameters are empty, signature verification failed, Epay is not configured on the server, or crediting failed for a transient reason. The gateway is expected to retry these deliveries.
+
+## Error messages
+
+| Condition | Description |
+| --- | --- |
+| fail — empty parameters | No query (or form) parameters were supplied |
+| fail — signature verification failed | `sign` does not match the MD5 signature computed with the merchant key |
+| fail — Epay not configured | The payment gateway address, merchant ID or key is missing on the server |
+| fail — crediting failed | The order does not exist, or the payment method/amount does not match the order; see server logs |

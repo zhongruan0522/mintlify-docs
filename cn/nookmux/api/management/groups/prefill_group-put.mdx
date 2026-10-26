@@ -1,7 +1,130 @@
 ---
 title: 更新预填分组
+description: 按 ID 整体替换一个已存在的预填分组。
 api: "PUT /api/prefill_group/"
 ---
 
-👨‍💼 需要管理员权限（Admin）
+更新一个已存在的预填分组。该接口绑定完整的分组对象并整体替换存储记录，因此请发送完整分组；服务端会刷新 `updated_time`，并拒绝已被其他未删除分组占用的名称。
 
+需要**管理员（Admin）**权限。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
+
+## 请求
+
+<RequestExample>
+
+```bash cURL
+curl --request PUT \
+  --url 'https://your-nookmux-domain/api/prefill_group/' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1' \
+  --header 'Content-Type: application/json' \
+  --data '{
+  "id": 1,
+  "name": "gpt-flagship",
+  "type": "model",
+  "items": ["gpt-4o", "gpt-4o-mini", "o1"],
+  "description": "Flagship OpenAI models",
+  "created_time": 1735689600
+}'
+```
+
+</RequestExample>
+
+### 请求体
+
+<ParamField path="body.id" type="integer" required>
+  要更新的预填分组 ID。
+</ParamField>
+
+<ParamField path="body.name" type="string">
+  新分组名，在未删除分组内唯一（排除本分组自身），最长 64 字符。
+</ParamField>
+
+<ParamField path="body.type" type="string">
+  分组类别，例如 `model`、`tag` 或 `endpoint`。
+</ParamField>
+
+<ParamField path="body.items" type="array">
+  保存分组取值的字符串 JSON 数组，例如模型名列表。省略时会被写回 `null`。
+</ParamField>
+
+<ParamField path="body.description" type="string">
+  自由备注，最长 255 字符。
+</ParamField>
+
+<ParamField path="body.created_time" type="integer">
+  原样传回分组现有的 `created_time`，避免整体替换将其重置；见下方说明。
+</ParamField>
+
+## 响应
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": {
+    "id": 1,
+    "name": "gpt-flagship",
+    "type": "model",
+    "items": ["gpt-4o", "gpt-4o-mini", "o1"],
+    "description": "Flagship OpenAI models",
+    "created_time": 1735689600,
+    "updated_time": 1735862400
+  }
+}
+```
+
+</ResponseExample>
+
+### 响应字段
+
+<ResponseField name="success" type="boolean" required>
+  分组是否更新成功。
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  `success` 为 `false` 时的错误描述；成功时为空字符串。
+</ResponseField>
+
+<ResponseField name="data" type="object" required>
+  更新后的预填分组：请求对象经服务端刷新 `updated_time` 后的结果。
+
+  <Expandable title="prefill group 结构">
+    <ResponseField name="id" type="integer" required>
+      分组 ID。
+    </ResponseField>
+    <ResponseField name="name" type="string" required>
+      未删除分组内唯一的分组名，最长 64 字符。
+    </ResponseField>
+    <ResponseField name="type" type="string" required>
+      分组类别，例如 `model`、`tag` 或 `endpoint`。
+    </ResponseField>
+    <ResponseField name="items" type="array" required>
+      保存分组取值的字符串 JSON 数组；请求省略 `items` 时为 `null`。
+    </ResponseField>
+    <ResponseField name="description" type="string">
+      自由备注；为空时省略。
+    </ResponseField>
+    <ResponseField name="created_time" type="integer" required>
+      创建时间，Unix 时间戳（秒）；回显请求体中传入的值。
+    </ResponseField>
+    <ResponseField name="updated_time" type="integer" required>
+      更新时间，Unix 时间戳（秒），由服务端刷新。
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<Note>
+管理接口在业务失败时同样返回 HTTP `200`，必须以 `success` 字段判断结果。该接口执行全字段更新：绑定的对象连同所有字段一起落库，请求体中省略的字段会被写回零值——请发送完整分组对象，包括 `created_time`。
+</Note>
+
+## 错误说明
+
+| 条件 | 说明 |
+| --- | --- |
+| Invalid request body | JSON 请求体缺失或格式错误 |
+| Missing group ID | `id` 缺失或为 `0` |
+| Group name already exists | 已存在另一个同名且未删除的分组 |
+| Database error, please try again later | 加载或保存分组失败；`id` 不存在时也会以此形式返回 |

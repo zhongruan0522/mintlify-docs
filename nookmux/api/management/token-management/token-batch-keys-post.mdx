@@ -1,0 +1,78 @@
+---
+title: Batch Get Token Keys
+description: Fetch the full keys of several tokens owned by the current user in one call; the whole request fails if any id is invalid.
+api: "POST /api/token/batch/keys"
+---
+
+Fetch the full keys of multiple tokens owned by the current user in a single call. List and detail endpoints always return a masked key; the full key of an existing token can be read back only from this endpoint and `POST /api/token/{id}/key`.
+
+Unlike batch deletion, this endpoint does not skip unknown ids: the tokens are looked up one by one, and the first id that does not resolve to a token owned by the current user fails the whole request, returning no keys at all.
+
+Requires a logged-in user (**User** permissions). See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request POST \
+  --url 'https://your-nookmux-domain/api/token/batch/keys' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1' \
+  --header 'Content-Type: application/json' \
+  --data '{
+  "ids": [1, 3]
+}'
+```
+
+</RequestExample>
+
+### Body
+
+<ParamField path="body.ids" type="integer[]" required>
+  Ids of the tokens owned by the current user whose full keys should be returned. Must be a non-empty array; only tokens owned by the current user are matched.
+</ParamField>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": {
+    "keys": {
+      "1": "sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+      "3": "sk-yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy"
+    }
+  }
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+  Whether the full keys were returned.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  Error description when `success` is `false`; empty otherwise.
+</ResponseField>
+
+<ResponseField name="data.keys" type="object" required>
+  Map from token id to its full token key (site key prefix, `sk-` by default, plus 48 random characters). Ids are serialized as JSON object keys in string form.
+</ResponseField>
+
+<Note>
+Management endpoints return HTTP `200` even on business failures; always check the `success` field.
+</Note>
+
+## Error messages
+
+| Condition | Description |
+| --- | --- |
+| Invalid parameters | The JSON body is malformed or `ids` is empty |
+| Database error | Any requested id does not resolve to a token owned by the current user, or a lookup failed; no keys are returned; see server logs |

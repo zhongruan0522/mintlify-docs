@@ -1,7 +1,135 @@
 ---
 title: Sync Upstream Models
+description: Create metadata for locally missing models from the upstream catalog and optionally overwrite fields of existing entries.
 api: "POST /api/models/sync_upstream"
 ---
 
-👨‍💼 Requires Admin Permissions
+Synchronize model metadata from the upstream metadata repository. By default the endpoint only creates records for models that are missing locally (see [Get Missing Models](/nookmux/api/management/model-management/models-missing-get)); a model is created only when the upstream catalog also knows it. The optional `overwrite` list updates selected fields of existing entries with the upstream values. Vendors referenced by created models are created on demand, and the run is recorded in the audit log.
 
+Requires **Admin** permissions. See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request POST \
+  --url 'https://your-nookmux-domain/api/models/sync_upstream' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1' \
+  --header 'Content-Type: application/json' \
+  --data '{
+  "locale": "en",
+  "overwrite": [
+    {
+      "model_name": "claude-3-7-sonnet",
+      "fields": ["icon", "vendor"]
+    }
+  ]
+}'
+```
+
+</RequestExample>
+
+### Body
+
+The body is optional; an empty body syncs all missing models without overwriting anything.
+
+<ParamField path="body.overwrite" type="array of object">
+Existing models whose fields should be overwritten with the upstream values. An entry is skipped when the model does not exist locally or upstream, or when official sync is disabled for it.
+
+  <Expandable title="overwrite structure">
+    <ParamField path="model_name" type="string" required>
+      Exact name of the local model to update (rule matching is not applied here).
+    </ParamField>
+    <ParamField path="fields" type="array of string" required>
+      Fields to take from upstream: `icon`, `tags`, `vendor`, `name_rule`, `status` (case-insensitive). Any other value is ignored.
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+<ParamField path="body.locale" type="string">
+Language of the upstream catalog: `en`, `zh` or `ja`. Any other value, or omitting it, selects the default non-localized catalog files.
+</ParamField>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "data": {
+    "created_models": 2,
+    "created_vendors": 1,
+    "updated_models": 1,
+    "skipped_models": ["not-in-upstream-model"],
+    "created_list": ["gpt-4o", "o3"],
+    "updated_list": ["claude-3-7-sonnet"],
+    "source": {
+      "locale": "en",
+      "models_url": "https://basellm.github.io/llm-metadata/api/i18n/en/newapi/models.json",
+      "vendors_url": "https://basellm.github.io/llm-metadata/api/i18n/en/newapi/vendors.json"
+    }
+  }
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+Whether the sync run completed.
+</ResponseField>
+
+<ResponseField name="data.created_models" type="integer" required>
+Number of metadata records created for previously missing models.
+</ResponseField>
+
+<ResponseField name="data.created_vendors" type="integer" required>
+Number of vendor records created while resolving the vendors of the synced models.
+</ResponseField>
+
+<ResponseField name="data.updated_models" type="integer" required>
+Number of existing models updated through the `overwrite` list.
+</ResponseField>
+
+<ResponseField name="data.skipped_models" type="array of string" required>
+Model names that were not created: not found upstream, official sync disabled, or the insert failed.
+</ResponseField>
+
+<ResponseField name="data.created_list" type="array of string" required>
+Names of the created models.
+</ResponseField>
+
+<ResponseField name="data.updated_list" type="array of string" required>
+Names of the updated models.
+</ResponseField>
+
+<ResponseField name="data.source" type="object" required>
+Description of the upstream source that was used.
+
+  <Expandable title="source structure">
+    <ResponseField name="locale" type="string">
+      Locale value from the request; empty when it was not provided.
+    </ResponseField>
+    <ResponseField name="models_url" type="string">
+      Upstream URL the model catalog was fetched from.
+    </ResponseField>
+    <ResponseField name="vendors_url" type="string">
+      Upstream URL the vendor catalog was fetched from.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<Note>
+Management endpoints return HTTP `200` even on business failures; always check the `success` field. The success payload of this endpoint does not include a `message` field. When no models are missing and no `overwrite` entries are given, the upstream is not contacted at all and zero counters are returned. The upstream repository defaults to `https://basellm.github.io/llm-metadata` and can be redirected with the `SYNC_UPSTREAM_BASE` environment variable.
+</Note>
+
+## Error messages
+
+| Condition | Description |
+| --- | --- |
+| Failed to get model list, please try again later | Reading the local missing-model list failed |
+| Failed to fetch upstream models: ... | Fetching the upstream catalog failed after retries; `message` includes the cause, and the top-level `locale` and `source_urls` fields describe the attempted source |

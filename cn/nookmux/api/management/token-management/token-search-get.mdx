@@ -1,7 +1,143 @@
 ---
 title: 搜索令牌
+description: 按名称、密钥、分组与状态搜索当前用户的令牌，支持分页。
 api: "GET /api/token/search"
 ---
 
-🔐 需要登录（User权限）
+搜索当前用户名下的 API 令牌。`keyword` 与 `token` 支持 SQL `LIKE` 的 `%` 通配符模式，并受服务端清洗规则约束。结果按最新在前（`id` 倒序）返回，每个令牌的 `key` 均已脱敏。
 
+需要登录（**User** 权限）。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
+
+<Note>
+该接口除全局 API 限流外，还挂载了独立的按用户搜索限流（服务端开启时为每用户每 60 秒 10 次）。
+</Note>
+
+## 请求
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url 'https://your-nookmux-domain/api/token/search?keyword=my-%25token%25&p=1&page_size=10' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1'
+```
+
+</RequestExample>
+
+### 查询参数
+
+<ParamField path="query.keyword" type="string">
+  匹配令牌名称。不含 `%` 时为精确匹配；含 `%` 时为模糊 `LIKE` 模式——最多两个 `%` 通配符、不允许连续的 `%%`、去掉 `%` 后至少 2 个字符。
+</ParamField>
+
+<ParamField path="query.token" type="string">
+  匹配令牌密钥，模式规则与 `keyword` 相同。
+</ParamField>
+
+<ParamField path="query.all" type="boolean" default="false">
+  设为 `true`（或 `1`）时启用单框搜索：名称匹配 `keyword` **或** 密钥匹配 `token` 即命中。要求 `keyword` 与 `token` 均非空；否则两个条件按 AND 组合（各自仅在非空时生效）。
+</ParamField>
+
+<ParamField path="query.group" type="string">
+  按分组精确过滤。为空时不过滤。
+</ParamField>
+
+<ParamField path="query.status" type="integer" default="0">
+  状态过滤：`0` 或缺省不过滤；`1` 启用，`2` 禁用，`3` 已过期，`4` 额度耗尽。
+</ParamField>
+
+<ParamField path="query.p" type="integer" default="1">
+  页码。
+</ParamField>
+
+<ParamField path="query.page_size" type="integer" default="10">
+  每页条数。存储层强制钳制到 100：小于 1 或大于 100 时按 100 处理。
+</ParamField>
+
+## 响应
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": {
+    "page": 1,
+    "page_size": 10,
+    "total": 1,
+    "items": [
+      {
+        "id": 3,
+        "user_id": 1,
+        "key": "***************************************************",
+        "status": 1,
+        "name": "my-token",
+        "created_time": 1748000000,
+        "accessed_time": 1748086400,
+        "expired_time": -1,
+        "remain_quota": 500000,
+        "unlimited_quota": false,
+        "model_limits_enabled": false,
+        "model_limits": "",
+        "model_mapping": null,
+        "allow_ips": null,
+        "used_quota": 0,
+        "group": "default",
+        "cross_group_retry": false,
+        "quota_type": 1,
+        "window_hours": 0,
+        "window_quota": 0,
+        "window_start_hour": 0,
+        "cycle_days": 0,
+        "cycle_quota": 0,
+        "window_used_quota": 0,
+        "window_start_time": 0,
+        "cycle_used_quota": 0,
+        "cycle_start_time": 0
+      }
+    ]
+  }
+}
+```
+
+</ResponseExample>
+
+### 响应字段
+
+<ResponseField name="success" type="boolean" required>
+  请求是否成功。
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  `success` 为 `false` 时的错误描述；成功时为空字符串。
+</ResponseField>
+
+<ResponseField name="data.page" type="integer" required>
+  当前页码。
+</ResponseField>
+
+<ResponseField name="data.page_size" type="integer" required>
+  实际生效的每页条数。
+</ResponseField>
+
+<ResponseField name="data.total" type="integer" required>
+  符合过滤条件的令牌数量。统计查询上限为 1000。
+</ResponseField>
+
+<ResponseField name="data.items" type="array" required>
+  当前页的令牌对象数组。结构与[获取所有令牌](/cn/nookmux/api/management/token-management/token-get)一致；每个令牌的 `key` 均已脱敏。
+</ResponseField>
+
+<Note>
+搜索结果中永远不会出现完整令牌密钥，即使是通过 `token` 参数匹配密钥命中。令牌数超过 1000 的用户只能精确搜索——其携带 `%` 的模糊模式会被拒绝。
+</Note>
+
+## 错误说明
+
+| 条件 | 说明 |
+| --- | --- |
+| 搜索模式非法 | `keyword` 或 `token` 含连续 `%%`、超过两个 `%` 通配符，或去掉 `%` 后不足 2 个字符 |
+| 不允许模糊搜索 | 用户令牌数超过 1000 且使用了 `%` 通配符，仅允许精确搜索 |
+| 数据库错误 | 搜索或统计令牌失败，详见服务端日志 |

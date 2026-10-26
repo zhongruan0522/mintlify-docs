@@ -1,7 +1,145 @@
 ---
 title: Update Vendor
+description: Update an existing vendor metadata entry by submitting the complete vendor object.
 api: "PUT /api/vendors/"
 ---
 
-👨‍💼 Admin permissions required
+Updates an existing vendor metadata entry. The request body must carry the vendor `id`; the vendor name must remain unique among other non-deleted vendors.
 
+This is a full-record update: the submitted object is saved as-is, so optional fields omitted from the body are written back as empty or unset. `updated_time` is refreshed by the server; the updated record is returned in `data`.
+
+Requires **Admin** permissions. See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request PUT \
+  --url 'https://your-nookmux-domain/api/vendors/' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1' \
+  --header 'Content-Type: application/json' \
+  --data '{
+  "id": 1,
+  "name": "OpenAI",
+  "description": "OpenAI models",
+  "icon": "openai",
+  "data_retention_days": 30,
+  "training_opt_out": true,
+  "status": 1
+}'
+```
+
+</RequestExample>
+
+### Body
+
+<ParamField path="body.id" type="integer" required>
+  ID of the vendor to update. Requests with an ID of `0` (or without an ID) are rejected.
+</ParamField>
+
+<ParamField path="body.name" type="string" required>
+  Vendor name, unique among other non-deleted vendors; limited to 128 characters.
+</ParamField>
+
+<ParamField path="body.description" type="string">
+  Free-form description.
+</ParamField>
+
+<ParamField path="body.icon" type="string">
+  Icon name from `@lobehub/icons`, rendered by the frontend; limited to 128 characters.
+</ParamField>
+
+<ParamField path="body.data_retention_days" type="integer">
+  Data-retention window in days shown on the pricing page (`0` means no retention). Omit to unset the value.
+</ParamField>
+
+<ParamField path="body.training_opt_out" type="boolean">
+  Whether requests to this vendor are excluded from upstream model training by default (shown on the pricing page). Omit to unset the value.
+</ParamField>
+
+<ParamField path="body.status" type="integer" default="1">
+  Reserved status field; `1` means enabled.
+</ParamField>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": {
+    "id": 1,
+    "name": "OpenAI",
+    "description": "OpenAI models",
+    "icon": "openai",
+    "data_retention_days": 30,
+    "training_opt_out": true,
+    "status": 1,
+    "created_time": 1735689600,
+    "updated_time": 1735776000
+  }
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+  Whether the vendor was updated.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  Error description when `success` is `false`; empty otherwise.
+</ResponseField>
+
+<ResponseField name="data" type="object" required>
+  The updated vendor record.
+
+  <Expandable title="vendor structure">
+    <ResponseField name="id" type="integer" required>
+      Vendor ID.
+    </ResponseField>
+    <ResponseField name="name" type="string" required>
+      Vendor name.
+    </ResponseField>
+    <ResponseField name="description" type="string">
+      Free-form description; omitted when empty.
+    </ResponseField>
+    <ResponseField name="icon" type="string">
+      Icon name from `@lobehub/icons`, rendered by the frontend; omitted when empty.
+    </ResponseField>
+    <ResponseField name="data_retention_days" type="integer">
+      Data-retention window in days; omitted when unset.
+    </ResponseField>
+    <ResponseField name="training_opt_out" type="boolean">
+      Whether requests to this vendor are excluded from upstream model training by default; omitted when unset.
+    </ResponseField>
+    <ResponseField name="status" type="integer" required>
+      Reserved status field; `1` means enabled.
+    </ResponseField>
+    <ResponseField name="created_time" type="integer" required>
+      Creation time as a Unix timestamp in seconds.
+    </ResponseField>
+    <ResponseField name="updated_time" type="integer" required>
+      Last update time as a Unix timestamp in seconds, refreshed by the server.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<Note>
+Management endpoints return HTTP `200` even on business failures; always check the `success` field. Successful updates are recorded in the admin audit log (vendor module).
+</Note>
+
+## Error messages
+
+| Condition | Description |
+| --- | --- |
+| Invalid request body | The JSON body is missing or malformed |
+| Missing vendor ID | The body does not carry a non-zero `id` |
+| Vendor name already exists | Another non-deleted vendor already uses the same name |
+| Database error, please try again later | Reading the current record, the duplicate-name check, or the save failed; this includes an unknown `id`; see server logs |

@@ -1,7 +1,120 @@
 ---
 title: Create Prefill Group
+description: Create a reusable prefill group.
 api: "POST /api/prefill_group/"
 ---
 
-👨‍💼 Admin permissions required
+Create a prefill group. The group `name` must be non-empty and unique among non-deleted groups, and `type` must be non-empty.
 
+Requires **Admin** permissions. See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request POST \
+  --url 'https://your-nookmux-domain/api/prefill_group/' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1' \
+  --header 'Content-Type: application/json' \
+  --data '{
+  "name": "gpt-flagship",
+  "type": "model",
+  "items": ["gpt-4o", "gpt-4o-mini"],
+  "description": "Flagship OpenAI models"
+}'
+```
+
+</RequestExample>
+
+### Body
+
+<ParamField path="body.name" type="string" required>
+  Group name, unique among non-deleted groups, limited to 64 characters. Shown in console dropdowns.
+</ParamField>
+
+<ParamField path="body.type" type="string" required>
+  Category of the group, for example `model`, `tag`, or `endpoint`. The server only requires it to be non-empty.
+</ParamField>
+
+<ParamField path="body.items" type="array">
+  JSON array of strings holding the values of the group, for example model names. Omit it to store `null`.
+</ParamField>
+
+<ParamField path="body.description" type="string">
+  Free-form description, up to 255 characters.
+</ParamField>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": {
+    "id": 3,
+    "name": "gpt-flagship",
+    "type": "model",
+    "items": ["gpt-4o", "gpt-4o-mini"],
+    "description": "Flagship OpenAI models",
+    "created_time": 1735776000,
+    "updated_time": 1735776000
+  }
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+  Whether the group was created.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  Error description when `success` is `false`; empty otherwise.
+</ResponseField>
+
+<ResponseField name="data" type="object" required>
+  The created prefill group. The server fills `id`, `created_time`, and `updated_time`; all other fields are the stored representation of the request.
+
+  <Expandable title="prefill group structure">
+    <ResponseField name="id" type="integer" required>
+      Group ID assigned by the server.
+    </ResponseField>
+    <ResponseField name="name" type="string" required>
+      Unique group name among non-deleted groups, limited to 64 characters.
+    </ResponseField>
+    <ResponseField name="type" type="string" required>
+      Category of the group, for example `model`, `tag`, or `endpoint`.
+    </ResponseField>
+    <ResponseField name="items" type="array" required>
+      JSON array of strings holding the values of the group; `null` when `items` was omitted.
+    </ResponseField>
+    <ResponseField name="description" type="string">
+      Free-form description; omitted when empty.
+    </ResponseField>
+    <ResponseField name="created_time" type="integer" required>
+      Creation time as a Unix timestamp in seconds, set by the server.
+    </ResponseField>
+    <ResponseField name="updated_time" type="integer" required>
+      Set equal to `created_time` on creation.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<Note>
+Management endpoints return HTTP `200` even on business failures; always check the `success` field. Server-managed fields (`id`, `created_time`, `updated_time`) can be omitted from the request. Name uniqueness applies only to non-deleted groups: once a group is deleted, its name can be reused.
+</Note>
+
+## Error messages
+
+| Condition | Description |
+| --- | --- |
+| Invalid request body | The JSON body is missing or malformed |
+| Group name and type cannot be empty | `name` or `type` is missing or empty |
+| Group name already exists | A non-deleted group with the same `name` already exists |
+| Database error, please try again later | Persisting the group failed; see server logs |

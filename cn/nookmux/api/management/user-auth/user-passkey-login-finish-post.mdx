@@ -1,7 +1,138 @@
 ---
 title: 完成Passkey登录
+description: 提交签名后的 WebAuthn 断言，完成 Passkey 登录。
 api: "POST /api/user/passkey/login/finish"
 ---
 
-🔓 无需鉴权
+Passkey 登录第二步。提交 `navigator.credentials.get()` 依据 `POST /api/user/passkey/login/begin` 下发挑战值生成的断言（需携带同一个会话 Cookie）。服务端校验签名、按凭证 ID 解析账号、拒绝禁用状态的账号、更新凭证使用计数，并完成登录。
 
+本接口为 **Public（公开）**——无需鉴权（属于登录流程）。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
+
+<Note>
+本接口挂载了更严格的按 IP 限流（CriticalRateLimit），并对匿名请求体大小做了限制，超限返回 HTTP `413`。登录挑战值为一次性，每对 begin/finish 只签名一个挑战值。
+</Note>
+
+## 请求
+
+<RequestExample>
+
+```bash cURL
+curl --request POST \
+  --url 'https://your-nookmux-domain/api/user/passkey/login/finish' \
+  --header 'Cookie: session={session_cookie}' \
+  --header 'Content-Type: application/json' \
+  --data '{
+  "id": "oWbs1K_Ye88W9yAasl-bEuB_frm0R5aTPdSNYI3zaoQ",
+  "type": "public-key",
+  "rawId": "oWbs1K_Ye88W9yAasl-bEuB_frm0R5aTPdSNYI3zaoQ",
+  "response": {
+    "clientDataJSON": "eyJ0eXBlIjoid2ViYXV0aG4uZ2V0IiwiY2hhbGxlbmdlIjoiLi4uIiwib3JpZ2luIjoiaHR0cHM6Ly95b3VyLW5vb2ttdXgtZG9tYWluIn0",
+    "authenticatorData": "SZYN5YgOjGh0NBcPZHZgV0knn3j4t5b3CMf4fN0YQEvqVWk",
+    "signature": "MEUCIQDXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+    "userHandle": "MQ"
+  }
+}'
+```
+
+</RequestExample>
+
+### 请求体
+
+标准 WebAuthn 断言（`navigator.credentials.get()` 返回的 `PublicKeyCredential` 的 JSON 序列化）；NookMux 未对协议做任何扩展。
+
+<ParamField path="body.id" type="string" required>
+凭证 ID（base64url）。
+</ParamField>
+
+<ParamField path="body.type" type="string">
+凭证类型；WebAuthn 凭据恒为 `public-key`。
+</ParamField>
+
+<ParamField path="body.rawId" type="string" required>
+原始凭证 ID（base64url）。
+</ParamField>
+
+<ParamField path="body.response" type="object" required>
+认证器断言响应。
+
+<Expandable title="response 结构">
+  <ParamField path="clientDataJSON" type="string" required>
+    base64url 编码的客户端数据 JSON，含被签名的挑战值与来源 Origin。
+  </ParamField>
+  <ParamField path="authenticatorData" type="string" required>
+    base64url 编码的认证器数据。
+  </ParamField>
+  <ParamField path="signature" type="string" required>
+    base64url 编码的签名，签名对象为 `authenticatorData || SHA-256(clientDataJSON)`。
+  </ParamField>
+  <ParamField path="userHandle" type="string">
+    base64url 编码的用户句柄；存在时必须与解析出的账号一致。
+  </ParamField>
+</Expandable>
+</ParamField>
+
+## 响应
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": {
+    "id": 1,
+    "username": "alice",
+    "display_name": "alice",
+    "role": 1,
+    "status": 1,
+    "group": "default"
+  }
+}
+```
+
+</ResponseExample>
+
+### 响应字段
+
+<ResponseField name="success" type="boolean" required>
+断言校验与登录是否成功。
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+`success` 为 `false` 时的错误描述；成功时为空字符串。
+</ResponseField>
+
+<ResponseField name="data" type="object" required>
+账号信息，与密码登录一步完成时的 `data` 对象完全一致。
+
+<Expandable title="data 结构">
+  <ResponseField name="id" type="integer" required>
+    用户 ID。
+  </ResponseField>
+  <ResponseField name="username" type="string" required>
+    用户名。
+  </ResponseField>
+  <ResponseField name="display_name" type="string" required>
+    显示名称。
+  </ResponseField>
+  <ResponseField name="role" type="integer" required>
+    角色：`1` 普通用户，`10` 管理员，`100` 超级管理员（Root）。
+  </ResponseField>
+  <ResponseField name="status" type="integer" required>
+    账号状态：`1` 启用，`2` 禁用。
+  </ResponseField>
+  <ResponseField name="group" type="string" required>
+    所属用户分组。
+  </ResponseField>
+</Expandable>
+</ResponseField>
+
+## 错误说明
+
+| 条件 | 说明 |
+| --- | --- |
+| Passkey 登录未开启 | 管理员未启用 Passkey 登录 |
+| 数据库错误 | 会话中不存在有效登录挑战值、断言校验失败，或凭证存储读写失败 |
+| Passkey 登录状态无效 | 校验通过的凭据无法映射回账号 |
+| 用户已被禁用 | 凭据所属账号未处于启用状态 |
+| Passkey 凭证更新失败 | 更新凭证使用计数失败 |

@@ -1,7 +1,82 @@
 ---
 title: Complete Passkey Registration
+description: Submit the WebAuthn attestation response and store the new passkey credential.
 api: "POST /api/user/passkey/register/finish"
 ---
 
-🔐 Login Required (User Permission)
+Completes the second half of the passkey registration ceremony. The server verifies the attestation produced by the browser authenticator against the challenge started by `POST /api/user/passkey/register/begin` and stores the resulting credential for the current user.
 
+Requires **User** permission (any logged-in user). See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request POST \
+  --url 'https://your-nookmux-domain/api/user/passkey/register/finish' \
+  --header 'Cookie: session={session_cookie}' \
+  --header 'New-Api-User: 1' \
+  --header 'Content-Type: application/json' \
+  --data '{
+  "id": "R2dpSmY4Q3JEektWWXRHcw",
+  "rawId": "R2dpSmY4Q3JEektWWXRHcw",
+  "type": "public-key",
+  "response": {
+    "clientDataJSON": "eyJjaGFsbGVuZ2UiOiJoSzBkRjJ2UTh4TjNtWjdiVDF3WTVjUjlqTDRwQTZzRCIsIm9yaWdpbiI6Imh0dHBzOi8veW91ci1ub29rbXV4LWRvbWFpbiIsInR5cGUiOiJ3ZWJhdXRobi5jcmVhdGUifQ",
+    "attestationObject": "o2NmbXQvZGVmYXVsdC1mb3JtYXQ...",
+    "transports": ["internal"]
+  }
+}'
+```
+
+</RequestExample>
+
+### Body
+
+<ParamField path="body" type="object" required>
+The attestation returned by the browser, following the standard WebAuthn `PublicKeyCredential<AttestationResponse>` structure: top-level `id`, `rawId`, `type`, and a `response` object containing at least `clientDataJSON` and `attestationObject`. The body is parsed directly by the server's WebAuthn library, so the protocol fields are defined by the WebAuthn standard rather than by NookMux.
+</ParamField>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "Passkey registered successfully",
+  "data": null
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+Whether the credential was registered.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+Localized success message when `success` is `true`; error description otherwise.
+</ResponseField>
+
+<ResponseField name="data" type="null">
+Always `null` for this endpoint.
+</ResponseField>
+
+<Note>
+The request must be sent from the same session as the `begin` call: the challenge is read from the server-side session and consumed in one shot, so a second attempt fails until a new `begin` call is made. The device name saved during `begin` is attached to the stored credential. The passkey limit and, when 2FA is enabled, the 2FA step-up verification are re-checked before the credential is persisted.
+</Note>
+
+## Error messages
+
+| Condition | Description |
+| --- | --- |
+| Passkey login is not enabled by administrator | The passkey feature is disabled in the server settings |
+| Not logged in / user disabled | The session cannot be resolved; returned as HTTP `401` |
+| Secure verification required | 2FA is enabled but no valid 2FA step-up verification exists |
+| Passkey limit reached | The limit was reached between `begin` and `finish` |
+| Unable to create Passkey credential | No active registration challenge exists for this session (missing or already consumed), or the attestation failed verification; see server logs |
+| Database error | Persisting the credential failed; see server logs |

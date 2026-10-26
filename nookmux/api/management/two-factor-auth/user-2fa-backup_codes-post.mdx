@@ -1,7 +1,76 @@
 ---
 title: Regenerate Backup Codes
+description: Replace all existing 2FA backup codes with a fresh set after verifying a TOTP code.
 api: "POST /api/user/2fa/backup_codes"
 ---
 
-🔐 Login required (User permission)
+Replaces the backup codes of the logged-in account. All existing codes are deleted and 4 new ones in `XXXX-XXXX` format are generated, stored as hashes, and returned in plain text. The request must carry the current 6-digit TOTP code; backup codes themselves are not accepted for this operation.
 
+Requires **User** permission (any logged-in user). See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request POST \
+  --url 'https://your-nookmux-domain/api/user/2fa/backup_codes' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1' \
+  --header 'Content-Type: application/json' \
+  --data '{
+  "code": "123456"
+}'
+```
+
+</RequestExample>
+
+### Body
+
+<ParamField path="body.code" type="string" required>
+Current 6-digit TOTP code from the authenticator app. Only TOTP codes are accepted; a backup code is rejected as an invalid parameter.
+</ParamField>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "Backup codes regenerated successfully",
+  "data": {
+    "backup_codes": ["A1B2-C3D4", "E5F6-G7H8", "J9K0-L1M2", "N3P4-Q5R6"]
+  }
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+Whether the backup codes were regenerated.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+Localized success message; error description when `success` is `false`.
+</ResponseField>
+
+<ResponseField name="data.backup_codes" type="string[]" required>
+The 4 new backup recovery codes in `XXXX-XXXX` format. All previous backup codes become invalid immediately after this call.
+</ResponseField>
+
+<Note>
+The new codes are returned in plain text only once — the server keeps only their hashes — and each can be used exactly once. Failed TOTP verifications are counted: after 5 consecutive wrong codes, 2FA verification is locked for 300 seconds and even correct codes are rejected until the lock expires.
+</Note>
+
+## Error messages
+
+| Condition | Description |
+| --- | --- |
+| Invalid request body | The JSON body is missing, `code` is empty, or the code is not 6 digits |
+| 2FA not enabled | There is no enabled 2FA record for this account |
+| Verification code invalid | The TOTP code does not match the stored secret, or verification is temporarily locked |
+| Backup code generation or save failed | The server failed to generate or persist the backup codes; see server logs |
+| Database error | Loading, verifying, or updating the 2FA record failed; see server logs |

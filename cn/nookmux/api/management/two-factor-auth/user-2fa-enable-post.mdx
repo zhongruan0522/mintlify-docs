@@ -1,7 +1,74 @@
 ---
 title: 启用2FA
+description: 提交 TOTP 验证码，激活当前登录账号待生效的两步验证设置。
 api: "POST /api/user/2fa/enable"
 ---
 
-🔐 需要登录（User权限）
+激活由[设置 2FA](/cn/nookmux/api/management/two-factor-auth/user-2fa-setup-post)创建的待生效 2FA 记录。请求须携带验证器应用针对设置时返回的密钥生成的当前 6 位 TOTP 验证码。成功后 2FA 记录被标记为已启用，该账号后续登录需要 TOTP 验证码或备用码。
 
+需要**用户（User）**权限（任意登录用户）。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
+
+## 请求
+
+<RequestExample>
+
+```bash cURL
+curl --request POST \
+  --url 'https://your-nookmux-domain/api/user/2fa/enable' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1' \
+  --header 'Content-Type: application/json' \
+  --data '{
+  "code": "123456"
+}'
+```
+
+</RequestExample>
+
+### 请求体
+
+<ParamField path="body.code" type="string" required>
+验证器应用生成的当前 6 位 TOTP 验证码。允许包含空格（校验时忽略）。本接口不接受备用码。
+</ParamField>
+
+## 响应
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "Two-factor authentication enabled successfully",
+  "data": null
+}
+```
+
+</ResponseExample>
+
+### 响应字段
+
+<ResponseField name="success" type="boolean" required>
+2FA 是否启用成功。
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+成功时为本地化的成功提示；`success` 为 `false` 时为错误描述。
+</ResponseField>
+
+<ResponseField name="data" type="null" required>
+恒为 `null`；本接口不返回数据载荷。
+</ResponseField>
+
+<Note>
+本接口直接将验证码与存储的密钥比对，验证失败不计入锁定计数（锁定计数适用于禁用 2FA、重新生成备用码与登录验证）。
+</Note>
+
+## 错误说明
+
+| 条件 | 说明 |
+| --- | --- |
+| 请求体非法 | JSON 请求体缺失、`code` 为空或不是 6 位数字 |
+| 尚未完成设置 | 不存在待生效的 2FA 记录，需先调用 `POST /api/user/2fa/setup` |
+| 2FA 已启用 | 该账号的两步验证已处于启用状态 |
+| 验证码无效 | TOTP 验证码与存储密钥不匹配 |
+| 数据库错误 | 读取或更新 2FA 记录失败，详见服务端日志 |

@@ -1,7 +1,138 @@
 ---
 title: Complete Passkey Login
+description: Complete a passkey (WebAuthn) login by submitting the signed assertion.
 api: "POST /api/user/passkey/login/finish"
 ---
 
-🔓 No Authentication Required
+Second step of passkey login. Submits the assertion produced by `navigator.credentials.get()` for the challenge issued by `POST /api/user/passkey/login/begin` (the same session cookie is required). The server verifies the signature, resolves the account from the credential ID, rejects disabled accounts, updates the credential usage counters, and completes the login.
 
+This endpoint is **Public** — no authentication is required (it is part of the login process). See [Authentication](/nookmux/api/management/auth) for how management API requests are authenticated.
+
+<Note>
+This endpoint applies a stricter per-IP rate limit (CriticalRateLimit) and limits the anonymous request body size (oversized bodies are rejected with HTTP `413`). The login challenge is single-use; each begin/finish pair signs one challenge.
+</Note>
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request POST \
+  --url 'https://your-nookmux-domain/api/user/passkey/login/finish' \
+  --header 'Cookie: session={session_cookie}' \
+  --header 'Content-Type: application/json' \
+  --data '{
+  "id": "oWbs1K_Ye88W9yAasl-bEuB_frm0R5aTPdSNYI3zaoQ",
+  "type": "public-key",
+  "rawId": "oWbs1K_Ye88W9yAasl-bEuB_frm0R5aTPdSNYI3zaoQ",
+  "response": {
+    "clientDataJSON": "eyJ0eXBlIjoid2ViYXV0aG4uZ2V0IiwiY2hhbGxlbmdlIjoiLi4uIiwib3JpZ2luIjoiaHR0cHM6Ly95b3VyLW5vb2ttdXgtZG9tYWluIn0",
+    "authenticatorData": "SZYN5YgOjGh0NBcPZHZgV0knn3j4t5b3CMf4fN0YQEvqVWk",
+    "signature": "MEUCIQDXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+    "userHandle": "MQ"
+  }
+}'
+```
+
+</RequestExample>
+
+### Body
+
+Standard WebAuthn assertion (the JSON serialization of the `PublicKeyCredential` returned by `navigator.credentials.get()`); NookMux does not extend the protocol.
+
+<ParamField path="body.id" type="string" required>
+Credential ID (base64url).
+</ParamField>
+
+<ParamField path="body.type" type="string">
+Credential type; always `public-key` for WebAuthn credentials.
+</ParamField>
+
+<ParamField path="body.rawId" type="string" required>
+Raw credential ID (base64url).
+</ParamField>
+
+<ParamField path="body.response" type="object" required>
+Authenticator assertion response.
+
+<Expandable title="response structure">
+  <ParamField path="clientDataJSON" type="string" required>
+    Base64url-encoded client data JSON, including the signed challenge and origin.
+  </ParamField>
+  <ParamField path="authenticatorData" type="string" required>
+    Base64url-encoded authenticator data.
+  </ParamField>
+  <ParamField path="signature" type="string" required>
+    Base64url-encoded signature over `authenticatorData || SHA-256(clientDataJSON)`.
+  </ParamField>
+  <ParamField path="userHandle" type="string">
+    Base64url-encoded user handle; when present it must match the resolved account.
+  </ParamField>
+</Expandable>
+</ParamField>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": {
+    "id": 1,
+    "username": "alice",
+    "display_name": "alice",
+    "role": 1,
+    "status": 1,
+    "group": "default"
+  }
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+Whether the assertion was verified and the login completed.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+Error description when `success` is `false`; empty otherwise.
+</ResponseField>
+
+<ResponseField name="data" type="object" required>
+Account snapshot, identical to the `data` object of a completed password login.
+
+<Expandable title="data structure">
+  <ResponseField name="id" type="integer" required>
+    User ID.
+  </ResponseField>
+  <ResponseField name="username" type="string" required>
+    Username.
+  </ResponseField>
+  <ResponseField name="display_name" type="string" required>
+    Display name.
+  </ResponseField>
+  <ResponseField name="role" type="integer" required>
+    Role: `1` common user, `10` admin, `100` root.
+  </ResponseField>
+  <ResponseField name="status" type="integer" required>
+    Account status: `1` enabled, `2` disabled.
+  </ResponseField>
+  <ResponseField name="group" type="string" required>
+    User group.
+  </ResponseField>
+</Expandable>
+</ResponseField>
+
+## Error messages
+
+| Condition | Description |
+| --- | --- |
+| Passkey login disabled | Passkey login is not enabled by the administrator |
+| Database error | No valid login challenge in the session, the assertion failed verification, or the credential store could not be read or written |
+| Invalid Passkey login state | The verified credential could not be mapped back to an account |
+| User disabled | The account owning the credential is not in enabled status |
+| Failed to update Passkey credential | Updating the credential usage counters failed |

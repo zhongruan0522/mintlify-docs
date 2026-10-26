@@ -1,7 +1,63 @@
 ---
 title: Delete User
+description: Permanently delete a user by ID with a hard delete that bypasses soft deletion.
 api: "DELETE /api/user/{id}"
 ---
 
-👨‍💼 Admin privileges required
+Permanently deletes a user. Unlike the self-service endpoint, this is a hard delete: the row is physically removed and cannot be recovered. The caller's role must be strictly higher than the target user's role, so the root account cannot be deleted by anyone, including another root admin. The operation writes an audit record.
 
+Requires **Admin** permissions. See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request DELETE \
+  --url 'https://your-nookmux-domain/api/user/2' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1'
+```
+
+</RequestExample>
+
+### Path parameters
+
+<ParamField path="path.id" type="integer" required>
+ID of the user to delete.
+</ParamField>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": ""
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+Whether the user was deleted.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+Error description when `success` is `false`; empty otherwise.
+</ResponseField>
+
+<Note>
+This endpoint returns no `data` field. For a recoverable soft delete, use the self-service endpoint `DELETE /api/user/self` or the `delete` action of `POST /api/user/manage`.
+</Note>
+
+## Error messages
+
+| Condition | Description |
+| --- | --- |
+| Invalid parameters | `id` in the path is not an integer |
+| Database error | The target user cannot be loaded (including an unknown `id`) or the delete failed |
+| No permission | The target user has the same or a higher role than the caller |

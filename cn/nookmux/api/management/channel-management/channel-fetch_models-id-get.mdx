@@ -1,7 +1,81 @@
 ---
 title: 获取上游模型列表
+description: 从已保存渠道的上游服务商拉取模型列表。
 api: "GET /api/channel/fetch_models/{id}"
 ---
 
-👨‍💼 需要管理员权限（Admin）
+从已保存渠道的上游拉取其提供的模型列表，便于粘贴到渠道的 `models` 字段。行为依渠道类型而异：
 
+- Ollama 渠道请求 Ollama 的 `/v1/models` 接口，返回模型名。
+- AWS Bedrock 渠道使用渠道密钥拉取 Claude 模型列表。
+- Gemini 渠道请求 Gemini 的模型列表接口。
+- Vertex AI 渠道没有公开的列表接口，直接返回适配器内置的模型清单，不发起上游请求。
+- 其余渠道请求 `{base_url}/v1/models`（Zhipu v4 使用 `/api/paas/v4/models`，Moonshot 使用 `/v1/models`；已知套餐 Base URL 会替换为其 OpenAI 兼容端点），返回 `data[].id` 的值。
+
+发往上游的请求走渠道上配置的代理。
+
+需要**超级管理员（Root）**权限。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
+
+## 请求
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url 'https://your-nookmux-domain/api/channel/fetch_models/1' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1'
+```
+
+</RequestExample>
+
+### 路径参数
+
+<ParamField path="id" type="integer" required>
+  要查询上游的渠道 ID。
+</ParamField>
+
+## 响应
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": [
+    "gpt-4o",
+    "gpt-4o-mini"
+  ]
+}
+```
+
+</ResponseExample>
+
+### 响应字段
+
+<ResponseField name="success" type="boolean" required>
+  模型列表是否拉取成功。
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  `success` 为 `false` 时的错误描述；成功时为空字符串。
+</ResponseField>
+
+<ResponseField name="data" type="array" required>
+  上游返回的模型 ID 列表。ID 为空的条目会被丢弃。
+</ResponseField>
+
+<Note>
+  管理接口在业务失败时同样返回 HTTP `200`，必须以 `success` 字段判断结果。多 Key 渠道使用第一个处于启用状态的密钥发起请求。
+</Note>
+
+## 错误说明
+
+| 条件 | 说明 |
+| --- | --- |
+| 渠道 ID 格式错误 | 路径中的 `id` 不是整数 |
+| 数据库错误 | 渠道加载失败，包括渠道不存在 |
+| 无可用密钥 | 多 Key 渠道没有启用状态的密钥 |
+| 上游拉取失败 | 上游请求失败或返回非 200 状态码 |
+| 响应解析失败 | 上游响应无法解析为模型列表 |

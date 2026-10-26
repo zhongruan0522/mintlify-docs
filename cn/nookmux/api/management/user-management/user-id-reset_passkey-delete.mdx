@@ -1,7 +1,69 @@
 ---
 title: 管理员重置用户Passkey
+description: 删除用户绑定的全部 Passkey（WebAuthn）凭证，例如在丢失所有设备后使用。
 api: "DELETE /api/user/{id}/reset_passkey"
 ---
 
-👨‍💼 需要管理员权限（Admin）
+删除目标用户绑定的全部 Passkey（WebAuthn）凭证。适用于用户丢失所有 Passkey 设备、无法再通过安全验证的场景。重置后用户可重新注册新的 Passkey。操作会写入审计日志。
 
+需要**管理员（Admin）**权限。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
+
+## 请求
+
+<RequestExample>
+
+```bash cURL
+curl --request DELETE \
+  --url 'https://your-nookmux-domain/api/user/2/reset_passkey' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1'
+```
+
+</RequestExample>
+
+### 路径参数
+
+<ParamField path="path.id" type="integer" required>
+目标用户 ID。
+</ParamField>
+
+## 响应
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "Passkey has been reset",
+  "data": null
+}
+```
+
+</ResponseExample>
+
+### 响应字段
+
+<ResponseField name="success" type="boolean" required>
+是否成功删除 Passkey。
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+`success` 为 `true` 时为本地化的成功提示；否则为错误描述。
+</ResponseField>
+
+<ResponseField name="data" type="null">
+本接口恒为 `null`。
+</ResponseField>
+
+<Note>
+非超级管理员只能重置角色等级严格低于自己的用户的 Passkey；超级管理员可重置任意用户的 Passkey。
+</Note>
+
+## 错误说明
+
+| 条件 | 说明 |
+| --- | --- |
+| 无效的用户 ID | 路径中的 `id` 不是整数 |
+| 数据库错误 | 统计或删除 Passkey 失败，详见服务端日志 |
+| 无权限 | 调用者不是超级管理员，且目标用户为同级或更高级 |
+| 该用户尚未绑定 Passkey | 目标用户没有可重置的 Passkey |

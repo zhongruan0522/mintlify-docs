@@ -1,7 +1,83 @@
 ---
 title: 更新指定渠道余额
+description: 实时查询单个渠道的上游余额并落库到渠道。
 api: "GET /api/channel/update_balance/{id}"
 ---
 
-👨‍💼 需要管理员权限（Admin）
+实时查询单个渠道的上游余额并保存到渠道。响应以渠道上游的上报币种返回余额；DeepSeek 渠道还会额外返回余额中的赠金与充值两部分明细。
 
+需要**管理员（Admin）**权限。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
+
+## 请求
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url 'https://your-nookmux-domain/api/channel/update_balance/1' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1'
+```
+
+</RequestExample>
+
+### 路径参数
+
+<ParamField path="id" type="integer" required>
+要刷新余额的渠道 ID。
+</ParamField>
+
+## 响应
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "balance": 12.34,
+  "currency": "USD"
+}
+```
+
+</ResponseExample>
+
+### 响应字段
+
+<ResponseField name="success" type="boolean" required>
+余额查询是否成功。
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+`success` 为 `false` 时的错误描述；成功时为空字符串。
+</ResponseField>
+
+<ResponseField name="balance" type="number" required>
+按上游口径刷新得到的余额，同时会落库到渠道。
+</ResponseField>
+
+<ResponseField name="currency" type="string" required>
+余额币种：`USD` 或 `CNY`。
+</ResponseField>
+
+<ResponseField name="granted_balance" type="number">
+余额中的赠金部分。仅 DeepSeek 渠道且非零时返回。
+</ResponseField>
+
+<ResponseField name="topped_up_balance" type="number">
+余额中的充值部分。仅 DeepSeek 渠道且非零时返回。
+</ResponseField>
+
+<Note>
+该响应把 `balance`、`currency` 以及可选的 DeepSeek 明细字段与 `success`/`message` 平铺返回，而不是包裹在 `data` 对象中。余额查询支持 OpenAI 兼容计费端点（OpenAI 与自定义 Base URL）、SiliconFlow、DeepSeek、OpenRouter、Moonshot 与智谱 GLM 渠道；Azure 及其他不支持的类型会返回"未实现"错误。多 Key 渠道因余额无法归属到单个密钥而被直接拒绝。请求由服务端经渠道配置的代理发出。
+</Note>
+
+## 错误说明
+
+| 条件 | 说明 |
+| --- | --- |
+| 渠道 ID 格式错误 | 路径 `id` 不是整数 |
+| 数据库错误 | 加载渠道失败 |
+| 多 Key 渠道不支持 | 多 Key 渠道不支持余额刷新 |
+| 余额查询未实现 | 渠道类型未提供余额接口（例如 Azure） |
+| 余额查询失败 | 上游请求或响应解析失败，错误信息附在 `message` 中 |

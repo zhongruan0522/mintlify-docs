@@ -1,7 +1,229 @@
 ---
 title: 获取定价信息
+description: 获取模型广场页所需的逐模型定价、供应商元数据、分组倍率与受支持的端点映射。
 api: "GET /api/pricing"
 ---
 
-🔓 无需鉴权（可选登录）
+返回模型广场页使用的模型定价表：所有由启用渠道提供的模型、其计费倍率或固定价格、供应商元数据、调用者可见的分组倍率，以及端点类型到中继路径的映射。
 
+该接口受顶部导航模块配置中 `pricing` 模块的开关控制。默认模块启用且公开：无需鉴权，若调用者携带登录会话则自动识别其身份；若模块配置为需要登录，则强制校验登录（User 权限）。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
+
+## 请求
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url 'https://your-nookmux-domain/api/pricing'
+```
+
+</RequestExample>
+
+## 响应
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "data": [
+    {
+      "model_name": "gpt-4o",
+      "quota_type": 0,
+      "available": true,
+      "model_ratio": 1.25,
+      "model_price": 0,
+      "owner_by": "",
+      "completion_ratio": 2.5,
+      "enable_groups": ["default"],
+      "supported_endpoint_types": ["openai"]
+    },
+    {
+      "model_name": "text-embedding-3-small",
+      "quota_type": 1,
+      "available": true,
+      "model_ratio": 0,
+      "model_price": 0.02,
+      "owner_by": "",
+      "completion_ratio": 0,
+      "enable_groups": ["default"],
+      "supported_endpoint_types": ["openai"]
+    }
+  ],
+  "vendors": [
+    {
+      "id": 1,
+      "name": "OpenAI"
+    }
+  ],
+  "group_ratio": {
+    "default": 1.0
+  },
+  "usable_group": {
+    "default": "默认分组"
+  },
+  "supported_endpoint": {
+    "openai": {
+      "path": "/v1/chat/completions",
+      "method": "POST"
+    }
+  },
+  "auto_groups": []
+}
+```
+
+</ResponseExample>
+
+### 响应字段
+
+<ResponseField name="success" type="boolean" required>
+  请求是否成功。
+</ResponseField>
+
+<ResponseField name="data" type="array" required>
+  每个至少被一个启用渠道提供的模型的定价条目；在模型元数据中被禁用的模型不会出现。
+
+  <Expandable title="定价条目结构">
+    <ParamField path="model_name" type="string" required>
+      中继接受的模型名。
+    </ParamField>
+    <ParamField path="quota_type" type="integer" required>
+      计费模式：`0` 按倍率计费（通过 `model_ratio` 与 `completion_ratio` 按 token 计费），`1` 按次固定价格（`model_price`）。
+    </ParamField>
+    <ParamField path="available" type="boolean" required>
+      该模型是否配置了倍率或价格。
+    </ParamField>
+    <ParamField path="model_ratio" type="number" required>
+      倍率计费下作用于输入（prompt）token 的基础倍率。
+    </ParamField>
+    <ParamField path="model_price" type="number" required>
+      按次计费下每次调用的固定价格；其余情况为 `0`。
+    </ParamField>
+    <ParamField path="owner_by" type="string" required>
+      预留的归属字段，通常为空。
+    </ParamField>
+    <ParamField path="completion_ratio" type="number" required>
+      倍率计费下输出（completion）token 相对 `model_ratio` 的倍率。
+    </ParamField>
+    <ParamField path="cache_ratio" type="number">
+      缓存命中 token 的读取倍率。仅在该模型显式配置时出现。
+    </ParamField>
+    <ParamField path="create_cache_ratio" type="number">
+      缓存写入 token 的倍率。仅在该模型显式配置时出现。
+    </ParamField>
+    <ParamField path="audio_ratio" type="number">
+      音频输入 token 倍率。仅在该模型显式配置时出现。
+    </ParamField>
+    <ParamField path="audio_completion_ratio" type="number">
+      音频输出 token 倍率。仅在该模型显式配置时出现。
+    </ParamField>
+    <ParamField path="context_pricing" type="object">
+      上下文阶梯计价配置。仅当模型存在启用且至少含一个阶梯的阶梯计价规则时出现；此时第一个阶梯的倍率会同时复制到平铺倍率字段中。
+
+      <Expandable title="context_pricing 结构">
+        <ParamField path="enabled" type="boolean" required>
+          阶梯规则是否启用。
+        </ParamField>
+        <ParamField path="tiers" type="array" required>
+          按上下文长度排序的阶梯列表。每个阶梯包含 `name`（可选字符串）、`min_tokens`（整数）、`max_tokens`（整数，最高阶梯缺省），以及该阶梯的 `model_ratio`、`completion_ratio`、`cache_ratio`、`create_cache_ratio`、`audio_ratio`、`audio_completion_ratio`（数值）。
+        </ParamField>
+      </Expandable>
+    </ParamField>
+    <ParamField path="enable_groups" type="array">
+      当前提供该模型的用户分组。匿名调用者的响应中该字段整体省略。
+    </ParamField>
+    <ParamField path="supported_endpoint_types" type="array" required>
+      该模型可调用的端点类型名，例如 `openai`、`anthropic`。首项为首选端点。
+    </ParamField>
+    <ParamField path="description" type="string">
+      模型元数据中的模型描述。
+    </ParamField>
+    <ParamField path="icon" type="string">
+      模型元数据中的图标 URL。
+    </ParamField>
+    <ParamField path="tags" type="string">
+      模型元数据中的标签，逗号分隔。
+    </ParamField>
+    <ParamField path="vendor_id" type="integer">
+      该模型归属的供应商 ID，对应 `vendors` 中的条目。
+    </ParamField>
+    <ParamField path="context_length" type="integer">
+      模型元数据中的最大上下文长度。
+    </ParamField>
+    <ParamField path="max_output_tokens" type="integer">
+      模型元数据中的最大输出 token 数。
+    </ParamField>
+    <ParamField path="input_modalities" type="array">
+      模型元数据中的支持的输入模态（例如 text、image）。
+    </ParamField>
+    <ParamField path="output_modalities" type="array">
+      模型元数据中的支持的输出模态。
+    </ParamField>
+    <ParamField path="capabilities" type="array">
+      模型元数据中的能力标签，如工具调用、视觉。
+    </ParamField>
+    <ParamField path="knowledge_cutoff" type="string">
+      模型元数据中的知识截止日期。
+    </ParamField>
+    <ParamField path="release_date" type="string">
+      模型元数据中的发布日期。
+    </ParamField>
+    <ParamField path="parameter_count" type="string">
+      模型元数据中的参数量。
+    </ParamField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="vendors" type="array" required>
+  定价条目引用的供应商元数据。
+
+  <Expandable title="供应商结构">
+    <ParamField path="id" type="integer" required>
+      供应商 ID。
+    </ParamField>
+    <ParamField path="name" type="string" required>
+      供应商显示名。
+    </ParamField>
+    <ParamField path="description" type="string">
+      供应商描述。
+    </ParamField>
+    <ParamField path="icon" type="string">
+      供应商图标 URL。
+    </ParamField>
+    <ParamField path="data_retention_days" type="integer">
+      供应商声明的请求数据保留天数。
+    </ParamField>
+    <ParamField path="training_opt_out" type="boolean">
+      供应商是否声明不使用请求数据训练。
+    </ParamField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="group_ratio" type="object" required>
+  各用户分组的计费倍率，仅保留 `usable_group` 中列出的分组。对已识别身份的调用者，会将其所属分组配置的分组间倍率覆盖应用到基础倍率之上。
+</ResponseField>
+
+<ResponseField name="usable_group" type="object" required>
+  调用者可使用的分组，对象形式为分组名到分组显示描述的映射。
+</ResponseField>
+
+<ResponseField name="supported_endpoint" type="object" required>
+  端点类型名到中继请求信息的映射：`path`（中继路径，可能含 `{model}` 等模型占位符）与 `method`（HTTP 方法）。
+</ResponseField>
+
+<ResponseField name="auto_groups" type="array" required>
+  站点配置的自动路由分组，已按调用者可用分组过滤。
+</ResponseField>
+
+<Note>
+  匿名调用者收到的是裁剪后的载荷：每个定价条目中的 `enable_groups` 字段被移除，避免向公开定价页暴露内部分组名；`group_ratio` 也仅覆盖默认可用分组。携带有效登录会话即可识别调用者身份并返回完整载荷。
+
+  定价表从数据库刷新的频率不超过每分钟一次；渠道、模型元数据或倍率的变更最多需要一分钟才会体现。
+</Note>
+
+## 错误说明
+
+| 条件 | 说明 |
+| --- | --- |
+| 模块已禁用 | 顶部导航模块设置中关闭 pricing 模块时返回 HTTP `403`，message 为 `pricing is disabled` |
+| 需要登录 | pricing 模块配置为需要登录且调用者未通过鉴权时，返回标准鉴权错误（HTTP `401`） |

@@ -1,7 +1,281 @@
 ---
 title: 获取系统状态
+description: 获取登录前前端所需的公开引导配置：品牌信息、登录方式、面板开关与控制台内容。
 api: "GET /api/status"
 ---
 
-🔓 无需鉴权
+返回用于渲染登录前壳层并初始化前端的公开配置：品牌信息、可用登录方式、Turnstile 设置、面板开关、Passkey 参数以及可选的控制台内容（API 信息、公告、FAQ）。该响应对匿名与已登录调用者完全一致；管理员专属配置（侧栏模块结构、构建版本号）刻意不包含在内，由独立的管理端接口下发。
 
+该接口为公开接口，无需鉴权。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
+
+## 请求
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url 'https://your-nookmux-domain/api/status'
+```
+
+</RequestExample>
+
+## 响应
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": {
+    "email_verification": true,
+    "github_oauth": true,
+    "github_client_id": "github-oauth-client-id",
+    "linuxdo_oauth": false,
+    "linuxdo_client_id": "",
+    "linuxdo_minimum_trust_level": 0,
+    "system_name": "NookMux",
+    "logo": "https://your-nookmux-domain/logo.png",
+    "footer_html": "<p>Powered by NookMux</p>",
+    "server_address": "https://your-nookmux-domain",
+    "turnstile_check": false,
+    "turnstile_site_key": "",
+    "docs_link": "https://docs.example.com",
+    "quota_per_unit": 500000,
+    "enable_batch_update": false,
+    "enable_data_export": true,
+    "data_export_interval": 5,
+    "data_export_default_time": "hour",
+    "default_collapse_sidebar": false,
+    "default_use_auto_group": false,
+    "price": 7.3,
+    "stripe_unit_price": 8.0,
+    "api_info_enabled": true,
+    "uptime_kuma_enabled": true,
+    "announcements_enabled": true,
+    "faq_enabled": true,
+    "HeaderNavModules": "",
+    "passkey_login": false,
+    "passkey_display_name": "NookMux",
+    "passkey_rp_id": "your-nookmux-domain",
+    "passkey_origins": "https://your-nookmux-domain",
+    "passkey_allow_insecure": false,
+    "passkey_user_verification": "preferred",
+    "passkey_attachment": "",
+    "setup": true,
+    "user_agreement_enabled": true,
+    "privacy_policy_enabled": false,
+    "checkin_enabled": false,
+    "_qn": "nookmux",
+    "api_info": [
+      {
+        "url": "https://api.example.com",
+        "route": "/v1",
+        "description": "主 API 接入点",
+        "color": "primary"
+      }
+    ],
+    "announcements": [
+      {
+        "content": "服务现已正式上线。",
+        "publishDate": "2026-01-02T08:00:00Z",
+        "type": "success"
+      }
+    ],
+    "faq": [
+      {
+        "question": "如何充值？",
+        "answer": "打开充值页面并按提示操作。"
+      }
+    ]
+  }
+}
+```
+
+</ResponseExample>
+
+### 响应字段
+
+<ResponseField name="success" type="boolean" required>
+  请求是否成功。
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  `success` 为 `false` 时的错误描述；成功时为空字符串。
+</ResponseField>
+
+<ResponseField name="data" type="object" required>
+  公开引导配置。
+
+  <Expandable title="data 结构">
+    <ParamField path="email_verification" type="boolean" required>
+      注册是否开启邮箱验证。
+    </ParamField>
+    <ParamField path="github_oauth" type="boolean" required>
+      是否启用 GitHub OAuth 登录。
+    </ParamField>
+    <ParamField path="github_client_id" type="string" required>
+      GitHub OAuth client ID；未启用时为空字符串。
+    </ParamField>
+    <ParamField path="linuxdo_oauth" type="boolean" required>
+      是否启用 LinuxDO OAuth 登录。
+    </ParamField>
+    <ParamField path="linuxdo_client_id" type="string" required>
+      LinuxDO OAuth client ID；未启用时为空字符串。
+    </ParamField>
+    <ParamField path="linuxdo_minimum_trust_level" type="integer" required>
+      OAuth 登录接受的最低 LinuxDO 信任等级。
+    </ParamField>
+    <ParamField path="system_name" type="string" required>
+      站点显示名称。
+    </ParamField>
+    <ParamField path="logo" type="string" required>
+      站点 Logo URL。
+    </ParamField>
+    <ParamField path="footer_html" type="string" required>
+      页脚 HTML。
+    </ParamField>
+    <ParamField path="server_address" type="string" required>
+      本站点配置的对外服务地址。
+    </ParamField>
+    <ParamField path="turnstile_check" type="boolean" required>
+      公开表单是否强制 Cloudflare Turnstile 人机验证。
+    </ParamField>
+    <ParamField path="turnstile_site_key" type="string" required>
+      Turnstile site key；未启用时为空字符串。
+    </ParamField>
+    <ParamField path="docs_link" type="string" required>
+      前端展示的文档链接。
+    </ParamField>
+    <ParamField path="quota_per_unit" type="number" required>
+      每计价单位的配额数（默认 `500000`），用于把配额换算为货币金额。
+    </ParamField>
+    <ParamField path="enable_batch_update" type="boolean" required>
+      是否启用用量计数器的聚合批量更新模式。
+    </ParamField>
+    <ParamField path="enable_data_export" type="boolean" required>
+      是否启用数据看板的用量数据导出。
+    </ParamField>
+    <ParamField path="data_export_interval" type="integer" required>
+      数据聚合间隔，单位分钟（默认 `5`）。
+    </ParamField>
+    <ParamField path="data_export_default_time" type="string" required>
+      数据看板默认时间分桶，例如 `hour`。
+    </ParamField>
+    <ParamField path="default_collapse_sidebar" type="boolean" required>
+      控制台侧栏是否默认折叠。
+    </ParamField>
+    <ParamField path="default_use_auto_group" type="boolean" required>
+      新建令牌是否默认选择 auto 分组。
+    </ParamField>
+    <ParamField path="price" type="number" required>
+      充值单价系数，用于把配额金额换算为展示货币。
+    </ParamField>
+    <ParamField path="stripe_unit_price" type="number" required>
+      Stripe 充值使用的单价。
+    </ParamField>
+    <ParamField path="api_info_enabled" type="boolean" required>
+      数据看板是否启用 API 信息面板。
+    </ParamField>
+    <ParamField path="uptime_kuma_enabled" type="boolean" required>
+      数据看板是否启用 Uptime Kuma 面板。
+    </ParamField>
+    <ParamField path="announcements_enabled" type="boolean" required>
+      数据看板是否启用公告面板。
+    </ParamField>
+    <ParamField path="faq_enabled" type="boolean" required>
+      数据看板是否启用 FAQ 面板。
+    </ParamField>
+    <ParamField path="HeaderNavModules" type="string" required>
+      配置顶部导航模块的原始 JSON 字符串（如 pricing、rankings 的可见性与登录要求）。未设置时为空字符串。
+    </ParamField>
+    <ParamField path="passkey_login" type="boolean" required>
+      是否启用 Passkey（WebAuthn）登录。
+    </ParamField>
+    <ParamField path="passkey_display_name" type="string" required>
+      Passkey Relying Party 显示名称。
+    </ParamField>
+    <ParamField path="passkey_rp_id" type="string" required>
+      Passkey Relying Party ID（未显式配置时从服务地址推导）。
+    </ParamField>
+    <ParamField path="passkey_origins" type="string" required>
+      Passkey 允许的 origins。
+    </ParamField>
+    <ParamField path="passkey_allow_insecure" type="boolean" required>
+      Passkey 注册是否接受非 HTTPS 的不安全 origin。
+    </ParamField>
+    <ParamField path="passkey_user_verification" type="string" required>
+      Passkey 用户验证要求，例如 `preferred`。
+    </ParamField>
+    <ParamField path="passkey_attachment" type="string" required>
+      偏好的 Passkey 认证器挂载方式；未设置时为空字符串。
+    </ParamField>
+    <ParamField path="setup" type="boolean" required>
+      系统是否已完成初始化。
+    </ParamField>
+    <ParamField path="user_agreement_enabled" type="boolean" required>
+      是否已配置用户协议文本。
+    </ParamField>
+    <ParamField path="privacy_policy_enabled" type="boolean" required>
+      是否已配置隐私政策文本。
+    </ParamField>
+    <ParamField path="checkin_enabled" type="boolean" required>
+      是否启用每日签到功能。
+    </ParamField>
+    <ParamField path="_qn" type="string" required>
+      常量标记，恒为 `nookmux`。
+    </ParamField>
+    <ParamField path="api_info" type="array">
+      API 信息面板条目。仅当 `api_info_enabled` 为 `true` 时出现。
+
+      <Expandable title="api_info 条目结构">
+        <ParamField path="url" type="string" required>
+          展示给用户的 API 基础地址。
+        </ParamField>
+        <ParamField path="route" type="string" required>
+          该接入点的路由前缀标签。
+        </ParamField>
+        <ParamField path="description" type="string" required>
+          接入点描述。
+        </ParamField>
+        <ParamField path="color" type="string" required>
+          条目的展示颜色标签。
+        </ParamField>
+      </Expandable>
+    </ParamField>
+    <ParamField path="announcements" type="array">
+      公告条目，按发布时间倒序排列。仅当 `announcements_enabled` 为 `true` 时出现。
+
+      <Expandable title="announcements 条目结构">
+        <ParamField path="content" type="string" required>
+          公告正文。
+        </ParamField>
+        <ParamField path="publishDate" type="string" required>
+          发布时间，RFC 3339 格式。
+        </ParamField>
+        <ParamField path="type" type="string">
+          公告样式：`default`、`ongoing`、`success`、`warning` 或 `error`。
+        </ParamField>
+        <ParamField path="extra" type="string">
+          可选的附加文本。
+        </ParamField>
+      </Expandable>
+    </ParamField>
+    <ParamField path="faq" type="array">
+      FAQ 条目。仅当 `faq_enabled` 为 `true` 时出现。
+
+      <Expandable title="faq 条目结构">
+        <ParamField path="question" type="string" required>
+          问题文本。
+        </ParamField>
+        <ParamField path="answer" type="string" required>
+          回答文本。
+        </ParamField>
+      </Expandable>
+    </ParamField>
+  </Expandable>
+</ResponseField>
+
+<Note>
+  该接口是登录前的引导接口，仅包含公开信息。管理员受限数据由独立接口下发：管理端侧栏模块结构与构建版本号需要管理员鉴权，用户侧栏模块需要登录。
+</Note>

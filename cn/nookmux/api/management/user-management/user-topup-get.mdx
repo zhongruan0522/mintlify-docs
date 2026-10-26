@@ -1,7 +1,136 @@
 ---
 title: 获取所有充值记录
+description: 分页列出全平台在线充值订单，支持按订单号模糊搜索。
 api: "GET /api/user/topup"
 ---
 
-👨‍💼 需要管理员权限（Admin）
+分页列出全平台的在线充值订单，按 `id` 降序排列，支持按订单号模糊搜索。与用户自助列表不同，管理员列表覆盖全量历史，没有时间窗口限制。
 
+需要**管理员（Admin）**权限。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
+
+## 请求
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url 'https://your-nookmux-domain/api/user/topup?p=1&page_size=10&keyword=USR2NO' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1'
+```
+
+</RequestExample>
+
+### 查询参数
+
+<ParamField path="query.p" type="integer" default="1">
+页码，从 1 开始。
+</ParamField>
+
+<ParamField path="query.page_size" type="integer" default="10">
+每页订单数，上限 100。兼容旧别名 `ps` 与 `size`。
+</ParamField>
+
+<ParamField path="query.keyword" type="string">
+按订单号 `trade_no` 模糊匹配。省略时列出全部订单。
+</ParamField>
+
+## 响应
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": {
+    "page": 1,
+    "page_size": 10,
+    "total": 1,
+    "items": [
+      {
+        "id": 101,
+        "user_id": 2,
+        "amount": 100,
+        "money": 7.0,
+        "trade_no": "USR2NOab12cd1761234567",
+        "payment_method": "alipay",
+        "payment_provider": "epay",
+        "create_time": 1761234567,
+        "complete_time": 1761234800,
+        "status": "success"
+      }
+    ]
+  }
+}
+```
+
+</ResponseExample>
+
+### 响应字段
+
+<ResponseField name="success" type="boolean" required>
+订单是否成功返回。
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+`success` 为 `false` 时的错误描述；成功时为空字符串。
+</ResponseField>
+
+<ResponseField name="data" type="object" required>
+分页结果。
+
+<Expandable title="data 结构">
+  <ResponseField name="page" type="integer" required>
+当前页码，从 1 开始。
+</ResponseField>
+  <ResponseField name="page_size" type="integer" required>
+实际生效的页大小，上限 100。
+</ResponseField>
+  <ResponseField name="total" type="integer" required>
+匹配查询条件的订单总数。
+</ResponseField>
+  <ResponseField name="items" type="object[]">
+当前页的订单列表，按 `id` 降序排列。
+
+<Expandable title="充值订单结构">
+  <ResponseField name="id" type="integer" required>
+订单 ID。
+</ResponseField>
+  <ResponseField name="user_id" type="integer" required>
+订单所属用户。
+</ResponseField>
+  <ResponseField name="amount" type="integer" required>
+下单时选择的充值数量；易支付订单的入账额度为该数量乘以额度单位换算。
+</ResponseField>
+  <ResponseField name="money" type="number" required>
+经分组倍率与折扣计算后的实际支付金额。
+</ResponseField>
+  <ResponseField name="trade_no" type="string" required>
+唯一订单号。
+</ResponseField>
+  <ResponseField name="payment_method" type="string" required>
+收银台选择的支付方式，例如易支付订单的 `alipay`、`wxpay`，Stripe 订单的 `stripe`。
+</ResponseField>
+  <ResponseField name="payment_provider" type="string" required>
+支付渠道：`epay` 或 `stripe`。
+</ResponseField>
+  <ResponseField name="create_time" type="integer" required>
+订单创建时间，Unix 秒级时间戳。
+</ResponseField>
+  <ResponseField name="complete_time" type="integer" required>
+订单入账时间，Unix 秒级时间戳；待支付时为 `0`。
+</ResponseField>
+  <ResponseField name="status" type="string" required>
+订单状态：`pending` 待支付，`success` 已入账，`expired` 已失效。
+</ResponseField>
+</Expandable>
+  </ResponseField>
+</Expandable>
+</ResponseField>
+
+## 错误说明
+
+| 条件 | 说明 |
+| --- | --- |
+| 数据库错误 | 列出或搜索订单失败，详见服务端日志 |

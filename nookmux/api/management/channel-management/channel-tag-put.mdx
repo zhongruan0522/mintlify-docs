@@ -1,7 +1,99 @@
 ---
 title: Edit Tag Channel
+description: Bulk-edit channels sharing a tag, including renaming the tag and overriding shared settings.
 api: "PUT /api/channel/tag"
 ---
 
-👨‍💼 Requires Administrator Permissions (Admin)
+Bulk-edit every channel that carries a given tag: rename the tag, or update the shared model mapping, model list, groups, parameter override, and header override in one call. Only the fields you send are applied; changes to `models` or `groups` rebuild the routing abilities for the affected channels.
 
+Requires **Admin** permissions. See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request PUT \
+  --url 'https://your-nookmux-domain/api/channel/tag' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1' \
+  --header 'Content-Type: application/json' \
+  --data '{
+  "tag": "openai-pool",
+  "new_tag": "openai-main",
+  "models": "gpt-4o,gpt-4o-mini",
+  "groups": "default,premium",
+  "model_mapping": "{\"gpt-4o\": \"gpt-4o-2024-08-06\"}",
+  "param_override": "{\"max_tokens\": 4096}",
+  "header_override": "{\"X-Custom\": \"value\"}"
+}'
+```
+
+</RequestExample>
+
+### Body
+
+<ParamField path="body.tag" type="string" required>
+Tag identifying the channels to edit. Channels are matched by exact tag equality.
+</ParamField>
+
+<ParamField path="body.new_tag" type="string">
+New tag value. Applied only when present and different from `tag`, effectively renaming the tag on all matching channels.
+</ParamField>
+
+<ParamField path="body.model_mapping" type="string">
+JSON object mapping requested model names to upstream model names. Applied only when present and non-empty.
+</ParamField>
+
+<ParamField path="body.models" type="string">
+Comma-separated model list. Applied only when present and non-empty; rebuilding routing abilities for the affected channels.
+</ParamField>
+
+<ParamField path="body.groups" type="string">
+Comma-separated user groups that can use the channels. Applied only when present and non-empty; rebuilding routing abilities for the affected channels.
+</ParamField>
+
+<ParamField path="body.param_override" type="string">
+JSON object that overrides request parameters before the request is forwarded upstream. Applied whenever present; an empty string clears the override, a non-empty value must be valid JSON.
+</ParamField>
+
+<ParamField path="body.header_override" type="string">
+JSON object that adds or overrides headers sent upstream. Applied whenever present; an empty string clears the override, a non-empty value must be valid JSON.
+</ParamField>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": ""
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+Whether the channels were updated.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+Error description when `success` is `false`; empty otherwise.
+</ResponseField>
+
+<Note>
+Management endpoints return HTTP `200` even on business failures; always check the `success` field. The channel cache is refreshed after the change. Routing abilities are rebuilt for every affected channel when `models` or `groups` change; other edits only update the ability records' tag.
+</Note>
+
+## Error messages
+
+| Condition | Description |
+| --- | --- |
+| Invalid request body | The JSON body is missing or malformed |
+| Tag required | `tag` is empty |
+| Parameter override invalid | `param_override` is non-empty but not valid JSON |
+| Header override invalid | `header_override` is non-empty but not valid JSON |
+| Database error | Persisting the change failed; see server logs |

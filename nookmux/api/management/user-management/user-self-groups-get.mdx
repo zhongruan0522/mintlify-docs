@@ -1,7 +1,74 @@
 ---
 title: Get Current User Groups
+description: List the user groups the current user may switch to, with their billing ratios and descriptions.
 api: "GET /api/user/self/groups"
 ---
 
-🔐 Login Required (User Permission)
+Returns the user groups usable by the current user together with the billing ratio applied when using each group and its configured description. The result drives the group selector in the console and per-token group settings.
 
+Requires **User** permission (any logged-in user). See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url 'https://your-nookmux-domain/api/user/self/groups' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 2'
+```
+
+</RequestExample>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": {
+    "default": {
+      "ratio": 1,
+      "desc": "默认分组"
+    },
+    "vip": {
+      "ratio": 1.5,
+      "desc": "vip分组"
+    }
+  }
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+Whether the groups were returned.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+Error description when `success` is `false`; empty otherwise.
+</ResponseField>
+
+<ResponseField name="data" type="object" required>
+Map of group names to group metadata. Each key is a group name and each value has the structure below. Only groups that have a ratio entry on the server and are usable by the user's current group are returned.
+
+<Expandable title="group structure">
+  <ResponseField name="ratio" type="number" required>
+Billing ratio applied when the user routes requests through this group. When the `auto` group is usable by the user, its entry carries the fixed string `自动` instead of a number, because automatic selection has no single ratio.
+</ResponseField>
+  <ResponseField name="desc" type="string" required>
+Group description configured by the administrator; falls back to the group name when no description is configured.
+</ResponseField>
+</Expandable>
+</ResponseField>
+
+## Error messages
+
+| Condition | Description |
+| --- | --- |
+| Database error | Loading the user's group failed; see server logs |

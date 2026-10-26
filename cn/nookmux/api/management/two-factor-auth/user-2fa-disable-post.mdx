@@ -1,7 +1,73 @@
 ---
 title: 禁用2FA
+description: 使用 TOTP 验证码或备用码关闭当前登录账号的两步验证。
 api: "POST /api/user/2fa/disable"
 ---
 
-🔐 需要登录（User权限）
+关闭当前登录账号的两步验证，并永久删除 2FA 记录及全部剩余备用码。请求须携带有效的当前 6 位 TOTP 验证码或一个未使用的备用码。
 
+需要**用户（User）**权限（任意登录用户）。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
+
+## 请求
+
+<RequestExample>
+
+```bash cURL
+curl --request POST \
+  --url 'https://your-nookmux-domain/api/user/2fa/disable' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1' \
+  --header 'Content-Type: application/json' \
+  --data '{
+  "code": "A1B2-C3D4"
+}'
+```
+
+</RequestExample>
+
+### 请求体
+
+<ParamField path="body.code" type="string" required>
+当前的 6 位 TOTP 验证码，或一个未使用的 `XXXX-XXXX` 格式备用码（匹配不区分大小写，连字符可省略）。服务端先校验 TOTP 验证码，不匹配时再回退尝试备用码。
+</ParamField>
+
+## 响应
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "Two-factor authentication disabled",
+  "data": null
+}
+```
+
+</ResponseExample>
+
+### 响应字段
+
+<ResponseField name="success" type="boolean" required>
+2FA 是否禁用成功。
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+成功时为本地化的成功提示；`success` 为 `false` 时为错误描述。
+</ResponseField>
+
+<ResponseField name="data" type="null" required>
+恒为 `null`；本接口不返回数据载荷。
+</ResponseField>
+
+<Note>
+禁用会永久删除 2FA 记录和全部剩余备用码；如需再次使用 2FA，须重新执行设置与启用流程。验证失败会计入锁定计数：连续 5 次失败后 2FA 验证将被锁定 300 秒，锁定期内即使验证码正确也会被拒绝。
+</Note>
+
+## 错误说明
+
+| 条件 | 说明 |
+| --- | --- |
+| 请求体非法 | JSON 请求体缺失或 `code` 为空 |
+| 2FA 未启用 | 该账号没有已启用的 2FA 记录 |
+| 验证码或备用码无效 | TOTP 验证码与全部未使用备用码均不匹配，或验证已被临时锁定 |
+| 数据库错误 | 读取、校验或删除 2FA 记录失败，详见服务端日志 |

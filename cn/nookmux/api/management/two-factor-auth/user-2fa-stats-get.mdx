@@ -1,7 +1,68 @@
 ---
 title: 获取2FA统计
+description: 面向管理员的全体用户两步验证启用统计。
 api: "GET /api/user/2fa/stats"
 ---
 
-👨‍💼 需要管理员权限（Admin）
+返回全站两步验证统计信息：用户账号总数、其中已启用 2FA 的数量以及启用率。
 
+需要**管理员（Admin）**权限。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
+
+## 请求
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url 'https://your-nookmux-domain/api/user/2fa/stats' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1'
+```
+
+</RequestExample>
+
+## 响应
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": {
+    "total_users": 100,
+    "enabled_users": 25,
+    "enabled_rate": "25.0%"
+  }
+}
+```
+
+</ResponseExample>
+
+### 响应字段
+
+<ResponseField name="success" type="boolean" required>
+统计信息是否返回成功。
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+`success` 为 `false` 时的错误描述；成功时为空字符串。
+</ResponseField>
+
+<ResponseField name="data.total_users" type="integer" required>
+用户账号总数。
+</ResponseField>
+
+<ResponseField name="data.enabled_users" type="integer" required>
+已启用 2FA 的账号数量。
+</ResponseField>
+
+<ResponseField name="data.enabled_rate" type="string" required>
+启用率，保留一位小数并带 `%` 后缀，例如 `25.0%`。没有用户时为 `0.0%`。
+</ResponseField>
+
+## 错误说明
+
+| 条件 | 说明 |
+| --- | --- |
+| 数据库错误 | 统计用户数或已启用 2FA 记录数失败，详见服务端日志 |

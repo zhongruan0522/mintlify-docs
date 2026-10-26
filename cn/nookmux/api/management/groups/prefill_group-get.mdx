@@ -1,7 +1,110 @@
 ---
 title: 获取预填分组
+description: 获取可复用的预填分组列表，可按类别过滤。
 api: "GET /api/prefill_group/"
 ---
 
-👨‍💼 需要管理员权限（Admin）
+预填分组是可复用的命名集合，用于在控制台下拉框中快速选择，例如一组模型名，可用于快速填充渠道的模型列表。每个分组拥有唯一的 `name`，并用 `type` 标记所属类别。
 
+返回全部预填分组，按 `updated_time` 降序排列。可选的 `type` 查询参数按类别过滤列表。
+
+需要**管理员（Admin）**权限。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
+
+## 请求
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url 'https://your-nookmux-domain/api/prefill_group/?type=model' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1'
+```
+
+</RequestExample>
+
+### 查询参数
+
+<ParamField path="query.type" type="string">
+  要返回的分组类别，例如 `model`、`tag` 或 `endpoint`。省略该参数时返回所有类别的分组。
+</ParamField>
+
+## 响应
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": [
+    {
+      "id": 1,
+      "name": "gpt-flagship",
+      "type": "model",
+      "items": ["gpt-4o", "gpt-4o-mini"],
+      "description": "Flagship OpenAI models",
+      "created_time": 1735689600,
+      "updated_time": 1735776000
+    },
+    {
+      "id": 2,
+      "name": "eu-endpoints",
+      "type": "endpoint",
+      "items": ["https://endpoint-1.example.com", "https://endpoint-2.example.com"],
+      "created_time": 1735689700,
+      "updated_time": 1735689700
+    }
+  ]
+}
+```
+
+</ResponseExample>
+
+### 响应字段
+
+<ResponseField name="success" type="boolean" required>
+  请求是否成功。
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  `success` 为 `false` 时的错误描述；成功时为空字符串。
+</ResponseField>
+
+<ResponseField name="data" type="array" required>
+  按 `updated_time` 降序排列的预填分组列表。
+
+  <Expandable title="prefill group 结构">
+    <ResponseField name="id" type="integer" required>
+      分组 ID。
+    </ResponseField>
+    <ResponseField name="name" type="string" required>
+      未删除分组内唯一的分组名，最长 64 字符；用于在控制台下拉框中展示。
+    </ResponseField>
+    <ResponseField name="type" type="string" required>
+      分组类别，例如 `model`、`tag` 或 `endpoint`。
+    </ResponseField>
+    <ResponseField name="items" type="array" required>
+      保存分组取值的字符串 JSON 数组，例如模型名列表。创建时未提供 `items` 的分组为 `null`。
+    </ResponseField>
+    <ResponseField name="description" type="string">
+      自由备注，最长 255 字符；为空时省略。
+    </ResponseField>
+    <ResponseField name="created_time" type="integer" required>
+      创建时间，Unix 时间戳（秒），由服务端写入。
+    </ResponseField>
+    <ResponseField name="updated_time" type="integer" required>
+      最后更新时间，Unix 时间戳（秒），每次变更由服务端刷新。
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<Note>
+管理接口在业务失败时同样返回 HTTP `200`，必须以 `success` 字段判断结果。
+</Note>
+
+## 错误说明
+
+| 条件 | 说明 |
+| --- | --- |
+| Database error, please try again later | 读取预填分组失败，详见服务端日志 |

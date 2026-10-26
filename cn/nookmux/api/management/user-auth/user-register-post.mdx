@@ -1,7 +1,101 @@
 ---
 title: 用户注册
+description: 使用用户名和密码注册新账号。
 api: "POST /api/user/register"
 ---
 
-🔓 无需鉴权
+注册一个新的普通用户账号。要求管理员同时开启新用户注册与密码注册。若开启了邮箱验证，需携带通过 `GET /api/verification` 获取的验证码。显示名称初始化为用户名；角色、额度、分组等服务端维护字段一律由服务端设置，客户端传入的值会被忽略。
 
+本接口为 **Public（公开）**——无需鉴权。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
+
+<Note>
+本接口挂载了更严格的按 IP 限流（CriticalRateLimit），并对匿名请求体大小做了限制，超限返回 HTTP `413`。当服务端开启 Cloudflare Turnstile 人机验证时，必须携带有效的 `turnstile` 查询令牌（当前会话已通过校验的除外）。
+</Note>
+
+## 请求
+
+<RequestExample>
+
+```bash cURL
+curl --request POST \
+  --url 'https://your-nookmux-domain/api/user/register?turnstile=XXXX.DUMMY.TOKEN.XXXX' \
+  --header 'Content-Type: application/json' \
+  --data '{
+  "username": "alice",
+  "password": "your-password",
+  "email": "user@example.com",
+  "verification_code": "123456",
+  "aff_code": "a1b2"
+}'
+```
+
+</RequestExample>
+
+### 查询参数
+
+<ParamField path="turnstile" type="string">
+Cloudflare Turnstile 令牌。仅当服务端开启 Turnstile 人机验证且当前会话尚未通过校验时必填。
+</ParamField>
+
+### 请求体
+
+<ParamField path="body.username" type="string" required>
+登录用户名，最长 20 字符。不得与既有或已软删除的账号用户名、已使用的邮箱冲突。
+</ParamField>
+
+<ParamField path="body.password" type="string" required>
+密码，8 到 20 字符。以 bcrypt 哈希存储。
+</ParamField>
+
+<ParamField path="body.email" type="string">
+邮箱地址，最长 50 字符。开启邮箱验证时必填。
+</ParamField>
+
+<ParamField path="body.verification_code" type="string">
+`GET /api/verification` 下发的 6 位验证码。开启邮箱验证时必填。
+</ParamField>
+
+<ParamField path="body.aff_code" type="string">
+邀请人的邀请码。能解析到已有用户时，该用户成为新账号的邀请人。
+</ParamField>
+
+## 响应
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": ""
+}
+```
+
+</ResponseExample>
+
+### 响应字段
+
+<ResponseField name="success" type="boolean" required>
+账号是否创建成功。
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+`success` 为 `false` 时的错误描述；成功时为空字符串。
+</ResponseField>
+
+<Note>
+当服务端开启了为新用户生成默认令牌的配置时，会在创建账号的同时自动生成一个不限额度、永不过期的初始 API 令牌。
+</Note>
+
+## 错误说明
+
+| 条件 | 说明 |
+| --- | --- |
+| 注册已关闭 | 管理员关闭了新用户注册 |
+| 密码注册已关闭 | 仅允许通过第三方（OAuth）方式注册 |
+| 输入不合法 | 输入未通过校验，例如用户名超过 20 字符、密码少于 8 位 |
+| 需要邮箱验证 | 已开启邮箱验证但 `email` 或 `verification_code` 缺失 |
+| 验证码错误 | 验证码不正确或已过期 |
+| 用户名已存在 | 用户名或邮箱已被既有或已软删除的账号使用 |
+| 注册失败 | 账号已创建但回读用户 ID 失败 |
+| 默认令牌生成失败 | 自动初始令牌生成失败 |
+| 数据库错误 | 账号落库或重复性检查失败 |

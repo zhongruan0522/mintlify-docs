@@ -1,7 +1,48 @@
 ---
 title: Get About Information
+description: Fetch the raw About page content configured in console content settings.
 api: "GET /api/about"
 ---
 
-🔓 No authentication required
+Returns the About page content configured by the administrator in console content settings. The value is returned as a raw string (typically HTML or Markdown) and rendering is handled by the frontend. Returns an empty string when no content is configured.
 
+This endpoint is public and requires no authentication. See [Authentication](/nookmux/api/management/auth) for details on how management API requests are authenticated.
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url 'https://your-nookmux-domain/api/about'
+```
+
+</RequestExample>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": "<h1>About this NookMux deployment</h1><p>...</p>"
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+  Whether the request succeeded.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  Error description when `success` is `false`; empty otherwise.
+</ResponseField>
+
+<ResponseField name="data" type="string" required>
+  The About page content configured in console content settings, as a raw string. Empty string when no content is set.
+</ResponseField>

@@ -1,7 +1,69 @@
 ---
 title: Admin Disable User 2FA
+description: Force-disable two-factor authentication for a user who lost access to the authenticator.
 api: "DELETE /api/user/{id}/2fa"
 ---
 
-👨‍💼 Admin Permissions Required (Admin)
+Force-disables two-factor authentication (TOTP) of the target user. Use this when a user loses the authenticator device and cannot sign in. The operation writes a management log entry on the target user (with the acting admin recorded in a separate admin-only field) and an audit record.
 
+Requires **Admin** permissions. See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request DELETE \
+  --url 'https://your-nookmux-domain/api/user/2/2fa' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1'
+```
+
+</RequestExample>
+
+### Path parameters
+
+<ParamField path="path.id" type="integer" required>
+ID of the target user.
+</ParamField>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "User 2FA has been forcibly disabled",
+  "data": null
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+Whether 2FA was disabled.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+Localized success message when `success` is `true`; error description otherwise.
+</ResponseField>
+
+<ResponseField name="data" type="null">
+Always `null` for this endpoint.
+</ResponseField>
+
+<Note>
+A non-root admin can only disable 2FA for users with a strictly lower role. The root admin can disable 2FA for any user.
+</Note>
+
+## Error messages
+
+| Condition | Description |
+| --- | --- |
+| Invalid user ID | `id` in the path is not an integer |
+| Database error | The target user cannot be loaded (including an unknown `id`) or the update failed |
+| No permission | The caller is not root and the target user has the same or a higher role |
+| 2FA not enabled | The target user has no enabled 2FA |

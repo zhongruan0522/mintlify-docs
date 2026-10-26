@@ -1,7 +1,48 @@
 ---
 title: Get Announcements
+description: Fetch the notice content configured in console content settings.
 api: "GET /api/notice"
 ---
 
-🔓 No authentication required
+Returns the notice (announcement) content configured by the administrator in console content settings. The value is returned as a raw string (typically Markdown) and rendering is handled by the frontend. Returns an empty string when no notice is configured.
 
+This endpoint is public and requires no authentication. See [Authentication](/nookmux/api/management/auth) for details on how management API requests are authenticated.
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url 'https://your-nookmux-domain/api/notice'
+```
+
+</RequestExample>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": "## Notice\nThe service will be under maintenance tonight."
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+  Whether the request succeeded.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  Error description when `success` is `false`; empty otherwise.
+</ResponseField>
+
+<ResponseField name="data" type="string" required>
+  The notice content configured in console content settings, as a raw string. Empty string when no notice is set.
+</ResponseField>

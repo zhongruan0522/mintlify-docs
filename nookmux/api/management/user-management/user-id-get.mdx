@@ -1,7 +1,170 @@
 ---
 title: Get Specific User
+description: Return the full details of a single user by ID.
 api: "GET /api/user/{id}"
 ---
 
-👨‍💼 Admin privileges required
+Returns the full details of a single user. The caller's role must be strictly higher than the target user's role, unless the caller is the root admin. Passwords and access tokens are never returned.
 
+Requires **Admin** permissions. See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url 'https://your-nookmux-domain/api/user/2' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1'
+```
+
+</RequestExample>
+
+### Path parameters
+
+<ParamField path="path.id" type="integer" required>
+ID of the target user.
+</ParamField>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": {
+    "id": 2,
+    "username": "alice",
+    "original_password": "",
+    "display_name": "alice",
+    "role": 1,
+    "status": 1,
+    "email": "alice@example.com",
+    "github_id": "",
+    "verification_code": "",
+    "quota": 500000,
+    "used_quota": 100000,
+    "request_count": 42,
+    "group": "default",
+    "aff_code": "ab12",
+    "aff_count": 3,
+    "aff_quota": 100000,
+    "aff_history_quota": 1500000,
+    "inviter_id": 0,
+    "DeletedAt": null,
+    "linux_do_id": "",
+    "remark": "",
+    "stripe_customer": "",
+    "image_converted_count": 0,
+    "video_converted_count": 0,
+    "created_at": 1761000000,
+    "last_login_at": 1761100000
+  }
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+Whether the user was returned.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+Error description when `success` is `false`; empty otherwise.
+</ResponseField>
+
+<ResponseField name="data" type="object">
+  <Expandable title="user structure">
+    <ResponseField name="id" type="integer" required>
+      User ID.
+    </ResponseField>
+    <ResponseField name="username" type="string" required>
+      Login username, up to 20 characters.
+    </ResponseField>
+    <ResponseField name="original_password" type="string" required>
+      Request helper field for password change verification; always an empty string in responses.
+    </ResponseField>
+    <ResponseField name="display_name" type="string" required>
+      Display name, up to 20 characters.
+    </ResponseField>
+    <ResponseField name="role" type="integer" required>
+      Role level: `1` common user, `10` admin, `100` root.
+    </ResponseField>
+    <ResponseField name="status" type="integer" required>
+      Account status: `1` enabled, `2` disabled.
+    </ResponseField>
+    <ResponseField name="email" type="string" required>
+      Bound email address; empty when not bound.
+    </ResponseField>
+    <ResponseField name="github_id" type="string" required>
+      Bound GitHub ID; empty when not bound.
+    </ResponseField>
+    <ResponseField name="verification_code" type="string" required>
+      Request helper field for email verification; always an empty string in responses.
+    </ResponseField>
+    <ResponseField name="quota" type="integer" required>
+      Remaining quota in quota units (500,000 quota equals $1 by default).
+    </ResponseField>
+    <ResponseField name="used_quota" type="integer" required>
+      Consumed quota in quota units.
+    </ResponseField>
+    <ResponseField name="request_count" type="integer" required>
+      Total number of requests made by the user.
+    </ResponseField>
+    <ResponseField name="group" type="string" required>
+      User group, for example `default`.
+    </ResponseField>
+    <ResponseField name="aff_code" type="string" required>
+      Invitation code of this user.
+    </ResponseField>
+    <ResponseField name="aff_count" type="integer" required>
+      Number of users registered with this user's invitation code.
+    </ResponseField>
+    <ResponseField name="aff_quota" type="integer" required>
+      Remaining invitation reward quota that can still be converted.
+    </ResponseField>
+    <ResponseField name="aff_history_quota" type="integer" required>
+      Accumulated invitation reward quota.
+    </ResponseField>
+    <ResponseField name="inviter_id" type="integer" required>
+      User ID of the inviter; `0` when the user registered without an invitation code.
+    </ResponseField>
+    <ResponseField name="DeletedAt" type="string">
+      Soft-delete time (RFC 3339); `null` while the account is not deleted.
+    </ResponseField>
+    <ResponseField name="linux_do_id" type="string" required>
+      Bound LinuxDO ID; empty when not bound.
+    </ResponseField>
+    <ResponseField name="remark" type="string">
+      Admin remark, up to 255 characters. Omitted when empty.
+    </ResponseField>
+    <ResponseField name="stripe_customer" type="string" required>
+      Stripe customer ID used for online top-up; empty when not used.
+    </ResponseField>
+    <ResponseField name="image_converted_count" type="integer" required>
+      Number of images converted by multimodal adaptation.
+    </ResponseField>
+    <ResponseField name="video_converted_count" type="integer" required>
+      Number of videos converted by multimodal adaptation.
+    </ResponseField>
+    <ResponseField name="created_at" type="integer" required>
+      Account creation time as a Unix timestamp in seconds.
+    </ResponseField>
+    <ResponseField name="last_login_at" type="integer" required>
+      Last login time as a Unix timestamp in seconds; `0` when never logged in.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+## Error messages
+
+| Condition | Description |
+| --- | --- |
+| Invalid parameters | `id` in the path is not an integer |
+| Database error | The user cannot be loaded, including an unknown `id` |
+| No permission | The caller is not root and the target user has the same or a higher role |

@@ -1,7 +1,104 @@
 ---
 title: 通用安全验证
+description: 通过 2FA 或 Passkey 完成二次验证，在五分钟内解锁安全敏感的控制台端点。
 api: "POST /api/verify"
 ---
 
-🔐 需要登录（User权限）
+通用二次（安全）验证端点。验证通过后，调用方会话将被标记为已通过安全验证，有效期 5 分钟，可解锁挂载了安全验证门禁的安全敏感控制台端点（例如查看渠道完整 API Key）。
 
+支持两种验证方式：
+
+- `2fa`：提交账户双因素认证的动态口令或备用码。
+- `passkey`：先完成 WebAuthn 断言流程 `POST /api/user/passkey/verify/begin` 与 `POST /api/user/passkey/verify/finish`（标准 WebAuthn 结构），该流程会在会话中写入短期有效的就绪标记（60 秒内有效）；随后以 `method: "passkey"` 调用本端点完成最终确认。
+
+需要**用户（User）**权限，且账户必须已配置 2FA 或 Passkey。该接口挂载了更严格的限流（CriticalRateLimit）。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
+
+## 请求
+
+<RequestExample>
+
+```bash cURL
+curl --request POST \
+  --url 'https://your-nookmux-domain/api/verify' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1' \
+  --header 'Content-Type: application/json' \
+  --data '{
+  "method": "2fa",
+  "code": "123456"
+}'
+```
+
+</RequestExample>
+
+### 请求体
+
+<ParamField path="body.method" type="string" required>
+  验证方式：`2fa` 或 `passkey`。
+</ParamField>
+
+<ParamField path="body.code" type="string">
+  验证码，`method` 为 `2fa` 时必填。接受 6 位 TOTP 动态口令或备用码。`passkey` 方式忽略该字段，其凭证是会话中的 WebAuthn 就绪标记。
+</ParamField>
+
+## 响应
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "验证成功",
+  "data": {
+    "verified": true,
+    "expires_at": 1769472000
+  }
+}
+```
+
+</ResponseExample>
+
+### 响应字段
+
+<ResponseField name="success" type="boolean" required>
+  验证是否通过。
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  成功时为 `验证成功`；`success` 为 `false` 时为错误描述。
+</ResponseField>
+
+<ResponseField name="data" type="object" required>
+  验证结果。
+
+  <Expandable title="data 结构">
+    <ResponseField name="verified" type="boolean" required>
+      成功响应中恒为 `true`。
+    </ResponseField>
+    <ResponseField name="expires_at" type="integer" required>
+      安全验证状态过期的 Unix 时间戳（验证时间加 300 秒）。
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<Note>
+  该接口挂载了更严格的限流（CriticalRateLimit）。验证态与会话中的当前用户 ID 绑定，不能被其他身份复用。WebAuthn finish 端点写入的 passkey 就绪标记为一次性，60 秒后过期。
+</Note>
+
+## 错误说明
+
+| 条件 | 说明 |
+| --- | --- |
+| 未登录 | 鉴权上下文中没有用户 ID（HTTP 401） |
+| 请求体格式不正确 | JSON 请求体缺失或格式错误 |
+| 用户信息获取失败 | 加载用户记录失败 |
+| 该用户已被禁用 | 账户状态不是启用 |
+| 用户未启用2FA或Passkey | 账户未配置任何验证方式 |
+| 用户未启用2FA | `method` 为 `2fa` 但账户未开启 2FA |
+| 验证码不能为空 | `method` 为 `2fa` 但 `code` 为空 |
+| 用户未启用Passkey | `method` 为 `passkey` 但账户未绑定 Passkey |
+| 请先完成 Passkey 验证 | 会话中没有（或已消费/过期）passkey 就绪标记 |
+| 无效的 Passkey 验证状态 | passkey 就绪标记存在但无法用于该用户 |
+| 不支持的验证方式: {method} | `method` 不是 `2fa` 或 `passkey` |
+| 验证失败，请检查验证码 | 2FA 验证码既不是有效 TOTP 也不是有效备用码 |
+| 保存验证状态失败 | 会话保存失败，详见服务端日志 |

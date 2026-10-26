@@ -1,7 +1,69 @@
 ---
 title: 转换邀请额度
+description: 将当前用户的一部分邀请奖励额度转换为可用的普通额度。
 api: "POST /api/user/aff_transfer"
 ---
 
-🔐 需要登录（User权限）
+将当前用户的一部分邀请奖励额度（`aff_quota`）转换为普通额度（`quota`）。转换在单个数据库事务中执行并加行锁，余额校验基于最新值进行。单次转换最小为一个额度单位（500,000 额度，默认折合 $1），且不得超过剩余邀请额度。
 
+需要**用户（User）**权限（任意登录用户）。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
+
+## 请求
+
+<RequestExample>
+
+```bash cURL
+curl --request POST \
+  --url 'https://your-nookmux-domain/api/user/aff_transfer' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1' \
+  --header 'Content-Type: application/json' \
+  --data '{
+  "quota": 500000
+}'
+```
+
+</RequestExample>
+
+### 请求体
+
+<ParamField path="body.quota" type="integer" required>
+要转换的邀请额度数量，单位为额度（默认 500,000 额度折合 $1）。不得小于一个额度单位，不得超过剩余邀请额度，且不能为 `0`。
+</ParamField>
+
+## 响应
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "Transfer successful",
+  "data": null
+}
+```
+
+</ResponseExample>
+
+### 响应字段
+
+<ResponseField name="success" type="boolean" required>
+转换是否成功。
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+`success` 为 `true` 时为本地化的成功提示；否则为错误描述。
+</ResponseField>
+
+<ResponseField name="data" type="null">
+本接口恒为 `null`。
+</ResponseField>
+
+## 错误说明
+
+| 条件 | 说明 |
+| --- | --- |
+| 请求体非法 | JSON 缺失、格式错误，或 `quota` 为 `0` |
+| 转换失败：低于最小值 | `quota` 小于一个额度单位（默认 500,000） |
+| 转换失败：邀请额度不足 | `quota` 超过剩余邀请额度 |
+| 数据库错误 | 转换事务失败，详见服务端日志 |

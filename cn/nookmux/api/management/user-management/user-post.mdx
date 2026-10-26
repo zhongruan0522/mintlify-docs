@@ -1,7 +1,83 @@
 ---
 title: 创建用户
+description: 以用户名、密码、显示名称和角色创建一个新用户。
 api: "POST /api/user/"
 ---
 
-👨‍💼 需要管理员权限（Admin）
+创建一个新用户。请求中只有 `username`、`password`、`display_name` 与 `role` 会生效；新用户获得系统配置的初始额度、自动生成的 4 位邀请码以及当前时间作为创建时间。`role` 必须严格低于调用者角色。操作会写入审计日志。
 
+需要**管理员（Admin）**权限。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
+
+## 请求
+
+<RequestExample>
+
+```bash cURL
+curl --request POST \
+  --url 'https://your-nookmux-domain/api/user/' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1' \
+  --header 'Content-Type: application/json' \
+  --data '{
+  "username": "bob",
+  "password": "a-secure-password",
+  "display_name": "Bob",
+  "role": 1
+}'
+```
+
+</RequestExample>
+
+### 请求体
+
+<ParamField path="body.username" type="string" required>
+登录用户名，最长 20 字符。首尾空白会被裁剪。
+</ParamField>
+
+<ParamField path="body.password" type="string" required>
+初始密码，8 到 20 字符。以 bcrypt 哈希存储。
+</ParamField>
+
+<ParamField path="body.display_name" type="string">
+显示名称，最长 20 字符。省略时默认取 `username`。
+</ParamField>
+
+<ParamField path="body.role" type="integer" default="1">
+新用户角色：`1` 普通用户或 `10` 管理员。必须严格低于调用者角色，因此只有超级管理员能创建管理员用户。超级管理员角色无法通过本接口创建。
+</ParamField>
+
+<Note>
+请求绑定可接受的其余用户字段（如 `email`、`group`）在本接口中被忽略。创建后可由用户通过自助接口绑定邮箱。
+</Note>
+
+## 响应
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": ""
+}
+```
+
+</ResponseExample>
+
+### 响应字段
+
+<ResponseField name="success" type="boolean" required>
+用户是否创建成功。
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+`success` 为 `false` 时的错误描述；成功时为空字符串。
+</ResponseField>
+
+## 错误说明
+
+| 条件 | 说明 |
+| --- | --- |
+| 参数非法 | JSON 格式错误，或 `username`、`password` 为空 |
+| 输入非法 | 字段约束不满足（`username` 最长 20 字符、`password` 8 到 20 字符、`display_name` 最长 20 字符） |
+| 无法创建同级或更高级用户 | `role` 等于或高于调用者角色 |
+| 数据库错误 | 用户落库失败，例如用户名已存在 |

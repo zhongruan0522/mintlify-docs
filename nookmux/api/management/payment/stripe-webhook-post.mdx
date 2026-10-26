@@ -1,7 +1,97 @@
 ---
 title: Stripe Webhook
+description: Receive Stripe webhook events, verify the signature, and credit, expire, or fail Stripe Checkout top-up orders.
 api: "POST /api/stripe/webhook"
 ---
 
-🔓 No Authentication Required (Webhook Callback)
+Receives Stripe webhook notifications for Stripe Checkout top-ups. The endpoint reads the raw request body, verifies the `Stripe-Signature` header against the configured Stripe webhook secret, and dispatches the event by type: completed sessions credit the user's quota, expired sessions mark the order as expired, and failed asynchronous payments mark the order as failed.
 
+This endpoint is **Public** — no authentication. It is called by Stripe's servers; requests are authenticated through the `Stripe-Signature` header. See [Authentication](/nookmux/api/management/auth) for how management API requests are authenticated.
+
+<Note>
+This endpoint does **not** use the standard `{"success", "message", "data"}` JSON envelope. It replies with a bare HTTP status code and an empty body, as required by the Stripe webhook contract. The raw body must be forwarded exactly as received from Stripe, because the signature is computed over it. Anonymous requests are also subject to the anonymous request body size limit, which rejects oversized bodies with HTTP `413`.
+</Note>
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request POST \
+  --url 'https://your-nookmux-domain/api/stripe/webhook' \
+  --header 'Content-Type: application/json' \
+  --header 'Stripe-Signature: t=1730000000,v1=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx' \
+  --data '{
+  "id": "evt_1QExampleWebhook",
+  "type": "checkout.session.completed",
+  "data": {
+    "object": {
+      "client_reference_id": "ref_a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0",
+      "customer": "cus_ExampleCustomer",
+      "status": "complete",
+      "payment_status": "paid",
+      "currency": "usd",
+      "amount_total": 8000,
+      "total_details": { "amount_discount": 0 }
+    }
+  }
+}'
+```
+
+</RequestExample>
+
+### Body
+
+The body is a standard Stripe `Event` object. Only the fields below are read by NookMux; the rest of the Stripe payload is ignored.
+
+<ParamField path="body.type" type="string" required>
+Event type. Handled types: `checkout.session.completed`, `checkout.session.expired`, `checkout.session.async_payment_succeeded`, `checkout.session.async_payment_failed`. Other event types are logged and acknowledged without processing.
+</ParamField>
+
+<ParamField path="body.data.object" type="object" required>
+Event payload object (a Stripe Checkout Session).
+
+<Expandable title="data.object structure">
+  <ParamField path="client_reference_id" type="string">
+    Order number (`trade_no`) of the top-up order created by `POST /api/user/stripe/pay`. Events without it are skipped.
+  </ParamField>
+  <ParamField path="customer" type="string">
+    Stripe customer ID; stored on the paying user when the order is credited.
+  </ParamField>
+  <ParamField path="status" type="string">
+    Checkout session status. `complete` sessions are processed for crediting; `expired` sessions are marked as expired; other values are logged and ignored.
+  </ParamField>
+  <ParamField path="payment_status" type="string">
+    Payment status of the session. `completed` events only credit the order when this is `paid`; sessions still awaiting payment are left pending for the asynchronous payment events.
+  </ParamField>
+  <ParamField path="currency" type="string">
+    Payment currency, used together with `amount_total` to verify the paid amount against the configured Stripe unit price before crediting.
+  </ParamField>
+  <ParamField path="amount_total" type="integer">
+    Total amount paid, in the currency's smallest unit. Verified before crediting.
+  </ParamField>
+  <ParamField path="total_details.amount_discount" type="integer">
+    Promotion-code discount, in the currency's smallest unit. Taken into account when verifying the paid amount.
+  </ParamField>
+</Expandable>
+</ParamField>
+
+## Response
+
+<ResponseExample>
+
+```text 200
+(empty response body)
+```
+
+</ResponseExample>
+
+The response body is always empty; the outcome is signaled by the HTTP status code alone.
+
+| HTTP status | Condition |
+| --- | --- |
+| 200 | Event accepted, unsupported event type ignored, or terminal situation acknowledged (duplicate delivery of an already-processed order, order number unknown locally) |
+| 400 | `Stripe-Signature` header missing or signature verification failed |
+| 403 | Stripe webhook secret is not configured on the server |
+| 500 | Event handling failed (database error, paid amount inconsistent with the configured unit price); Stripe retries the delivery |
+| 503 | The request body could not be read |

@@ -1,7 +1,75 @@
 ---
 title: Batch Delete Channels
+description: Delete multiple channels and their routing abilities in one call.
 api: "POST /api/channel/batch"
 ---
 
-👨‍💼 Requires Administrator Permissions (Admin)
+Delete multiple channels by id. The channels and their routing abilities are removed in a single transaction (processed in chunks of 200 ids), the in-memory channel cache is reloaded, and the operation is recorded in the admin audit log.
 
+Requires **Admin** permissions. See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request POST \
+  --url 'https://your-nookmux-domain/api/channel/batch' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1' \
+  --header 'Content-Type: application/json' \
+  --data '{
+  "ids": [1, 2, 3]
+}'
+```
+
+</RequestExample>
+
+### Body
+
+<ParamField path="body.ids" type="array" required>
+  Ids of the channels to delete. Must contain at least one element.
+</ParamField>
+
+<ParamField path="body.tag" type="string">
+  Not used by this endpoint. The request struct is shared with batch tag setting, which accepts an optional `tag` here; it is ignored when deleting.
+</ParamField>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": 3
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+  Whether the channels were deleted.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  Error description when `success` is `false`; empty otherwise.
+</ResponseField>
+
+<ResponseField name="data" type="integer" required>
+  Number of requested ids.
+</ResponseField>
+
+<Note>
+  Management endpoints return HTTP `200` even on business failures; always check the `success` field.
+</Note>
+
+## Error messages
+
+| Condition | Description |
+| --- | --- |
+| Invalid parameters | The JSON body is malformed or `ids` is empty |
+| Database error | The transactional delete failed; see server logs |

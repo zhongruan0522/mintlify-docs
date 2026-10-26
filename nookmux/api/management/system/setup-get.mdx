@@ -1,7 +1,63 @@
 ---
 title: Get Initialization Status
+description: Fetch whether the deployment is initialized, whether a root account exists, and the database type in use.
 api: "GET /api/setup"
 ---
 
-🔓 No Authentication Required
+Returns the initialization state of the deployment. The setup wizard uses this endpoint before the first administrator account has been created. Once the system is initialized, `root_init` and `database_type` stay at their zero values and only `status` remains meaningful.
 
+This endpoint is public and requires no authentication. See [Authentication](/nookmux/api/management/auth) for details on how management API requests are authenticated.
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url 'https://your-nookmux-domain/api/setup'
+```
+
+</RequestExample>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "data": {
+    "status": false,
+    "root_init": false,
+    "database_type": "mysql"
+  }
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+  Whether the request succeeded.
+</ResponseField>
+
+<ResponseField name="data" type="object" required>
+  Initialization state.
+
+  <Expandable title="data structure">
+    <ParamField path="status" type="boolean" required>
+      Whether system initialization has been completed.
+    </ParamField>
+    <ParamField path="root_init" type="boolean" required>
+      Whether a root user already exists in the database. Always `false` once `status` is `true`, because the database is not queried in that case.
+    </ParamField>
+    <ParamField path="database_type" type="string" required>
+      Database engine in use: `mysql`, `opengauss`, `dameng`, `kingbase`, `postgres`, or `sqlite`. Empty string once `status` is `true`.
+    </ParamField>
+  </Expandable>
+</ResponseField>
+
+<Note>
+  This response does not include the standard `message` field. PostgreSQL-compatible engines (openGauss, KingbaseES) are reported by their own name, not as `postgres`.
+</Note>

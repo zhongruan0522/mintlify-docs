@@ -1,7 +1,71 @@
 ---
 title: Send Email Verification Code
+description: Send a one-time 6-digit verification code to an email address, valid for 10 minutes.
 api: "GET /api/verification"
 ---
 
-🔓 No Authentication Required
+Sends a one-time 6-digit verification code to the specified email address. The code is valid for 10 minutes and is consumed by user registration (`POST /api/user/register`) and email binding (`POST /api/oauth/email/bind`). Requesting a new code for the same address overwrites the previous one.
 
+This endpoint is **Public** — no authentication is required. See [Authentication](/nookmux/api/management/auth) for how management API requests are authenticated.
+
+<Note>
+This endpoint is limited to 2 requests per 30 seconds per client IP; exceeding the limit returns HTTP `429`. When Cloudflare Turnstile verification is enabled on the server, a valid `turnstile` token must be supplied (unless the current session has already passed the check).
+</Note>
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url 'https://your-nookmux-domain/api/verification?email=user%40example.com&turnstile=XXXX.DUMMY.TOKEN.XXXX'
+```
+
+</RequestExample>
+
+### Query parameters
+
+<ParamField path="email" type="string" required>
+Target email address. Must be a syntactically valid email address.
+</ParamField>
+
+<ParamField path="turnstile" type="string">
+Cloudflare Turnstile token. Required only when Turnstile verification is enabled on the server and the current session has not already passed the check.
+</ParamField>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": ""
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+Whether the verification email was sent.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+Error description when `success` is `false`; empty otherwise.
+</ResponseField>
+
+<Note>
+Business failures return HTTP `200` with `success: false`; only the per-IP rate limiter returns a real HTTP `429`.
+</Note>
+
+## Error messages
+
+| Condition | Description |
+| --- | --- |
+| Invalid parameters | `email` is missing or not a valid email address |
+| Email domain not allowed | The email domain whitelist is enabled and the address domain is not on it |
+| Email alias rejected | Email alias restriction is enabled and the local part of the address contains `+` or `.` |
+| Email address already taken | The email address is already used by another account |
+| Email send failure | The verification email could not be delivered; retry later or contact the administrator |

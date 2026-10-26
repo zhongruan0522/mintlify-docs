@@ -1,7 +1,84 @@
 ---
 title: 易支付回调
+description: 易支付充值订单的异步支付结果回调，通过参数 MD5 签名鉴权。
 api: "GET /api/user/epay/notify"
 ---
 
-🔓 无需鉴权（支付回调）
+易支付网关在用户完成（或放弃）支付后调用的异步支付结果回调。NookMux 用商户密钥校验参数的 MD5 签名，交易成功时在订单锁内完成支付方式与金额校验及原子状态翻转，为匹配的充值订单入账。
 
+该接口为**公开（Public）**接口——无需鉴权。它由易支付网关服务器调用，请求通过参数签名鉴权。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
+
+<Note>
+同一处理函数也挂在 `POST /api/user/epay/notify` 上，POST 变体从表单体读取参数而非查询串。响应为纯文本而非标准 JSON 包裹结构：响应体为 `success` 或 `fail`，网关收到 `fail` 后会重试投递。
+</Note>
+
+## 请求
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url 'https://your-nookmux-domain/api/user/epay/notify?out_trade_no=USR1NOAb12cd1730000000&trade_no=2026102612000000&type=alipay&name=TUC10&money=73.00&trade_status=TRADE_SUCCESS&sign=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx&sign_type=MD5'
+```
+
+</RequestExample>
+
+### 查询参数
+
+标准易支付 V1 回调参数。除 `sign` 和 `sign_type` 外的所有非空参数排序后拼接为待签名字符串，签名为该字符串加盐商户密钥后的 MD5 摘要。
+
+<ParamField path="out_trade_no" type="string" required>
+由 `POST /api/user/pay` 创建的商户订单号，用于定位待入账的充值订单。
+</ParamField>
+
+<ParamField path="trade_no" type="string">
+易支付网关生成的订单号。
+</ParamField>
+
+<ParamField path="type" type="string">
+订单使用的支付渠道，例如 `alipay` 或 `wxpay`。必须与订单记录的支付方式一致。
+</ParamField>
+
+<ParamField path="name" type="string">
+订单商品名，例如 10 个单位的充值对应 `TUC10`。
+</ParamField>
+
+<ParamField path="money" type="string">
+实付金额。必须与订单记录金额一致，按两位小数比较。
+</ParamField>
+
+<ParamField path="trade_status" type="string" required>
+交易状态。`TRADE_SUCCESS` 触发入账；其他状态仅确认收到、不入账。
+</ParamField>
+
+<ParamField path="sign" type="string" required>
+排序参数串的 MD5 签名。
+</ParamField>
+
+<ParamField path="sign_type" type="string">
+签名算法；`MD5`。
+</ParamField>
+
+## 响应
+
+<ResponseExample>
+
+```text 200
+success
+```
+
+</ResponseExample>
+
+响应体为纯文本 `success` 或 `fail`，HTTP 状态码为 200；没有 JSON 包裹结构，也没有响应字段。
+
+- `success`：订单入账成功；或订单已被早前投递处理过（重复回调）；或交易状态为无需重试的非成功状态。
+- `fail`：参数为空、验签失败、服务端未配置易支付，或入账因暂时性原因失败。网关会重试这些投递。
+
+## 错误说明
+
+| 条件 | 说明 |
+| --- | --- |
+| fail — 参数为空 | 未提供任何查询（或表单）参数 |
+| fail — 验签失败 | `sign` 与用商户密钥计算的 MD5 签名不一致 |
+| fail — 未配置易支付 | 服务端缺少支付网关地址、商户 ID 或密钥 |
+| fail — 入账失败 | 订单不存在，或支付方式/金额与订单不一致；详见服务端日志 |

@@ -1,7 +1,104 @@
 ---
 title: General Security Verification
+description: Complete a step-up verification with 2FA or passkey to unlock security-sensitive console endpoints for five minutes.
 api: "POST /api/verify"
 ---
 
-🔐 Login Required (User Permission)
+Universal step-up (secure) verification endpoint. After passing verification, the caller's session is marked as securely verified for 5 minutes, which unlocks security-sensitive console endpoints that are mounted with the secure-verification guard (for example viewing a channel's full API key).
 
+Two methods are supported:
+
+- `2fa`: submit a time-based one-time code or a backup code from the account's two-factor authentication.
+- `passkey`: first complete the WebAuthn assertion flow `POST /api/user/passkey/verify/begin` and `POST /api/user/passkey/verify/finish` (standard WebAuthn structures), which marks a short-lived ready state in the session (valid for 60 seconds); then call this endpoint with `method: "passkey"` to finalize the verification.
+
+Requires **User** permissions and the account must have 2FA or a passkey configured. This endpoint is protected by a stricter rate limit (CriticalRateLimit). See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request POST \
+  --url 'https://your-nookmux-domain/api/verify' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1' \
+  --header 'Content-Type: application/json' \
+  --data '{
+  "method": "2fa",
+  "code": "123456"
+}'
+```
+
+</RequestExample>
+
+### Body
+
+<ParamField path="body.method" type="string" required>
+  Verification method: `2fa` or `passkey`.
+</ParamField>
+
+<ParamField path="body.code" type="string">
+  Verification code, required when `method` is `2fa`. Accepts the 6-digit TOTP code or a backup code. Ignored for `passkey`, whose proof is the WebAuthn ready state in the session.
+</ParamField>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "Verification successful",
+  "data": {
+    "verified": true,
+    "expires_at": 1769472000
+  }
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+  Whether the verification passed.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  `Verification successful` on success; error description when `success` is `false`.
+</ResponseField>
+
+<ResponseField name="data" type="object" required>
+  Verification result.
+
+  <Expandable title="data structure">
+    <ResponseField name="verified" type="boolean" required>
+      Always `true` in a successful response.
+    </ResponseField>
+    <ResponseField name="expires_at" type="integer" required>
+      Unix timestamp when the secure-verification state expires (verification time plus 300 seconds).
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<Note>
+  This endpoint is protected by a stricter rate limit (CriticalRateLimit). The verified state is bound to the current user id in the session and is not transferable to another identity. The passkey ready state set by the WebAuthn finish endpoint is single-use and expires after 60 seconds.
+</Note>
+
+## Error messages
+
+| Condition | Description |
+| --- | --- |
+| Not logged in | No user id in the authenticated context (HTTP 401) |
+| Invalid request body | The JSON body is missing or malformed |
+| Failed to get user information | Loading the user record failed |
+| This user has been disabled | The account status is not enabled |
+| 2FA or Passkey is not enabled for this user | The account has neither verification method configured |
+| 2FA is not enabled for this user | `method` is `2fa` but the account has no 2FA |
+| Verification code cannot be empty | `method` is `2fa` but `code` is empty |
+| Passkey is not enabled for this user | `method` is `passkey` but the account has no passkey |
+| Please complete Passkey verification first | No (or already consumed/expired) passkey ready state in the session |
+| Invalid Passkey verification state | The passkey ready state exists but cannot be used for this user |
+| Unsupported verification method: {method} | `method` is neither `2fa` nor `passkey` |
+| Verification failed, please check the code | The 2FA code is neither a valid TOTP nor a valid backup code |
+| Failed to save verification state | Saving the session failed; see server logs |

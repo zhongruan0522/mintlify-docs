@@ -1,7 +1,104 @@
 ---
 title: 两步验证登录
+description: 提交两步验证码，完成处于待验证状态的两步验证登录。
 api: "POST /api/user/login/2fa"
 ---
 
-🔓 无需鉴权（登录流程）
+开启两步验证（2FA）账号的密码登录第二步。`POST /api/user/login` 返回 `data.require_2fa = true` 后，携带同一个会话 Cookie，通过本接口提交 6 位 TOTP 验证码（或备用码）。待验证登录态有效期 5 分钟，验证成功后即清除并完成登录。
 
+本接口为 **Public（公开）**——无需鉴权（属于登录流程）。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
+
+<Note>
+本接口挂载了更严格的按 IP 限流（CriticalRateLimit），并对匿名请求体大小做了限制，超限返回 HTTP `413`。必须携带上一步返回 `require_2fa` 的 `POST /api/user/login` 所签发的会话 Cookie；不存在有效待验证登录态时请求会失败。
+</Note>
+
+## 请求
+
+<RequestExample>
+
+```bash cURL
+curl --request POST \
+  --url 'https://your-nookmux-domain/api/user/login/2fa' \
+  --header 'Cookie: session={session_cookie}' \
+  --header 'Content-Type: application/json' \
+  --data '{
+  "code": "123456"
+}'
+```
+
+</RequestExample>
+
+### 请求体
+
+<ParamField path="body.code" type="string" required>
+认证器应用的 6 位 TOTP 验证码，或一次性备用码。
+</ParamField>
+
+## 响应
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": {
+    "id": 1,
+    "username": "alice",
+    "display_name": "alice",
+    "role": 1,
+    "status": 1,
+    "group": "default"
+  }
+}
+```
+
+</ResponseExample>
+
+### 响应字段
+
+<ResponseField name="success" type="boolean" required>
+两步验证与登录是否成功。
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+`success` 为 `false` 时的错误描述；成功时为空字符串。
+</ResponseField>
+
+<ResponseField name="data" type="object" required>
+账号信息，与密码登录一步完成时的 `data` 对象完全一致。
+
+<Expandable title="data 结构">
+  <ResponseField name="id" type="integer" required>
+    用户 ID。
+  </ResponseField>
+  <ResponseField name="username" type="string" required>
+    用户名。
+  </ResponseField>
+  <ResponseField name="display_name" type="string" required>
+    显示名称。
+  </ResponseField>
+  <ResponseField name="role" type="integer" required>
+    角色：`1` 普通用户，`10` 管理员，`100` 超级管理员（Root）。
+  </ResponseField>
+  <ResponseField name="status" type="integer" required>
+    账号状态：`1` 启用，`2` 禁用。
+  </ResponseField>
+  <ResponseField name="group" type="string" required>
+    所属用户分组。
+  </ResponseField>
+</Expandable>
+</ResponseField>
+
+## 错误说明
+
+| 条件 | 说明 |
+| --- | --- |
+| 参数无效 | 请求体不是合法 JSON，或 `code` 缺失 |
+| 会话已过期 | 会话中不存在待验证的 2FA 登录态，或已超过 5 分钟时效 |
+| 会话数据无效 | 待验证会话载荷无法读取 |
+| 用户不存在 | 账号在两步之间被删除 |
+| 未启用两步验证 | 账号当前未开启（或已关闭）两步验证 |
+| 验证码或备用码错误 | TOTP 验证码与备用码均不匹配 |
+| 数据库错误 | 读取账号或其 2FA 记录失败 |
+| 会话保存失败 | 状态变更后无法持久化会话 |

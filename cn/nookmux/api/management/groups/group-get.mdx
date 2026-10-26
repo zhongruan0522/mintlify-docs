@@ -1,7 +1,54 @@
 ---
 title: 获取所有分组
+description: 列出分组倍率配置中定义的全部用户分组名称。
 api: "GET /api/group/"
 ---
 
-👨‍💼 需要管理员权限（Admin）
+列出分组倍率配置中定义的全部用户分组名称。分组用于关联用户与渠道：渠道的 `group` 字段声明哪些分组可以使用该渠道，每个用户则归属于一个分组。全新安装默认包含 `default`、`vip`、`svip` 三个分组。
 
+需要**管理员（Admin）**权限。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
+
+## 请求
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url 'https://your-nookmux-domain/api/group/' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1'
+```
+
+</RequestExample>
+
+## 响应
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": ["default", "vip", "svip"]
+}
+```
+
+</ResponseExample>
+
+### 响应字段
+
+<ResponseField name="success" type="boolean" required>
+  请求是否成功。
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  `success` 为 `false` 时的错误描述；成功时为空字符串。
+</ResponseField>
+
+<ResponseField name="data" type="array" required>
+  取自分组倍率配置的用户分组名称数组。该列表由内存中的 map 构建而来，名称顺序不作保证。
+</ResponseField>
+
+<Note>
+管理接口在业务失败时同样返回 HTTP `200`，必须以 `success` 字段判断结果。除鉴权失败外，本接口不存在业务失败路径。
+</Note>

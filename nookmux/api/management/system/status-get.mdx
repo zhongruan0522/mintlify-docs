@@ -1,7 +1,281 @@
 ---
 title: Get System Status
+description: "Fetch the public bootstrap configuration the frontend needs before login: branding, login options, dashboard panel switches and console content."
 api: "GET /api/status"
 ---
 
-🔓 No Authentication Required
+Returns the public configuration used to render the pre-login shell and initialize the frontend: branding, available login options, Turnstile settings, dashboard panel switches, passkey parameters and optional console content (API info, announcements, FAQ). The response is identical for anonymous and authenticated callers; administrator-only configuration (sidebar module layout, build version) is deliberately not included and is served by dedicated admin endpoints.
 
+This endpoint is public and requires no authentication. See [Authentication](/nookmux/api/management/auth) for details on how management API requests are authenticated.
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url 'https://your-nookmux-domain/api/status'
+```
+
+</RequestExample>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": {
+    "email_verification": true,
+    "github_oauth": true,
+    "github_client_id": "github-oauth-client-id",
+    "linuxdo_oauth": false,
+    "linuxdo_client_id": "",
+    "linuxdo_minimum_trust_level": 0,
+    "system_name": "NookMux",
+    "logo": "https://your-nookmux-domain/logo.png",
+    "footer_html": "<p>Powered by NookMux</p>",
+    "server_address": "https://your-nookmux-domain",
+    "turnstile_check": false,
+    "turnstile_site_key": "",
+    "docs_link": "https://docs.example.com",
+    "quota_per_unit": 500000,
+    "enable_batch_update": false,
+    "enable_data_export": true,
+    "data_export_interval": 5,
+    "data_export_default_time": "hour",
+    "default_collapse_sidebar": false,
+    "default_use_auto_group": false,
+    "price": 7.3,
+    "stripe_unit_price": 8.0,
+    "api_info_enabled": true,
+    "uptime_kuma_enabled": true,
+    "announcements_enabled": true,
+    "faq_enabled": true,
+    "HeaderNavModules": "",
+    "passkey_login": false,
+    "passkey_display_name": "NookMux",
+    "passkey_rp_id": "your-nookmux-domain",
+    "passkey_origins": "https://your-nookmux-domain",
+    "passkey_allow_insecure": false,
+    "passkey_user_verification": "preferred",
+    "passkey_attachment": "",
+    "setup": true,
+    "user_agreement_enabled": true,
+    "privacy_policy_enabled": false,
+    "checkin_enabled": false,
+    "_qn": "nookmux",
+    "api_info": [
+      {
+        "url": "https://api.example.com",
+        "route": "/v1",
+        "description": "Primary API endpoint",
+        "color": "primary"
+      }
+    ],
+    "announcements": [
+      {
+        "content": "The service is now generally available.",
+        "publishDate": "2026-01-02T08:00:00Z",
+        "type": "success"
+      }
+    ],
+    "faq": [
+      {
+        "question": "How do I top up?",
+        "answer": "Open the top-up page and follow the instructions."
+      }
+    ]
+  }
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+  Whether the request succeeded.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  Error description when `success` is `false`; empty otherwise.
+</ResponseField>
+
+<ResponseField name="data" type="object" required>
+  Public bootstrap configuration.
+
+  <Expandable title="data structure">
+    <ParamField path="email_verification" type="boolean" required>
+      Whether email verification is enabled for registration.
+    </ParamField>
+    <ParamField path="github_oauth" type="boolean" required>
+      Whether GitHub OAuth login is enabled.
+    </ParamField>
+    <ParamField path="github_client_id" type="string" required>
+      GitHub OAuth client ID; empty when GitHub login is disabled.
+    </ParamField>
+    <ParamField path="linuxdo_oauth" type="boolean" required>
+      Whether LinuxDO OAuth login is enabled.
+    </ParamField>
+    <ParamField path="linuxdo_client_id" type="string" required>
+      LinuxDO OAuth client ID; empty when LinuxDO login is disabled.
+    </ParamField>
+    <ParamField path="linuxdo_minimum_trust_level" type="integer" required>
+      Minimum LinuxDO trust level accepted for OAuth login.
+    </ParamField>
+    <ParamField path="system_name" type="string" required>
+      Site display name.
+    </ParamField>
+    <ParamField path="logo" type="string" required>
+      Site logo URL.
+    </ParamField>
+    <ParamField path="footer_html" type="string" required>
+      Footer HTML.
+    </ParamField>
+    <ParamField path="server_address" type="string" required>
+      Configured public server address of this deployment.
+    </ParamField>
+    <ParamField path="turnstile_check" type="boolean" required>
+      Whether Cloudflare Turnstile human verification is enforced on public forms.
+    </ParamField>
+    <ParamField path="turnstile_site_key" type="string" required>
+      Turnstile site key; empty when Turnstile is disabled.
+    </ParamField>
+    <ParamField path="docs_link" type="string" required>
+      Documentation link shown in the frontend.
+    </ParamField>
+    <ParamField path="quota_per_unit" type="number" required>
+      Quota units per billing unit (default `500000`), used to convert quota amounts into currency amounts.
+    </ParamField>
+    <ParamField path="enable_batch_update" type="boolean" required>
+      Whether aggregated batch update mode for usage counters is enabled.
+    </ParamField>
+    <ParamField path="enable_data_export" type="boolean" required>
+      Whether usage data export for the data dashboard is enabled.
+    </ParamField>
+    <ParamField path="data_export_interval" type="integer" required>
+      Data aggregation interval in minutes (default `5`).
+    </ParamField>
+    <ParamField path="data_export_default_time" type="string" required>
+      Default time bucket for the data dashboard, for example `hour`.
+    </ParamField>
+    <ParamField path="default_collapse_sidebar" type="boolean" required>
+      Whether the console sidebar is collapsed by default.
+    </ParamField>
+    <ParamField path="default_use_auto_group" type="boolean" required>
+      Whether the auto group is selected by default for new tokens.
+    </ParamField>
+    <ParamField path="price" type="number" required>
+      Top-up unit price factor used when converting quota amounts into the display currency.
+    </ParamField>
+    <ParamField path="stripe_unit_price" type="number" required>
+      Unit price used for Stripe top-up.
+    </ParamField>
+    <ParamField path="api_info_enabled" type="boolean" required>
+      Whether the API info panel is enabled on the dashboard.
+    </ParamField>
+    <ParamField path="uptime_kuma_enabled" type="boolean" required>
+      Whether the Uptime Kuma panel is enabled on the dashboard.
+    </ParamField>
+    <ParamField path="announcements_enabled" type="boolean" required>
+      Whether the announcements panel is enabled on the dashboard.
+    </ParamField>
+    <ParamField path="faq_enabled" type="boolean" required>
+      Whether the FAQ panel is enabled on the dashboard.
+    </ParamField>
+    <ParamField path="HeaderNavModules" type="string" required>
+      Raw JSON string configuring the header navigation modules (such as pricing and rankings visibility and their login requirements). Empty string when unset.
+    </ParamField>
+    <ParamField path="passkey_login" type="boolean" required>
+      Whether passkey (WebAuthn) login is enabled.
+    </ParamField>
+    <ParamField path="passkey_display_name" type="string" required>
+      Passkey relying-party display name.
+    </ParamField>
+    <ParamField path="passkey_rp_id" type="string" required>
+      Passkey relying-party ID (derived from the server address when not explicitly configured).
+    </ParamField>
+    <ParamField path="passkey_origins" type="string" required>
+      Passkey allowed origins.
+    </ParamField>
+    <ParamField path="passkey_allow_insecure" type="boolean" required>
+      Whether insecure (non-HTTPS) origins are accepted for passkey registration.
+    </ParamField>
+    <ParamField path="passkey_user_verification" type="string" required>
+      Passkey user verification requirement, for example `preferred`.
+    </ParamField>
+    <ParamField path="passkey_attachment" type="string" required>
+      Preferred passkey authenticator attachment; empty when unset.
+    </ParamField>
+    <ParamField path="setup" type="boolean" required>
+      Whether system initialization has been completed.
+    </ParamField>
+    <ParamField path="user_agreement_enabled" type="boolean" required>
+      Whether a user agreement text is configured.
+    </ParamField>
+    <ParamField path="privacy_policy_enabled" type="boolean" required>
+      Whether a privacy policy text is configured.
+    </ParamField>
+    <ParamField path="checkin_enabled" type="boolean" required>
+      Whether the daily check-in feature is enabled.
+    </ParamField>
+    <ParamField path="_qn" type="string" required>
+      Constant marker, always `nookmux`.
+    </ParamField>
+    <ParamField path="api_info" type="array">
+      API info panel entries. Present only when `api_info_enabled` is `true`.
+
+      <Expandable title="api_info entry structure">
+        <ParamField path="url" type="string" required>
+          API base URL shown to users.
+        </ParamField>
+        <ParamField path="route" type="string" required>
+          Route prefix label for this endpoint.
+        </ParamField>
+        <ParamField path="description" type="string" required>
+          Description of the endpoint.
+        </ParamField>
+        <ParamField path="color" type="string" required>
+          Display color tag for the entry.
+        </ParamField>
+      </Expandable>
+    </ParamField>
+    <ParamField path="announcements" type="array">
+      Announcement entries, sorted by publish date (newest first). Present only when `announcements_enabled` is `true`.
+
+      <Expandable title="announcements entry structure">
+        <ParamField path="content" type="string" required>
+          Announcement text.
+        </ParamField>
+        <ParamField path="publishDate" type="string" required>
+          Publish time in RFC 3339 format.
+        </ParamField>
+        <ParamField path="type" type="string">
+          Announcement style: `default`, `ongoing`, `success`, `warning`, or `error`.
+        </ParamField>
+        <ParamField path="extra" type="string">
+          Optional extra text.
+        </ParamField>
+      </Expandable>
+    </ParamField>
+    <ParamField path="faq" type="array">
+      FAQ entries. Present only when `faq_enabled` is `true`.
+
+      <Expandable title="faq entry structure">
+        <ParamField path="question" type="string" required>
+          Question text.
+        </ParamField>
+        <ParamField path="answer" type="string" required>
+          Answer text.
+        </ParamField>
+      </Expandable>
+    </ParamField>
+  </Expandable>
+</ResponseField>
+
+<Note>
+  This is the pre-login bootstrap endpoint and contains public information only. Administrator-restricted data is served by separate endpoints: the admin sidebar module layout and build version require admin authentication, and user-visible sidebar modules require login.
+</Note>

@@ -1,7 +1,56 @@
 ---
 title: 注销当前用户
+description: 软删除当前用户自己的账号。
 api: "DELETE /api/user/self"
 ---
 
-🔐 需要登录（User权限）
+软删除当前登录用户的账号。用户数据行被标记为删除，从常规列表与搜索中隐藏，而不是物理移除。超级管理员账号不能注销自己。
 
+需要**用户（User）**权限（任意登录用户）。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
+
+## 请求
+
+<RequestExample>
+
+```bash cURL
+curl --request DELETE \
+  --url 'https://your-nookmux-domain/api/user/self' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1'
+```
+
+</RequestExample>
+
+## 响应
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": ""
+}
+```
+
+</ResponseExample>
+
+### 响应字段
+
+<ResponseField name="success" type="boolean" required>
+账号是否删除成功。
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+`success` 为 `false` 时的错误描述；成功时为空字符串。
+</ResponseField>
+
+<Note>
+本接口不返回 `data` 字段。与管理端 `DELETE /api/user/{id}` 的硬删除不同，本自助接口只做软删除。
+</Note>
+
+## 错误说明
+
+| 条件 | 说明 |
+| --- | --- |
+| 无法删除超级管理员 | 当前账号是超级管理员 |
+| 数据库错误 | 删除失败，详见服务端日志 |

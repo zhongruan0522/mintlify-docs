@@ -1,7 +1,161 @@
 ---
 title: 添加渠道
+description: 一次调用创建一个或多个上游渠道，支持批量与多 Key 模式。
 api: "POST /api/channel/"
 ---
 
-👨‍💼 需要管理员权限（Admin）
+创建一个或多个上游渠道。`mode` 字段决定 `channel.key` 中密钥列表的解释方式：`single` 用单个密钥创建一个渠道；`batch` 按行拆分密钥列表，每行创建一个渠道；`multi_to_single` 将全部密钥聚合成一个多 Key 渠道。
 
+需要**管理员（Admin）**权限。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
+
+## 请求
+
+<RequestExample>
+
+```bash cURL
+curl --request POST \
+  --url 'https://your-nookmux-domain/api/channel/' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1' \
+  --header 'Content-Type: application/json' \
+  --data '{
+  "mode": "single",
+  "channel": {
+    "type": 1,
+    "name": "my-openai",
+    "key": "sk-xxxxxxxxxxxxxxxxxxxx",
+    "base_url": "",
+    "models": "gpt-4o,gpt-4o-mini",
+    "group": "default",
+    "priority": 0,
+    "weight": 0
+  }
+}'
+```
+
+</RequestExample>
+
+### 请求体
+
+<ParamField path="body.mode" type="string" default="single">
+  渠道创建模式：
+
+  - `single`：用 `channel.key` 中的单个密钥创建一个渠道。
+  - `batch`：按行拆分 `channel.key`（换行分隔），每行密钥创建一个渠道。
+  - `multi_to_single`：将 `channel.key` 中的全部密钥聚合为一个多 Key 渠道（换行分隔；Vertex AI 的 JSON 凭据使用 JSON 数组形式）。
+</ParamField>
+
+<ParamField path="body.multi_key_mode" type="string">
+  `multi_to_single` 模式下的轮询策略：`random`（随机）或 `polling`（轮询）。`mode` 为 `multi_to_single` 时必填，其他模式下忽略。
+</ParamField>
+
+<ParamField path="body.batch_add_set_key_prefix_2_name" type="boolean" default="false">
+  `batch` 模式且密钥多于一个时，是否把每个密钥的前 8 个字符追加到渠道名末尾，便于区分批量生成的渠道。
+</ParamField>
+
+<ParamField path="body.channel" type="object" required>
+  渠道定义。以下为创建时常用字段；`id`、`created_time`、`balance`、`channel_info` 等服务端维护字段由服务端填充，可省略。
+
+  <Expandable title="channel 结构">
+    <ParamField path="type" type="integer" required>
+      渠道类型常量，例如 `1` 表示 OpenAI。完整映射见控制台渠道编辑器（控制台 → 渠道 → 添加）。
+    </ParamField>
+    <ParamField path="name" type="string" required>
+      渠道显示名称。
+    </ParamField>
+    <ParamField path="key" type="string" required>
+      上游 API 密钥。解释方式取决于 `mode`，见上文。多 Key 渠道用换行分隔多个密钥。
+    </ParamField>
+    <ParamField path="base_url" type="string">
+      自定义上游 Base URL。留空时使用渠道类型内置的接口地址。
+    </ParamField>
+    <ParamField path="models" type="string" required>
+      该渠道支持的模型名列表，逗号分隔。单个模型名最长 255 字符。
+    </ParamField>
+    <ParamField path="group" type="string" default="default">
+      可使用该渠道的用户分组，逗号分隔。
+    </ParamField>
+    <ParamField path="model_mapping" type="string">
+      模型名重定向的 JSON 对象，例如 `{"gpt-4o": "gpt-4o-2024-08-06"}`。
+    </ParamField>
+    <ParamField path="priority" type="integer" default="0">
+      路由优先级。多个渠道提供同一模型时优先使用数值更大的渠道。
+    </ParamField>
+    <ParamField path="weight" type="integer" default="0">
+      同优先级渠道之间的负载均衡权重。
+    </ParamField>
+    <ParamField path="status" type="integer" default="1">
+      初始状态：`1` 启用，`2` 手动禁用，`3` 自动禁用。
+    </ParamField>
+    <ParamField path="test_model" type="string">
+      渠道测试所用的模型；当渠道不便暴露模型列表时用于连通性测试。
+    </ParamField>
+    <ParamField path="tag" type="string">
+      可选的渠道标签，用于控制台分组展示。
+    </ParamField>
+    <ParamField path="other" type="string">
+      渠道类型的附加选项。Vertex AI 渠道必须为含 `default` 键的区域 JSON 对象。
+    </ParamField>
+    <ParamField path="settings" type="string">
+      额外设置的 JSON 对象，例如 Azure 的 API 版本。
+    </ParamField>
+    <ParamField path="setting" type="string">
+      渠道运行时设置的 JSON 对象。
+    </ParamField>
+    <ParamField path="param_override" type="string">
+      请求转发上游前的参数覆盖 JSON 对象。
+    </ParamField>
+    <ParamField path="header_override" type="string">
+      追加或覆盖发往上游的请求头的 JSON 对象。
+    </ParamField>
+    <ParamField path="status_code_mapping" type="string">
+      上游 HTTP 状态码到 NookMux 返回状态码的映射 JSON 对象。
+    </ParamField>
+    <ParamField path="auto_ban" type="integer" default="1">
+      上游连续失败后是否自动禁用渠道：`1` 启用，`0` 关闭。
+    </ParamField>
+    <ParamField path="openai_organization" type="string">
+      OpenAI 类型渠道的 organization 头（`OpenAI-Organization`）。
+    </ParamField>
+    <ParamField path="remark" type="string">
+      自由备注，最长 255 字符。
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+## 响应
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": ""
+}
+```
+
+</ResponseExample>
+
+### 响应字段
+
+<ResponseField name="success" type="boolean" required>
+  渠道是否创建成功。
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  `success` 为 `false` 时的错误描述；成功时为空字符串。
+</ResponseField>
+
+<Note>
+  管理接口在业务失败时同样返回 HTTP `200`，必须以 `success` 字段判断结果。校验类错误（渠道类型未知、多 Key 模式非法、Vertex AI 缺少区域配置等）通过 `success: false` 加本地化的 `message` 返回。
+</Note>
+
+## 错误说明
+
+| 条件 | 说明 |
+| --- | --- |
+| 请求体非法 | JSON 缺失或格式错误 |
+| 渠道类型非法 | `type` 未知或已不再支持 |
+| 多 Key 模式非法 | `mode` 为 `multi_to_single` 但 `multi_key_mode` 不是 `random` 或 `polling` |
+| 添加模式不支持 | `mode` 不是 `single`、`batch`、`multi_to_single` 之一 |
+| 数据库错误 | 渠道落库失败，详见服务端日志 |

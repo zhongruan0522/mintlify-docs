@@ -1,7 +1,52 @@
 ---
 title: 获取模型列表
+description: 获取按渠道类型分组的内置模型目录，供控制台模型选择器使用。
 api: "GET /api/models"
 ---
 
-🔐 需要登录（User权限）
+返回每个受支持渠道类型的内置模型列表。响应将渠道类型常量（例如 OpenAI 为 `1`）映射到该渠道类型适配器原生支持的模型名数组。该目录在服务启动时编译生成，不反映站点实际配置的渠道；如需实际在售模型请使用定价信息接口。
 
+需要登录（**User** 权限，任意已登录账号）。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
+
+## 请求
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url 'https://your-nookmux-domain/api/models' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1'
+```
+
+</RequestExample>
+
+## 响应
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "data": {
+    "1": ["gpt-4o", "gpt-4o-mini"],
+    "14": ["claude-3-5-sonnet-20241022"]
+  }
+}
+```
+
+</ResponseExample>
+
+### 响应字段
+
+<ResponseField name="success" type="boolean" required>
+  请求是否成功。
+</ResponseField>
+
+<ResponseField name="data" type="object" required>
+  渠道类型常量（序列化为字符串键，例如 OpenAI 为 `"1"`）到该渠道类型适配器内置模型名数组的映射。
+</ResponseField>
+
+<Note>
+  该响应不包含标准的 `message` 字段。渠道类型常量与创建渠道时使用的取值一致（见渠道创建接口）；没有注册适配器的类型不会出现在该映射中。
+</Note>

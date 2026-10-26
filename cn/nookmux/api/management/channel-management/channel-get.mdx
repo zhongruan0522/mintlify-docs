@@ -1,7 +1,275 @@
 ---
 title: 获取所有渠道
+description: 分页列出渠道，支持分组、状态、类型过滤与按标签分组模式。
 api: "GET /api/channel/"
 ---
 
-👨‍💼 需要管理员权限（Admin）
+分页获取渠道列表。响应中永远不会泄露上游 `key`：该字段恒为空字符串。开启 `tag_mode` 后，分页对象变为去重后的标签，渠道按标签分组返回，而不是平铺分页。
 
+需要**管理员（Admin）**权限。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
+
+## 请求
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url 'https://your-nookmux-domain/api/channel/?p=1&page_size=10' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1'
+```
+
+</RequestExample>
+
+### 查询参数
+
+<ParamField path="query.p" type="integer" default="1">
+  页码。
+</ParamField>
+
+<ParamField path="query.page_size" type="integer" default="10">
+  每页条数，上限 100。分页辅助逻辑同时兼容旧别名 `ps` 与 `size`。
+</ParamField>
+
+<ParamField path="query.group" type="string">
+  按用户分组过滤。缺省、为空、`all` 或 `null`（不区分大小写）时不过滤。
+</ParamField>
+
+<ParamField path="query.status" type="string">
+  状态过滤：`enabled` 或 `1` 只返回启用渠道；`disabled` 或 `0` 返回全部禁用渠道（含手动禁用与自动禁用）；其他值不过滤。
+</ParamField>
+
+<ParamField path="query.type" type="integer">
+  按渠道类型常量过滤。缺省或不是数字时忽略。
+</ParamField>
+
+<ParamField path="query.id_sort" type="boolean" default="false">
+  为 `true` 时按 `id` 倒序；否则按名称升序、再按 `id` 升序。
+</ParamField>
+
+<ParamField path="query.tag_mode" type="boolean" default="false">
+  标签分组模式。为 `true` 时，分页对象是符合过滤条件的去重非空标签，页内各标签的渠道一并返回（按优先级倒序、权重倒序排列），不再对单个渠道分页。
+</ParamField>
+
+## 响应
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": {
+    "items": [
+      {
+        "id": 1,
+        "type": 1,
+        "key": "",
+        "openai_organization": null,
+        "test_model": null,
+        "status": 1,
+        "name": "my-openai",
+        "weight": 0,
+        "created_time": 1748000000,
+        "test_time": 1748000500,
+        "response_time": 850,
+        "base_url": "",
+        "other": "",
+        "balance": 18.52,
+        "balance_updated_time": 1748000500,
+        "models": "gpt-4o,gpt-4o-mini",
+        "group": "default",
+        "used_quota": 500000,
+        "model_mapping": null,
+        "status_code_mapping": "",
+        "priority": 0,
+        "auto_ban": 1,
+        "other_info": "",
+        "tag": null,
+        "setting": null,
+        "param_override": null,
+        "header_override": null,
+        "remark": "",
+        "channel_info": {
+          "is_multi_key": false,
+          "multi_key_size": 0,
+          "multi_key_status_list": null,
+          "multi_key_polling_index": 0,
+          "multi_key_mode": "",
+          "is_plan": false,
+          "plan_name": ""
+        },
+        "settings": ""
+      }
+    ],
+    "total": 42,
+    "page": 1,
+    "page_size": 10,
+    "type_counts": {
+      "1": 30,
+      "42": 12
+    }
+  }
+}
+```
+
+</ResponseExample>
+
+### 响应字段
+
+<ResponseField name="success" type="boolean" required>
+  请求是否成功。
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  `success` 为 `false` 时的错误描述；成功时为空字符串。
+</ResponseField>
+
+<ResponseField name="data.items" type="array" required>
+  当前页的渠道对象数组。`key` 字段恒为空字符串，不会泄露已存密钥。
+
+  <Expandable title="channel 结构">
+    <ResponseField name="id" type="integer" required>
+      渠道 ID。
+    </ResponseField>
+    <ResponseField name="type" type="integer" required>
+      渠道类型常量，例如 `1` 表示 OpenAI。
+    </ResponseField>
+    <ResponseField name="key" type="string">
+      上游密钥。本响应中恒为空字符串，不会返回已存密钥值。
+    </ResponseField>
+    <ResponseField name="status" type="integer" required>
+      `1` 启用，`2` 手动禁用，`3` 自动禁用。
+    </ResponseField>
+    <ResponseField name="name" type="string" required>
+      渠道显示名称。
+    </ResponseField>
+    <ResponseField name="weight" type="integer" required>
+      同优先级渠道之间的负载均衡权重。可能为 `null`。
+    </ResponseField>
+    <ResponseField name="created_time" type="integer" required>
+      渠道创建时间的 Unix 时间戳（秒）。
+    </ResponseField>
+    <ResponseField name="test_time" type="integer" required>
+      最近一次渠道测试的 Unix 时间戳；从未测试过为 `0`。
+    </ResponseField>
+    <ResponseField name="response_time" type="integer" required>
+      最近一次渠道测试的延迟，单位毫秒。
+    </ResponseField>
+    <ResponseField name="base_url" type="string" required>
+      自定义上游 Base URL。可能为 `null`。
+    </ResponseField>
+    <ResponseField name="other" type="string" required>
+      渠道类型的附加选项，例如 Vertex AI 的区域 JSON。
+    </ResponseField>
+    <ResponseField name="balance" type="number" required>
+      预估剩余余额，单位美元。
+    </ResponseField>
+    <ResponseField name="balance_updated_time" type="integer" required>
+      最近一次余额更新的 Unix 时间戳。
+    </ResponseField>
+    <ResponseField name="models" type="string" required>
+      该渠道支持的模型名列表，逗号分隔。
+    </ResponseField>
+    <ResponseField name="group" type="string" required>
+      可使用该渠道的用户分组，逗号分隔。
+    </ResponseField>
+    <ResponseField name="used_quota" type="integer" required>
+      该渠道累计消耗的配额。
+    </ResponseField>
+    <ResponseField name="model_mapping" type="string" required>
+      模型名重定向的 JSON 对象。可能为 `null`。
+    </ResponseField>
+    <ResponseField name="status_code_mapping" type="string" required>
+      上游 HTTP 状态码到 NookMux 返回状态码的映射 JSON 对象。可能为 `null`。
+    </ResponseField>
+    <ResponseField name="priority" type="integer" required>
+      路由优先级。可能为 `null`。
+    </ResponseField>
+    <ResponseField name="auto_ban" type="integer" required>
+      上游连续失败后是否自动禁用渠道：`1` 启用，`0` 关闭。可能为 `null`。
+    </ResponseField>
+    <ResponseField name="other_info" type="string" required>
+      服务端维护的杂项运行信息。
+    </ResponseField>
+    <ResponseField name="tag" type="string" required>
+      用于控制台分组的渠道标签。可能为 `null`。
+    </ResponseField>
+    <ResponseField name="setting" type="string" required>
+      渠道运行时设置的 JSON 对象。可能为 `null`。
+    </ResponseField>
+    <ResponseField name="param_override" type="string" required>
+      请求转发上游前的参数覆盖 JSON 对象。可能为 `null`。
+    </ResponseField>
+    <ResponseField name="header_override" type="string" required>
+      追加或覆盖发往上游的请求头的 JSON 对象。可能为 `null`。
+    </ResponseField>
+    <ResponseField name="remark" type="string" required>
+      自由备注。
+    </ResponseField>
+    <ResponseField name="channel_info" type="object" required>
+      渠道密钥与套餐的运行信息。
+
+      <Expandable title="channel_info 结构">
+        <ResponseField name="is_multi_key" type="boolean" required>
+          是否为聚合多个密钥的渠道。
+        </ResponseField>
+        <ResponseField name="multi_key_size" type="integer" required>
+          多 Key 模式下的密钥数量。
+        </ResponseField>
+        <ResponseField name="multi_key_status_list" type="object" required>
+          密钥索引到密钥状态的映射。
+        </ResponseField>
+        <ResponseField name="multi_key_polling_index" type="integer" required>
+          轮询模式下一次使用的密钥索引。
+        </ResponseField>
+        <ResponseField name="multi_key_mode" type="string" required>
+          多 Key 策略：`random`（随机）或 `polling`（轮询）。
+        </ResponseField>
+        <ResponseField name="is_plan" type="boolean" required>
+          是否指向套餐计量的特殊 Base URL。
+        </ResponseField>
+        <ResponseField name="plan_name" type="string" required>
+          套餐标识，对应已知的特殊 Base URL。
+        </ResponseField>
+      </Expandable>
+    </ResponseField>
+    <ResponseField name="settings" type="string" required>
+      额外设置的 JSON 对象，例如 Azure 的 API 版本。
+    </ResponseField>
+    <ResponseField name="openai_organization" type="string" required>
+      OpenAI 类型渠道的 organization 头。可能为 `null`。
+    </ResponseField>
+    <ResponseField name="test_model" type="string" required>
+      渠道测试所用的模型。可能为 `null`。
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="data.total" type="integer" required>
+  符合条件的渠道总数（标签模式下为标签总数）。
+</ResponseField>
+
+<ResponseField name="data.page" type="integer" required>
+  当前页码。
+</ResponseField>
+
+<ResponseField name="data.page_size" type="integer" required>
+  本次查询使用的页大小。
+</ResponseField>
+
+<ResponseField name="data.type_counts" type="object" required>
+  渠道类型常量（JSON 字符串键）到该类型渠道数量的映射。按分组与状态过滤统计，始终忽略 `type` 过滤。
+</ResponseField>
+
+<Note>
+  管理接口在业务失败时同样返回 HTTP `200`，必须以 `success` 字段判断结果。多 Key 渠道中各密钥的禁用原因与禁用时间属于内部状态，管理接口响应中会被剥离。
+</Note>
+
+## 错误说明
+
+| 条件 | 说明 |
+| --- | --- |
+| 数据库错误 | 渠道计数或查询失败，详见服务端日志 |
+| 标签模式失败 | 标签计数或按标签加载渠道失败（仅标签模式） |
+| 类型统计失败 | 汇总 `type_counts` 失败 |

@@ -1,7 +1,109 @@
 ---
 title: Get Specific Vendor
+description: Retrieve a single vendor metadata entry by ID.
 api: "GET /api/vendors/{id}"
 ---
 
-👨‍💼 Requires Administrator Permissions (Admin)
+Vendor metadata entries describe upstream model vendors. Model entries reference a vendor through `vendor_id`, and vendor fields such as the icon, data-retention window, and training opt-out flag are shown to end users on the pricing page.
 
+Returns the vendor with the given ID.
+
+Requires **Admin** permissions. See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url 'https://your-nookmux-domain/api/vendors/1' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1'
+```
+
+</RequestExample>
+
+### Path parameters
+
+<ParamField path="id" type="integer" required>
+  Vendor ID.
+</ParamField>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": {
+    "id": 1,
+    "name": "OpenAI",
+    "description": "OpenAI models",
+    "icon": "openai",
+    "data_retention_days": 30,
+    "training_opt_out": true,
+    "status": 1,
+    "created_time": 1735689600,
+    "updated_time": 1735689600
+  }
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+  Whether the request succeeded.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  Error description when `success` is `false`; empty otherwise.
+</ResponseField>
+
+<ResponseField name="data" type="object" required>
+  The vendor record.
+
+  <Expandable title="vendor structure">
+    <ResponseField name="id" type="integer" required>
+      Vendor ID.
+    </ResponseField>
+    <ResponseField name="name" type="string" required>
+      Vendor name, unique among non-deleted vendors; limited to 128 characters.
+    </ResponseField>
+    <ResponseField name="description" type="string">
+      Free-form description; omitted when empty.
+    </ResponseField>
+    <ResponseField name="icon" type="string">
+      Icon name from `@lobehub/icons`, rendered by the frontend; limited to 128 characters; omitted when empty.
+    </ResponseField>
+    <ResponseField name="data_retention_days" type="integer">
+      Data-retention window in days shown on the pricing page (`0` means no retention); omitted when unset.
+    </ResponseField>
+    <ResponseField name="training_opt_out" type="boolean">
+      Whether requests to this vendor are excluded from upstream model training by default (shown on the pricing page); omitted when unset.
+    </ResponseField>
+    <ResponseField name="status" type="integer" required>
+      Reserved status field; `1` means enabled.
+    </ResponseField>
+    <ResponseField name="created_time" type="integer" required>
+      Creation time as a Unix timestamp in seconds, set by the server.
+    </ResponseField>
+    <ResponseField name="updated_time" type="integer" required>
+      Last update time as a Unix timestamp in seconds, maintained by the server.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<Note>
+Management endpoints return HTTP `200` even on business failures; always check the `success` field.
+</Note>
+
+## Error messages
+
+| Condition | Description |
+| --- | --- |
+| Invalid parameters | `id` is not a valid integer |
+| Database error, please try again later | The vendor could not be read, including when the ID does not exist; see server logs |

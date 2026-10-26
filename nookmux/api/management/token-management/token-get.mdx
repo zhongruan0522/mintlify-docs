@@ -1,7 +1,201 @@
 ---
 title: Get All Tokens
+description: List the current user's API tokens with pagination, newest first, with keys masked.
 api: "GET /api/token/"
 ---
 
-🔐 Login Required (User Permission)
+List the API tokens owned by the current user, ordered newest first (`id` descending) and paginated. The `key` of every token is masked; the full key is only returned when the token is created.
 
+Requires a logged-in user (**User** permissions). See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url 'https://your-nookmux-domain/api/token/?p=1&page_size=10' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1'
+```
+
+</RequestExample>
+
+### Query parameters
+
+<ParamField path="query.p" type="integer" default="1">
+  Page number.
+</ParamField>
+
+<ParamField path="query.page_size" type="integer" default="10">
+  Items per page, capped at 100. The pagination helper also accepts the legacy aliases `ps` and `size`.
+</ParamField>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": {
+    "page": 1,
+    "page_size": 10,
+    "total": 3,
+    "items": [
+      {
+        "id": 3,
+        "user_id": 1,
+        "key": "***************************************************",
+        "status": 1,
+        "name": "my-token",
+        "created_time": 1748000000,
+        "accessed_time": 1748086400,
+        "expired_time": -1,
+        "remain_quota": 500000,
+        "unlimited_quota": false,
+        "model_limits_enabled": false,
+        "model_limits": "",
+        "model_mapping": null,
+        "allow_ips": null,
+        "used_quota": 0,
+        "group": "default",
+        "cross_group_retry": false,
+        "quota_type": 1,
+        "window_hours": 0,
+        "window_quota": 0,
+        "window_start_hour": 0,
+        "cycle_days": 0,
+        "cycle_quota": 0,
+        "window_used_quota": 0,
+        "window_start_time": 0,
+        "cycle_used_quota": 0,
+        "cycle_start_time": 0
+      }
+    ]
+  }
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+  Whether the request succeeded.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  Error description when `success` is `false`; empty otherwise.
+</ResponseField>
+
+<ResponseField name="data.page" type="integer" required>
+  Current page number.
+</ResponseField>
+
+<ResponseField name="data.page_size" type="integer" required>
+  Items per page actually applied.
+</ResponseField>
+
+<ResponseField name="data.total" type="integer" required>
+  Total number of tokens owned by the current user.
+</ResponseField>
+
+<ResponseField name="data.items" type="array" required>
+  Token objects on the current page. The `key` of each token is masked with asterisks of the same length as the real key.
+
+  <Expandable title="token structure">
+    <ResponseField name="id" type="integer" required>
+      Token id.
+    </ResponseField>
+    <ResponseField name="user_id" type="integer" required>
+      Id of the user who owns the token.
+    </ResponseField>
+    <ResponseField name="key" type="string" required>
+      Masked token key: asterisks with the same length as the real key.
+    </ResponseField>
+    <ResponseField name="status" type="integer" required>
+      Token status: `1` enabled, `2` disabled, `3` expired, `4` quota exhausted.
+    </ResponseField>
+    <ResponseField name="name" type="string" required>
+      Display name of the token, at most 50 characters.
+    </ResponseField>
+    <ResponseField name="created_time" type="integer" required>
+      Unix timestamp (seconds) of token creation.
+    </ResponseField>
+    <ResponseField name="accessed_time" type="integer" required>
+      Unix timestamp (seconds) of the last use of the token key.
+    </ResponseField>
+    <ResponseField name="expired_time" type="integer" required>
+      Unix timestamp (seconds) when the token expires; `-1` means never expires.
+    </ResponseField>
+    <ResponseField name="remain_quota" type="integer" required>
+      Remaining quota, spent as requests are billed for permanent-quota tokens (`quota_type` `1`); never decremented for unlimited tokens (`quota_type` `0`), where only `used_quota` accumulates. Time-window and cycle types use their own quota fields.
+    </ResponseField>
+    <ResponseField name="unlimited_quota" type="boolean" required>
+      Whether the token has unlimited quota.
+    </ResponseField>
+    <ResponseField name="model_limits_enabled" type="boolean" required>
+      Whether `model_limits` is enforced for this token.
+    </ResponseField>
+    <ResponseField name="model_limits" type="string" required>
+      Comma-separated list of model names the token may call.
+    </ResponseField>
+    <ResponseField name="model_mapping" type="string" required>
+      JSON object of token-level model redirects, for example `{"gpt-4o": "gpt-4o-2024-08-06"}`. `null` when not configured.
+    </ResponseField>
+    <ResponseField name="allow_ips" type="string" required>
+      Newline-separated IP whitelist for the token key. Empty or `null` means no restriction.
+    </ResponseField>
+    <ResponseField name="used_quota" type="integer" required>
+      Cumulative quota consumed through this token (permanent-quota accounting).
+    </ResponseField>
+    <ResponseField name="group" type="string" required>
+      Group used for channel selection. Empty means the token follows the user's group; the special value `auto` enables automatic group ordering.
+    </ResponseField>
+    <ResponseField name="cross_group_retry" type="boolean" required>
+      Whether retry may cross to the next group. Only effective when `group` is `auto`.
+    </ResponseField>
+    <ResponseField name="quota_type" type="integer" required>
+      Quota mode: `0` unlimited, `1` permanent quota, `2` time-window quota, `3` time-window plus cycle quota.
+    </ResponseField>
+    <ResponseField name="window_hours" type="integer" required>
+      Length of each quota window in hours. Effective for `quota_type` `2` and `3`.
+    </ResponseField>
+    <ResponseField name="window_quota" type="integer" required>
+      Quota granted per window.
+    </ResponseField>
+    <ResponseField name="window_start_hour" type="integer" required>
+      Hour of day (`0`-`23`) the window grid is aligned to.
+    </ResponseField>
+    <ResponseField name="cycle_days" type="integer" required>
+      Length of each quota cycle in days. Effective for `quota_type` `3`.
+    </ResponseField>
+    <ResponseField name="cycle_quota" type="integer" required>
+      Quota granted per cycle.
+    </ResponseField>
+    <ResponseField name="window_used_quota" type="integer" required>
+      Quota already used in the current window. Server-managed.
+    </ResponseField>
+    <ResponseField name="window_start_time" type="integer" required>
+      Unix timestamp (seconds) of the current window start. Server-managed.
+    </ResponseField>
+    <ResponseField name="cycle_used_quota" type="integer" required>
+      Quota already used in the current cycle. Server-managed.
+    </ResponseField>
+    <ResponseField name="cycle_start_time" type="integer" required>
+      Unix timestamp (seconds) of the current cycle start. Server-managed.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<Note>
+Management endpoints return HTTP `200` even on business failures; always check the `success` field.
+</Note>
+
+## Error messages
+
+| Condition | Description |
+| --- | --- |
+| Database error | Querying or counting the tokens failed; see server logs |

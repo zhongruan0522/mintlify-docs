@@ -1,7 +1,83 @@
 ---
 title: Update Current User Information
+description: Update the current user's username, display name, and password with original-password confirmation.
 api: "PUT /api/user/self"
 ---
 
-🔐 Login Required (User Permission)
+Updates the profile of the user making the request. Only `username`, `display_name`, and `password` are persisted; changing the password additionally requires the current password.
 
+Requires **User** permission (any logged-in user). See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request PUT \
+  --url 'https://your-nookmux-domain/api/user/self' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 2' \
+  --header 'Content-Type: application/json' \
+  --data '{
+  "username": "alice",
+  "display_name": "Alice",
+  "original_password": "current-password",
+  "password": "new-password"
+}'
+```
+
+</RequestExample>
+
+### Body
+
+<ParamField path="body.username" type="string">
+New username, at most 20 characters. Must remain unique; leaving it empty keeps the current username.
+</ParamField>
+
+<ParamField path="body.display_name" type="string">
+New display name, at most 20 characters. Leaving it empty keeps the current display name.
+</ParamField>
+
+<ParamField path="body.original_password" type="string">
+Current password, verified whenever `password` is provided. May be empty only when the account has no password yet, for example an OAuth-bound account setting a password for the first time.
+</ParamField>
+
+<ParamField path="body.password" type="string">
+New password, 8 to 20 characters. Omit it or leave it empty to keep the current password.
+</ParamField>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": ""
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+Whether the profile was updated.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+Error description when `success` is `false`; empty otherwise.
+</ResponseField>
+
+<Note>
+Only the fields above are written; other fields of the bound user structure are subject to the same length validation but are ignored. Empty fields are not written to the database, so omitted fields keep their current values. Role, quota, group, and remark are managed through the admin user endpoints. Security-sensitive caches for the user are invalidated after a successful update.
+</Note>
+
+## Error messages
+
+| Condition | Description |
+| --- | --- |
+| Invalid parameters | The JSON body is missing or malformed |
+| Invalid input | Validation failed, for example `username` longer than 20 characters or `password` outside 8-20 characters |
+| Original password is incorrect | `original_password` does not match the current password (and the account already has a password) |
+| Database error | The update failed, including a username conflict with an existing user; see server logs |

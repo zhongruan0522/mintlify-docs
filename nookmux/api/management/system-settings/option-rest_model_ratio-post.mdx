@@ -1,7 +1,56 @@
 ---
 title: Reset Model Ratio
+description: Restore the ModelRatio option to the built-in default model pricing ratios.
 api: "POST /api/option/rest_model_ratio"
 ---
 
-👑 Requires Super Administrator (Root) Permissions
+Resets the `ModelRatio` option to the built-in default model ratio table. The default JSON is persisted through the option store (database write plus in-memory refresh) and re-applied to the billing runtime, so model pricing immediately falls back to defaults for all models. The action is recorded in the admin audit log as an option update.
 
+No request body is required.
+
+Requires **Root** (super administrator) permissions. See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request POST \
+  --url 'https://your-nookmux-domain/api/option/rest_model_ratio' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1'
+```
+
+</RequestExample>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "Model ratios reset successfully",
+  "data": null
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+  Whether the reset completed.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  `Model ratios reset successfully` on success; error description when `success` is `false`.
+</ResponseField>
+
+<ResponseField name="data" type="null" required>
+  Always `null`; the endpoint returns no payload.
+</ResponseField>
+
+<Note>
+  Custom model ratios are overwritten without confirmation; restore them manually via `PUT /api/option/` if needed. Failure of either the persist step or the runtime re-apply step returns `success: false` with the raw error text in `message`, and the audit entry is written only after both steps succeed.
+</Note>

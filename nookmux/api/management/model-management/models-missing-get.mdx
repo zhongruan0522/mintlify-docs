@@ -1,7 +1,58 @@
 ---
 title: Get Missing Models
+description: List model names served by enabled channels that have no model metadata record yet.
 api: "GET /api/models/missing"
 ---
 
-👨‍💼 Requires Admin Permissions (Admin)
+List the model names that are served by at least one enabled channel but do not have a corresponding record in the model metadata table. Use this list to discover models that still need metadata configuration, or to feed the [upstream model sync](/nookmux/api/management/model-management/models-sync_upstream-post).
 
+Requires **Admin** permissions. See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url 'https://your-nookmux-domain/api/models/missing' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1'
+```
+
+</RequestExample>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "data": [
+    "claude-opus-4-6",
+    "gemini-2.5-pro"
+  ]
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+Whether the query was executed.
+</ResponseField>
+
+<ResponseField name="data" type="array of string" required>
+Names of the models that are enabled on at least one channel but have no model metadata record. Serialized as `null` when every enabled model already has a record; an empty array `[]` when no models are enabled at all.
+</ResponseField>
+
+<Note>
+Management endpoints return HTTP `200` even on business failures; always check the `success` field. Unlike the other model endpoints, the success payload of this endpoint does not include a `message` field; failures are reported through `success: false` with the raw error in `message`.
+</Note>
+
+## Error messages
+
+| Condition | Description |
+| --- | --- |
+| Database error | Reading the enabled models or the existing metadata failed; the raw error is returned in `message` |

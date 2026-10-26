@@ -1,7 +1,63 @@
 ---
 title: 获取初始化状态
+description: 获取站点是否已完成初始化、是否已存在 root 账号以及所用数据库类型。
 api: "GET /api/setup"
 ---
 
-🔓 无需鉴权
+返回站点的初始化状态。安装向导在创建首个管理员账号之前使用该接口。系统完成初始化后，`root_init` 与 `database_type` 保持零值，只有 `status` 仍有意义。
 
+该接口为公开接口，无需鉴权。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
+
+## 请求
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url 'https://your-nookmux-domain/api/setup'
+```
+
+</RequestExample>
+
+## 响应
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "data": {
+    "status": false,
+    "root_init": false,
+    "database_type": "mysql"
+  }
+}
+```
+
+</ResponseExample>
+
+### 响应字段
+
+<ResponseField name="success" type="boolean" required>
+  请求是否成功。
+</ResponseField>
+
+<ResponseField name="data" type="object" required>
+  初始化状态。
+
+  <Expandable title="data 结构">
+    <ParamField path="status" type="boolean" required>
+      系统是否已完成初始化。
+    </ParamField>
+    <ParamField path="root_init" type="boolean" required>
+      数据库中是否已存在 root 用户。`status` 为 `true` 时不再查询数据库，恒为 `false`。
+    </ParamField>
+    <ParamField path="database_type" type="string" required>
+      当前使用的数据库引擎：`mysql`、`opengauss`、`dameng`、`kingbase`、`postgres` 或 `sqlite`。`status` 为 `true` 时为空字符串。
+    </ParamField>
+  </Expandable>
+</ResponseField>
+
+<Note>
+  该响应不包含标准的 `message` 字段。PG 兼容内核（openGauss、金仓）按各自名称上报，不会报告为 `postgres`。
+</Note>

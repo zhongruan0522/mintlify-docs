@@ -1,7 +1,78 @@
 ---
 title: 获取系统选项
+description: 列出当前内存中已加载的全部非敏感系统选项键值对。
 api: "GET /api/option/"
 ---
 
-👑 需要超级管理员权限（Root）
+返回当前内存选项表中的全部系统选项，以 `key`/`value` 键值对形式给出。敏感键由服务端过滤：以 `Token`、`Secret`、`Key`、`secret`、`api_key` 结尾，或包含 `Password`/`password` 的键一律不返回——布尔开关 `PasswordLoginEnabled` 与 `PasswordRegisterEnabled` 例外，属于显式豁免项。
 
+需要**超级管理员（Root）**权限。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
+
+## 请求
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url 'https://your-nookmux-domain/api/option/' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1'
+```
+
+</RequestExample>
+
+### 查询参数
+
+<ParamField path="exclude_large_options" type="string" default="">
+  设为 `true` 时，已废弃的大型 JSON 选项的值替换为 `{}`，以缩小响应体。其他取值（包括缺省）返回存储的原值。
+</ParamField>
+
+## 响应
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": [
+    {
+      "key": "SystemName",
+      "value": "NookMux"
+    },
+    {
+      "key": "PasswordLoginEnabled",
+      "value": "true"
+    }
+  ]
+}
+```
+
+</ResponseExample>
+
+### 响应字段
+
+<ResponseField name="success" type="boolean" required>
+  选项是否读取成功。
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  `success` 为 `false` 时的错误描述；成功时为空字符串。
+</ResponseField>
+
+<ResponseField name="data" type="array" required>
+  选项条目列表。
+
+  <Expandable title="选项条目结构">
+    <ResponseField name="key" type="string" required>
+      选项键，例如 `SystemName`。
+    </ResponseField>
+    <ResponseField name="value" type="string" required>
+      序列化为字符串的选项值；布尔与数值以字符串形式呈现。
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<Note>
+  返回内容反映内存选项表，该表在启动时从数据库加载，并在每次选项更新后刷新。敏感键的值（OAuth 客户端密钥、SMTP 密码等）不会通过本端点返回；如需核对请直接查看控制台或数据库。
+</Note>

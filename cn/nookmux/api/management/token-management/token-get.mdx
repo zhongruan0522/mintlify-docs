@@ -1,7 +1,201 @@
 ---
 title: 获取所有令牌
+description: 分页列出当前用户的 API 令牌，按最新在前排序，密钥脱敏返回。
 api: "GET /api/token/"
 ---
 
-🔐 需要登录（User权限）
+列出当前用户名下的 API 令牌，按最新在前（`id` 倒序）分页返回。每个令牌的 `key` 均已脱敏；完整密钥仅在创建令牌时返回一次。
 
+需要登录（**User** 权限）。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
+
+## 请求
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url 'https://your-nookmux-domain/api/token/?p=1&page_size=10' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1'
+```
+
+</RequestExample>
+
+### 查询参数
+
+<ParamField path="query.p" type="integer" default="1">
+  页码。
+</ParamField>
+
+<ParamField path="query.page_size" type="integer" default="10">
+  每页条数，上限 100。分页辅助逻辑同时兼容旧别名 `ps` 与 `size`。
+</ParamField>
+
+## 响应
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": {
+    "page": 1,
+    "page_size": 10,
+    "total": 3,
+    "items": [
+      {
+        "id": 3,
+        "user_id": 1,
+        "key": "***************************************************",
+        "status": 1,
+        "name": "my-token",
+        "created_time": 1748000000,
+        "accessed_time": 1748086400,
+        "expired_time": -1,
+        "remain_quota": 500000,
+        "unlimited_quota": false,
+        "model_limits_enabled": false,
+        "model_limits": "",
+        "model_mapping": null,
+        "allow_ips": null,
+        "used_quota": 0,
+        "group": "default",
+        "cross_group_retry": false,
+        "quota_type": 1,
+        "window_hours": 0,
+        "window_quota": 0,
+        "window_start_hour": 0,
+        "cycle_days": 0,
+        "cycle_quota": 0,
+        "window_used_quota": 0,
+        "window_start_time": 0,
+        "cycle_used_quota": 0,
+        "cycle_start_time": 0
+      }
+    ]
+  }
+}
+```
+
+</ResponseExample>
+
+### 响应字段
+
+<ResponseField name="success" type="boolean" required>
+  请求是否成功。
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  `success` 为 `false` 时的错误描述；成功时为空字符串。
+</ResponseField>
+
+<ResponseField name="data.page" type="integer" required>
+  当前页码。
+</ResponseField>
+
+<ResponseField name="data.page_size" type="integer" required>
+  实际生效的每页条数。
+</ResponseField>
+
+<ResponseField name="data.total" type="integer" required>
+  当前用户拥有的令牌总数。
+</ResponseField>
+
+<ResponseField name="data.items" type="array" required>
+  当前页的令牌对象数组。每个令牌的 `key` 均脱敏为与真实密钥等长的星号。
+
+  <Expandable title="token 结构">
+    <ResponseField name="id" type="integer" required>
+      令牌 id。
+    </ResponseField>
+    <ResponseField name="user_id" type="integer" required>
+      令牌所属用户 id。
+    </ResponseField>
+    <ResponseField name="key" type="string" required>
+      脱敏后的令牌密钥：与真实密钥等长的星号串。
+    </ResponseField>
+    <ResponseField name="status" type="integer" required>
+      令牌状态：`1` 启用，`2` 禁用，`3` 已过期，`4` 额度耗尽。
+    </ResponseField>
+    <ResponseField name="name" type="string" required>
+      令牌显示名称，最长 50 字符。
+    </ResponseField>
+    <ResponseField name="created_time" type="integer" required>
+      令牌创建时间的 Unix 时间戳（秒）。
+    </ResponseField>
+    <ResponseField name="accessed_time" type="integer" required>
+      密钥最近一次使用时间的 Unix 时间戳（秒）。
+    </ResponseField>
+    <ResponseField name="expired_time" type="integer" required>
+      令牌过期时间的 Unix 时间戳（秒）；`-1` 表示永不过期。
+    </ResponseField>
+    <ResponseField name="remain_quota" type="integer" required>
+      剩余额度，永久限额令牌（`quota_type` 为 `1`）按计费扣减；无限额度令牌（`quota_type` 为 `0`）不扣减该值，仅累计 `used_quota`。时段/周期限额类型使用各自的额度字段。
+    </ResponseField>
+    <ResponseField name="unlimited_quota" type="boolean" required>
+      是否为无限额度令牌。
+    </ResponseField>
+    <ResponseField name="model_limits_enabled" type="boolean" required>
+      是否对该令牌启用 `model_limits` 模型限制。
+    </ResponseField>
+    <ResponseField name="model_limits" type="string" required>
+      该令牌可调用的模型名列表，逗号分隔。
+    </ResponseField>
+    <ResponseField name="model_mapping" type="string" required>
+      令牌级模型重定向的 JSON 对象，例如 `{"gpt-4o": "gpt-4o-2024-08-06"}`。未配置时为 `null`。
+    </ResponseField>
+    <ResponseField name="allow_ips" type="string" required>
+      令牌密钥的 IP 白名单，换行分隔。为空或 `null` 表示不限制。
+    </ResponseField>
+    <ResponseField name="used_quota" type="integer" required>
+      该令牌累计消耗的额度（永久额度口径）。
+    </ResponseField>
+    <ResponseField name="group" type="string" required>
+      令牌用于渠道选择的分组。为空表示跟随用户分组；特殊值 `auto` 表示自动分组排序。
+    </ResponseField>
+    <ResponseField name="cross_group_retry" type="boolean" required>
+      重试时是否允许跨到下一个分组。仅 `group` 为 `auto` 时生效。
+    </ResponseField>
+    <ResponseField name="quota_type" type="integer" required>
+      限额模式：`0` 无限额度，`1` 永久限额，`2` 时段限额，`3` 时段+周期限额。
+    </ResponseField>
+    <ResponseField name="window_hours" type="integer" required>
+      每个额度窗口的时长（小时）。`quota_type` 为 `2`、`3` 时生效。
+    </ResponseField>
+    <ResponseField name="window_quota" type="integer" required>
+      每个窗口的额度。
+    </ResponseField>
+    <ResponseField name="window_start_hour" type="integer" required>
+      窗口对齐的小时（`0`-`23`）。
+    </ResponseField>
+    <ResponseField name="cycle_days" type="integer" required>
+      每个额度周期的天数。`quota_type` 为 `3` 时生效。
+    </ResponseField>
+    <ResponseField name="cycle_quota" type="integer" required>
+      每个周期的额度。
+    </ResponseField>
+    <ResponseField name="window_used_quota" type="integer" required>
+      当前窗口已用额度。由服务端维护。
+    </ResponseField>
+    <ResponseField name="window_start_time" type="integer" required>
+      当前窗口开始时间的 Unix 时间戳（秒）。由服务端维护。
+    </ResponseField>
+    <ResponseField name="cycle_used_quota" type="integer" required>
+      当前周期已用额度。由服务端维护。
+    </ResponseField>
+    <ResponseField name="cycle_start_time" type="integer" required>
+      当前周期开始时间的 Unix 时间戳（秒）。由服务端维护。
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<Note>
+  管理接口在业务失败时同样返回 HTTP `200`，必须以 `success` 字段判断结果。
+</Note>
+
+## 错误说明
+
+| 条件 | 说明 |
+| --- | --- |
+| 数据库错误 | 查询或统计令牌失败，详见服务端日志 |

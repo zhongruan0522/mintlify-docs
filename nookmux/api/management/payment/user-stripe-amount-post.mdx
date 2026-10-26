@@ -1,7 +1,69 @@
 ---
 title: Get Stripe Payment Amount
+description: Compute the payable amount for a Stripe top-up before creating a Checkout session.
 api: "POST /api/user/stripe/amount"
 ---
 
-🔐 Login Required (User Permission)
+Quote endpoint for Stripe top-ups. Computes the amount of money to pay for a requested top-up quantity by applying the configured Stripe unit price, the caller's top-up group ratio and the preset amount discount. Only `amount` is used; no order is created. Use `POST /api/user/stripe/pay` to actually initiate the payment.
 
+Requires **User** permissions (any logged-in account). See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request POST \
+  --url 'https://your-nookmux-domain/api/user/stripe/amount' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1' \
+  --header 'Content-Type: application/json' \
+  --data '{
+  "amount": 10
+}'
+```
+
+</RequestExample>
+
+### Body
+
+<ParamField path="body.amount" type="integer" required>
+Top-up quantity to price. Must not be lower than the configured Stripe minimum top-up amount.
+</ParamField>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "Top-up successful",
+  "data": "80.00"
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+Whether the payable amount was computed.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+Localized status message; error description when `success` is `false`. The exact wording depends on the request language.
+</ResponseField>
+
+<ResponseField name="data" type="string" required>
+Payable amount for the requested quantity, formatted as a string with two decimal places.
+</ResponseField>
+
+## Error messages
+
+| Condition | Description |
+| --- | --- |
+| Invalid parameters | The JSON body is missing or malformed |
+| Top-up amount cannot be less than the minimum | `amount` is lower than the configured Stripe minimum top-up amount |
+| Failed to get user group | The caller's top-up group could not be loaded |
+| Top-up amount is too low | The computed payable amount does not exceed the minimum chargeable amount (0.01) |

@@ -1,7 +1,75 @@
 ---
 title: 使用兑换码
+description: 兑换一个兑换码，并将其额度充入当前账户。
 api: "POST /api/user/topup"
 ---
 
-🔐 需要登录（User权限）
+兑换一个充值（兑换）码，把该码的额度充入当前账户。兑换在数据库事务中执行：锁定兑换码行并原子地把状态翻转为已使用，因此即使并发请求也只有一个能兑换成功；额度会累加到用户余额，并记录一条充值日志。
 
+同一用户的请求由在途锁串行化：上一笔兑换仍在处理时，同账户的后续请求会被立即拒绝。
+
+需要**用户（User）**权限。该接口挂载了更严格的限流（CriticalRateLimit）。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
+
+## 请求
+
+<RequestExample>
+
+```bash cURL
+curl --request POST \
+  --url 'https://your-nookmux-domain/api/user/topup' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1' \
+  --header 'Content-Type: application/json' \
+  --data '{
+  "key": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+}'
+```
+
+</RequestExample>
+
+### 请求体
+
+<ParamField path="body.key" type="string" required>
+  要兑换的兑换码。
+</ParamField>
+
+## 响应
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": 100000
+}
+```
+
+</ResponseExample>
+
+### 响应字段
+
+<ResponseField name="success" type="boolean" required>
+  兑换码是否兑换成功。
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  `success` 为 `false` 时的错误描述；成功时为空字符串。
+</ResponseField>
+
+<ResponseField name="data" type="integer" required>
+  本次兑换码为账户充入的额度数量。
+</ResponseField>
+
+<Note>
+  该接口挂载了更严格的限流（CriticalRateLimit）。所有兑换失败场景——兑换码不存在、已被使用、已过期——统一返回同一条提示；如需区分请查看服务端日志。
+</Note>
+
+## 错误说明
+
+| 条件 | 说明 |
+| --- | --- |
+| 请求体格式不正确 | JSON 请求体缺失或格式错误 |
+| 充值处理中，请稍后重试 | 同一用户有另一笔兑换仍在处理中 |
+| 兑换失败，请稍后重试 | 兑换码无效、已被使用或已过期 |
+| 数据库错误，请稍后重试 | 兑换事务或额度更新失败，详见服务端日志 |

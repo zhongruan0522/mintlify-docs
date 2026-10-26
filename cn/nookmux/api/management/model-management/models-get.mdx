@@ -1,7 +1,220 @@
 ---
 title: 获取所有模型元数据
+description: 分页列出模型元数据记录，附带绑定信息与按供应商统计的模型数量。
 api: "GET /api/models/"
 ---
 
-👨‍💼 需要管理员权限（Admin）
+分页列出全部模型元数据记录。每条记录都附带绑定信息：服务该模型的已启用渠道、可使用它的用户分组、计费方式、支持的端点类型；规则类记录还附带命中的具体模型名。`vendor_counts` 额外按供应商统计模型数量，统计范围为全部记录，不受分页影响。
 
+需要**管理员（Admin）**权限。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
+
+## 请求
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url 'https://your-nookmux-domain/api/models/?p=1&page_size=10' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1'
+```
+
+</RequestExample>
+
+### 查询参数
+
+<ParamField path="p" type="integer" default="1">
+页码，从 `1` 开始。
+</ParamField>
+
+<ParamField path="page_size" type="integer" default="10">
+每页条数，上限 `100`。未传 `page_size` 时也接受旧别名 `ps` 与 `size`。
+</ParamField>
+
+## 响应
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": {
+    "items": [
+      {
+        "id": 42,
+        "model_name": "gpt-4o",
+        "description": "OpenAI flagship multimodal model",
+        "icon": "openai",
+        "tags": "llm,chat",
+        "vendor_id": 1,
+        "endpoints": "[\"openai\",\"anthropic\"]",
+        "context_length": 128000,
+        "max_output_tokens": 16384,
+        "input_modalities": ["text", "image"],
+        "output_modalities": ["text"],
+        "knowledge_cutoff": "2023-10",
+        "release_date": "2024-05-13",
+        "parameter_count": "unknown",
+        "status": 1,
+        "created_time": 1715587200,
+        "updated_time": 1718100000,
+        "name_rule": 0,
+        "bound_channels": [
+          { "name": "my-openai", "type": 1 }
+        ],
+        "enable_groups": ["default"],
+        "quota_types": [0]
+      },
+      {
+        "id": 41,
+        "model_name": "gpt-3.5",
+        "icon": "openai",
+        "vendor_id": 1,
+        "status": 1,
+        "created_time": 1715587100,
+        "updated_time": 1718100000,
+        "name_rule": 1,
+        "endpoints": "[\"openai\"]",
+        "enable_groups": ["default"],
+        "quota_types": [0, 1],
+        "matched_models": ["gpt-3.5-turbo", "gpt-3.5-turbo-16k"],
+        "matched_count": 2
+      }
+    ],
+    "total": 128,
+    "page": 1,
+    "page_size": 10,
+    "vendor_counts": {
+      "1": 42,
+      "2": 17
+    }
+  }
+}
+```
+
+</ResponseExample>
+
+### 响应字段
+
+<ResponseField name="success" type="boolean" required>
+查询是否成功执行。
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+`success` 为 `false` 时的错误描述；成功时为空字符串。
+</ResponseField>
+
+<ResponseField name="data.items" type="array" required>
+当前页的模型元数据记录，按 ID 降序排列，并附带绑定信息。
+
+  <Expandable title="模型结构">
+    <ResponseField name="id" type="integer" required>
+      模型元数据记录 ID。
+    </ResponseField>
+    <ResponseField name="model_name" type="string" required>
+      模型名；与具体模型的匹配方式由 `name_rule` 决定。
+    </ResponseField>
+    <ResponseField name="description" type="string">
+      模型的自由描述。
+    </ResponseField>
+    <ResponseField name="icon" type="string">
+      控制台展示的图标标识。
+    </ResponseField>
+    <ResponseField name="tags" type="string">
+      逗号分隔的标签。
+    </ResponseField>
+    <ResponseField name="vendor_id" type="integer">
+      模型所属供应商的 ID；`0` 表示未指定供应商。供应商记录由 [供应商接口](/cn/nookmux/api/management/vendors/vendors-get) 管理。
+    </ResponseField>
+    <ResponseField name="endpoints" type="string">
+      支持的端点类型，序列化为 JSON 数组字符串，例如 `"[\"openai\",\"anthropic\"]"`。可取值：`openai`、`openai-response`、`openai-response-compact`、`anthropic`、`gemini`、`jina-rerank`、`image-generation`、`embeddings`。存储值为空时由定价缓存自动填充。
+    </ResponseField>
+    <ResponseField name="context_length" type="integer">
+      上下文窗口大小（token 数）。
+    </ResponseField>
+    <ResponseField name="max_output_tokens" type="integer">
+      最大输出 token 数。
+    </ResponseField>
+    <ResponseField name="input_modalities" type="array of string">
+      接受的输入模态，例如 `["text","image"]`。
+    </ResponseField>
+    <ResponseField name="output_modalities" type="array of string">
+      输出模态，例如 `["text"]`。
+    </ResponseField>
+    <ResponseField name="capabilities" type="array of string">
+      模型的自由能力标签。
+    </ResponseField>
+    <ResponseField name="knowledge_cutoff" type="string">
+      模型的知识截止日期。
+    </ResponseField>
+    <ResponseField name="release_date" type="string">
+      模型的发布日期。
+    </ResponseField>
+    <ResponseField name="parameter_count" type="string">
+      参数规模描述。
+    </ResponseField>
+    <ResponseField name="status" type="integer" required>
+      模型状态：`1` 启用，`0` 停用。
+    </ResponseField>
+    <ResponseField name="name_rule" type="integer" required>
+      `model_name` 与具体模型的匹配方式：`0` 精确匹配，`1` 前缀匹配，`2` 包含匹配，`3` 后缀匹配。
+    </ResponseField>
+    <ResponseField name="created_time" type="integer" required>
+      记录创建时间的 Unix 时间戳。
+    </ResponseField>
+    <ResponseField name="updated_time" type="integer" required>
+      最近一次更新时间的 Unix 时间戳。
+    </ResponseField>
+    <ResponseField name="bound_channels" type="array of object">
+      服务该模型的已启用渠道；没有已启用渠道提供时省略。
+
+      <Expandable title="绑定渠道结构">
+        <ResponseField name="name" type="string">
+          渠道显示名称。
+        </ResponseField>
+        <ResponseField name="type" type="integer">
+          渠道类型常量，例如 `1` 表示 OpenAI。
+        </ResponseField>
+      </Expandable>
+    </ResponseField>
+    <ResponseField name="enable_groups" type="array of string">
+      允许使用该模型的用户分组，由定价条目聚合而来。
+    </ResponseField>
+    <ResponseField name="quota_types" type="array of integer">
+      该模型定价条目中的计费方式：`0` 按量计费，`1` 按次计费。
+    </ResponseField>
+    <ResponseField name="matched_models" type="array of string">
+      仅规则类记录（`name_rule` 不为 `0`）返回：规则命中的具体模型名列表。
+    </ResponseField>
+    <ResponseField name="matched_count" type="integer">
+      仅规则类记录返回：命中的模型数量。
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="data.total" type="integer" required>
+模型元数据记录总数。
+</ResponseField>
+
+<ResponseField name="data.page" type="integer" required>
+当前页码。
+</ResponseField>
+
+<ResponseField name="data.page_size" type="integer" required>
+本次请求实际生效的每页条数。
+</ResponseField>
+
+<ResponseField name="data.vendor_counts" type="object" required>
+供应商 ID 到该供应商模型数量的映射，统计范围为全部记录而非当前页。未指定供应商的记录计入 `"0"`。
+</ResponseField>
+
+<Note>
+管理接口在业务失败时同样返回 HTTP `200`，必须以 `success` 字段判断结果。规则类记录（`name_rule` 不为 `0`）的 `bound_channels`、`enable_groups`、`quota_types` 与 `endpoints` 是对全部命中该规则的定价条目取并集的结果。
+</Note>
+
+## 错误说明
+
+| 条件 | 说明 |
+| --- | --- |
+| 数据库错误 | 查询模型列表或统计总数失败，详见服务端日志 |

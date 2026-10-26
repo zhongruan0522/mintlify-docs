@@ -1,7 +1,199 @@
 ---
 title: 更新令牌
+description: 更新当前用户名下的令牌，支持整体更新与仅改状态两种模式。
 api: "PUT /api/token/"
 ---
 
-🔐 需要登录（User权限）
+更新当前用户名下的令牌。不带 `status_only` 时整体替换可编辑字段；带 `status_only` 时仅修改 `status` 字段。响应返回更新后的令牌，`key` 为脱敏值。
 
+需要登录（**User** 权限）。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
+
+## 请求
+
+<RequestExample>
+
+```bash cURL
+curl --request PUT \
+  --url 'https://your-nookmux-domain/api/token/' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1' \
+  --header 'Content-Type: application/json' \
+  --data '{
+  "id": 3,
+  "name": "my-token",
+  "expired_time": -1,
+  "quota_type": 1,
+  "remain_quota": 500000,
+  "unlimited_quota": false,
+  "group": "default",
+  "cross_group_retry": false,
+  "model_limits_enabled": false,
+  "model_limits": "",
+  "model_mapping": null,
+  "allow_ips": null
+}'
+```
+
+</RequestExample>
+
+### 查询参数
+
+<ParamField path="query.status_only" type="string">
+  任意非空值即进入仅改状态模式：只写入 `body.status`，请求体其余字段全部忽略。
+</ParamField>
+
+### 请求体
+
+<ParamField path="body.id" type="integer" required>
+  待更新令牌的 id。该令牌必须属于当前用户。
+</ParamField>
+
+<ParamField path="body.status" type="integer">
+  新状态：`1` 启用，`2` 禁用，`3` 已过期，`4` 额度耗尽。仅在 `status_only` 模式下生效。启用（`1`）已过期且过期时间已到的令牌、或额度耗尽且无剩余额度的令牌会被拒绝。
+</ParamField>
+
+<ParamField path="body.name" type="string">
+  令牌显示名称，最长 50 字符。整体更新模式下替换。
+</ParamField>
+
+<ParamField path="body.expired_time" type="integer">
+  令牌过期时间的 Unix 时间戳（秒）；`-1` 表示永不过期。整体更新模式下替换。
+</ParamField>
+
+<ParamField path="body.quota_type" type="integer">
+  限额模式，语义与[创建令牌](/cn/nookmux/api/management/token-management/token-post)一致：`0` 无限额度，`1` 永久限额，`2` 时段限额，`3` 时段+周期限额；`0` 且 `unlimited_quota: false` 时按 `1` 处理。与创建不同的是，此处不会拒绝未知取值——校验仅覆盖 `1`-`3` 各类型的参数约束。
+</ParamField>
+
+<ParamField path="body.unlimited_quota" type="boolean">
+  是否为无限额度令牌。由服务端按 `quota_type` 覆盖。
+</ParamField>
+
+<ParamField path="body.remain_quota" type="integer">
+  永久限额令牌的总额度；不得为负且不得超过服务端上限。仅在 `quota_type` 为 `1` 时校验。
+</ParamField>
+
+<ParamField path="body.window_hours" type="integer">
+  每个额度窗口的时长（小时），至少为 `1`。`quota_type` 为 `2`、`3` 时生效。
+</ParamField>
+
+<ParamField path="body.window_quota" type="integer">
+  每个窗口的额度，必须大于 `0`。`quota_type` 为 `2`、`3` 时生效。
+</ParamField>
+
+<ParamField path="body.window_start_hour" type="integer">
+  窗口对齐的小时（`0`-`23`）。`quota_type` 为 `2`、`3` 时生效。
+</ParamField>
+
+<ParamField path="body.cycle_days" type="integer">
+  每个额度周期的天数，至少为 `1`。`quota_type` 为 `3` 时生效。
+</ParamField>
+
+<ParamField path="body.cycle_quota" type="integer">
+  每个周期的额度，必须大于 `0`。`quota_type` 为 `3` 时生效。
+</ParamField>
+
+<ParamField path="body.model_limits_enabled" type="boolean">
+  是否对该令牌启用 `model_limits` 模型限制。
+</ParamField>
+
+<ParamField path="body.model_limits" type="string">
+  该令牌可调用的模型名列表，逗号分隔。
+</ParamField>
+
+<ParamField path="body.model_mapping" type="string">
+  令牌级模型重定向的 JSON 对象，校验规则与[创建令牌](/cn/nookmux/api/management/token-management/token-post)一致。`null` 或空字符串表示清除重定向。
+</ParamField>
+
+<ParamField path="body.allow_ips" type="string">
+  令牌密钥的 IP 白名单，换行分隔。`null` 或空表示不限制。
+</ParamField>
+
+<ParamField path="body.group" type="string">
+  令牌用于渠道选择的分组。为空表示跟随用户分组；`auto` 表示自动分组排序。
+</ParamField>
+
+<ParamField path="body.cross_group_retry" type="boolean">
+  重试时是否允许跨到下一个分组。仅 `group` 为 `auto` 时生效。
+</ParamField>
+
+<ParamField path="body.key / body.created_time / body.accessed_time / body.used_quota" type="any">
+  不可更新：`key`、时间戳与用量计数永远不会取自请求体。
+</ParamField>
+
+## 响应
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": {
+    "id": 3,
+    "user_id": 1,
+    "key": "***************************************************",
+    "status": 1,
+    "name": "my-token",
+    "created_time": 1748000000,
+    "accessed_time": 1748086400,
+    "expired_time": -1,
+    "remain_quota": 500000,
+    "unlimited_quota": false,
+    "model_limits_enabled": false,
+    "model_limits": "",
+    "model_mapping": null,
+    "allow_ips": null,
+    "used_quota": 0,
+    "group": "default",
+    "cross_group_retry": false,
+    "quota_type": 1,
+    "window_hours": 0,
+    "window_quota": 0,
+    "window_start_hour": 0,
+    "cycle_days": 0,
+    "cycle_quota": 0,
+    "window_used_quota": 0,
+    "window_start_time": 0,
+    "cycle_used_quota": 0,
+    "cycle_start_time": 0
+  }
+}
+```
+
+</ResponseExample>
+
+### 响应字段
+
+<ResponseField name="success" type="boolean" required>
+  令牌是否更新成功。
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  `success` 为 `false` 时的错误描述；成功时为空字符串。
+</ResponseField>
+
+<ResponseField name="data" type="object" required>
+  更新后的令牌对象。结构与[获取指定令牌](/cn/nookmux/api/management/token-management/token-id-get)一致；`key` 为脱敏值。
+</ResponseField>
+
+<Note>
+  整体更新模式下，当 `quota_type` 或窗口/周期参数发生变化时，窗口与周期的运行时用量计数会被重置为 `0`，新限额从干净状态开始计费。校验失败以 `success: false` 加本地化 `message` 返回。
+</Note>
+
+## 错误说明
+
+| 条件 | 说明 |
+| --- | --- |
+| 请求体非法 | JSON 缺失或格式错误 |
+| 令牌名称过长 | `name` 超过 50 字符 |
+| 模型重定向配置格式错误 | `model_mapping` 未通过与创建令牌相同的校验 |
+| 额度值不能为负数 | `quota_type` 为 `1` 但 `remain_quota` 为负数 |
+| 额度值超出有效范围 | `remain_quota` 超过服务端上限 |
+| 窗口时长必须大于等于 1 小时 | `quota_type` 为 `2` 或 `3` 但 `window_hours` 小于 `1` |
+| 窗口额度必须大于 0 | `quota_type` 为 `2` 或 `3` 但 `window_quota` 不为正 |
+| 窗口起始小时必须在 0-23 之间 | `window_start_hour` 不在 `0`-`23` 范围内 |
+| 周期天数必须大于等于 1 | `quota_type` 为 `3` 但 `cycle_days` 小于 `1` |
+| 周期总额度必须大于 0 | `quota_type` 为 `3` 但 `cycle_quota` 不为正 |
+| 令牌已过期，无法启用 | 启用 `expired_time` 已过的令牌 |
+| 令牌可用额度已用尽，无法启用 | 启用额度耗尽且无剩余额度、非无限额度的令牌 |
+| 数据库错误 | 当前用户名下不存在 `body.id` 对应的令牌，或更新落库失败；详见服务端日志 |

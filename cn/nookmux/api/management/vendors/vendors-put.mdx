@@ -1,7 +1,145 @@
 ---
 title: 更新供应商
+description: 提交完整供应商对象，全量更新已有供应商元数据。
 api: "PUT /api/vendors/"
 ---
 
-👨‍💼 需要管理员权限（Admin）
+更新已有供应商元数据。请求体必须携带供应商 `id`；供应商名称在其余未删除供应商中必须保持唯一。
 
+该接口为全量更新：提交的对象会按原样保存，请求体中省略的可选字段会被写回空值或未设置状态。`updated_time` 由服务端刷新；更新成功后在 `data` 中返回完整记录。
+
+需要**管理员（Admin）**权限。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
+
+## 请求
+
+<RequestExample>
+
+```bash cURL
+curl --request PUT \
+  --url 'https://your-nookmux-domain/api/vendors/' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1' \
+  --header 'Content-Type: application/json' \
+  --data '{
+  "id": 1,
+  "name": "OpenAI",
+  "description": "OpenAI models",
+  "icon": "openai",
+  "data_retention_days": 30,
+  "training_opt_out": true,
+  "status": 1
+}'
+```
+
+</RequestExample>
+
+### 请求体
+
+<ParamField path="body.id" type="integer" required>
+  待更新供应商的 ID。`id` 为 `0`（或缺失）时请求会被拒绝。
+</ParamField>
+
+<ParamField path="body.name" type="string" required>
+  供应商名称，在其余未删除供应商中唯一，最长 128 字符。
+</ParamField>
+
+<ParamField path="body.description" type="string">
+  自由描述。
+</ParamField>
+
+<ParamField path="body.icon" type="string">
+  `@lobehub/icons` 的图标名，由前端直接渲染，最长 128 字符。
+</ParamField>
+
+<ParamField path="body.data_retention_days" type="integer">
+  数据保留天数，展示在定价页（`0` 表示不留存）。省略表示清除该值。
+</ParamField>
+
+<ParamField path="body.training_opt_out" type="boolean">
+  发往该供应商的请求是否默认不用于上游模型训练（展示在定价页）。省略表示清除该值。
+</ParamField>
+
+<ParamField path="body.status" type="integer" default="1">
+  预留状态字段，`1` 表示启用。
+</ParamField>
+
+## 响应
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": {
+    "id": 1,
+    "name": "OpenAI",
+    "description": "OpenAI models",
+    "icon": "openai",
+    "data_retention_days": 30,
+    "training_opt_out": true,
+    "status": 1,
+    "created_time": 1735689600,
+    "updated_time": 1735776000
+  }
+}
+```
+
+</ResponseExample>
+
+### 响应字段
+
+<ResponseField name="success" type="boolean" required>
+  供应商是否更新成功。
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  `success` 为 `false` 时的错误描述；成功时为空字符串。
+</ResponseField>
+
+<ResponseField name="data" type="object" required>
+  更新后的供应商记录。
+
+  <Expandable title="vendor 结构">
+    <ResponseField name="id" type="integer" required>
+      供应商 ID。
+    </ResponseField>
+    <ResponseField name="name" type="string" required>
+      供应商名称。
+    </ResponseField>
+    <ResponseField name="description" type="string">
+      自由描述，为空时省略。
+    </ResponseField>
+    <ResponseField name="icon" type="string">
+      `@lobehub/icons` 的图标名，由前端直接渲染，为空时省略。
+    </ResponseField>
+    <ResponseField name="data_retention_days" type="integer">
+      数据保留天数，未设置时省略。
+    </ResponseField>
+    <ResponseField name="training_opt_out" type="boolean">
+      发往该供应商的请求是否默认不用于上游模型训练，未设置时省略。
+    </ResponseField>
+    <ResponseField name="status" type="integer" required>
+      预留状态字段，`1` 表示启用。
+    </ResponseField>
+    <ResponseField name="created_time" type="integer" required>
+      创建时间的 Unix 时间戳（秒）。
+    </ResponseField>
+    <ResponseField name="updated_time" type="integer" required>
+      最近更新时间的 Unix 时间戳（秒），由服务端刷新。
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<Note>
+管理接口在业务失败时同样返回 HTTP `200`，必须以 `success` 字段判断结果。更新成功会记录到管理端审计日志（vendor 模块）。
+</Note>
+
+## 错误说明
+
+| 条件 | 说明 |
+| --- | --- |
+| 请求体格式不正确 | JSON 缺失或格式错误 |
+| 缺少供应商 ID | 请求体未携带非零的 `id` |
+| 供应商名称已存在 | 其余未删除供应商中已有同名记录 |
+| 数据库错误，请稍后重试 | 读取原始记录、名称重复校验或保存失败（含 `id` 不存在的情况），详见服务端日志 |

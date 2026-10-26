@@ -1,7 +1,325 @@
 ---
 title: Update Channel
+description: Update an existing upstream channel, with key replacement or appending for multi-key channels.
 api: "PUT /api/channel/"
 ---
 
-👨‍💼 Requires Administrator Privileges (Admin)
+Update an existing channel. The request body is the channel object itself; only fields with non-zero values are written, so fields you do not want to change can be omitted or sent as zero values. Server-managed metadata (`channel_info`) is always preserved from the stored channel, and the response returns the updated channel with its key cleared.
 
+Requires **Admin** permissions. See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request PUT \
+  --url 'https://your-nookmux-domain/api/channel/' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1' \
+  --header 'Content-Type: application/json' \
+  --data '{
+  "id": 1,
+  "name": "my-openai",
+  "models": "gpt-4o,gpt-4o-mini",
+  "group": "default,premium",
+  "priority": 10,
+  "weight": 5,
+  "status": 1
+}'
+```
+
+</RequestExample>
+
+### Body
+
+<ParamField path="body.id" type="integer" required>
+ID of the channel to update. Must not be `0`.
+</ParamField>
+
+<ParamField path="body.multi_key_mode" type="string">
+New polling strategy for multi-key channels: `random` or `polling`. Applied only when non-empty; any other value is rejected.
+</ParamField>
+
+<ParamField path="body.key_mode" type="string">
+How `key` is applied on multi-key channels: `replace` (default behavior, also when omitted) overwrites the stored key list; `append` merges the new keys into the existing list after trimming and removing duplicates. Ignored for single-key channels.
+</ParamField>
+
+<ParamField path="body" type="object">
+Channel fields to update, using the same structure as the `channel` object in [Add channel](/nookmux/api/management/channel-management/channel-post). The fields below are the editable ones; server-managed fields (`created_time`, `balance`, `used_quota`, `channel_info`) are filled by the server.
+
+  <Expandable title="channel structure">
+    <ParamField path="type" type="integer">
+      Channel type constant, for example `1` for OpenAI. Omitted or unknown values keep the stored type.
+    </ParamField>
+    <ParamField path="name" type="string">
+      Display name of the channel. Omit to keep the current value.
+    </ParamField>
+    <ParamField path="key" type="string">
+      Upstream API key. For multi-key channels separate keys with newlines; with `key_mode: append` the new keys are merged into the existing list. Omit or send empty to keep the stored key.
+    </ParamField>
+    <ParamField path="base_url" type="string">
+      Custom upstream base URL. Leave empty to use the built-in endpoint for the channel type.
+    </ParamField>
+    <ParamField path="models" type="string">
+      Comma-separated list of model names served by this channel.
+    </ParamField>
+    <ParamField path="group" type="string">
+      Comma-separated user groups that can use this channel.
+    </ParamField>
+    <ParamField path="model_mapping" type="string">
+      JSON object mapping requested model names to upstream model names, for example `{"gpt-4o": "gpt-4o-2024-08-06"}`.
+    </ParamField>
+    <ParamField path="priority" type="integer">
+      Routing priority. Channels with a higher value are preferred when multiple channels serve the same model.
+    </ParamField>
+    <ParamField path="weight" type="integer">
+      Load-balancing weight among channels of equal priority.
+    </ParamField>
+    <ParamField path="status" type="integer">
+      Channel status: `1` enabled, `2` manually disabled, `3` auto-disabled.
+    </ParamField>
+    <ParamField path="test_model" type="string">
+      Model used by the channel test endpoint when the channel does not expose its model list.
+    </ParamField>
+    <ParamField path="tag" type="string">
+      Optional tag for grouping channels in the console.
+    </ParamField>
+    <ParamField path="other" type="string">
+      Channel-type-specific options. For Vertex AI it must be a JSON object of regions containing a `default` key.
+    </ParamField>
+    <ParamField path="settings" type="string">
+      JSON object of extra settings, such as the Azure API version.
+    </ParamField>
+    <ParamField path="setting" type="string">
+      JSON object of channel runtime settings.
+    </ParamField>
+    <ParamField path="param_override" type="string">
+      JSON object that overrides request parameters before the request is forwarded upstream.
+    </ParamField>
+    <ParamField path="header_override" type="string">
+      JSON object that adds or overrides headers sent upstream.
+    </ParamField>
+    <ParamField path="status_code_mapping" type="string">
+      JSON object mapping upstream HTTP status codes to codes returned by NookMux.
+    </ParamField>
+    <ParamField path="auto_ban" type="integer">
+      Whether the channel is automatically disabled after repeated upstream failures: `1` enabled, `0` disabled.
+    </ParamField>
+    <ParamField path="openai_organization" type="string">
+      OpenAI organization header (`OpenAI-Organization`) for OpenAI-type channels.
+    </ParamField>
+    <ParamField path="remark" type="string">
+      Free-form remark, up to 255 characters.
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": {
+    "id": 1,
+    "type": 1,
+    "key": "",
+    "openai_organization": null,
+    "test_model": "gpt-4o-mini",
+    "status": 1,
+    "name": "my-openai",
+    "weight": 5,
+    "created_time": 1718100000,
+    "test_time": 1718200000,
+    "response_time": 845,
+    "base_url": "",
+    "other": "",
+    "balance": 12.34,
+    "balance_updated_time": 1718250000,
+    "models": "gpt-4o,gpt-4o-mini",
+    "group": "default,premium",
+    "used_quota": 5000,
+    "model_mapping": null,
+    "status_code_mapping": "",
+    "priority": 10,
+    "auto_ban": 1,
+    "other_info": "",
+    "tag": "openai-pool",
+    "setting": null,
+    "param_override": null,
+    "header_override": null,
+    "remark": "",
+    "channel_info": {
+      "is_multi_key": false,
+      "multi_key_size": 0,
+      "multi_key_status_list": null,
+      "multi_key_polling_index": 0,
+      "multi_key_mode": "",
+      "is_plan": false,
+      "plan_name": ""
+    },
+    "settings": "",
+    "multi_key_mode": null,
+    "key_mode": null
+  }
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+Whether the channel was updated.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+Error description when `success` is `false`; empty otherwise.
+</ResponseField>
+
+<ResponseField name="data" type="object">
+The updated channel. `key` is always returned as an empty string, and multi-key disabled-reason/time details are stripped from `channel_info`. `multi_key_mode` and `key_mode` echo the request fields.
+
+  <Expandable title="channel structure">
+    <ResponseField name="id" type="integer">
+      Channel ID.
+    </ResponseField>
+    <ResponseField name="type" type="integer">
+      Channel type constant.
+    </ResponseField>
+    <ResponseField name="key" type="string">
+      Always an empty string; the stored key is never returned by this endpoint.
+    </ResponseField>
+    <ResponseField name="name" type="string">
+      Display name of the channel.
+    </ResponseField>
+    <ResponseField name="status" type="integer">
+      Channel status: `1` enabled, `2` manually disabled, `3` auto-disabled.
+    </ResponseField>
+    <ResponseField name="models" type="string">
+      Comma-separated model list.
+    </ResponseField>
+    <ResponseField name="group" type="string">
+      Comma-separated groups that can use the channel.
+    </ResponseField>
+    <ResponseField name="base_url" type="string">
+      Custom upstream base URL, empty when the built-in endpoint is used.
+    </ResponseField>
+    <ResponseField name="model_mapping" type="string">
+      Model name redirect mapping as a JSON object string.
+    </ResponseField>
+    <ResponseField name="priority" type="integer">
+      Routing priority.
+    </ResponseField>
+    <ResponseField name="weight" type="integer">
+      Load-balancing weight.
+    </ResponseField>
+    <ResponseField name="tag" type="string">
+      Tag the channel belongs to.
+    </ResponseField>
+    <ResponseField name="test_model" type="string">
+      Model used by channel tests.
+    </ResponseField>
+    <ResponseField name="balance" type="number">
+      Last known upstream balance in the channel's reporting currency.
+    </ResponseField>
+    <ResponseField name="balance_updated_time" type="integer">
+      Unix timestamp of the last balance refresh.
+    </ResponseField>
+    <ResponseField name="used_quota" type="integer">
+      Quota consumed through this channel.
+    </ResponseField>
+    <ResponseField name="response_time" type="integer">
+      Last measured test response time in milliseconds.
+    </ResponseField>
+    <ResponseField name="test_time" type="integer">
+      Unix timestamp of the last channel test.
+    </ResponseField>
+    <ResponseField name="created_time" type="integer">
+      Unix timestamp of channel creation.
+    </ResponseField>
+    <ResponseField name="auto_ban" type="integer">
+      Whether auto-disable on repeated failures is on: `1` enabled, `0` disabled.
+    </ResponseField>
+    <ResponseField name="other" type="string">
+      Channel-type-specific options (for example Vertex AI regions).
+    </ResponseField>
+    <ResponseField name="settings" type="string">
+      Extra settings JSON, such as the Azure API version.
+    </ResponseField>
+    <ResponseField name="setting" type="string">
+      Channel runtime settings JSON.
+    </ResponseField>
+    <ResponseField name="param_override" type="string">
+      Request parameter override JSON.
+    </ResponseField>
+    <ResponseField name="header_override" type="string">
+      Upstream header override JSON.
+    </ResponseField>
+    <ResponseField name="status_code_mapping" type="string">
+      Upstream status code mapping JSON.
+    </ResponseField>
+    <ResponseField name="openai_organization" type="string">
+      OpenAI organization header value.
+    </ResponseField>
+    <ResponseField name="remark" type="string">
+      Free-form remark.
+    </ResponseField>
+    <ResponseField name="other_info" type="string">
+      Additional runtime info kept by the server.
+    </ResponseField>
+    <ResponseField name="multi_key_mode" type="string">
+      Echo of the request's `multi_key_mode`; `null` when not sent.
+    </ResponseField>
+    <ResponseField name="key_mode" type="string">
+      Echo of the request's `key_mode`; `null` when not sent.
+    </ResponseField>
+    <ResponseField name="channel_info" type="object">
+      Multi-key and plan metadata, preserved from the stored channel.
+
+      <Expandable title="channel_info structure">
+        <ResponseField name="is_multi_key" type="boolean">
+          Whether the channel aggregates multiple keys.
+        </ResponseField>
+        <ResponseField name="multi_key_size" type="integer">
+          Number of keys in a multi-key channel.
+        </ResponseField>
+        <ResponseField name="multi_key_status_list" type="object">
+          Map of key index to status (`1` enabled, `2` manually disabled, `3` auto-disabled); absent entries are enabled.
+        </ResponseField>
+        <ResponseField name="multi_key_mode" type="string">
+          Polling strategy: `random` or `polling`.
+        </ResponseField>
+        <ResponseField name="multi_key_polling_index" type="integer">
+          Current index used by the `polling` strategy.
+        </ResponseField>
+        <ResponseField name="is_plan" type="boolean">
+          Whether the channel points to a subscription-style (plan) upstream.
+        </ResponseField>
+        <ResponseField name="plan_name" type="string">
+          Plan identifier for plan channels.
+        </ResponseField>
+      </Expandable>
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<Note>
+Management endpoints return HTTP `200` even on business failures; always check the `success` field. When patch-updating without `type` or `settings`, the stored values are inherited; the same applies to the Vertex AI region configuration in `other`, so unrelated edits do not fail validation. For multi-key channels in `key_mode: append`, a Vertex AI channel whose `key` starts with `[` parses the new keys as a JSON array.
+</Note>
+
+## Error messages
+
+| Condition | Description |
+| --- | --- |
+| Invalid request body | The JSON body is missing or malformed |
+| Channel ID invalid | `id` is missing or `0` |
+| Channel not found | No channel exists with the given `id` |
+| Channel settings invalid | `settings` is not a valid JSON object |
+| Channel type invalid | `type` is unknown or no longer supported |
+| Vertex AI region invalid | `other` is missing, not valid JSON, or lacks the `default` key |
+| Multi-key mode invalid | `multi_key_mode` is non-empty but not `random` or `polling` |
+| Database error | Persisting the channel failed; see server logs |

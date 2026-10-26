@@ -1,7 +1,56 @@
 ---
 title: Test All Channels
+description: Trigger a connectivity test of every channel in the background.
 api: "GET /api/channel/test"
 ---
 
-👨‍💼 Requires Administrator Privileges (Admin)
+Start a test run over every stored channel. The endpoint returns as soon as the run is scheduled; the tests themselves execute sequentially in a background worker. For each channel the test sends a real request through the relay pipeline (using the channel's test model, its first model, or `gpt-4o-mini` as fallback), records the response time, and may auto-disable failing or too-slow channels or re-enable recovered ones.
 
+Requires **Admin** permissions. See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url 'https://your-nookmux-domain/api/channel/test' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1'
+```
+
+</RequestExample>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": ""
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+Whether the test run was scheduled.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+Error description when `success` is `false`; empty otherwise.
+</ResponseField>
+
+<Note>
+Only one full test run can execute at a time; requests arriving while a run is in progress fail with a generic error message. During the run, each channel is tested with the configured request interval; when automatic channel disabling is enabled, channels whose test fails with a disabling error (and that allow auto-ban) are disabled, channels exceeding the response-time threshold are disabled as well, and previously disabled channels whose test now passes are re-enabled. The root user receives a notification when the run completes. Individual test results are not returned by this endpoint; check each channel's `test_time` and `response_time` afterwards.
+</Note>
+
+## Error messages
+
+| Condition | Description |
+| --- | --- |
+| Test already running | Another full test run is still in progress; the request is rejected |
+| Database error | Loading the channel list or resolving the test user failed |

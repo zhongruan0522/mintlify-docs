@@ -1,7 +1,71 @@
 ---
 title: 发送邮箱验证码
+description: 向指定邮箱发送一次性 6 位验证码，有效期 10 分钟。
 api: "GET /api/verification"
 ---
 
-🔓 无需鉴权
+向指定邮箱发送一次性 6 位验证码。验证码 10 分钟内有效，用于用户注册（`POST /api/user/register`）与邮箱绑定（`POST /api/oauth/email/bind`）。同一邮箱重复请求会覆盖上一个验证码。
 
+本接口为 **Public（公开）**——无需鉴权。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
+
+<Note>
+本接口按客户端 IP 限流，30 秒内最多 2 次，超出返回 HTTP `429`。当服务端开启 Cloudflare Turnstile 人机验证时，必须携带有效的 `turnstile` 令牌（当前会话已通过校验的除外）。
+</Note>
+
+## 请求
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url 'https://your-nookmux-domain/api/verification?email=user%40example.com&turnstile=XXXX.DUMMY.TOKEN.XXXX'
+```
+
+</RequestExample>
+
+### 查询参数
+
+<ParamField path="email" type="string" required>
+目标邮箱地址，必须为格式合法的邮箱。
+</ParamField>
+
+<ParamField path="turnstile" type="string">
+Cloudflare Turnstile 令牌。仅当服务端开启 Turnstile 人机验证且当前会话尚未通过校验时必填。
+</ParamField>
+
+## 响应
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": ""
+}
+```
+
+</ResponseExample>
+
+### 响应字段
+
+<ResponseField name="success" type="boolean" required>
+验证码邮件是否发送成功。
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+`success` 为 `false` 时的错误描述；成功时为空字符串。
+</ResponseField>
+
+<Note>
+业务失败时同样返回 HTTP `200`，需以 `success: false` 判断；只有按 IP 限流会返回真正的 HTTP `429`。
+</Note>
+
+## 错误说明
+
+| 条件 | 说明 |
+| --- | --- |
+| 参数无效 | `email` 缺失或不是合法邮箱地址 |
+| 邮箱域名不允许 | 开启了邮箱域名白名单，且该地址域名不在白名单内 |
+| 邮箱别名被拒绝 | 开启了邮箱别名限制，且地址本地部分包含 `+` 或 `.` |
+| 邮箱已被占用 | 该邮箱地址已被其他账号使用 |
+| 邮件发送失败 | 验证码邮件投递失败，请稍后重试或联系管理员 |

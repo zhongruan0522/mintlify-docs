@@ -1,7 +1,75 @@
 ---
 title: Set Up 2FA
+description: Initialize TOTP two-factor authentication for the logged-in account and return the secret, provisioning URI, and initial backup codes.
 api: "POST /api/user/2fa/setup"
 ---
 
-🔐 Login Required (User Permissions)
+Initializes two-factor authentication (TOTP) setup for the logged-in account. The server generates a TOTP secret bound to the username (6 digits, 30-second period), builds the `otpauth://` provisioning URI that authenticator apps scan, and creates 4 initial backup codes in `XXXX-XXXX` format. A **disabled** 2FA record plus the hashed backup codes are stored; the setup only takes effect after a current TOTP code is confirmed with [Enable 2FA](/nookmux/api/management/two-factor-auth/user-2fa-enable-post). This endpoint takes no request body.
 
+Requires **User** permission (any logged-in user). See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request POST \
+  --url 'https://your-nookmux-domain/api/user/2fa/setup' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1'
+```
+
+</RequestExample>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "2FA setup initialized. Scan the QR code with an authenticator and enter the code to finish setup",
+  "data": {
+    "secret": "JBSWY3DPEHPK3PXPJBSWY3DPEHPK3PXP",
+    "qr_code_data": "otpauth://totp/NookMux:alice (NookMux)?secret=JBSWY3DPEHPK3PXPJBSWY3DPEHPK3PXP&issuer=NookMux&digits=6&period=30",
+    "backup_codes": ["A1B2-C3D4", "E5F6-G7H8", "J9K0-L1M2", "N3P4-Q5R6"]
+  }
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+Whether the setup was initialized.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+Localized success message; error description when `success` is `false`.
+</ResponseField>
+
+<ResponseField name="data.secret" type="string" required>
+Base32-encoded TOTP shared secret, for manual entry into an authenticator app. Also embedded in `data.qr_code_data` as the `secret` parameter.
+</ResponseField>
+
+<ResponseField name="data.qr_code_data" type="string" required>
+`otpauth://totp` provisioning URI for QR-code scanning. The issuer is the site system name, the account label is `username (system name)`, and the TOTP parameters are 6 digits with a 30-second period.
+</ResponseField>
+
+<ResponseField name="data.backup_codes" type="string[]" required>
+4 initial backup recovery codes in `XXXX-XXXX` format (8 uppercase letters/digits). Only hashes are stored server-side, so the plain-text codes are shown only in this response.
+</ResponseField>
+
+<Note>
+The record created by this call is still disabled. Finish the flow by confirming a current TOTP code with `POST /api/user/2fa/enable`; the backup codes returned here remain valid after enabling. Each backup code can be used exactly once. If a previous disabled 2FA record exists, it is deleted and replaced by the new secret and backup codes.
+</Note>
+
+## Error messages
+
+| Condition | Description |
+| --- | --- |
+| 2FA already enabled | 2FA must be disabled before setting it up again |
+| Database error | Loading the account or persisting the 2FA record failed; see server logs |
+| Secret generation failed | The server failed to generate the TOTP secret; see server logs |
+| Backup code generation or save failed | The server failed to generate or persist the backup codes; see server logs |

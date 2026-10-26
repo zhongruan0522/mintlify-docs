@@ -1,7 +1,69 @@
 ---
 title: Admin Completes Top-up
+description: Manually complete a pending online top-up order and credit the user, with per-order locking and idempotency.
 api: "POST /api/user/topup/complete"
 ---
 
-👨‍💼 Requires Admin Permissions (Admin)
+Manually completes a pending online top-up order and credits the user, for example when the payment gateway callback was lost. The order is locked for the duration of the call to prevent concurrent completion, and an order that is already `success` returns success without crediting again.
 
+Credited quota follows the provider: Stripe orders credit `money` multiplied by the quota-per-unit conversion, other orders credit `amount` multiplied by it (500,000 quota per $1 by default). A top-up log entry is written for the user.
+
+Requires **Admin** permissions. See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request POST \
+  --url 'https://your-nookmux-domain/api/user/topup/complete' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1' \
+  --header 'Content-Type: application/json' \
+  --data '{
+  "trade_no": "USR2NOab12cd1761234567"
+}'
+```
+
+</RequestExample>
+
+### Body
+
+<ParamField path="body.trade_no" type="string" required>
+Order number of the top-up order to complete, as returned by `GET /api/user/topup`.
+</ParamField>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": null
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+Whether the order was completed (or was already completed).
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+Error description when `success` is `false`; empty otherwise.
+</ResponseField>
+
+<ResponseField name="data" type="null">
+Always `null` for this endpoint.
+</ResponseField>
+
+## Error messages
+
+| Condition | Description |
+| --- | --- |
+| Invalid parameters | The JSON body is missing, malformed, or `trade_no` is empty |
+| Database error | Completing the order failed: the order does not exist, its status is neither `pending` nor `success`, the credit would exceed the platform integer range, or the database write failed. All of these are reported through the generic database-error message; see server logs for the specific reason |

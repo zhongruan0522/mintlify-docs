@@ -1,7 +1,49 @@
 ---
 title: User Logout
+description: Clear the current login session.
 api: "GET /api/user/logout"
 ---
 
-🔓 No Authentication Required
+Clears all data stored in the current session and saves the cleared session, which logs the user out on this client. The endpoint does not require authentication; calling it without an active session simply rewrites an empty session.
 
+This endpoint is **Public** — no authentication is required. See [Authentication](/nookmux/api/management/auth) for how management API requests are authenticated.
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url 'https://your-nookmux-domain/api/user/logout'
+```
+
+</RequestExample>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": ""
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+Whether the session was cleared and saved.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+Error description when `success` is `false`; empty otherwise.
+</ResponseField>
+
+## Error messages
+
+| Condition | Description |
+| --- | --- |
+| Failed to save session | The cleared session could not be persisted; the error text is returned in `message` |

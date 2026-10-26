@@ -1,7 +1,55 @@
 ---
 title: Update All Channel Balances
+description: Refresh the upstream balance of every enabled single-key channel.
 api: "GET /api/channel/update_balance"
 ---
 
-👨‍💼 Requires Admin Permissions
+Refresh the upstream balance of every enabled, single-key channel. The run is synchronous: channels are queried one by one with the configured request interval, and the endpoint returns only after the whole sweep finishes. Channels whose refreshed balance is zero or below are disabled with a quota-exhausted reason.
 
+Requires **Admin** permissions. See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url 'https://your-nookmux-domain/api/channel/update_balance' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1'
+```
+
+</RequestExample>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": ""
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+Whether the sweep completed.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+Error description when `success` is `false`; empty otherwise.
+</ResponseField>
+
+<Note>
+Disabled channels and multi-key channels are skipped. Per-channel balance query failures are silently skipped; only a failure to load the channel list fails the whole request. Balance queries are supported for OpenAI-compatible billing endpoints (OpenAI and custom base URLs), SiliconFlow, DeepSeek, OpenRouter, Moonshot, and Zhipu GLM channels; Azure and other unsupported types are reported as not implemented per channel and skipped. Use [Update Specified Channel Balance](/nookmux/api/management/channel-management/channel-update_balance-id-get) to refresh a single channel and get the value back.
+</Note>
+
+## Error messages
+
+| Condition | Description |
+| --- | --- |
+| Database error | Loading the channel list failed |

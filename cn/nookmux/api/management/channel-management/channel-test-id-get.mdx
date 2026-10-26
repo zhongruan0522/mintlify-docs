@@ -1,7 +1,92 @@
 ---
 title: 测试指定渠道
+description: 通过单个渠道发送一次真实测试请求，返回耗时与错误信息。
 api: "GET /api/channel/test/{id}"
 ---
 
-👨‍💼 需要管理员权限（Admin）
+对单个渠道进行测试：通过中继管线向该渠道的上游发送一次真实请求，随后返回测试结果、上游错误（若有）以及请求耗时。渠道已存的响应时间会用本次测量值刷新。
 
+需要**管理员（Admin）**权限。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
+
+## 请求
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url 'https://your-nookmux-domain/api/channel/test/1?model=gpt-4o-mini' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1'
+```
+
+</RequestExample>
+
+### 路径参数
+
+<ParamField path="id" type="integer" required>
+要测试的渠道 ID。
+</ParamField>
+
+### 查询参数
+
+<ParamField path="model" type="string">
+测试所用模型。默认依次取渠道的 `test_model`、渠道 `models` 列表的第一项，最后兜底 `gpt-4o-mini`。
+</ParamField>
+
+<ParamField path="endpoint_type" type="string">
+要测试的中继端点：`openai`、`openai-response`、`openai-response-compact`、`anthropic`、`gemini`、`jina-rerank`、`image-generation` 或 `embeddings`。未知值回退为 OpenAI 格式。省略时按模型名自动推断（rerank、embedding、codex 与 compact 后缀模型使用专属路径；带 compact 后缀的模型会被规范化处理）。
+</ParamField>
+
+<ParamField path="stream" type="boolean" default="false">
+是否以流式请求执行测试。
+</ParamField>
+
+<ParamField path="tool" type="boolean" default="false">
+强制测试请求使用确定性的工具调用。渠道或模型不支持测试工具时会被拒绝。
+</ParamField>
+
+## 响应
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "time": 1.845
+}
+```
+
+</ResponseExample>
+
+### 响应字段
+
+<ResponseField name="success" type="boolean" required>
+测试请求是否无错误完成。
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+`success` 为 `false` 时的上游或本地错误描述；成功时为空字符串。
+</ResponseField>
+
+<ResponseField name="time" type="number" required>
+测试请求耗时，单位秒。
+</ResponseField>
+
+<ResponseField name="error_code" type="string">
+失败的 NookMux 错误码；仅当 `success` 为 `false` 且存在错误码时返回。
+</ResponseField>
+
+<Note>
+管理接口在业务失败时同样返回 HTTP `200`，必须以 `success` 字段判断结果。该响应不包裹 `data` 字段。测试以调用管理员的身份执行（无法解析时回退 root 用户），因此走与正常流量相同的中继与计费管线。Midjourney、Midjourney-Plus、Suno 类型渠道不支持测试。响应返回后，渠道的 `response_time` 会被异步更新。
+</Note>
+
+## 错误说明
+
+| 条件 | 说明 |
+| --- | --- |
+| 渠道 ID 格式错误 | 路径 `id` 不是整数 |
+| 渠道类型不支持测试 | Midjourney、Midjourney-Plus、Suno 类型无法测试 |
+| 工具测试不支持 | `tool` 为 `true` 但渠道或模型不支持 |
+| 上游请求失败 | 中继请求失败；`message` 携带错误信息，可用时 `error_code` 携带错误码 |
+| 数据库错误 | 解析测试用户或加载渠道失败 |

@@ -1,7 +1,65 @@
 ---
 title: Test System Status
+description: Health-check endpoint that pings the database and reports live HTTP connection statistics.
 api: "GET /api/status/test"
 ---
 
-👨‍💼 Requires Administrator Privileges (Admin)
+Health check for the deployment: it pings the database and, on success, reports the number of currently active HTTP connections tracked by the stats middleware. Unlike other management endpoints, a database failure is reported with HTTP `503` instead of `200`.
 
+Requires **Admin** permissions. See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url 'https://your-nookmux-domain/api/status/test' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1'
+```
+
+</RequestExample>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "Server is running",
+  "http_stats": {
+    "active_connections": 12
+  }
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+  Whether the database ping succeeded.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  Status description: `Server is running` on success, `Database connection failed` on failure. The message is localized according to the caller's language preference.
+</ResponseField>
+
+<ResponseField name="http_stats" type="object">
+  Live HTTP statistics; present only on success.
+
+  <Expandable title="http_stats structure">
+    <ParamField path="active_connections" type="integer" required>
+      Number of requests currently in flight through the stats middleware.
+    </ParamField>
+  </Expandable>
+</ResponseField>
+
+## Error messages
+
+| Condition | Description |
+| --- | --- |
+| Database connection failed | Returned with HTTP `503` when the database ping fails; see server logs |
+| Authentication failed | Standard authentication errors (HTTP `401`) when the caller is not an administrator |

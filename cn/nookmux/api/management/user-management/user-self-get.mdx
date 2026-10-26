@@ -1,7 +1,178 @@
 ---
 title: 获取当前用户信息
+description: 返回当前登录用户的资料、额度、邀请统计与通知设置。
 api: "GET /api/user/self"
 ---
 
-🔐 需要登录（User权限）
+返回发起请求用户自己的资料：账号身份、角色与状态、额度与用量计数、邀请统计、已绑定的 OAuth 身份，以及序列化后的通知设置。用户通过会话或 Access Token 结合 `New-Api-User` 头解析。
 
+需要**用户（User）**权限（任意登录用户）。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
+
+## 请求
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url 'https://your-nookmux-domain/api/user/self' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 2'
+```
+
+</RequestExample>
+
+## 响应
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": {
+    "id": 2,
+    "username": "alice",
+    "display_name": "alice",
+    "role": 1,
+    "status": 1,
+    "email": "alice@example.com",
+    "github_id": "",
+    "group": "default",
+    "quota": 500000,
+    "used_quota": 100000,
+    "request_count": 42,
+    "aff_code": "ab12",
+    "aff_count": 3,
+    "aff_quota": 100000,
+    "aff_history_quota": 1500000,
+    "inviter_id": 0,
+    "linux_do_id": "",
+    "setting": "{\"notify_type\":\"email\",\"quota_warning_threshold\":10,\"gotify_priority\":0}",
+    "stripe_customer": "",
+    "image_converted_count": 0,
+    "video_converted_count": 0
+  }
+}
+```
+
+</ResponseExample>
+
+### 响应字段
+
+<ResponseField name="success" type="boolean" required>
+资料是否成功返回。
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+`success` 为 `false` 时的错误描述；成功时为空字符串。
+</ResponseField>
+
+<ResponseField name="data" type="object" required>
+当前用户资料。
+
+<Expandable title="data 结构">
+  <ResponseField name="id" type="integer" required>
+用户 ID。
+</ResponseField>
+  <ResponseField name="username" type="string" required>
+登录用户名。
+</ResponseField>
+  <ResponseField name="display_name" type="string" required>
+显示名称。
+</ResponseField>
+  <ResponseField name="role" type="integer" required>
+角色等级：`1` 普通用户，`10` 管理员，`100` 超级管理员。
+</ResponseField>
+  <ResponseField name="status" type="integer" required>
+账号状态：`1` 启用，`2` 禁用。
+</ResponseField>
+  <ResponseField name="email" type="string" required>
+绑定的邮箱地址；未绑定时为空字符串。
+</ResponseField>
+  <ResponseField name="github_id" type="string" required>
+绑定的 GitHub ID；未绑定时为空字符串。
+</ResponseField>
+  <ResponseField name="group" type="string" required>
+用户分组，例如 `default`。
+</ResponseField>
+  <ResponseField name="quota" type="integer" required>
+剩余额度，单位为额度（默认 500,000 额度折合 $1）。
+</ResponseField>
+  <ResponseField name="used_quota" type="integer" required>
+已消耗额度，单位为额度。
+</ResponseField>
+  <ResponseField name="request_count" type="integer" required>
+用户的请求总数。
+</ResponseField>
+  <ResponseField name="aff_code" type="string" required>
+该用户的邀请码。
+</ResponseField>
+  <ResponseField name="aff_count" type="integer" required>
+使用该用户邀请码注册的用户数。
+</ResponseField>
+  <ResponseField name="aff_quota" type="integer" required>
+仍可转换的剩余邀请奖励额度。
+</ResponseField>
+  <ResponseField name="aff_history_quota" type="integer" required>
+累计邀请奖励额度。
+</ResponseField>
+  <ResponseField name="inviter_id" type="integer" required>
+邀请人的用户 ID；未使用邀请码注册时为 `0`。
+</ResponseField>
+  <ResponseField name="linux_do_id" type="string" required>
+绑定的 LinuxDO ID；未绑定时为空字符串。
+</ResponseField>
+  <ResponseField name="setting" type="string" required>
+序列化为 JSON 字符串的通知设置，结构见下方展开项。为空的字段会被省略；`gotify_priority` 始终存在，未配置设置的用户该值为 `{\"gotify_priority\":0}`。通过 `PUT /api/user/setting` 写入。
+
+<Expandable title="setting 结构">
+  <ResponseField name="notify_type" type="string">
+额度预警通知类型：`email`、`webhook`、`bark` 或 `gotify`。
+</ResponseField>
+  <ResponseField name="quota_warning_threshold" type="number">
+额度预警阈值。
+</ResponseField>
+  <ResponseField name="webhook_url" type="string">
+Webhook 地址，`webhook` 类型时存在。
+</ResponseField>
+  <ResponseField name="webhook_secret" type="string">
+Webhook 密钥，`webhook` 类型且已配置时存在。
+</ResponseField>
+  <ResponseField name="notification_email" type="string">
+通知邮箱地址，`email` 类型且已配置时存在。
+</ResponseField>
+  <ResponseField name="bark_url" type="string">
+Bark 推送 URL，`bark` 类型时存在。
+</ResponseField>
+  <ResponseField name="gotify_url" type="string">
+Gotify 服务器地址，`gotify` 类型时存在。
+</ResponseField>
+  <ResponseField name="gotify_token" type="string">
+Gotify 应用令牌，`gotify` 类型时存在。
+</ResponseField>
+  <ResponseField name="gotify_priority" type="integer">
+Gotify 消息优先级；始终存在于序列化结果中，未设置时为 `0`。
+</ResponseField>
+</Expandable>
+</ResponseField>
+  <ResponseField name="stripe_customer" type="string" required>
+在线充值使用的 Stripe 客户 ID；未使用时为空字符串。
+</ResponseField>
+  <ResponseField name="image_converted_count" type="integer" required>
+多模态适配转换的图片数量。
+</ResponseField>
+  <ResponseField name="video_converted_count" type="integer" required>
+多模态适配转换的视频数量。
+</ResponseField>
+</Expandable>
+</ResponseField>
+
+<Note>
+该接口显式构建响应：密码哈希与系统访问令牌不会返回，管理员专属的备注（remark）字段也被剥离，不会出现在响应中。
+</Note>
+
+## 错误说明
+
+| 条件 | 说明 |
+| --- | --- |
+| 数据库错误 | 加载用户失败，详见服务端日志 |

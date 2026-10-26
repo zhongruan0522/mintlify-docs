@@ -1,7 +1,133 @@
 ---
 title: 搜索供应商
+description: 按名称关键字分页搜索供应商元数据。
 api: "GET /api/vendors/search"
 ---
 
-👨‍💼 需要管理员权限（Admin）
+按关键字搜索供应商元数据：关键字对供应商 `name` 做模糊匹配，命中的供应商按 `id` 倒序（最新在前）分页返回。关键字为空时等同于全量列表。
 
+需要**管理员（Admin）**权限。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
+
+## 请求
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url 'https://your-nookmux-domain/api/vendors/search?keyword=open&p=1&page_size=10' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1'
+```
+
+</RequestExample>
+
+### 查询参数
+
+<ParamField path="keyword" type="string">
+  搜索关键字，对供应商名称做模糊匹配。可省略，为空时返回全部供应商。
+</ParamField>
+
+<ParamField path="p" type="integer" default="1">
+  页码。
+</ParamField>
+
+<ParamField path="page_size" type="integer" default="10">
+  每页条数，上限 100。兼容旧别名 `ps` 与 `size`。
+</ParamField>
+
+## 响应
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": {
+    "page": 1,
+    "page_size": 10,
+    "total": 1,
+    "items": [
+      {
+        "id": 1,
+        "name": "OpenAI",
+        "description": "OpenAI models",
+        "icon": "openai",
+        "data_retention_days": 30,
+        "training_opt_out": true,
+        "status": 1,
+        "created_time": 1735689600,
+        "updated_time": 1735689600
+      }
+    ]
+  }
+}
+```
+
+</ResponseExample>
+
+### 响应字段
+
+<ResponseField name="success" type="boolean" required>
+  请求是否成功。
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  `success` 为 `false` 时的错误描述；成功时为空字符串。
+</ResponseField>
+
+<ResponseField name="data.page" type="integer" required>
+  当前页码。
+</ResponseField>
+
+<ResponseField name="data.page_size" type="integer" required>
+  实际生效的每页条数。
+</ResponseField>
+
+<ResponseField name="data.total" type="integer" required>
+  命中的供应商总数。
+</ResponseField>
+
+<ResponseField name="data.items" type="array" required>
+  当前页的供应商对象数组，按 `id` 倒序返回。
+
+  <Expandable title="vendor 结构">
+    <ResponseField name="id" type="integer" required>
+      供应商 ID。
+    </ResponseField>
+    <ResponseField name="name" type="string" required>
+      供应商名称，在未删除的供应商中唯一，最长 128 字符。
+    </ResponseField>
+    <ResponseField name="description" type="string">
+      自由描述，为空时省略。
+    </ResponseField>
+    <ResponseField name="icon" type="string">
+      `@lobehub/icons` 的图标名，由前端直接渲染，最长 128 字符，为空时省略。
+    </ResponseField>
+    <ResponseField name="data_retention_days" type="integer">
+      数据保留天数，展示在定价页（`0` 表示不留存），未设置时省略。
+    </ResponseField>
+    <ResponseField name="training_opt_out" type="boolean">
+      发往该供应商的请求是否默认不用于上游模型训练（展示在定价页），未设置时省略。
+    </ResponseField>
+    <ResponseField name="status" type="integer" required>
+      预留状态字段，`1` 表示启用。
+    </ResponseField>
+    <ResponseField name="created_time" type="integer" required>
+      创建时间的 Unix 时间戳（秒），由服务端写入。
+    </ResponseField>
+    <ResponseField name="updated_time" type="integer" required>
+      最近更新时间的 Unix 时间戳（秒），由服务端维护。
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<Note>
+管理接口在业务失败时同样返回 HTTP `200`，必须以 `success` 字段判断结果。
+</Note>
+
+## 错误说明
+
+| 条件 | 说明 |
+| --- | --- |
+| 数据库错误，请稍后重试 | 搜索供应商或统计总数失败，详见服务端日志 |

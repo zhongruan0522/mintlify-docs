@@ -1,7 +1,229 @@
 ---
 title: Search Users
+description: Search users by username, email, OAuth IDs, status, role, and group with pagination.
 api: "GET /api/user/search"
 ---
 
-👨‍💼 Admin privileges required
+Searches users with field-level filters and pagination, ordered by `id` descending. Text filters match with a fuzzy `LIKE` comparison; `status`, `role`, and `group` match exactly. Passwords and access tokens are never returned.
 
+Requires **Admin** permissions. See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url 'https://your-nookmux-domain/api/user/search?username=ali&status=1&p=1&page_size=10' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1'
+```
+
+</RequestExample>
+
+### Query parameters
+
+<ParamField path="query.keyword" type="string">
+Legacy keyword filter with a fuzzy match on `username`. Only used when `username`, `display_name`, and `email` are all empty; otherwise ignored.
+</ParamField>
+
+<ParamField path="query.username" type="string">
+Fuzzy match on the username.
+</ParamField>
+
+<ParamField path="query.display_name" type="string">
+Fuzzy match on the display name.
+</ParamField>
+
+<ParamField path="query.email" type="string">
+Fuzzy match on the email address.
+</ParamField>
+
+<ParamField path="query.linux_do_id" type="string">
+Fuzzy match on the bound LinuxDO ID.
+</ParamField>
+
+<ParamField path="query.github_id" type="string">
+Fuzzy match on the bound GitHub ID.
+</ParamField>
+
+<ParamField path="query.status" type="string">
+Status filter: `1` enabled users, `2` disabled users, `3` soft-deleted users. With `1` or `2`, soft-deleted users are excluded. When omitted, users of every status are returned, including soft-deleted ones.
+</ParamField>
+
+<ParamField path="query.role" type="string">
+Exact role filter: `1` common user, `10` admin, `100` root. Values that are not integers are ignored.
+</ParamField>
+
+<ParamField path="query.group" type="string">
+Exact match on the user group.
+</ParamField>
+
+<ParamField path="query.p" type="integer" default="1">
+Page number, starting at 1.
+</ParamField>
+
+<ParamField path="query.page_size" type="integer" default="10">
+Number of users per page, capped at 100. The legacy aliases `ps` and `size` are also accepted.
+</ParamField>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": {
+    "page": 1,
+    "page_size": 10,
+    "total": 1,
+    "items": [
+      {
+        "id": 2,
+        "username": "alice",
+        "original_password": "",
+        "display_name": "alice",
+        "role": 1,
+        "status": 1,
+        "email": "alice@example.com",
+        "github_id": "",
+        "verification_code": "",
+        "quota": 500000,
+        "used_quota": 100000,
+        "request_count": 42,
+        "group": "default",
+        "aff_code": "ab12",
+        "aff_count": 3,
+        "aff_quota": 100000,
+        "aff_history_quota": 1500000,
+        "inviter_id": 0,
+        "DeletedAt": null,
+        "linux_do_id": "",
+        "stripe_customer": "",
+        "image_converted_count": 0,
+        "video_converted_count": 0,
+        "created_at": 1761000000,
+        "last_login_at": 1761100000
+      }
+    ]
+  }
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+Whether the search result was returned.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+Error description when `success` is `false`; empty otherwise.
+</ResponseField>
+
+<ResponseField name="data" type="object">
+  <Expandable title="data structure">
+    <ResponseField name="page" type="integer" required>
+      Current page number, starting at 1.
+    </ResponseField>
+    <ResponseField name="page_size" type="integer" required>
+      Page size actually applied, capped at 100.
+    </ResponseField>
+    <ResponseField name="total" type="integer" required>
+      Total number of users matching the filters.
+    </ResponseField>
+    <ResponseField name="items" type="object[]">
+      Matching users on the current page, ordered by `id` descending.
+
+      <Expandable title="user structure">
+        <ResponseField name="id" type="integer" required>
+          User ID.
+        </ResponseField>
+        <ResponseField name="username" type="string" required>
+          Login username, up to 20 characters.
+        </ResponseField>
+        <ResponseField name="original_password" type="string" required>
+          Request helper field for password change verification; always an empty string in responses.
+        </ResponseField>
+        <ResponseField name="display_name" type="string" required>
+          Display name, up to 20 characters.
+        </ResponseField>
+        <ResponseField name="role" type="integer" required>
+          Role level: `1` common user, `10` admin, `100` root.
+        </ResponseField>
+        <ResponseField name="status" type="integer" required>
+          Account status: `1` enabled, `2` disabled.
+        </ResponseField>
+        <ResponseField name="email" type="string" required>
+          Bound email address; empty when not bound.
+        </ResponseField>
+        <ResponseField name="github_id" type="string" required>
+          Bound GitHub ID; empty when not bound.
+        </ResponseField>
+        <ResponseField name="verification_code" type="string" required>
+          Request helper field for email verification; always an empty string in responses.
+        </ResponseField>
+        <ResponseField name="quota" type="integer" required>
+          Remaining quota in quota units (500,000 quota equals $1 by default).
+        </ResponseField>
+        <ResponseField name="used_quota" type="integer" required>
+          Consumed quota in quota units.
+        </ResponseField>
+        <ResponseField name="request_count" type="integer" required>
+          Total number of requests made by the user.
+        </ResponseField>
+        <ResponseField name="group" type="string" required>
+          User group, for example `default`.
+        </ResponseField>
+        <ResponseField name="aff_code" type="string" required>
+          Invitation code of this user.
+        </ResponseField>
+        <ResponseField name="aff_count" type="integer" required>
+          Number of users registered with this user's invitation code.
+        </ResponseField>
+        <ResponseField name="aff_quota" type="integer" required>
+          Remaining invitation reward quota that can still be converted.
+        </ResponseField>
+        <ResponseField name="aff_history_quota" type="integer" required>
+          Accumulated invitation reward quota.
+        </ResponseField>
+        <ResponseField name="inviter_id" type="integer" required>
+          User ID of the inviter; `0` when the user registered without an invitation code.
+        </ResponseField>
+        <ResponseField name="DeletedAt" type="string">
+          Soft-delete time (RFC 3339); `null` while the account is not deleted.
+        </ResponseField>
+        <ResponseField name="linux_do_id" type="string" required>
+          Bound LinuxDO ID; empty when not bound.
+        </ResponseField>
+        <ResponseField name="remark" type="string">
+          Admin remark, up to 255 characters. Omitted when empty.
+        </ResponseField>
+        <ResponseField name="stripe_customer" type="string" required>
+          Stripe customer ID used for online top-up; empty when not used.
+        </ResponseField>
+        <ResponseField name="image_converted_count" type="integer" required>
+          Number of images converted by multimodal adaptation.
+        </ResponseField>
+        <ResponseField name="video_converted_count" type="integer" required>
+          Number of videos converted by multimodal adaptation.
+        </ResponseField>
+        <ResponseField name="created_at" type="integer" required>
+          Account creation time as a Unix timestamp in seconds.
+        </ResponseField>
+        <ResponseField name="last_login_at" type="integer" required>
+          Last login time as a Unix timestamp in seconds; `0` when never logged in.
+        </ResponseField>
+      </Expandable>
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+## Error messages
+
+| Condition | Description |
+| --- | --- |
+| Database error | Running the search query failed; see server logs |

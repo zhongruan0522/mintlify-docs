@@ -1,7 +1,141 @@
 ---
 title: 获取所有兑换码
+description: 分页列出全部兑换码，按 id 倒序返回；兑换码密钥一律脱敏。
 api: "GET /api/redemption/"
 ---
 
-👨‍💼 需要管理员权限（Admin）
+分页获取全部兑换码，按 `id` 倒序排列。兑换码密钥是可直接兑换的凭证，因此本接口返回的 `key` 字段恒为空字符串；单个兑换码的完整密钥只能通过专门的按需查看接口获取。
 
+需要**管理员（Admin）**权限。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
+
+## 请求
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url 'https://your-nookmux-domain/api/redemption/?p=1&page_size=10' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1'
+```
+
+</RequestExample>
+
+### 查询参数
+
+<ParamField path="query.p" type="integer" default="1">
+  页码。
+</ParamField>
+
+<ParamField path="query.page_size" type="integer" default="10">
+  每页条数，上限 100。分页工具还兼容旧别名 `ps` 与 `size`。
+</ParamField>
+
+## 响应
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": {
+    "page": 1,
+    "page_size": 10,
+    "total": 42,
+    "items": [
+      {
+        "id": 42,
+        "user_id": 1,
+        "key": "",
+        "status": 1,
+        "name": "welcome-bonus",
+        "quota": 100,
+        "created_time": 1748000000,
+        "redeemed_time": 0,
+        "count": 0,
+        "used_user_id": 0,
+        "DeletedAt": null,
+        "expired_time": 0
+      }
+    ]
+  }
+}
+```
+
+</ResponseExample>
+
+### 响应字段
+
+<ResponseField name="success" type="boolean" required>
+  请求是否成功。
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  `success` 为 `false` 时的错误描述；成功时为空字符串。
+</ResponseField>
+
+<ResponseField name="data.page" type="integer" required>
+  当前页码。
+</ResponseField>
+
+<ResponseField name="data.page_size" type="integer" required>
+  本次查询实际使用的每页条数。
+</ResponseField>
+
+<ResponseField name="data.total" type="integer" required>
+  兑换码总数。
+</ResponseField>
+
+<ResponseField name="data.items" type="array" required>
+  当前页的兑换码列表。
+
+  <Expandable title="redemption 结构">
+    <ResponseField name="id" type="integer" required>
+      兑换码 id。
+    </ResponseField>
+    <ResponseField name="user_id" type="integer" required>
+      创建该兑换码的管理员用户 id。
+    </ResponseField>
+    <ResponseField name="key" type="string" required>
+      兑换码密钥（32 位无连字符 UUID）。本接口恒返回空字符串，见下方说明。
+    </ResponseField>
+    <ResponseField name="status" type="integer" required>
+      兑换码状态：`1` 启用，`2` 禁用，`3` 已使用。
+    </ResponseField>
+    <ResponseField name="name" type="string" required>
+      兑换码名称。
+    </ResponseField>
+    <ResponseField name="quota" type="integer" required>
+      兑换成功后给兑换用户充入的额度。
+    </ResponseField>
+    <ResponseField name="created_time" type="integer" required>
+      创建时间的 Unix 时间戳（秒）。
+    </ResponseField>
+    <ResponseField name="redeemed_time" type="integer" required>
+      兑换时间的 Unix 时间戳（秒）；未兑换时为 `0`。
+    </ResponseField>
+    <ResponseField name="count" type="integer" required>
+      单次创建请求批量生成的个数。仅用于创建请求，响应中恒为 `0`。
+    </ResponseField>
+    <ResponseField name="used_user_id" type="integer" required>
+      兑换该码的用户 id；未兑换时为 `0`。
+    </ResponseField>
+    <ResponseField name="DeletedAt" type="string" required>
+      软删除标记；软删除记录不会出现在查询结果中，因此恒为 `null`。
+    </ResponseField>
+    <ResponseField name="expired_time" type="integer" required>
+      过期时间的 Unix 时间戳（秒），超过该时间不可再兑换；`0` 表示永不过期。
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<Note>
+管理接口在业务失败时同样返回 HTTP `200`，必须以 `success` 字段判断结果。列表接口不回传完整密钥；完整密钥需通过 `GET /api/redemption/{id}/key` 按需获取，该操作会记录到操作日志。
+</Note>
+
+## 错误说明
+
+| 条件 | 说明 |
+| --- | --- |
+| 数据库错误 | 统计或列出兑换码失败，详见服务端日志 |

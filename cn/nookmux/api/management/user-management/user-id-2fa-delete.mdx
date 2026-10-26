@@ -1,7 +1,69 @@
 ---
 title: 管理员禁用用户2FA
+description: 为丢失验证器的用户强制禁用两步验证。
 api: "DELETE /api/user/{id}/2fa"
 ---
 
-👨‍💼 需要管理员权限（Admin）
+强制禁用目标用户的两步验证（TOTP）。适用于用户丢失验证器设备而无法登录的场景。操作会在目标用户名下写入管理日志（操作管理员记录在单独的管理员信息字段中），并写入审计日志。
 
+需要**管理员（Admin）**权限。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
+
+## 请求
+
+<RequestExample>
+
+```bash cURL
+curl --request DELETE \
+  --url 'https://your-nookmux-domain/api/user/2/2fa' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1'
+```
+
+</RequestExample>
+
+### 路径参数
+
+<ParamField path="path.id" type="integer" required>
+目标用户 ID。
+</ParamField>
+
+## 响应
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "User 2FA has been forcibly disabled",
+  "data": null
+}
+```
+
+</ResponseExample>
+
+### 响应字段
+
+<ResponseField name="success" type="boolean" required>
+是否成功禁用 2FA。
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+`success` 为 `true` 时为本地化的成功提示；否则为错误描述。
+</ResponseField>
+
+<ResponseField name="data" type="null">
+本接口恒为 `null`。
+</ResponseField>
+
+<Note>
+非超级管理员只能禁用角色等级严格低于自己的用户的 2FA；超级管理员可禁用任意用户的 2FA。
+</Note>
+
+## 错误说明
+
+| 条件 | 说明 |
+| --- | --- |
+| 无效的用户 ID | 路径中的 `id` 不是整数 |
+| 数据库错误 | 目标用户加载失败（含 `id` 不存在）或更新失败 |
+| 无权限 | 调用者不是超级管理员，且目标用户为同级或更高级 |
+| 用户未启用2FA | 目标用户没有已启用的 2FA |

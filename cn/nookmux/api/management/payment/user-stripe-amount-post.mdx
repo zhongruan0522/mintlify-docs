@@ -1,7 +1,69 @@
 ---
 title: 获取Stripe支付金额
+description: 在创建 Checkout 会话前计算 Stripe 充值的应付金额。
 api: "POST /api/user/stripe/amount"
 ---
 
-🔐 需要登录（User权限）
+Stripe 充值的询价接口。按配置的 Stripe 单价、调用者的充值分组倍率和预设金额折扣，计算指定充值数量的应付金额。该接口只使用 `amount` 字段，不创建订单；实际发起支付请使用 `POST /api/user/stripe/pay`。
 
+需要**用户（User）**权限（任意已登录账号）。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
+
+## 请求
+
+<RequestExample>
+
+```bash cURL
+curl --request POST \
+  --url 'https://your-nookmux-domain/api/user/stripe/amount' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1' \
+  --header 'Content-Type: application/json' \
+  --data '{
+  "amount": 10
+}'
+```
+
+</RequestExample>
+
+### 请求体
+
+<ParamField path="body.amount" type="integer" required>
+待计价的充值数量。不得低于配置的 Stripe 最低充值数量。
+</ParamField>
+
+## 响应
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "充值成功",
+  "data": "80.00"
+}
+```
+
+</ResponseExample>
+
+### 响应字段
+
+<ResponseField name="success" type="boolean" required>
+应付金额是否计算成功。
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+本地化的状态消息；`success` 为 `false` 时为错误描述。具体文案随请求语言变化。
+</ResponseField>
+
+<ResponseField name="data" type="string" required>
+所请求充值数量的应付金额，格式化为保留两位小数的字符串。
+</ResponseField>
+
+## 错误说明
+
+| 条件 | 说明 |
+| --- | --- |
+| 无效的参数 | JSON 请求体缺失或格式错误 |
+| 充值数量不能小于最低值 | `amount` 低于配置的 Stripe 最低充值数量 |
+| 获取用户分组失败 | 调用者的充值分组加载失败 |
+| 充值金额过低 | 计算出的应付金额未超过最低可收金额（0.01） |

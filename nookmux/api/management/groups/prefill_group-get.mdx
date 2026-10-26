@@ -1,7 +1,110 @@
 ---
 title: Get Prefill Group
+description: List reusable prefill groups, optionally filtered by category.
 api: "GET /api/prefill_group/"
 ---
 
-👨‍💼 Requires Admin Permissions
+Prefill groups are reusable named collections shown in console dropdowns for quick selection, for example sets of model names used to prefill a channel's model list. Each group has a unique `name` and a `type` that marks its category.
 
+Returns all prefill groups, ordered by `updated_time` descending. An optional `type` query parameter filters the list by category.
+
+Requires **Admin** permissions. See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url 'https://your-nookmux-domain/api/prefill_group/?type=model' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1'
+```
+
+</RequestExample>
+
+### Query parameters
+
+<ParamField path="query.type" type="string">
+  Category of the groups to return, for example `model`, `tag`, or `endpoint`. Omit the parameter to return groups of every category.
+</ParamField>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": [
+    {
+      "id": 1,
+      "name": "gpt-flagship",
+      "type": "model",
+      "items": ["gpt-4o", "gpt-4o-mini"],
+      "description": "Flagship OpenAI models",
+      "created_time": 1735689600,
+      "updated_time": 1735776000
+    },
+    {
+      "id": 2,
+      "name": "eu-endpoints",
+      "type": "endpoint",
+      "items": ["https://endpoint-1.example.com", "https://endpoint-2.example.com"],
+      "created_time": 1735689700,
+      "updated_time": 1735689700
+    }
+  ]
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+  Whether the request succeeded.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  Error description when `success` is `false`; empty otherwise.
+</ResponseField>
+
+<ResponseField name="data" type="array" required>
+  Prefill groups ordered by `updated_time` descending.
+
+  <Expandable title="prefill group structure">
+    <ResponseField name="id" type="integer" required>
+      Group ID.
+    </ResponseField>
+    <ResponseField name="name" type="string" required>
+      Unique group name among non-deleted groups, limited to 64 characters; shown in console dropdowns.
+    </ResponseField>
+    <ResponseField name="type" type="string" required>
+      Category of the group, for example `model`, `tag`, or `endpoint`.
+    </ResponseField>
+    <ResponseField name="items" type="array" required>
+      JSON array of strings holding the values of the group, for example model names. `null` when the group was created without `items`.
+    </ResponseField>
+    <ResponseField name="description" type="string">
+      Free-form description, up to 255 characters; omitted when empty.
+    </ResponseField>
+    <ResponseField name="created_time" type="integer" required>
+      Creation time as a Unix timestamp in seconds, set by the server.
+    </ResponseField>
+    <ResponseField name="updated_time" type="integer" required>
+      Last update time as a Unix timestamp in seconds, refreshed by the server on every change.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<Note>
+Management endpoints return HTTP `200` even on business failures; always check the `success` field.
+</Note>
+
+## Error messages
+
+| Condition | Description |
+| --- | --- |
+| Database error, please try again later | Reading the prefill groups failed; see server logs |

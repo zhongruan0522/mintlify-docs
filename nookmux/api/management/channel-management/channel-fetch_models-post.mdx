@@ -1,7 +1,99 @@
 ---
 title: Get Model List
+description: Fetch the model list from an arbitrary upstream with a supplied key, before saving the channel.
 api: "POST /api/channel/fetch_models"
 ---
 
-👨‍💼 Requires Admin Permissions (Admin)
+Fetch the model list of an arbitrary upstream by supplying a base URL, channel type and key directly, without needing a saved channel. This is the channel-creation helper: the returned list can be pasted into the new channel's `models` field. Behavior depends on `type`:
 
+- Ollama queries the Ollama `/v1/models` endpoint.
+- AWS Bedrock fetches the Claude model list using the given key and key type.
+- Gemini queries the Gemini model list endpoint.
+- Vertex AI returns the adaptor's built-in model list without any upstream call.
+- All other types request `{base_url}/v1/models` (Zhipu v4 uses `/api/paas/v4/models`, Moonshot uses `/v1/models`; known plan base URLs are swapped to their OpenAI-compatible endpoint) and return the `data[].id` values.
+
+The target URL is checked against the fetch security settings (SSRF protection, private IP allowance, domain and IP filters, allowed ports).
+
+Requires **Root** permissions. See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request POST \
+  --url 'https://your-nookmux-domain/api/channel/fetch_models' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1' \
+  --header 'Content-Type: application/json' \
+  --data '{
+  "base_url": "https://api.openai.com",
+  "type": 1,
+  "key": "sk-xxxxxxxxxxxxxxxxxxxx"
+}'
+```
+
+</RequestExample>
+
+### Body
+
+<ParamField path="body.base_url" type="string">
+  Upstream base URL. When empty, the built-in endpoint of the given `type` is used.
+</ParamField>
+
+<ParamField path="body.type" type="integer" required>
+  Channel type constant, which selects the fetch strategy (for example Ollama, AWS Bedrock, Gemini, Vertex AI, Zhipu v4, Moonshot, or the generic OpenAI-style path).
+</ParamField>
+
+<ParamField path="body.key" type="string">
+  Upstream key. Surrounding whitespace is trimmed and only the first line is used, so a pasted multi-key block works.
+</ParamField>
+
+<ParamField path="body.aws_key_type" type="string" default="ak_sk">
+  Credential type for AWS Bedrock channels: `ak_sk` (access key + secret) or `api_key`.
+</ParamField>
+
+<ParamField path="body.proxy" type="string">
+  Proxy used for the upstream request (applies to the AWS Bedrock fetch).
+</ParamField>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "data": [
+    "gpt-4o",
+    "gpt-4o-mini"
+  ]
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+  Whether the model list was fetched.
+</ResponseField>
+
+<ResponseField name="data" type="array" required>
+  Model ids returned by the upstream. Entries with an empty id are dropped.
+</ResponseField>
+
+<Note>
+  Unlike most management endpoints, this one does not always return HTTP `200`: URL validation failures return `400` and upstream transport failures return `500`, in the same `{ success, message }` shape. Business fetch failures of the Ollama and Gemini paths return `200` with `success: false`. On success no `message` field is included.
+</Note>
+
+## Error messages
+
+| Condition | Description |
+| --- | --- |
+| Invalid request body | HTTP 400 — the JSON body is malformed |
+| URL rejected | HTTP 400 — the target URL violates the fetch security settings |
+| Upstream request failed | HTTP 500 — building or sending the upstream request failed |
+| Upstream non-200 | HTTP 500 — the upstream returned a status other than 200 |
+| Response parse failed | HTTP 500 — the upstream response is not valid JSON |
+| Ollama or Gemini fetch failed | HTTP 200 with `success: false` and a localized message |

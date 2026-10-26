@@ -1,7 +1,83 @@
 ---
 title: Create User
+description: Create a new user with a username, password, display name, and role.
 api: "POST /api/user/"
 ---
 
-👨‍💼 Requires Administrator Permissions (Admin)
+Creates a new user. Only `username`, `password`, `display_name`, and `role` are taken from the request; the new user receives the system-configured initial quota, a generated 4-character invitation code, and the current timestamp as creation time. The `role` must be strictly lower than the caller's role. The operation writes an audit record.
 
+Requires **Admin** permissions. See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request POST \
+  --url 'https://your-nookmux-domain/api/user/' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1' \
+  --header 'Content-Type: application/json' \
+  --data '{
+  "username": "bob",
+  "password": "a-secure-password",
+  "display_name": "Bob",
+  "role": 1
+}'
+```
+
+</RequestExample>
+
+### Body
+
+<ParamField path="body.username" type="string" required>
+Login username, up to 20 characters. Leading and trailing whitespace is trimmed.
+</ParamField>
+
+<ParamField path="body.password" type="string" required>
+Initial password, 8 to 20 characters. Stored as a bcrypt hash.
+</ParamField>
+
+<ParamField path="body.display_name" type="string">
+Display name, up to 20 characters. Defaults to `username` when omitted.
+</ParamField>
+
+<ParamField path="body.role" type="integer" default="1">
+Role of the new user: `1` common user or `10` admin. Must be strictly lower than the caller's role, so only the root admin can create admin users. The root role cannot be created through this endpoint.
+</ParamField>
+
+<Note>
+Other user fields accepted by the request binding, such as `email` or `group`, are ignored by this endpoint. Bind an email through the user self-service endpoints after creation.
+</Note>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": ""
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+Whether the user was created.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+Error description when `success` is `false`; empty otherwise.
+</ResponseField>
+
+## Error messages
+
+| Condition | Description |
+| --- | --- |
+| Invalid parameters | The JSON body is malformed, or `username` or `password` is empty |
+| Invalid input | Field constraints are violated (`username` up to 20 characters, `password` 8 to 20 characters, `display_name` up to 20 characters) |
+| Cannot create higher level user | `role` is equal to or higher than the caller's role |
+| Database error | Inserting the user failed, for example the username already exists |

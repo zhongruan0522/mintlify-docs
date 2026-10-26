@@ -1,7 +1,60 @@
 ---
 title: Delete Invalid Redemption Codes
+description: Bulk-delete redemption codes that are used, disabled or expired, and get the deleted row count.
 api: "DELETE /api/redemption/invalid"
 ---
 
-👨‍💼 Requires Administrator Privileges (Admin)
+Bulk-delete all redemption codes that are no longer redeemable: codes with status used (`3`) or disabled (`2`), and enabled (`1`) codes whose `expired_time` is set and in the past. The number of deleted rows is returned in `data`.
 
+Requires **Admin** permissions. See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request DELETE \
+  --url 'https://your-nookmux-domain/api/redemption/invalid' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1'
+```
+
+</RequestExample>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": 12
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+  Whether the deletion succeeded.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  Error description when `success` is `false`; empty otherwise.
+</ResponseField>
+
+<ResponseField name="data" type="integer" required>
+  Number of redemption codes deleted by this call; `0` when there was nothing to clean up.
+</ResponseField>
+
+<Note>
+Management endpoints return HTTP `200` even on business failures; always check the `success` field.
+</Note>
+
+## Error messages
+
+| Condition | Description |
+| --- | --- |
+| Database error | Deleting the invalid redemption codes failed; see server logs |

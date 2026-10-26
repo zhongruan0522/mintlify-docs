@@ -1,7 +1,114 @@
 ---
 title: 获取Passkey状态
+description: 列出当前用户已绑定的 Passkey（WebAuthn）凭据及单用户绑定上限。
 api: "GET /api/user/passkey"
 ---
 
-🔐 需要登录（User权限）
+返回当前用户的 Passkey（WebAuthn）绑定状态：是否至少绑定了一个凭据、凭据列表（含设备信息）以及服务端 Passkey 设置中配置的单用户上限。
 
+需要**用户（User）**权限（任意登录用户）。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
+
+## 请求
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url 'https://your-nookmux-domain/api/user/passkey' \
+  --header 'Cookie: session={session_cookie}' \
+  --header 'New-Api-User: 1'
+```
+
+</RequestExample>
+
+## 响应
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": {
+    "enabled": true,
+    "passkeys": [
+      {
+        "id": 1,
+        "device_name": "MacBook Touch ID",
+        "attachment": "platform",
+        "backup_eligible": false,
+        "backup_state": false,
+        "last_used_at": "2026-01-02T03:04:05Z",
+        "created_at": "2025-12-01T08:00:00Z"
+      }
+    ],
+    "count": 1,
+    "max_passkeys": 1
+  }
+}
+```
+
+</ResponseExample>
+
+### 响应字段
+
+<ResponseField name="success" type="boolean" required>
+状态是否成功返回。
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+`success` 为 `false` 时的错误描述；成功时为空字符串。
+</ResponseField>
+
+<ResponseField name="data" type="object" required>
+Passkey 绑定状态。
+
+<Expandable title="data 结构">
+  <ResponseField name="enabled" type="boolean" required>
+用户是否至少绑定了一个 Passkey（`passkeys` 非空时为 `true`）。
+</ResponseField>
+  <ResponseField name="passkeys" type="object[]">
+已绑定的 Passkey 凭据列表。
+
+<Expandable title="passkey 结构">
+  <ResponseField name="id" type="integer" required>
+Passkey 凭据记录 ID，用作删除、改名接口的 `{id}` 路径参数。
+</ResponseField>
+  <ResponseField name="device_name" type="string" required>
+注册时填写的设备名；未填写时为空字符串。
+</ResponseField>
+  <ResponseField name="attachment" type="string" required>
+WebAuthn 认证器挂载方式，例如 `platform`（设备内置认证器）或 `cross-platform`（安全钥匙、手机等跨平台认证器）。
+</ResponseField>
+  <ResponseField name="backup_eligible" type="boolean" required>
+该凭据是否支持云同步多设备备份。
+</ResponseField>
+  <ResponseField name="backup_state" type="boolean" required>
+该凭据当前是否已备份。
+</ResponseField>
+  <ResponseField name="last_used_at" type="string">
+最近一次验证成功的使用时间（RFC 3339）；从未使用过时为 `null`。
+</ResponseField>
+  <ResponseField name="created_at" type="string" required>
+凭据注册时间（RFC 3339）。
+</ResponseField>
+</Expandable>
+  </ResponseField>
+  <ResponseField name="count" type="integer" required>
+已绑定凭据数量。
+</ResponseField>
+  <ResponseField name="max_passkeys" type="integer" required>
+服务端 Passkey 设置的单用户上限；配置值小于 1 时按 1 处理。
+</ResponseField>
+</Expandable>
+</ResponseField>
+
+<Note>
+Passkey 系列接口从服务端会话（session）解析当前用户，请求必须携带登录会话 Cookie（通过 `POST /api/user/login` 获得），仅用 Access Token 鉴权会被拒绝，同时仍需携带 `New-Api-User` 头。会话无法解析（未登录、用户被禁用）时返回 HTTP `401`，而非通常的 HTTP `200` 包装。
+</Note>
+
+## 错误说明
+
+| 条件 | 说明 |
+| --- | --- |
+| 数据库错误 | 加载 Passkey 凭据失败，详见服务端日志 |

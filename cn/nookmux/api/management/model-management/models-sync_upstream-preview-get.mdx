@@ -1,7 +1,106 @@
 ---
 title: 预览上游模型同步
+description: 预览上游同步会创建哪些模型、哪些已有记录存在字段差异。
 api: "GET /api/models/sync_upstream/preview"
 ---
 
-👨‍💼 需要管理员权限（Admin）
+在执行[同步上游模型](/cn/nookmux/api/management/model-management/models-sync_upstream-post)之前，预览本地模型元数据与上游元数据仓库的差异。响应列出上游也收录的缺失模型（创建候选），以及已有记录中与上游取值不一致的字段。本接口不写入任何数据。
 
+需要**管理员（Admin）**权限。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
+
+## 请求
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url 'https://your-nookmux-domain/api/models/sync_upstream/preview?locale=en' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1'
+```
+
+</RequestExample>
+
+### 查询参数
+
+<ParamField path="locale" type="string">
+上游目录的语言：`en`、`zh` 或 `ja`。取其他值或不传时，使用默认的非本地化目录文件。
+</ParamField>
+
+## 响应
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "data": {
+    "missing": ["gpt-4o", "o3"],
+    "conflicts": [
+      {
+        "model_name": "claude-3-7-sonnet",
+        "fields": [
+          { "field": "icon", "local": "", "upstream": "anthropic" },
+          { "field": "status", "local": 0, "upstream": 1 }
+        ]
+      }
+    ],
+    "source": {
+      "locale": "en",
+      "models_url": "https://basellm.github.io/llm-metadata/api/i18n/en/newapi/models.json",
+      "vendors_url": "https://basellm.github.io/llm-metadata/api/i18n/en/newapi/vendors.json"
+    }
+  }
+}
+```
+
+</ResponseExample>
+
+### 响应字段
+
+<ResponseField name="success" type="boolean" required>
+预览是否成功计算。
+</ResponseField>
+
+<ResponseField name="data.missing" type="array of string" required>
+本地缺失且上游也收录的模型名，即一次同步会创建的候选记录。
+</ResponseField>
+
+<ResponseField name="data.conflicts" type="array of object" required>
+存储值与上游不一致的已有记录。仅比较参与官方同步的记录。
+
+  <Expandable title="conflict 结构">
+    <ResponseField name="model_name" type="string">
+      本地模型记录的名称。
+    </ResponseField>
+    <ResponseField name="fields" type="array of object">
+      本地与上游取值不一致的字段列表。
+
+      <Expandable title="差异字段结构">
+        <ResponseField name="field" type="string">
+          被比较的字段：`icon`、`tags`、`vendor`、`name_rule` 或 `status`。其中 `vendor` 按供应商名称比较。
+        </ResponseField>
+        <ResponseField name="local" type="string | integer">
+          本地当前存储的值。`icon`、`tags`、`vendor` 为字符串；`name_rule`、`status` 为整数。
+        </ResponseField>
+        <ResponseField name="upstream" type="string | integer">
+          上游目录提供的值，类型与 `local` 相同。
+        </ResponseField>
+      </Expandable>
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="data.source" type="object" required>
+本次实际使用的上游来源描述：`locale`（回显请求值）、`models_url` 与 `vendors_url`（实际拉取的上游 URL）。
+</ResponseField>
+
+<Note>
+管理接口在业务失败时同样返回 HTTP `200`，必须以 `success` 字段判断结果。本接口成功响应不含 `message` 字段。上游仓库默认为 `https://basellm.github.io/llm-metadata`，可通过环境变量 `SYNC_UPSTREAM_BASE` 重定向。
+</Note>
+
+## 错误说明
+
+| 条件 | 说明 |
+| --- | --- |
+| 获取上游模型失败：... | 重试后仍拉取上游目录失败；`message` 附带原因，顶层 `locale` 与 `source_urls` 字段描述所尝试的来源 |

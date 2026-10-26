@@ -1,7 +1,105 @@
 ---
 title: Start Passkey Registration
+description: Start a WebAuthn registration ceremony and receive creation options for binding a new passkey.
 api: "POST /api/user/passkey/register/begin"
 ---
 
-🔐 Login Required (User Permissions)
+Starts the first half of a WebAuthn registration ceremony for the current user. The server generates a challenge, excludes credentials already bound by the user, stores the challenge and the optional device name in the session, and returns the creation options that the browser passes to `navigator.credentials.create()`.
 
+Requires **User** permission (any logged-in user). See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request POST \
+  --url 'https://your-nookmux-domain/api/user/passkey/register/begin' \
+  --header 'Cookie: session={session_cookie}' \
+  --header 'New-Api-User: 1' \
+  --header 'Content-Type: application/json' \
+  --data '{
+  "device_name": "MacBook Touch ID"
+}'
+```
+
+</RequestExample>
+
+### Body
+
+<ParamField path="body.device_name" type="string">
+Friendly name for the new credential, shown in the passkey list. Optional: surrounding whitespace is trimmed and the value is capped at 255 characters. When omitted or empty, no device name is stored.
+</ParamField>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": {
+    "options": {
+      "publicKey": {
+        "challenge": "hK0dF2vQ8xN3mZ7bT1wY5cR9jL4pA6sD",
+        "rp": {
+          "id": "your-nookmux-domain",
+          "name": "NookMux"
+        },
+        "user": {
+          "id": "Mg",
+          "name": "alice",
+          "displayName": "alice"
+        },
+        "pubKeyCredParams": [
+          {
+            "type": "public-key",
+            "alg": -7
+          }
+        ],
+        "excludeCredentials": [],
+        "attestation": "none"
+      }
+    }
+  }
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+Whether the ceremony was started.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+Error description when `success` is `false`; empty otherwise.
+</ResponseField>
+
+<ResponseField name="data.options" type="object" required>
+WebAuthn creation options following the standard WebAuthn `PublicKeyCredentialCreationOptions` structure: a server-generated `challenge`, the relying party (`rp`), the user entity (`user`), acceptable algorithm parameters (`pubKeyCredParams`), and `excludeCredentials` listing the credentials this user has already bound so the authenticator skips them. The condensed example above shows the shape; the protocol internals are defined by the WebAuthn standard and the server passkey settings.
+</ResponseField>
+
+<Note>
+Before calling this endpoint:
+
+- The passkey feature must be enabled in the server passkey settings.
+- The user must hold a valid session login; access-token-only authentication is rejected with HTTP `401`.
+- With 2FA enabled, a step-up verification with the `2fa` method no older than 5 minutes is required (`POST /api/verify`).
+- The number of bound passkeys must be below `max_passkeys` (from `GET /api/user/passkey`).
+
+The challenge and the device name are stored in the server-side session, so `POST /api/user/passkey/register/finish` must be sent from the same session and consumes them.
+</Note>
+
+## Error messages
+
+| Condition | Description |
+| --- | --- |
+| Passkey login is not enabled by administrator | The passkey feature is disabled in the server settings |
+| Not logged in / user disabled | The session cannot be resolved; returned as HTTP `401` |
+| Secure verification required | 2FA is enabled but no valid 2FA step-up verification exists |
+| Passkey limit reached | The user already has the maximum number of passkeys |
+| Unable to create Passkey credential | Building the WebAuthn relying party, generating the ceremony, or saving the session state failed; see server logs |
+| Database error | Counting or loading the existing credentials failed; see server logs |

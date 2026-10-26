@@ -1,7 +1,49 @@
 ---
 title: 用户登出
+description: 清除当前登录会话。
 api: "GET /api/user/logout"
 ---
 
-🔓 无需鉴权
+清空当前会话中存储的全部数据并保存，即在本客户端登出。本接口无需鉴权；未登录状态下调用只是重写一个空会话。
 
+本接口为 **Public（公开）**——无需鉴权。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
+
+## 请求
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url 'https://your-nookmux-domain/api/user/logout'
+```
+
+</RequestExample>
+
+## 响应
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": ""
+}
+```
+
+</ResponseExample>
+
+### 响应字段
+
+<ResponseField name="success" type="boolean" required>
+会话是否清空并保存成功。
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+`success` 为 `false` 时的错误描述；成功时为空字符串。
+</ResponseField>
+
+## 错误说明
+
+| 条件 | 说明 |
+| --- | --- |
+| 会话保存失败 | 清空后的会话无法持久化，错误文本返回在 `message` 中 |

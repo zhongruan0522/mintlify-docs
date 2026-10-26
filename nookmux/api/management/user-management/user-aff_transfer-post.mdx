@@ -1,7 +1,69 @@
 ---
 title: Convert Invitation Quota
+description: Convert part of the current user's invitation reward quota into normal usable quota.
 api: "POST /api/user/aff_transfer"
 ---
 
-🔐 Login Required (User Permission)
+Converts part of the current user's invitation reward quota (`aff_quota`) into normal quota (`quota`). The transfer runs in a single database transaction with a row lock, so the balance is checked against the latest value. The minimum transfer is one quota unit (500,000 quota, equal to $1 by default), and the amount must not exceed the remaining invitation quota.
 
+Requires **User** permission (any logged-in user). See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request POST \
+  --url 'https://your-nookmux-domain/api/user/aff_transfer' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1' \
+  --header 'Content-Type: application/json' \
+  --data '{
+  "quota": 500000
+}'
+```
+
+</RequestExample>
+
+### Body
+
+<ParamField path="body.quota" type="integer" required>
+Amount of invitation quota to convert, in quota units (500,000 quota equals $1 by default). Must be at least one quota unit, must not exceed the remaining invitation quota, and must not be `0`.
+</ParamField>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "Transfer successful",
+  "data": null
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+Whether the conversion succeeded.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+Localized success message when `success` is `true`; error description otherwise.
+</ResponseField>
+
+<ResponseField name="data" type="null">
+Always `null` for this endpoint.
+</ResponseField>
+
+## Error messages
+
+| Condition | Description |
+| --- | --- |
+| Invalid request body | The JSON body is missing, malformed, or `quota` is `0` |
+| Transfer failed: below minimum | `quota` is smaller than one quota unit (500,000 by default) |
+| Transfer failed: insufficient invitation quota | `quota` exceeds the remaining invitation quota |
+| Database error | The transfer transaction failed; see server logs |

@@ -1,7 +1,166 @@
 ---
 title: Create Model Metadata
+description: Create a new model metadata entry; the model name must be unique among existing entries.
 api: "POST /api/models/"
 ---
 
-👨‍💼 Admin permissions required
+Create a model metadata entry. The entry describes a model (or a naming rule, see `name_rule`) shown in the console: vendor, icon, tags, context window, modalities and supported endpoint types. After a successful creation the pricing cache is refreshed and the change is recorded in the audit log.
 
+Requires **Admin** permissions. See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request POST \
+  --url 'https://your-nookmux-domain/api/models/' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1' \
+  --header 'Content-Type: application/json' \
+  --data '{
+  "model_name": "gpt-4o-mini",
+  "description": "Affordable and intelligent small model",
+  "icon": "openai",
+  "tags": "llm,chat",
+  "vendor_id": 1,
+  "endpoints": "[\"openai\"]",
+  "context_length": 128000,
+  "max_output_tokens": 16384,
+  "input_modalities": ["text", "image"],
+  "output_modalities": ["text"],
+  "knowledge_cutoff": "2023-10",
+  "release_date": "2024-07-18",
+  "parameter_count": "unknown",
+  "status": 1,
+  "name_rule": 0
+}'
+```
+
+</RequestExample>
+
+### Body
+
+<ParamField path="body.model_name" type="string" required>
+Model name. Must be unique among existing entries; how it matches concrete models is determined by `name_rule`.
+</ParamField>
+
+<ParamField path="body.description" type="string">
+Free-form description of the model.
+</ParamField>
+
+<ParamField path="body.icon" type="string">
+Icon identifier displayed in the console.
+</ParamField>
+
+<ParamField path="body.tags" type="string">
+Comma-separated tags.
+</ParamField>
+
+<ParamField path="body.vendor_id" type="integer">
+ID of the vendor the model belongs to; `0` (or omitted) means no vendor. Vendor records are managed by the [vendors endpoints](/nookmux/api/management/vendors/vendors-get).
+</ParamField>
+
+<ParamField path="body.endpoints" type="string">
+Supported endpoint types as a JSON array string, for example `"[\"openai\",\"anthropic\"]"`. Possible values: `openai`, `openai-response`, `openai-response-compact`, `anthropic`, `gemini`, `jina-rerank`, `image-generation`, `embeddings`. When left empty, list endpoints fill it from the pricing cache.
+</ParamField>
+
+<ParamField path="body.context_length" type="integer" default="0">
+Context window size in tokens.
+</ParamField>
+
+<ParamField path="body.max_output_tokens" type="integer" default="0">
+Maximum number of output tokens.
+</ParamField>
+
+<ParamField path="body.input_modalities" type="array of string">
+Accepted input modalities, for example `["text","image"]`.
+</ParamField>
+
+<ParamField path="body.output_modalities" type="array of string">
+Output modalities, for example `["text"]`.
+</ParamField>
+
+<ParamField path="body.capabilities" type="array of string">
+Free-form capability labels of the model.
+</ParamField>
+
+<ParamField path="body.knowledge_cutoff" type="string">
+Knowledge cutoff date of the model.
+</ParamField>
+
+<ParamField path="body.release_date" type="string">
+Release date of the model.
+</ParamField>
+
+<ParamField path="body.parameter_count" type="string">
+Parameter count description.
+</ParamField>
+
+<ParamField path="body.status" type="integer" default="1">
+Model status: `1` enabled, `0` disabled.
+</ParamField>
+
+<ParamField path="body.name_rule" type="integer" default="0">
+How `model_name` matches concrete models: `0` exact match, `1` prefix match, `2` contains match, `3` suffix match.
+</ParamField>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": {
+    "id": 43,
+    "model_name": "gpt-4o-mini",
+    "description": "Affordable and intelligent small model",
+    "icon": "openai",
+    "tags": "llm,chat",
+    "vendor_id": 1,
+    "endpoints": "[\"openai\"]",
+    "context_length": 128000,
+    "max_output_tokens": 16384,
+    "input_modalities": ["text", "image"],
+    "output_modalities": ["text"],
+    "knowledge_cutoff": "2023-10",
+    "release_date": "2024-07-18",
+    "parameter_count": "unknown",
+    "status": 1,
+    "created_time": 1718100000,
+    "updated_time": 1718100000,
+    "name_rule": 0
+  }
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+Whether the entry was created.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+Error description when `success` is `false`; empty otherwise.
+</ResponseField>
+
+<ResponseField name="data" type="object" required>
+The created model metadata record: the request body fields plus the server-assigned `id`, `created_time` and `updated_time`. The computed enrichment fields (`bound_channels`, `enable_groups`, `quota_types`, `matched_models`, `matched_count`) are not part of this response; see [Get All Model Metadata](/nookmux/api/management/model-management/models-get) for their meaning.
+</ResponseField>
+
+<Note>
+Management endpoints return HTTP `200` even on business failures; always check the `success` field.
+</Note>
+
+## Error messages
+
+| Condition | Description |
+| --- | --- |
+| Invalid request body | The JSON body is missing or malformed |
+| Model name cannot be empty | `model_name` is missing |
+| Model name already exists | Another record uses the same `model_name` |
+| Database error | Persisting the record failed; see server logs |

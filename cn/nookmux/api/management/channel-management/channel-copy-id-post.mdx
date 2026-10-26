@@ -1,7 +1,80 @@
 ---
 title: 复制渠道
+description: 克隆一个已有渠道，包含其上游密钥。
 api: "POST /api/channel/copy/{id}"
 ---
 
-👨‍💼 需要管理员权限（Admin）
+克隆一个已有渠道。副本保留源渠道的全部字段（包括密钥），但会分配新的 ID 与创建时间，最近测试时间与响应耗时被重置。副本与其路由能力（abilities）一并创建，随后重新加载内存中的渠道缓存，并把该操作记入管理员审计日志。
 
+需要**管理员（Admin）**权限。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
+
+## 请求
+
+<RequestExample>
+
+```bash cURL
+curl --request POST \
+  --url 'https://your-nookmux-domain/api/channel/copy/1?suffix=-copy&reset_balance=true' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1'
+```
+
+</RequestExample>
+
+### 路径参数
+
+<ParamField path="id" type="integer" required>
+  要复制的渠道 ID。
+</ParamField>
+
+### 查询参数
+
+<ParamField path="query.suffix" type="string" default="_复制">
+  追加到源渠道名称末尾的后缀。
+</ParamField>
+
+<ParamField path="query.reset_balance" type="boolean" default="true">
+  为 `true` 时，副本的 `balance` 与 `used_quota` 重置为 `0`。取值不是合法布尔值时保持默认。
+</ParamField>
+
+## 响应
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": {
+    "id": 42
+  }
+}
+```
+
+</ResponseExample>
+
+### 响应字段
+
+<ResponseField name="success" type="boolean" required>
+  渠道是否复制成功。
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  `success` 为 `false` 时的错误描述；成功时为空字符串。
+</ResponseField>
+
+<ResponseField name="data.id" type="integer" required>
+  新建渠道的 ID。
+</ResponseField>
+
+<Note>
+  管理接口在业务失败时同样返回 HTTP `200`，必须以 `success` 字段判断结果。
+</Note>
+
+## 错误说明
+
+| 条件 | 说明 |
+| --- | --- |
+| 渠道 ID 非法 | 路径中的 `id` 不是整数 |
+| 获取源渠道失败 | 源渠道加载失败，包括渠道不存在 |
+| 复制失败 | 写入副本失败，详见服务端日志 |

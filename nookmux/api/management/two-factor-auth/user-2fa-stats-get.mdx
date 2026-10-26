@@ -1,7 +1,68 @@
 ---
 title: Get 2FA Statistics
+description: Site-wide two-factor-authentication adoption statistics for administrators.
 api: "GET /api/user/2fa/stats"
 ---
 
-👨‍💼 Requires Administrator Privileges (Admin)
+Returns site-wide two-factor authentication statistics: the total number of user accounts, how many of them have 2FA enabled, and the adoption rate.
 
+Requires **Admin** permissions. See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url 'https://your-nookmux-domain/api/user/2fa/stats' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1'
+```
+
+</RequestExample>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": {
+    "total_users": 100,
+    "enabled_users": 25,
+    "enabled_rate": "25.0%"
+  }
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+Whether the statistics were returned.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+Error description when `success` is `false`; empty otherwise.
+</ResponseField>
+
+<ResponseField name="data.total_users" type="integer" required>
+Total number of user accounts.
+</ResponseField>
+
+<ResponseField name="data.enabled_users" type="integer" required>
+Number of accounts with 2FA enabled.
+</ResponseField>
+
+<ResponseField name="data.enabled_rate" type="string" required>
+Adoption rate formatted with one decimal place and a `%` suffix, for example `25.0%`. It is `0.0%` when there are no users.
+</ResponseField>
+
+## Error messages
+
+| Condition | Description |
+| --- | --- |
+| Database error | Counting users or enabled 2FA records failed; see server logs |

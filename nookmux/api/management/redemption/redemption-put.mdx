@@ -1,7 +1,153 @@
 ---
 title: Update Redemption Code
+description: Update a redemption code's name, quota and expiry, or only its status with status_only mode.
 api: "PUT /api/redemption/"
 ---
 
-👨‍💼 Requires Administrator Privileges (Admin)
+Update an existing redemption code. By default `name`, `quota` and `expired_time` are updated; when the `status_only` query parameter is set to a non-empty value, only `status` is updated and the other body fields are ignored. The response returns the updated code, with the `key` field always masked as an empty string.
 
+Requires **Admin** permissions. See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request PUT \
+  --url 'https://your-nookmux-domain/api/redemption/' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1' \
+  --header 'Content-Type: application/json' \
+  --data '{
+  "id": 42,
+  "name": "welcome-bonus-v2",
+  "quota": 200,
+  "expired_time": 1750000000
+}'
+```
+
+</RequestExample>
+
+### Query parameters
+
+<ParamField path="query.status_only" type="string">
+  Status-only mode. When set to any non-empty value, only the `status` field from the body is applied; `name`, `quota` and `expired_time` are ignored. When omitted or empty, `name`, `quota` and `expired_time` are applied and `status` is ignored.
+</ParamField>
+
+### Body
+
+<ParamField path="body.id" type="integer" required>
+  Id of the redemption code to update. The stored record is loaded by this id; the update fails if no code exists with it.
+</ParamField>
+
+<ParamField path="body.name" type="string">
+  New name. Applied only when `status_only` is not set.
+</ParamField>
+
+<ParamField path="body.quota" type="integer">
+  New quota credited on redemption. Applied only when `status_only` is not set.
+</ParamField>
+
+<ParamField path="body.expired_time" type="integer">
+  New expiry as a Unix timestamp (seconds); `0` means no expiry. Applied only when `status_only` is not set. When non-zero, it must not be earlier than the current time.
+</ParamField>
+
+<ParamField path="body.status" type="integer">
+  New status: `1` enabled, `2` disabled, `3` used. Applied only when `status_only` is set.
+</ParamField>
+
+<Note>
+The store-layer update applies non-zero values: in the default mode, fields left at their zero value (empty `name`, `0` quota, `0` expired_time) keep their stored value.
+</Note>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": {
+    "id": 42,
+    "user_id": 1,
+    "key": "",
+    "status": 1,
+    "name": "welcome-bonus-v2",
+    "quota": 200,
+    "created_time": 1748000000,
+    "redeemed_time": 0,
+    "count": 0,
+    "used_user_id": 0,
+    "DeletedAt": null,
+    "expired_time": 1750000000
+  }
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+  Whether the update succeeded.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  Error description when `success` is `false`; empty otherwise.
+</ResponseField>
+
+<ResponseField name="data" type="object" required>
+  The updated redemption code, with `key` masked as an empty string.
+
+  <Expandable title="redemption structure">
+    <ResponseField name="id" type="integer" required>
+      Redemption code id.
+    </ResponseField>
+    <ResponseField name="user_id" type="integer" required>
+      Id of the administrator who created the code.
+    </ResponseField>
+    <ResponseField name="key" type="string" required>
+      The redemption key. Always returned as an empty string by this endpoint; fetch the full key on demand from `GET /api/redemption/{id}/key`.
+    </ResponseField>
+    <ResponseField name="status" type="integer" required>
+      Code status: `1` enabled, `2` disabled, `3` used.
+    </ResponseField>
+    <ResponseField name="name" type="string" required>
+      Display name of the code.
+    </ResponseField>
+    <ResponseField name="quota" type="integer" required>
+      Quota credited to the user who redeems the code.
+    </ResponseField>
+    <ResponseField name="created_time" type="integer" required>
+      Unix timestamp (seconds) of creation.
+    </ResponseField>
+    <ResponseField name="redeemed_time" type="integer" required>
+      Unix timestamp (seconds) of redemption; `0` if the code has not been redeemed.
+    </ResponseField>
+    <ResponseField name="count" type="integer" required>
+      Number of codes to generate in one create call. Request-only field, always `0` in responses.
+    </ResponseField>
+    <ResponseField name="used_user_id" type="integer" required>
+      Id of the user who redeemed the code; `0` if the code has not been redeemed.
+    </ResponseField>
+    <ResponseField name="DeletedAt" type="string" required>
+      Soft-delete marker; always `null` because soft-deleted rows are excluded from queries.
+    </ResponseField>
+    <ResponseField name="expired_time" type="integer" required>
+      Unix timestamp (seconds) after which the code can no longer be redeemed; `0` means no expiry.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<Note>
+Management endpoints return HTTP `200` even on business failures; always check the `success` field.
+</Note>
+
+## Error messages
+
+| Condition | Description |
+| --- | --- |
+| Invalid request body | The JSON body is missing or malformed |
+| Expire time invalid | `expired_time` is non-zero and earlier than the current time (default mode only) |
+| Database error | No redemption code exists with the given `id`, or persisting the change failed; see server logs |

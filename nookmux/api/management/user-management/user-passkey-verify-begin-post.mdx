@@ -1,7 +1,79 @@
 ---
 title: Start Passkey Verification
+description: Start a WebAuthn assertion ceremony for step-up secure verification of the logged-in user.
 api: "POST /api/user/passkey/verify/begin"
 ---
 
-🔐 Login Required (User Permission)
+Starts the first half of a WebAuthn assertion ceremony used for step-up (secure) verification of the already logged-in user — not for login. The server generates a challenge for the user's bound passkeys, stores it in the session, and returns assertion options that the browser passes to `navigator.credentials.get()`.
 
+Requires **User** permission (any logged-in user). See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request POST \
+  --url 'https://your-nookmux-domain/api/user/passkey/verify/begin' \
+  --header 'Cookie: session={session_cookie}' \
+  --header 'New-Api-User: 1'
+```
+
+</RequestExample>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": {
+    "options": {
+      "publicKey": {
+        "challenge": "hK0dF2vQ8xN3mZ7bT1wY5cR9jL4pA6sD",
+        "timeout": 60000,
+        "rpId": "your-nookmux-domain",
+        "allowCredentials": [
+          {
+            "id": "R2dpSmY4Q3JEektWWXRHcw",
+            "type": "public-key",
+            "transports": ["internal"]
+          }
+        ],
+        "userVerification": "preferred"
+      }
+    }
+  }
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+Whether the ceremony was started.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+Error description when `success` is `false`; empty otherwise.
+</ResponseField>
+
+<ResponseField name="data.options" type="object" required>
+WebAuthn assertion options following the standard WebAuthn `PublicKeyCredentialRequestOptions` structure: a server-generated `challenge`, the relying party ID (`rpId`), `allowCredentials` covering the user's bound passkeys, and the user-verification preference (`userVerification`) from the server passkey settings. The condensed example above shows the shape; the protocol internals are defined by the WebAuthn standard.
+</ResponseField>
+
+<Note>
+The passkey feature must be enabled in the server settings and the user must have at least one bound passkey. The challenge is stored in the server-side session, so `POST /api/user/passkey/verify/finish` must be sent from the same session and consumes it. Access-token-only authentication is rejected with HTTP `401`.
+</Note>
+
+## Error messages
+
+| Condition | Description |
+| --- | --- |
+| Passkey login is not enabled by administrator | The passkey feature is disabled in the server settings |
+| Not logged in / user disabled | The session cannot be resolved; returned as HTTP `401` |
+| This user has not bound a Passkey | There is no credential to verify with |
+| Database error | Loading the credentials, generating the ceremony, or saving the session state failed; see server logs |

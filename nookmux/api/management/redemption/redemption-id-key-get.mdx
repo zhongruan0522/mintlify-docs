@@ -1,0 +1,73 @@
+---
+title: Get Redemption Code Key
+description: Reveal the full key of a redemption code on demand; each view is recorded in the operation logs.
+api: "GET /api/redemption/{id}/key"
+---
+
+Return the full key of a single redemption code on demand. Redemption keys are redeemable credentials: they are returned exactly once in the creation response, and afterwards the list, detail and update endpoints never return the key; this is the only endpoint that reveals it again. Every call is recorded in the operation logs of the calling administrator.
+
+Requires **Admin** permissions. See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
+
+<Note>
+  Responses are sent with no-store cache directives, so browsers and intermediary proxies never cache the revealed key.
+</Note>
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url 'https://your-nookmux-domain/api/redemption/42/key' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1'
+```
+
+</RequestExample>
+
+### Path parameters
+
+<ParamField path="id" type="integer" required>
+  Id of the redemption code whose key should be revealed.
+</ParamField>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": {
+    "key": "e3f0c9d1a4b26f7c8d90e1a2b3c4d5e6"
+  }
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+  Whether the key was returned.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  Error description when `success` is `false`; empty otherwise.
+</ResponseField>
+
+<ResponseField name="data.key" type="string" required>
+  The full redemption key (a 32-character UUID without dashes).
+</ResponseField>
+
+<Note>
+Management endpoints return HTTP `200` even on business failures; always check the `success` field.
+</Note>
+
+## Error messages
+
+| Condition | Description |
+| --- | --- |
+| Invalid parameters | `id` is not an integer |
+| Database error | No redemption code exists with the given id, or loading it failed; see server logs |

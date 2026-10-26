@@ -1,7 +1,104 @@
 ---
 title: Two-Factor Authentication Login
+description: Finish a password login that is waiting for a two-factor authentication code.
 api: "POST /api/user/login/2fa"
 ---
 
-🔓 No Authentication Required (Login Process)
+Second step of password login for accounts with two-factor authentication (2FA) enabled. After `POST /api/user/login` returns `data.require_2fa = true`, submit the 6-digit TOTP code (or a backup code) with this endpoint using the same session cookie as the first step. The pending login is valid for 5 minutes; a successful verification clears it and completes the login.
 
+This endpoint is **Public** — no authentication is required (it is part of the login process). See [Authentication](/nookmux/api/management/auth) for how management API requests are authenticated.
+
+<Note>
+This endpoint applies a stricter per-IP rate limit (CriticalRateLimit) and limits the anonymous request body size (oversized bodies are rejected with HTTP `413`). It requires the session cookie issued by the `POST /api/user/login` call that returned `require_2fa`; without a valid pending login the request fails.
+</Note>
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request POST \
+  --url 'https://your-nookmux-domain/api/user/login/2fa' \
+  --header 'Cookie: session={session_cookie}' \
+  --header 'Content-Type: application/json' \
+  --data '{
+  "code": "123456"
+}'
+```
+
+</RequestExample>
+
+### Body
+
+<ParamField path="body.code" type="string" required>
+6-digit TOTP code from the authenticator app, or a single-use backup code.
+</ParamField>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": {
+    "id": 1,
+    "username": "alice",
+    "display_name": "alice",
+    "role": 1,
+    "status": 1,
+    "group": "default"
+  }
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+Whether the 2FA verification and login succeeded.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+Error description when `success` is `false`; empty otherwise.
+</ResponseField>
+
+<ResponseField name="data" type="object" required>
+Account snapshot, identical to the `data` object of a completed password login.
+
+<Expandable title="data structure">
+  <ResponseField name="id" type="integer" required>
+    User ID.
+  </ResponseField>
+  <ResponseField name="username" type="string" required>
+    Username.
+  </ResponseField>
+  <ResponseField name="display_name" type="string" required>
+    Display name.
+  </ResponseField>
+  <ResponseField name="role" type="integer" required>
+    Role: `1` common user, `10` admin, `100` root.
+  </ResponseField>
+  <ResponseField name="status" type="integer" required>
+    Account status: `1` enabled, `2` disabled.
+  </ResponseField>
+  <ResponseField name="group" type="string" required>
+    User group.
+  </ResponseField>
+</Expandable>
+</ResponseField>
+
+## Error messages
+
+| Condition | Description |
+| --- | --- |
+| Invalid parameters | The body is not valid JSON, or `code` is missing |
+| Session expired | There is no pending 2FA login in the session, or it is older than 5 minutes |
+| Session data invalid | The pending session payload could not be read |
+| User does not exist | The account no longer exists |
+| 2FA not enabled | Two-factor authentication is not (or no longer) enabled for the account |
+| Verification code or backup code incorrect | Neither the TOTP code nor a backup code matched |
+| Database error | Reading the account or its 2FA record failed |
+| Failed to save session | The session could not be persisted after the state change |

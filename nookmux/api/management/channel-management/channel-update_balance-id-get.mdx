@@ -1,7 +1,83 @@
 ---
 title: Update Specified Channel Balance
+description: Query a channel's upstream balance in real time and persist it on the channel.
 api: "GET /api/channel/update_balance/{id}"
 ---
 
-👨‍💼 Requires Admin Permissions
+Query the upstream balance of a single channel in real time and store it on the channel. The response reports the balance in the upstream's reporting currency; DeepSeek channels additionally return the granted and topped-up components of the balance.
 
+Requires **Admin** permissions. See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url 'https://your-nookmux-domain/api/channel/update_balance/1' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1'
+```
+
+</RequestExample>
+
+### Path parameters
+
+<ParamField path="id" type="integer" required>
+ID of the channel to refresh.
+</ParamField>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "balance": 12.34,
+  "currency": "USD"
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+Whether the balance query succeeded.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+Error description when `success` is `false`; empty otherwise.
+</ResponseField>
+
+<ResponseField name="balance" type="number" required>
+Refreshed upstream balance as reported by the provider. Also persisted to the channel.
+</ResponseField>
+
+<ResponseField name="currency" type="string" required>
+Currency of the balance value: `USD` or `CNY`.
+</ResponseField>
+
+<ResponseField name="granted_balance" type="number">
+Granted (promotional) part of the balance. Present only for DeepSeek channels and only when non-zero.
+</ResponseField>
+
+<ResponseField name="topped_up_balance" type="number">
+Topped-up part of the balance. Present only for DeepSeek channels and only when non-zero.
+</ResponseField>
+
+<Note>
+This response places `balance`, `currency`, and the optional DeepSeek detail fields next to `success`/`message` instead of wrapping them in a `data` object. Balance queries are supported for OpenAI-compatible billing endpoints (OpenAI and custom base URLs), SiliconFlow, DeepSeek, OpenRouter, Moonshot, and Zhipu GLM channels; Azure and other unsupported types fail with a not-implemented error. Multi-key channels are rejected outright because their balance cannot be attributed to a single key. The request is sent from the server through the channel's configured proxy.
+</Note>
+
+## Error messages
+
+| Condition | Description |
+| --- | --- |
+| Channel ID format error | The path `id` is not an integer |
+| Database error | Loading the channel failed |
+| Multi-key channels unsupported | Balance refresh is not available for multi-key channels |
+| Balance query not implemented | The channel type does not expose a balance API (for example Azure) |
+| Balance query failed | The upstream request or response parsing failed; the error detail is included |

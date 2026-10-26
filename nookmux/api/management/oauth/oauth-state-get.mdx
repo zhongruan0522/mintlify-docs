@@ -1,7 +1,66 @@
 ---
 title: Generate OAuth State
+description: Generate the session-bound state parameter used as CSRF protection by the OAuth login callbacks.
 api: "GET /api/oauth/state"
 ---
 
-🔓 No authentication required
+Generates a random state parameter for OAuth CSRF protection and stores it in the caller's session. The frontend calls this endpoint right before redirecting the user to the provider's authorization page; the returned state must be passed to [GitHub OAuth Login](/nookmux/api/management/oauth/oauth-github-get) or [LinuxDO OAuth Login](/nookmux/api/management/oauth/oauth-linuxdo-get) as the `state` query parameter when the provider redirects back. The callback rejects the request with HTTP `403` if the state is missing or does not match the session.
 
+An optional affiliate (`aff`) code can be passed along; it is stored in the same session and credited as the inviter when the OAuth flow ends up creating a new account.
+
+This endpoint is **Public**; no access token is required. It is protected by a stricter rate limit (CriticalRateLimit). See [Authentication](/nookmux/api/management/auth) for how management API requests are authenticated.
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url 'https://your-nookmux-domain/api/oauth/state?aff=abc123'
+```
+
+</RequestExample>
+
+### Query parameters
+
+<ParamField path="aff" type="string">
+  Affiliate (invitation) code. When provided, it is stored in the session and applied as the inviter if the subsequent OAuth callback registers a new account.
+</ParamField>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": "a1b2c3d4e5f6"
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+  Whether the state was generated and stored.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  Error description when `success` is `false`; empty otherwise.
+</ResponseField>
+
+<ResponseField name="data" type="string" required>
+  The generated state value (a 12-character random string). Send it to the provider and expect it back on the OAuth callback in the same session.
+</ResponseField>
+
+<Note>
+  This endpoint is protected by a stricter rate limit (CriticalRateLimit). The state is only valid within the session that created it; generate it with the same browser session (cookies) that will receive the OAuth callback.
+</Note>
+
+## Error messages
+
+| Condition | Description |
+| --- | --- |
+| Database error, please try again later | Saving the session failed; see server logs |

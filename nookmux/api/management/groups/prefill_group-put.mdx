@@ -1,7 +1,130 @@
 ---
 title: Update Prefill Group
+description: Replace an existing prefill group by ID.
 api: "PUT /api/prefill_group/"
 ---
 
-👨‍💼 Admin permissions required
+Update an existing prefill group. The request binds the full group object and replaces the stored record, so send the complete group; the server refreshes `updated_time` and rejects names already used by another non-deleted group.
 
+Requires **Admin** permissions. See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request PUT \
+  --url 'https://your-nookmux-domain/api/prefill_group/' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1' \
+  --header 'Content-Type: application/json' \
+  --data '{
+  "id": 1,
+  "name": "gpt-flagship",
+  "type": "model",
+  "items": ["gpt-4o", "gpt-4o-mini", "o1"],
+  "description": "Flagship OpenAI models",
+  "created_time": 1735689600
+}'
+```
+
+</RequestExample>
+
+### Body
+
+<ParamField path="body.id" type="integer" required>
+  ID of the prefill group to update.
+</ParamField>
+
+<ParamField path="body.name" type="string">
+  New group name, unique among non-deleted groups (excluding this group), limited to 64 characters.
+</ParamField>
+
+<ParamField path="body.type" type="string">
+  Category of the group, for example `model`, `tag`, or `endpoint`.
+</ParamField>
+
+<ParamField path="body.items" type="array">
+  JSON array of strings holding the values of the group, for example model names. Omitting it writes back `null`.
+</ParamField>
+
+<ParamField path="body.description" type="string">
+  Free-form description, up to 255 characters.
+</ParamField>
+
+<ParamField path="body.created_time" type="integer">
+  Pass through the group's existing `created_time` so the full replacement does not reset it; see the note below.
+</ParamField>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": {
+    "id": 1,
+    "name": "gpt-flagship",
+    "type": "model",
+    "items": ["gpt-4o", "gpt-4o-mini", "o1"],
+    "description": "Flagship OpenAI models",
+    "created_time": 1735689600,
+    "updated_time": 1735862400
+  }
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+  Whether the group was updated.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  Error description when `success` is `false`; empty otherwise.
+</ResponseField>
+
+<ResponseField name="data" type="object" required>
+  The updated prefill group: the request object with `updated_time` refreshed by the server.
+
+  <Expandable title="prefill group structure">
+    <ResponseField name="id" type="integer" required>
+      Group ID.
+    </ResponseField>
+    <ResponseField name="name" type="string" required>
+      Unique group name among non-deleted groups, limited to 64 characters.
+    </ResponseField>
+    <ResponseField name="type" type="string" required>
+      Category of the group, for example `model`, `tag`, or `endpoint`.
+    </ResponseField>
+    <ResponseField name="items" type="array" required>
+      JSON array of strings holding the values of the group; `null` when `items` was omitted.
+    </ResponseField>
+    <ResponseField name="description" type="string">
+      Free-form description; omitted when empty.
+    </ResponseField>
+    <ResponseField name="created_time" type="integer" required>
+      Creation time as a Unix timestamp in seconds; echoes the value sent in the request body.
+    </ResponseField>
+    <ResponseField name="updated_time" type="integer" required>
+      Update time as a Unix timestamp in seconds, refreshed by the server.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<Note>
+Management endpoints return HTTP `200` even on business failures; always check the `success` field. This endpoint performs a full-column update: the bound object is saved with every field, so fields omitted from the JSON body are written back as zero values — send the complete group object, including `created_time`.
+</Note>
+
+## Error messages
+
+| Condition | Description |
+| --- | --- |
+| Invalid request body | The JSON body is missing or malformed |
+| Missing group ID | `id` is missing or `0` |
+| Group name already exists | Another non-deleted group with the same `name` already exists |
+| Database error, please try again later | Loading or saving the group failed; an unknown `id` is also reported this way |

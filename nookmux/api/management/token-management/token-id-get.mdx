@@ -1,7 +1,95 @@
 ---
 title: Get Specified Token
+description: Retrieve a single token owned by the current user by its id, with the key masked.
 api: "GET /api/token/{id}"
 ---
 
-🔐 Login Required (User Permission)
+Retrieve a single token by its id. Only tokens owned by the current user can be accessed; the `key` is masked in the response.
 
+Requires a logged-in user (**User** permissions). See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url 'https://your-nookmux-domain/api/token/3' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1'
+```
+
+</RequestExample>
+
+### Path parameters
+
+<ParamField path="id" type="integer" required>
+  Token id.
+</ParamField>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": {
+    "id": 3,
+    "user_id": 1,
+    "key": "***************************************************",
+    "status": 1,
+    "name": "my-token",
+    "created_time": 1748000000,
+    "accessed_time": 1748086400,
+    "expired_time": -1,
+    "remain_quota": 500000,
+    "unlimited_quota": false,
+    "model_limits_enabled": false,
+    "model_limits": "",
+    "model_mapping": null,
+    "allow_ips": null,
+    "used_quota": 0,
+    "group": "default",
+    "cross_group_retry": false,
+    "quota_type": 1,
+    "window_hours": 0,
+    "window_quota": 0,
+    "window_start_hour": 0,
+    "cycle_days": 0,
+    "cycle_quota": 0,
+    "window_used_quota": 0,
+    "window_start_time": 0,
+    "cycle_used_quota": 0,
+    "cycle_start_time": 0
+  }
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+  Whether the request succeeded.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  Error description when `success` is `false`; empty otherwise.
+</ResponseField>
+
+<ResponseField name="data" type="object" required>
+  The token object. Same structure as the items in [Get All Tokens](/nookmux/api/management/token-management/token-get); the `key` is masked with asterisks of the same length as the real key.
+</ResponseField>
+
+<Note>
+Management endpoints return HTTP `200` even on business failures; always check the `success` field.
+</Note>
+
+## Error messages
+
+| Condition | Description |
+| --- | --- |
+| Invalid parameters | `id` is not an integer |
+| Database error | No token with this id belongs to the current user, or the query failed; see server logs |

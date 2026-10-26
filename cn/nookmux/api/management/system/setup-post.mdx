@@ -1,7 +1,86 @@
 ---
 title: 初始化系统
+description: 完成全新 NookMux 站点的一次性初始化并创建 root 管理员账号。
 api: "POST /api/setup"
 ---
 
-🔓 无需鉴权
+执行全新站点的一次性初始化：创建 root 管理员账号（当尚不存在时），并写入标记系统已初始化的 setup 记录。该调用仅在系统未初始化时有效，此后接口永久拒绝任何再次调用。
 
+该接口为公开接口，无需鉴权，仅在初始化前的引导阶段存在。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
+
+## 请求
+
+<RequestExample>
+
+```bash cURL
+curl --request POST \
+  --url 'https://your-nookmux-domain/api/setup' \
+  --header 'Content-Type: application/json' \
+  --data '{
+  "username": "root",
+  "password": "{your_password}",
+  "confirmPassword": "{your_password}"
+}'
+```
+
+</RequestExample>
+
+### 请求体
+
+<ParamField path="body.username" type="string">
+  待创建的 root 管理员用户名，最长 12 个字符。当 root 用户已存在时忽略（复用已有账号）。
+</ParamField>
+
+<ParamField path="body.password" type="string">
+  root 管理员密码，至少 8 个字符。
+</ParamField>
+
+<ParamField path="body.confirmPassword" type="string">
+  `password` 的确认值，必须与其完全一致。
+</ParamField>
+
+## 响应
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "系统初始化成功",
+  "data": null
+}
+```
+
+</ResponseExample>
+
+### 响应字段
+
+<ResponseField name="success" type="boolean" required>
+  初始化是否成功完成。
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  成功描述，或 `success` 为 `false` 时的错误描述。
+</ResponseField>
+
+<ResponseField name="data" type="null" required>
+  恒为 `null`，该接口不返回数据载荷。
+</ResponseField>
+
+<Note>
+  并发的初始化请求会被串行化：每个进程同时只允许一个在途初始化；数据库层的 setup 记录保证多实例部署下只有一个实例能完成初始化，其余实例收到"已初始化"错误。该操作会记入审计日志（模块 `setup`，动作 `create`）。
+
+  当 root 用户已存在时，复用该账号并仅写入 setup 记录，此时跳过用户名与密码校验。
+</Note>
+
+## 错误说明
+
+| 条件 | 说明 |
+| --- | --- |
+| 系统已经初始化完成 | 系统已完成初始化，接口不再接受调用 |
+| 请求参数有误 | JSON 请求体缺失或格式错误 |
+| 用户名长度不能超过12个字符 | `username` 超过 12 个字符 |
+| 两次输入的密码不一致 | `password` 与 `confirmPassword` 不一致 |
+| 密码长度至少为8个字符 | `password` 少于 8 个字符 |
+| 系统错误 | 密码哈希失败，详见服务端日志 |
+| 系统初始化失败 | root 用户或 setup 记录写入数据库失败，详见服务端日志 |

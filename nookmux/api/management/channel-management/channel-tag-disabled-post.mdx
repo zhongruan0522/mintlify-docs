@@ -1,7 +1,66 @@
 ---
 title: Disable Tag Channel
+description: Manually disable every channel carrying a given tag.
 api: "POST /api/channel/tag/disabled"
 ---
 
-👨‍💼 Admin privileges required
+Disable all channels that carry a given tag. Each matching channel's status is set to `2` (manually disabled) and the routing abilities for those channels are disabled accordingly, so requests stop being routed to them.
 
+Requires **Admin** permissions. See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request POST \
+  --url 'https://your-nookmux-domain/api/channel/tag/disabled' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1' \
+  --header 'Content-Type: application/json' \
+  --data '{
+  "tag": "openai-pool"
+}'
+```
+
+</RequestExample>
+
+### Body
+
+<ParamField path="body.tag" type="string" required>
+Tag whose channels should be disabled. Channels are matched by exact tag equality.
+</ParamField>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": ""
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+Whether the channels were disabled.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+Error description when `success` is `false`; empty otherwise.
+</ResponseField>
+
+<Note>
+Management endpoints return HTTP `200` even on business failures; always check the `success` field. The channel cache is refreshed after the change, so routing picks it up immediately.
+</Note>
+
+## Error messages
+
+| Condition | Description |
+| --- | --- |
+| Invalid request parameters | The JSON body is missing, malformed, or `tag` is empty |
+| Database error | Persisting the status change failed; see server logs |

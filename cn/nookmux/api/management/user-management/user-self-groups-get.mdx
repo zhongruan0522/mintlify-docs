@@ -1,7 +1,74 @@
 ---
 title: 获取当前用户分组
+description: 列出当前用户可切换使用的用户分组，及其计费倍率与描述。
 api: "GET /api/user/self/groups"
 ---
 
-🔐 需要登录（User权限）
+返回当前用户可使用的用户分组，以及使用各分组时应用的计费倍率与配置的描述。该结果用于控制台的分组选择器和令牌级分组设置。
 
+需要**用户（User）**权限（任意登录用户）。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
+
+## 请求
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url 'https://your-nookmux-domain/api/user/self/groups' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 2'
+```
+
+</RequestExample>
+
+## 响应
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": {
+    "default": {
+      "ratio": 1,
+      "desc": "默认分组"
+    },
+    "vip": {
+      "ratio": 1.5,
+      "desc": "vip分组"
+    }
+  }
+}
+```
+
+</ResponseExample>
+
+### 响应字段
+
+<ResponseField name="success" type="boolean" required>
+分组是否成功返回。
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+`success` 为 `false` 时的错误描述；成功时为空字符串。
+</ResponseField>
+
+<ResponseField name="data" type="object" required>
+分组名到分组元信息的映射：每个键为分组名，每个值的结构见下方展开项。仅返回在服务端有倍率配置、且当前用户所在分组可使用的分组。
+
+<Expandable title="group 结构">
+  <ResponseField name="ratio" type="number" required>
+用户经该分组路由请求时应用的计费倍率。当用户可使用 `auto` 分组时，该条目的 ratio 为固定字符串 `自动` 而非数字，因为自动选择不存在单一倍率。
+</ResponseField>
+  <ResponseField name="desc" type="string" required>
+管理员配置的分组描述；未配置时回退为分组名。
+</ResponseField>
+</Expandable>
+</ResponseField>
+
+## 错误说明
+
+| 条件 | 说明 |
+| --- | --- |
+| 数据库错误 | 加载用户分组失败，详见服务端日志 |

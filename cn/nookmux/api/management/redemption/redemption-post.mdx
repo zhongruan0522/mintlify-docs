@@ -1,7 +1,98 @@
 ---
 title: 创建兑换码
+description: 单次调用原子地批量创建兑换码，并返回生成的全部密钥。
 api: "POST /api/redemption/"
 ---
 
-👨‍💼 需要管理员权限（Admin）
+一次调用创建一个或多个兑换码。每个兑换码的密钥由服务端生成（32 位无连字符 UUID）；整批写入包裹在事务中，要么全部成功、要么全部回滚。生成的密钥仅在本次响应的 `data` 中返回一次，之后无法再从列表或详情接口读取。
 
+需要**管理员（Admin）**权限。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
+
+## 请求
+
+<RequestExample>
+
+```bash cURL
+curl --request POST \
+  --url 'https://your-nookmux-domain/api/redemption/' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1' \
+  --header 'Content-Type: application/json' \
+  --data '{
+  "name": "welcome-bonus",
+  "count": 3,
+  "quota": 100,
+  "expired_time": 0
+}'
+```
+
+</RequestExample>
+
+### 请求体
+
+<ParamField path="body.name" type="string" required>
+  本批次全部兑换码共用的名称。长度（按字符数计）必须在 1 到 20 之间。
+</ParamField>
+
+<ParamField path="body.count" type="integer" required>
+  生成的兑换码个数。必须在 1 到 100 之间；需要更多兑换码时请分批多次调用本接口。
+</ParamField>
+
+<ParamField path="body.quota" type="integer" default="100">
+  每个兑换码兑换成功后充入的额度。省略时回落为默认值 100。
+</ParamField>
+
+<ParamField path="body.expired_time" type="integer" default="0">
+  过期时间的 Unix 时间戳（秒），超过该时间不可再兑换；`0` 表示永不过期。非 0 时不得早于当前时间。
+</ParamField>
+
+<Note>
+请求体中只有 `name`、`count`、`quota` 和 `expired_time` 会生效。密钥由服务端生成，创建人取自访问令牌，创建时间由服务端记录；请求体中的其他字段一律忽略。
+</Note>
+
+## 响应
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": [
+    "a1b2c3d4e5f60718293a4b5c6d7e8f90",
+    "0f9e8d7c6b5a49382716053c4d5e6f70",
+    "f0e1d2c3b4a5968778695a4b3c2d1e0f"
+  ]
+}
+```
+
+</ResponseExample>
+
+### 响应字段
+
+<ResponseField name="success" type="boolean" required>
+  兑换码是否创建成功。
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  `success` 为 `false` 时的错误描述；成功时为空字符串。
+</ResponseField>
+
+<ResponseField name="data" type="array" required>
+  生成的兑换码密钥，条数等于 `count`。这是唯一会返回完整密钥的响应。
+</ResponseField>
+
+<Note>
+管理接口在业务失败时同样返回 HTTP `200`，必须以 `success` 字段判断结果。批量插入在事务中执行；任意一条插入失败时整批均不落库。
+</Note>
+
+## 错误说明
+
+| 条件 | 说明 |
+| --- | --- |
+| 请求体非法 | JSON 缺失或格式错误 |
+| 名称长度非法 | `name` 为空或超过 20 个字符 |
+| 个数非法 | `count` 为 0 或负数 |
+| 个数超限 | `count` 大于 100 |
+| 过期时间非法 | `expired_time` 非 0 且早于当前时间 |
+| 创建失败 | 事务内批量插入失败，本批次不落库，详见服务端日志 |

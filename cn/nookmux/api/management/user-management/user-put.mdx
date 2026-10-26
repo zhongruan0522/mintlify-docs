@@ -1,7 +1,102 @@
 ---
 title: 更新用户
+description: 更新单个用户的资料字段，包括用户名、密码、额度与分组。
 api: "PUT /api/user/"
 ---
 
-👨‍💼 需要管理员权限（Admin）
+更新单个用户的可编辑字段。只有下方列出的字段会被持久化：`password` 非空时替换旧密码，`quota` 仅在提供时才修改。调用者角色必须同时严格高于目标用户当前角色与请求中的角色（超级管理员除外）。
 
+需要**管理员（Admin）**权限。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
+
+## 请求
+
+<RequestExample>
+
+```bash cURL
+curl --request PUT \
+  --url 'https://your-nookmux-domain/api/user/' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1' \
+  --header 'Content-Type: application/json' \
+  --data '{
+  "id": 2,
+  "username": "alice",
+  "display_name": "Alice",
+  "quota": 1000000,
+  "group": "default",
+  "remark": "trusted user"
+}'
+```
+
+</RequestExample>
+
+### 请求体
+
+<ParamField path="body.id" type="integer" required>
+目标用户 ID。不能为 `0`。
+</ParamField>
+
+<ParamField path="body.username" type="string">
+新用户名，最长 20 字符。
+</ParamField>
+
+<ParamField path="body.password" type="string">
+新密码，8 到 20 字符。为空或省略时保持原密码不变。
+</ParamField>
+
+<ParamField path="body.display_name" type="string">
+新显示名称，最长 20 字符。
+</ParamField>
+
+<ParamField path="body.role" type="integer">
+请求的角色，仅做调用者权限校验，本接口不会持久化该字段。角色变更请使用 `POST /api/user/manage` 的 `promote` 与 `demote` 动作。
+</ParamField>
+
+<ParamField path="body.quota" type="integer">
+新额度（默认 500,000 额度折合 $1）。省略时保持当前额度不变。
+</ParamField>
+
+<ParamField path="body.group" type="string">
+新用户分组，例如 `default`。
+</ParamField>
+
+<ParamField path="body.remark" type="string">
+管理员备注，最长 255 字符。
+</ParamField>
+
+## 响应
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": ""
+}
+```
+
+</ResponseExample>
+
+### 响应字段
+
+<ResponseField name="success" type="boolean" required>
+用户是否更新成功。
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+`success` 为 `false` 时的错误描述；成功时为空字符串。
+</ResponseField>
+
+<Note>
+本接口不返回 `data` 字段。额度变化会记入用户管理日志，每次更新都会记入审计日志。
+</Note>
+
+## 错误说明
+
+| 条件 | 说明 |
+| --- | --- |
+| 参数非法 | JSON 格式错误，或 `id` 缺失、为 `0` |
+| 输入非法 | 字段约束不满足（`username` 最长 20 字符、设置密码时 8 到 20 字符、`display_name` 最长 20 字符、`remark` 最长 255 字符） |
+| 无权限 | 调用者不是超级管理员，且目标用户为同级或更高级 |
+| 无法创建同级或更高级用户 | `role` 等于或高于调用者角色 |
+| 数据库错误 | 加载或更新用户失败 |

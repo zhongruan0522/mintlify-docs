@@ -1,7 +1,135 @@
 ---
 title: 同步上游模型
+description: 从上游元数据仓库为本地缺失的模型创建元数据，并可选地覆盖更新已有记录的字段。
 api: "POST /api/models/sync_upstream"
 ---
 
-👨‍💼 需要管理员权限（Admin）
+从上游元数据仓库同步模型元数据。默认只为本地缺失的模型创建记录（见[获取缺失模型](/cn/nookmux/api/management/model-management/models-missing-get)），且仅当上游目录也收录了该模型时才会创建。可选的 `overwrite` 列表用上游值覆盖更新已有记录的指定字段。创建模型引用的供应商会按需创建，本次同步会写入审计日志。
 
+需要**管理员（Admin）**权限。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
+
+## 请求
+
+<RequestExample>
+
+```bash cURL
+curl --request POST \
+  --url 'https://your-nookmux-domain/api/models/sync_upstream' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1' \
+  --header 'Content-Type: application/json' \
+  --data '{
+  "locale": "en",
+  "overwrite": [
+    {
+      "model_name": "claude-3-7-sonnet",
+      "fields": ["icon", "vendor"]
+    }
+  ]
+}'
+```
+
+</RequestExample>
+
+### 请求体
+
+请求体可选；空请求体表示同步全部缺失模型且不做覆盖更新。
+
+<ParamField path="body.overwrite" type="array of object">
+需要用上游值覆盖更新字段的已有模型列表。模型在本地或上游不存在、或其官方同步被停用时，该条目会被跳过。
+
+  <Expandable title="overwrite 结构">
+    <ParamField path="model_name" type="string" required>
+      要更新的本地模型的精确名称（此处不做规则匹配）。
+    </ParamField>
+    <ParamField path="fields" type="array of string" required>
+      需要采用上游值的字段：`icon`、`tags`、`vendor`、`name_rule`、`status`（大小写不敏感）。其他取值会被忽略。
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+<ParamField path="body.locale" type="string">
+上游目录的语言：`en`、`zh` 或 `ja`。取其他值或不传时，使用默认的非本地化目录文件。
+</ParamField>
+
+## 响应
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "data": {
+    "created_models": 2,
+    "created_vendors": 1,
+    "updated_models": 1,
+    "skipped_models": ["not-in-upstream-model"],
+    "created_list": ["gpt-4o", "o3"],
+    "updated_list": ["claude-3-7-sonnet"],
+    "source": {
+      "locale": "en",
+      "models_url": "https://basellm.github.io/llm-metadata/api/i18n/en/newapi/models.json",
+      "vendors_url": "https://basellm.github.io/llm-metadata/api/i18n/en/newapi/vendors.json"
+    }
+  }
+}
+```
+
+</ResponseExample>
+
+### 响应字段
+
+<ResponseField name="success" type="boolean" required>
+同步是否成功完成。
+</ResponseField>
+
+<ResponseField name="data.created_models" type="integer" required>
+为之前缺失的模型创建的元数据记录数量。
+</ResponseField>
+
+<ResponseField name="data.created_vendors" type="integer" required>
+解析同步模型的供应商时创建的供应商记录数量。
+</ResponseField>
+
+<ResponseField name="data.updated_models" type="integer" required>
+通过 `overwrite` 列表更新成功的已有模型数量。
+</ResponseField>
+
+<ResponseField name="data.skipped_models" type="array of string" required>
+未被创建的模型名：上游未收录、官方同步被停用或写入失败。
+</ResponseField>
+
+<ResponseField name="data.created_list" type="array of string" required>
+创建成功的模型名列表。
+</ResponseField>
+
+<ResponseField name="data.updated_list" type="array of string" required>
+更新成功的模型名列表。
+</ResponseField>
+
+<ResponseField name="data.source" type="object" required>
+本次实际使用的上游来源描述。
+
+  <Expandable title="source 结构">
+    <ResponseField name="locale" type="string">
+      请求中的 locale 值；未提供时为空字符串。
+    </ResponseField>
+    <ResponseField name="models_url" type="string">
+      实际拉取模型目录的上游 URL。
+    </ResponseField>
+    <ResponseField name="vendors_url" type="string">
+      实际拉取供应商目录的上游 URL。
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<Note>
+管理接口在业务失败时同样返回 HTTP `200`，必须以 `success` 字段判断结果。本接口成功响应不含 `message` 字段。没有缺失模型且未提供 `overwrite` 时不会请求上游，直接返回全零计数。上游仓库默认为 `https://basellm.github.io/llm-metadata`，可通过环境变量 `SYNC_UPSTREAM_BASE` 重定向。
+</Note>
+
+## 错误说明
+
+| 条件 | 说明 |
+| --- | --- |
+| 获取模型列表失败，请稍后重试 | 读取本地缺失模型列表失败 |
+| 获取上游模型失败：... | 重试后仍拉取上游目录失败；`message` 附带原因，顶层 `locale` 与 `source_urls` 字段描述所尝试的来源 |

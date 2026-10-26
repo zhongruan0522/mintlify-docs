@@ -1,7 +1,81 @@
 ---
 title: Get Upstream Model List
+description: Fetch the model list from a saved channel's upstream provider.
 api: "GET /api/channel/fetch_models/{id}"
 ---
 
-👨‍💼 Requires Administrator Privileges (Admin)
+Fetch the model list offered by the upstream of a saved channel, so it can be pasted into the channel's `models` field. Behavior depends on the channel type:
 
+- Ollama channels query the Ollama `/v1/models` endpoint and return model names.
+- AWS Bedrock channels fetch the Claude model list using the channel key.
+- Gemini channels query the Gemini model list endpoint.
+- Vertex AI channels have no public list endpoint, so the adaptor's built-in model list is returned without any upstream call.
+- All other channels request `{base_url}/v1/models` (Zhipu v4 uses `/api/paas/v4/models`, Moonshot uses `/v1/models`; known plan base URLs are swapped to their OpenAI-compatible endpoint) and return the `data[].id` values.
+
+Requests to the upstream go through the proxy configured on the channel.
+
+Requires **Root** permissions. See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url 'https://your-nookmux-domain/api/channel/fetch_models/1' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1'
+```
+
+</RequestExample>
+
+### Path parameters
+
+<ParamField path="id" type="integer" required>
+  Id of the channel whose upstream should be queried.
+</ParamField>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": [
+    "gpt-4o",
+    "gpt-4o-mini"
+  ]
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+  Whether the model list was fetched.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  Error description when `success` is `false`; empty otherwise.
+</ResponseField>
+
+<ResponseField name="data" type="array" required>
+  Model ids returned by the upstream. Entries with an empty id are dropped.
+</ResponseField>
+
+<Note>
+  Management endpoints return HTTP `200` even on business failures; always check the `success` field. Multi-key channels use their first enabled key for the request.
+</Note>
+
+## Error messages
+
+| Condition | Description |
+| --- | --- |
+| Channel id format error | `id` in the path is not an integer |
+| Database error | The channel could not be loaded, including when it does not exist |
+| No usable key | A multi-key channel has no enabled key |
+| Upstream fetch failed | The upstream request failed or returned a non-200 status |
+| Response parse failed | The upstream response could not be parsed as a model list |

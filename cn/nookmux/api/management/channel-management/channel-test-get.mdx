@@ -1,7 +1,56 @@
 ---
 title: 测试所有渠道
+description: 在后台触发全部渠道的连通性测试。
 api: "GET /api/channel/test"
 ---
 
-👨‍💼 需要管理员权限（Admin）
+启动一次覆盖全部已存渠道的测试。任务调度完成后接口即返回，测试本身在后台 worker 中顺序执行。每个渠道的测试通过中继管线发送一次真实请求（依次使用渠道的测试模型、模型列表中的第一个模型，兜底 `gpt-4o-mini`），记录响应时间，并可能自动禁用失败或过慢的渠道、重新启用已恢复的渠道。
 
+需要**管理员（Admin）**权限。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
+
+## 请求
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url 'https://your-nookmux-domain/api/channel/test' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1'
+```
+
+</RequestExample>
+
+## 响应
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": ""
+}
+```
+
+</ResponseExample>
+
+### 响应字段
+
+<ResponseField name="success" type="boolean" required>
+测试任务是否调度成功。
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+`success` 为 `false` 时的错误描述；成功时为空字符串。
+</ResponseField>
+
+<Note>
+同一时刻只允许运行一次全量测试；已有测试进行时新请求会失败并返回通用错误信息。测试期间按配置的请求间隔逐个测试渠道；开启自动禁用后，测试命中可禁用错误的渠道（且允许自动禁用）会被禁用，超过响应时间阈值的渠道同样会被禁用，此前被禁用但测试通过的渠道会被重新启用。测试完成后会通知 root 用户。本接口不返回单个渠道的测试结果，可事后查看各渠道的 `test_time` 与 `response_time`。
+</Note>
+
+## 错误说明
+
+| 条件 | 说明 |
+| --- | --- |
+| 测试已在进行 | 已有全量测试尚未结束，请求被拒绝 |
+| 数据库错误 | 加载渠道列表或解析测试用户失败 |

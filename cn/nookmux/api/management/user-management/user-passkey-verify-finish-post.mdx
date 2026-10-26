@@ -1,7 +1,82 @@
 ---
 title: 完成验证Passkey
+description: 提交 WebAuthn 断言响应，将当前会话标记为可完成二次安全验证。
 api: "POST /api/user/passkey/verify/finish"
 ---
 
-🔐 需要登录（User权限）
+完成 Passkey 二次验证流程的后半段。服务端校验浏览器认证器生成的断言与 `POST /api/user/passkey/verify/begin` 发起的挑战值是否匹配，刷新凭据的最近使用时间，并将会话标记为「Passkey 已就绪」，供后续完成二次安全验证。
 
+需要**用户（User）**权限（任意登录用户）。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
+
+## 请求
+
+<RequestExample>
+
+```bash cURL
+curl --request POST \
+  --url 'https://your-nookmux-domain/api/user/passkey/verify/finish' \
+  --header 'Cookie: session={session_cookie}' \
+  --header 'New-Api-User: 1' \
+  --header 'Content-Type: application/json' \
+  --data '{
+  "id": "R2dpSmY4Q3JEektWWXRHcw",
+  "rawId": "R2dpSmY4Q3JEektWWXRHcw",
+  "type": "public-key",
+  "response": {
+    "clientDataJSON": "eyJjaGFsbGVuZ2UiOiJoSzBkRjJ2UTh4TjNtWjdiVDF3WTVjUjlqTDRwQTZzRCIsIm9yaWdpbiI6Imh0dHBzOi8veW91ci1ub29rbXV4LWRvbWFpbiIsInR5cGUiOiJ3ZWJhdXRobi5nZXQifQ",
+    "authenticatorData": "SZYN5YgOjGh0NBcPZHZgW4_krrmihjLHmVzzuoMdl2MFAAAAAQ",
+    "signature": "MEUCIQDk...F3Zg",
+    "userHandle": "Mg"
+  }
+}'
+```
+
+</RequestExample>
+
+### 请求体
+
+<ParamField path="body" type="object" required>
+浏览器返回的断言数据，遵循标准 WebAuthn `PublicKeyCredential<AssertionResponse>` 结构：顶层 `id`、`rawId`、`type`，以及 `response` 对象（含 `clientDataJSON`、`authenticatorData`、`signature`、`userHandle`）。请求体由服务端的 WebAuthn 库直接解析，协议字段以 WebAuthn 标准为准，而非 NookMux 自定义。
+</ParamField>
+
+## 响应
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "Passkey verification successful",
+  "data": null
+}
+```
+
+</ResponseExample>
+
+### 响应字段
+
+<ResponseField name="success" type="boolean" required>
+断言是否校验通过。
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+`success` 为 `true` 时为本地化的成功提示；否则为错误描述。
+</ResponseField>
+
+<ResponseField name="data" type="null">
+本接口恒为 `null`。
+</ResponseField>
+
+<Note>
+断言校验通过本身尚未构成二次安全验证。此时会话仅被标记为「Passkey 就绪」，须在 60 秒内调用 `POST /api/verify` 并传 `{"method": "passkey"}` 完成最终确认；确认后的验证状态有效期为 5 分钟，可用于解锁未启用 2FA 账号的删除 Passkey 等操作。参见[通用安全验证](/cn/nookmux/api/management/security-verification/verify-post)。
+</Note>
+
+## 错误说明
+
+| 条件 | 说明 |
+| --- | --- |
+| 管理员未启用 Passkey 登录 | 服务端设置中未启用 Passkey 功能 |
+| 未登录 / 用户被禁用 | 会话无法解析，返回 HTTP `401` |
+| 用户未绑定 Passkey | 没有可用于验证的凭据 |
+| 数据库错误 | 加载凭据、读取验证流程状态（挑战值缺失或已被消费）或断言校验失败，详见服务端日志 |
+| 保存验证状态失败 | 将验证标记写入会话失败 |

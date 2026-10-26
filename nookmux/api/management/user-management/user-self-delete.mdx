@@ -1,7 +1,56 @@
 ---
 title: Delete Current User
+description: Soft-delete the current user's own account.
 api: "DELETE /api/user/self"
 ---
 
-🔐 Login Required (User Permission)
+Soft-deletes the account of the currently logged-in user. The user row is marked as deleted and hidden from regular listings and searches instead of being physically removed. The root account cannot delete itself.
 
+Requires **User** permission (any logged-in user). See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request DELETE \
+  --url 'https://your-nookmux-domain/api/user/self' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1'
+```
+
+</RequestExample>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": ""
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+Whether the account was deleted.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+Error description when `success` is `false`; empty otherwise.
+</ResponseField>
+
+<Note>
+This endpoint returns no `data` field. Unlike the admin endpoint `DELETE /api/user/{id}`, which hard-deletes the row, this self-service endpoint only soft-deletes the account.
+</Note>
+
+## Error messages
+
+| Condition | Description |
+| --- | --- |
+| Cannot delete super administrator | The current account is the root user |
+| Database error | The deletion failed; see server logs |

@@ -1,7 +1,82 @@
 ---
 title: Get Channel Model List
+description: List all models built into the NookMux channel adaptors.
 api: "GET /api/channel/models"
 ---
 
-👨‍💼 Requires Administrator Permissions (Admin)
+Return the built-in catalog of every model known to NookMux, compiled from the model lists of all channel adaptors (including the Moonshot and MiniMax built-in lists), deduplicated by model id. This is a static catalog; it does not reflect the channels configured in the database.
 
+Requires **Admin** permissions. See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url 'https://your-nookmux-domain/api/channel/models' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1'
+```
+
+</RequestExample>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "data": [
+    {
+      "id": "gpt-4o",
+      "object": "model",
+      "created": 1626777600,
+      "owned_by": "openai",
+      "supported_endpoint_types": null
+    },
+    {
+      "id": "claude-3-5-sonnet-20241022",
+      "object": "model",
+      "created": 1626777600,
+      "owned_by": "claude",
+      "supported_endpoint_types": null
+    }
+  ]
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+  Whether the request succeeded.
+</ResponseField>
+
+<ResponseField name="data" type="array" required>
+  Built-in model entries in OpenAI list format.
+
+  <Expandable title="data item structure">
+    <ResponseField name="id" type="string" required>
+      Model name.
+    </ResponseField>
+    <ResponseField name="object" type="string" required>
+      Always `model`.
+    </ResponseField>
+    <ResponseField name="created" type="integer" required>
+      Fixed placeholder timestamp; the same for every entry.
+    </ResponseField>
+    <ResponseField name="owned_by" type="string" required>
+      Name of the adaptor that provides the model, for example `openai` or `claude`.
+    </ResponseField>
+    <ResponseField name="supported_endpoint_types" type="array">
+      Not populated by this endpoint; always `null` in the response.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<Note>
+  Management endpoints return HTTP `200` even on business failures; always check the `success` field. On success no `message` field is included. To see the models actually routable through your channels, use [Get Enabled Model List](/nookmux/api/management/channel-management/channel-models_enabled-get) instead.
+</Note>

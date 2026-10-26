@@ -1,7 +1,81 @@
 ---
 title: Reset Password
+description: Set a new password using the one-time token from the password reset email.
 api: "POST /api/user/reset"
 ---
 
-🔓 No Authentication Required
+Completes the password reset flow started by `GET /api/reset_password`. Verifies the one-time token that was emailed to the user, stores the new password as a bcrypt hash, and invalidates the token. The token is valid for 10 minutes and can be used only once.
 
+This endpoint is **Public** — no authentication is required. See [Authentication](/nookmux/api/management/auth) for how management API requests are authenticated.
+
+<Note>
+This endpoint applies a stricter per-IP rate limit (CriticalRateLimit) and limits the anonymous request body size; oversized bodies are rejected with HTTP `413`.
+</Note>
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request POST \
+  --url 'https://your-nookmux-domain/api/user/reset' \
+  --header 'Content-Type: application/json' \
+  --data '{
+  "email": "user@example.com",
+  "token": "5f8d2a4c1b9e4d7f8a2c6e3b1d4f7a8c9e2b5d8f",
+  "new_password": "your-new-password"
+}'
+```
+
+</RequestExample>
+
+### Body
+
+<ParamField path="body.email" type="string" required>
+Email address the reset email was sent to. Must match the address encoded in the reset link.
+</ParamField>
+
+<ParamField path="body.token" type="string" required>
+One-time token from the reset link (`?token=...`).
+</ParamField>
+
+<ParamField path="body.new_password" type="string" required>
+New password, 8 to 20 characters. Hashed before storage and never returned in any response.
+</ParamField>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "Password has been reset. Please sign in with your new password",
+  "data": null
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+Whether the password was reset.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+Localized confirmation message when successful; localized error description when `success` is `false`.
+</ResponseField>
+
+<ResponseField name="data" type="null" required>
+Always `null` for this endpoint.
+</ResponseField>
+
+## Error messages
+
+| Condition | Description |
+| --- | --- |
+| Invalid parameters | The body is not valid JSON, or one of the fields is empty |
+| Reset link invalid or expired | The token does not match, is older than 10 minutes, or was already used |
+| Password invalid | `new_password` is not between 8 and 20 characters |
+| Database error | Persisting the new password failed; see server logs |

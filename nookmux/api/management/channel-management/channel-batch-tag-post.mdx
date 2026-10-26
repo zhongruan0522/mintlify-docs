@@ -1,7 +1,76 @@
 ---
 title: Batch Set Channel Tags
+description: Set or clear the tag of multiple channels in one call.
 api: "POST /api/channel/batch/tag"
 ---
 
-👨‍💼 Requires Administrator Permissions (Admin)
+Set (or clear) the tag of multiple channels by id. The tag column is updated in a transaction, the routing abilities of the affected channels are rebuilt, the in-memory channel cache is reloaded, and the operation is recorded in the admin audit log.
 
+Requires **Admin** permissions. See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request POST \
+  --url 'https://your-nookmux-domain/api/channel/batch/tag' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1' \
+  --header 'Content-Type: application/json' \
+  --data '{
+  "ids": [1, 2, 3],
+  "tag": "production"
+}'
+```
+
+</RequestExample>
+
+### Body
+
+<ParamField path="body.ids" type="array" required>
+  Ids of the channels to update. Must contain at least one element.
+</ParamField>
+
+<ParamField path="body.tag" type="string">
+  Tag to apply. Pass `null` to clear the tag of all listed channels.
+</ParamField>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": 3
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+  Whether the tags were updated.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  Error description when `success` is `false`; empty otherwise.
+</ResponseField>
+
+<ResponseField name="data" type="integer" required>
+  Number of requested ids.
+</ResponseField>
+
+<Note>
+  Management endpoints return HTTP `200` even on business failures; always check the `success` field.
+</Note>
+
+## Error messages
+
+| Condition | Description |
+| --- | --- |
+| Invalid parameters | The JSON body is malformed or `ids` is empty |
+| Database error | Updating the tag or rebuilding abilities failed; see server logs |

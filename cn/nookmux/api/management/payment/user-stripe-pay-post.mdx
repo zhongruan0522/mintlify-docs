@@ -1,7 +1,98 @@
 ---
 title: 发起Stripe支付
+description: 创建待支付的 Stripe 充值订单并获取 Stripe Checkout 托管支付链接。
 api: "POST /api/user/stripe/pay"
 ---
 
-🔐 需要登录（User权限）
+发起 Stripe 充值。服务端用配置的 Stripe 价格按所请求的数量创建 Stripe Checkout 会话，落库一条待支付充值订单，并返回托管支付链接。订单随后由 Stripe Webhook（`POST /api/stripe/webhook`）完成入账。
 
+需要**用户（User）**权限（任意已登录账号）。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
+
+<Note>
+该接口受更严格的按 IP 限流（CriticalRateLimit，启用时）约束，超限返回 HTTP `429`。另外，与本页其他业务错误不同，`success_url` 或 `cancel_url` 不受信任时直接返回 HTTP `400`（而非 HTTP `200` 加 `success: false`）。
+</Note>
+
+## 请求
+
+<RequestExample>
+
+```bash cURL
+curl --request POST \
+  --url 'https://your-nookmux-domain/api/user/stripe/pay' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1' \
+  --header 'Content-Type: application/json' \
+  --data '{
+  "amount": 10,
+  "payment_method": "stripe"
+}'
+```
+
+</RequestExample>
+
+### 请求体
+
+<ParamField path="body.amount" type="integer" required>
+充值数量。不得低于配置的 Stripe 最低充值数量，且不得大于 `10000`。
+</ParamField>
+
+<ParamField path="body.payment_method" type="string" required>
+支付方式；必须为 `stripe`。
+</ParamField>
+
+<ParamField path="body.success_url" type="string">
+支付成功后跳转用户的 URL。提供时必须使用 `http`/`https`，且域名必须属于服务端的可信跳转域名（环境变量 `TRUSTED_REDIRECT_DOMAINS` 中的条目，精确匹配或作为父域名匹配）。留空时使用控制台日志页。
+</ParamField>
+
+<ParamField path="body.cancel_url" type="string">
+支付取消后跳转用户的 URL，校验规则与 `success_url` 相同。留空时使用控制台充值页。
+</ParamField>
+
+## 响应
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "充值成功",
+  "data": {
+    "pay_link": "https://checkout.stripe.com/c/pay/cs_test_ExampleSession"
+  }
+}
+```
+
+</ResponseExample>
+
+### 响应字段
+
+<ResponseField name="success" type="boolean" required>
+Checkout 会话与充值订单是否创建成功。
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+本地化的状态消息；`success` 为 `false` 时为错误描述。具体文案随请求语言变化。
+</ResponseField>
+
+<ResponseField name="data" type="object" required>
+
+<Expandable title="data 结构">
+  <ParamField path="pay_link" type="string" required>
+    已创建的 Stripe Checkout 会话 URL。将用户重定向到该链接以完成支付。
+  </ParamField>
+</Expandable>
+</ResponseField>
+
+## 错误说明
+
+| 条件 | 说明 |
+| --- | --- |
+| 无效的参数 | JSON 请求体缺失或格式错误 |
+| 不支持的支付渠道 | `payment_method` 不是 `stripe` |
+| 充值数量不能小于最低值 | `amount` 低于配置的 Stripe 最低充值数量 |
+| 充值数量不能大于 10000 | `amount` 大于 `10000` |
+| 支付成功重定向 URL 不在可信任域名列表中 | `success_url` 已设置但不受信任；返回 HTTP `400` |
+| 支付取消重定向 URL 不在可信任域名列表中 | `cancel_url` 已设置但不受信任；返回 HTTP `400` |
+| 获取用户信息失败 | 调用者的用户记录加载失败 |
+| 拉起支付失败 | Stripe API 密钥缺失/非法或 Checkout 会话创建失败 |
+| 创建订单失败 | 充值订单落库失败；详见服务端日志 |

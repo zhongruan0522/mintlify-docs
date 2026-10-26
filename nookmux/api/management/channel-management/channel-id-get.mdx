@@ -1,7 +1,223 @@
 ---
 title: Get Specific Channel
+description: Retrieve a single channel by its id, without the upstream key.
 api: "GET /api/channel/{id}"
 ---
 
-👨‍💼 Requires Administrator Privileges (Admin)
+Retrieve the full definition of a single channel. The upstream `key` is never exposed (always returned as an empty string); use [Get Channel Key](/nookmux/api/management/channel-management/channel-id-key-post) to reveal it.
 
+Requires **Admin** permissions. See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url 'https://your-nookmux-domain/api/channel/1' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1'
+```
+
+</RequestExample>
+
+### Path parameters
+
+<ParamField path="id" type="integer" required>
+  Channel id.
+</ParamField>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": {
+    "id": 1,
+    "type": 1,
+    "key": "",
+    "openai_organization": null,
+    "test_model": null,
+    "status": 1,
+    "name": "my-openai",
+    "weight": 0,
+    "created_time": 1748000000,
+    "test_time": 1748000500,
+    "response_time": 850,
+    "base_url": "",
+    "other": "",
+    "balance": 18.52,
+    "balance_updated_time": 1748000500,
+    "models": "gpt-4o,gpt-4o-mini",
+    "group": "default",
+    "used_quota": 500000,
+    "model_mapping": null,
+    "status_code_mapping": "",
+    "priority": 0,
+    "auto_ban": 1,
+    "other_info": "",
+    "tag": null,
+    "setting": null,
+    "param_override": null,
+    "header_override": null,
+    "remark": "",
+    "channel_info": {
+      "is_multi_key": false,
+      "multi_key_size": 0,
+      "multi_key_status_list": null,
+      "multi_key_polling_index": 0,
+      "multi_key_mode": "",
+      "is_plan": false,
+      "plan_name": ""
+    },
+    "settings": ""
+  }
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+  Whether the request succeeded.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  Error description when `success` is `false`; empty otherwise.
+</ResponseField>
+
+<ResponseField name="data" type="object" required>
+  The channel object. The `key` field is always an empty string; the stored key is never exposed.
+
+  <Expandable title="channel structure">
+    <ResponseField name="id" type="integer" required>
+      Channel id.
+    </ResponseField>
+    <ResponseField name="type" type="integer" required>
+      Channel type constant, for example `1` for OpenAI.
+    </ResponseField>
+    <ResponseField name="key" type="string">
+      Upstream key. Always an empty string in this response; the stored key value is never exposed.
+    </ResponseField>
+    <ResponseField name="status" type="integer" required>
+      `1` enabled, `2` manually disabled, `3` auto-disabled.
+    </ResponseField>
+    <ResponseField name="name" type="string" required>
+      Display name of the channel.
+    </ResponseField>
+    <ResponseField name="weight" type="integer" required>
+      Load-balancing weight among channels of equal priority. May be `null`.
+    </ResponseField>
+    <ResponseField name="created_time" type="integer" required>
+      Unix timestamp (seconds) of channel creation.
+    </ResponseField>
+    <ResponseField name="test_time" type="integer" required>
+      Unix timestamp of the last channel test; `0` if never tested.
+    </ResponseField>
+    <ResponseField name="response_time" type="integer" required>
+      Latency of the last channel test, in milliseconds.
+    </ResponseField>
+    <ResponseField name="base_url" type="string" required>
+      Custom upstream base URL. May be `null`.
+    </ResponseField>
+    <ResponseField name="other" type="string" required>
+      Channel-type-specific options, for example the Vertex AI region JSON.
+    </ResponseField>
+    <ResponseField name="balance" type="number" required>
+      Estimated remaining balance, in USD.
+    </ResponseField>
+    <ResponseField name="balance_updated_time" type="integer" required>
+      Unix timestamp of the last balance update.
+    </ResponseField>
+    <ResponseField name="models" type="string" required>
+      Comma-separated model names served by this channel.
+    </ResponseField>
+    <ResponseField name="group" type="string" required>
+      Comma-separated user groups that can use this channel.
+    </ResponseField>
+    <ResponseField name="used_quota" type="integer" required>
+      Cumulative quota consumed through this channel.
+    </ResponseField>
+    <ResponseField name="model_mapping" type="string" required>
+      JSON object mapping requested model names to upstream model names. May be `null`.
+    </ResponseField>
+    <ResponseField name="status_code_mapping" type="string" required>
+      JSON object mapping upstream HTTP status codes to codes returned by NookMux. May be `null`.
+    </ResponseField>
+    <ResponseField name="priority" type="integer" required>
+      Routing priority. May be `null`.
+    </ResponseField>
+    <ResponseField name="auto_ban" type="integer" required>
+      Whether the channel is automatically disabled after repeated upstream failures: `1` enabled, `0` disabled. May be `null`.
+    </ResponseField>
+    <ResponseField name="other_info" type="string" required>
+      Miscellaneous runtime info kept by the server.
+    </ResponseField>
+    <ResponseField name="tag" type="string" required>
+      Channel tag used for console grouping. May be `null`.
+    </ResponseField>
+    <ResponseField name="setting" type="string" required>
+      JSON object of channel runtime settings. May be `null`.
+    </ResponseField>
+    <ResponseField name="param_override" type="string" required>
+      JSON object that overrides request parameters before the request is forwarded upstream. May be `null`.
+    </ResponseField>
+    <ResponseField name="header_override" type="string" required>
+      JSON object that adds or overrides headers sent upstream. May be `null`.
+    </ResponseField>
+    <ResponseField name="remark" type="string" required>
+      Free-form remark.
+    </ResponseField>
+    <ResponseField name="channel_info" type="object" required>
+      Runtime info about the channel keys and plan.
+
+      <Expandable title="channel_info structure">
+        <ResponseField name="is_multi_key" type="boolean" required>
+          Whether the channel aggregates multiple keys.
+        </ResponseField>
+        <ResponseField name="multi_key_size" type="integer" required>
+          Number of keys in multi-key mode.
+        </ResponseField>
+        <ResponseField name="multi_key_status_list" type="object" required>
+          Map of key index to key status.
+        </ResponseField>
+        <ResponseField name="multi_key_polling_index" type="integer" required>
+          Index of the key to be used next under polling mode.
+        </ResponseField>
+        <ResponseField name="multi_key_mode" type="string" required>
+          Multi-key strategy: `random` or `polling`.
+        </ResponseField>
+        <ResponseField name="is_plan" type="boolean" required>
+          Whether the channel points to a metered plan base.
+        </ResponseField>
+        <ResponseField name="plan_name" type="string" required>
+          Plan identifier, matching a known special base URL.
+        </ResponseField>
+      </Expandable>
+    </ResponseField>
+    <ResponseField name="settings" type="string" required>
+      JSON object of extra settings, such as the Azure API version.
+    </ResponseField>
+    <ResponseField name="openai_organization" type="string" required>
+      OpenAI organization header for OpenAI-type channels. May be `null`.
+    </ResponseField>
+    <ResponseField name="test_model" type="string" required>
+      Model used by the channel test endpoint. May be `null`.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<Note>
+  Management endpoints return HTTP `200` even on business failures; always check the `success` field. A non-existent channel id is reported as a database error with `success: false`.
+</Note>
+
+## Error messages
+
+| Condition | Description |
+| --- | --- |
+| Channel id format error | `id` in the path is not an integer |
+| Database error | The channel could not be loaded, including when it does not exist |

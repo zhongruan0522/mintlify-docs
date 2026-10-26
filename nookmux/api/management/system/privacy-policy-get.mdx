@@ -1,7 +1,48 @@
 ---
 title: Get Privacy Policy
+description: Fetch the privacy policy text configured in system legal settings.
 api: "GET /api/privacy-policy"
 ---
 
-🔓 No authentication required
+Returns the privacy policy text configured by the administrator in system legal settings. The value is returned as a raw string and rendering is handled by the frontend. Returns an empty string when no privacy policy is configured (the presence flag exposed by the status endpoint is `privacy_policy_enabled`).
 
+This endpoint is public and requires no authentication. See [Authentication](/nookmux/api/management/auth) for details on how management API requests are authenticated.
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url 'https://your-nookmux-domain/api/privacy-policy'
+```
+
+</RequestExample>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": "# Privacy Policy\nThis deployment processes ..."
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+  Whether the request succeeded.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  Error description when `success` is `false`; empty otherwise.
+</ResponseField>
+
+<ResponseField name="data" type="string" required>
+  The privacy policy text configured in system legal settings. Empty string when not set.
+</ResponseField>

@@ -1,22 +1,74 @@
 ---
 title: 绑定邮箱
+description: 使用邮箱验证码为当前登录账户绑定邮箱地址。
+api: "POST /api/oauth/email/bind"
 ---
 
-当前运行时代码实现的是 `POST /api/oauth/email/bind`。
+为当前已登录的账户绑定邮箱地址。验证码必须事先通过 `GET /api/verification` 为同一邮箱签发。接口只接受 JSON 请求体形式，不再支持旧的 `GET /api/oauth/email/bind?email=...&code=...` 调用方式。
 
-该接口用于把邮箱绑定到当前已登录账户，已经不再接受旧的 GET 查询参数形式。
+需要**用户（User）**权限。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
 
-请求体:
+## 请求
 
-```json
-{
+<RequestExample>
+
+```bash cURL
+curl --request POST \
+  --url 'https://your-nookmux-domain/api/oauth/email/bind' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1' \
+  --header 'Content-Type: application/json' \
+  --data '{
   "email": "user@example.com",
   "code": "123456"
+}'
+```
+
+</RequestExample>
+
+### 请求体
+
+<ParamField path="body.email" type="string" required>
+  要绑定的邮箱地址。前后空白会被裁剪，裁剪后不得为空。
+</ParamField>
+
+<ParamField path="body.code" type="string" required>
+  由 `GET /api/verification` 为同一邮箱签发的验证码。前后空白会被裁剪，裁剪后不得为空。
+</ParamField>
+
+## 响应
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": ""
 }
 ```
 
-说明:
+</ResponseExample>
 
-- 必须携带有效的登录会话。
-- 验证码需要先通过 `/api/verification` 为同一个邮箱签发。
-- 不应再使用旧的 `GET /api/oauth/email/bind?email=...&code=...` 调用方式。
+### 响应字段
+
+<ResponseField name="success" type="boolean" required>
+  邮箱是否绑定成功。
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  `success` 为 `false` 时的错误描述；成功时为空字符串。
+</ResponseField>
+
+<Note>
+  该接口挂载了更严格的限流（CriticalRateLimit）与匿名请求体大小限制（超出限制返回 HTTP `413`）。账户依据登录时创建的会话解析，控制台浏览器会话是正常调用方。若账户在登录后被封禁，会话将被清除且拒绝绑定。
+</Note>
+
+## 错误说明
+
+| 条件 | 说明 |
+| --- | --- |
+| 请求体非法 | JSON 缺失、格式错误，或 `email`/`code` 裁剪后为空 |
+| 验证码错误或已过期 | 没有与该邮箱匹配的有效验证码 |
+| 未登录 | 登录会话中找不到用户 ID（HTTP 401） |
+| 用户已被封禁 | 账户状态不再是启用，会话会被清除 |
+| 数据库错误，请稍后重试 | 加载用户或保存邮箱失败，详见服务端日志 |

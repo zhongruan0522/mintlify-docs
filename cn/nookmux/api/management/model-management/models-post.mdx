@@ -1,7 +1,166 @@
 ---
 title: 创建模型元数据
+description: 创建一条新的模型元数据记录；模型名在现有记录中必须唯一。
 api: "POST /api/models/"
 ---
 
-👨‍💼 需要管理员权限（Admin）
+创建一条模型元数据记录。记录描述一个模型（或一条命名规则，见 `name_rule`）在控制台中的展示信息：供应商、图标、标签、上下文窗口、模态与支持的端点类型。创建成功后会刷新定价缓存，并写入审计日志。
 
+需要**管理员（Admin）**权限。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
+
+## 请求
+
+<RequestExample>
+
+```bash cURL
+curl --request POST \
+  --url 'https://your-nookmux-domain/api/models/' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1' \
+  --header 'Content-Type: application/json' \
+  --data '{
+  "model_name": "gpt-4o-mini",
+  "description": "Affordable and intelligent small model",
+  "icon": "openai",
+  "tags": "llm,chat",
+  "vendor_id": 1,
+  "endpoints": "[\"openai\"]",
+  "context_length": 128000,
+  "max_output_tokens": 16384,
+  "input_modalities": ["text", "image"],
+  "output_modalities": ["text"],
+  "knowledge_cutoff": "2023-10",
+  "release_date": "2024-07-18",
+  "parameter_count": "unknown",
+  "status": 1,
+  "name_rule": 0
+}'
+```
+
+</RequestExample>
+
+### 请求体
+
+<ParamField path="body.model_name" type="string" required>
+模型名。必须在现有记录中唯一；与具体模型的匹配方式由 `name_rule` 决定。
+</ParamField>
+
+<ParamField path="body.description" type="string">
+模型的自由描述。
+</ParamField>
+
+<ParamField path="body.icon" type="string">
+控制台展示的图标标识。
+</ParamField>
+
+<ParamField path="body.tags" type="string">
+逗号分隔的标签。
+</ParamField>
+
+<ParamField path="body.vendor_id" type="integer">
+模型所属供应商的 ID；`0`（或不传）表示未指定供应商。供应商记录由 [供应商接口](/cn/nookmux/api/management/vendors/vendors-get) 管理。
+</ParamField>
+
+<ParamField path="body.endpoints" type="string">
+支持的端点类型，序列化为 JSON 数组字符串，例如 `"[\"openai\",\"anthropic\"]"`。可取值：`openai`、`openai-response`、`openai-response-compact`、`anthropic`、`gemini`、`jina-rerank`、`image-generation`、`embeddings`。留空时列表接口会用定价缓存填充。
+</ParamField>
+
+<ParamField path="body.context_length" type="integer" default="0">
+上下文窗口大小（token 数）。
+</ParamField>
+
+<ParamField path="body.max_output_tokens" type="integer" default="0">
+最大输出 token 数。
+</ParamField>
+
+<ParamField path="body.input_modalities" type="array of string">
+接受的输入模态，例如 `["text","image"]`。
+</ParamField>
+
+<ParamField path="body.output_modalities" type="array of string">
+输出模态，例如 `["text"]`。
+</ParamField>
+
+<ParamField path="body.capabilities" type="array of string">
+模型的自由能力标签。
+</ParamField>
+
+<ParamField path="body.knowledge_cutoff" type="string">
+模型的知识截止日期。
+</ParamField>
+
+<ParamField path="body.release_date" type="string">
+模型的发布日期。
+</ParamField>
+
+<ParamField path="body.parameter_count" type="string">
+参数规模描述。
+</ParamField>
+
+<ParamField path="body.status" type="integer" default="1">
+模型状态：`1` 启用，`0` 停用。
+</ParamField>
+
+<ParamField path="body.name_rule" type="integer" default="0">
+`model_name` 与具体模型的匹配方式：`0` 精确匹配，`1` 前缀匹配，`2` 包含匹配，`3` 后缀匹配。
+</ParamField>
+
+## 响应
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": {
+    "id": 43,
+    "model_name": "gpt-4o-mini",
+    "description": "Affordable and intelligent small model",
+    "icon": "openai",
+    "tags": "llm,chat",
+    "vendor_id": 1,
+    "endpoints": "[\"openai\"]",
+    "context_length": 128000,
+    "max_output_tokens": 16384,
+    "input_modalities": ["text", "image"],
+    "output_modalities": ["text"],
+    "knowledge_cutoff": "2023-10",
+    "release_date": "2024-07-18",
+    "parameter_count": "unknown",
+    "status": 1,
+    "created_time": 1718100000,
+    "updated_time": 1718100000,
+    "name_rule": 0
+  }
+}
+```
+
+</ResponseExample>
+
+### 响应字段
+
+<ResponseField name="success" type="boolean" required>
+记录是否创建成功。
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+`success` 为 `false` 时的错误描述；成功时为空字符串。
+</ResponseField>
+
+<ResponseField name="data" type="object" required>
+创建后的模型元数据记录：请求体字段加上服务端生成的 `id`、`created_time`、`updated_time`。计算型的绑定字段（`bound_channels`、`enable_groups`、`quota_types`、`matched_models`、`matched_count`）不在该响应中，其含义见[获取所有模型元数据](/cn/nookmux/api/management/model-management/models-get)。
+</ResponseField>
+
+<Note>
+管理接口在业务失败时同样返回 HTTP `200`，必须以 `success` 字段判断结果。
+</Note>
+
+## 错误说明
+
+| 条件 | 说明 |
+| --- | --- |
+| 请求体非法 | JSON 缺失或格式错误 |
+| 模型名称不能为空 | 未提供 `model_name` |
+| 模型名称已存在 | 已有记录使用了相同的 `model_name` |
+| 数据库错误 | 记录落库失败，详见服务端日志 |

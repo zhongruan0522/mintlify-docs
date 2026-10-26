@@ -1,7 +1,62 @@
 ---
 title: Generate Access Token
+description: Generate a fresh system access token for the current user, replacing the previous one.
 api: "GET /api/user/token"
 ---
 
-🔐 Login Required (User Permission)
+Generates a new system access token for the current user and stores it on the account, replacing any previous token. The token authenticates management API requests through the `Authorization: Bearer` header together with the `New-Api-User` header.
 
+Requires **User** permission (any logged-in user). See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url 'https://your-nookmux-domain/api/user/token' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 2'
+```
+
+</RequestExample>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": "nF8w3Yh2VtqLxKdR9sZm4Pb6CgJ5TaE1"
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+Whether the token was generated.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+Error description when `success` is `false`; empty otherwise.
+</ResponseField>
+
+<ResponseField name="data" type="string" required>
+The newly generated access token, a randomly generated string.
+</ResponseField>
+
+<Note>
+Generating a new token invalidates the previous one immediately. The token grants management API access at the user's own permission level, so keep it secret; it is never returned by other endpoints such as `GET /api/user/self`.
+</Note>
+
+## Error messages
+
+| Condition | Description |
+| --- | --- |
+| Generation failed | Generating the random key failed |
+| Database error | Loading the user or saving the token failed; see server logs |
+| Duplicate token | The randomly generated token already exists on another account (extremely unlikely); retry |

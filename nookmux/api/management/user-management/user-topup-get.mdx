@@ -1,7 +1,136 @@
 ---
 title: Get All Top-up Records
+description: List all online top-up orders across the platform with pagination and order-number search.
 api: "GET /api/user/topup"
 ---
 
-👨‍💼 Requires Admin Permissions (Admin)
+Lists the online top-up orders of the whole platform, ordered by `id` descending, with pagination and an optional fuzzy search on the order number. Unlike the user-facing self-service list, the admin list covers the full history without a time-window restriction.
 
+Requires **Admin** permissions. See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url 'https://your-nookmux-domain/api/user/topup?p=1&page_size=10&keyword=USR2NO' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1'
+```
+
+</RequestExample>
+
+### Query parameters
+
+<ParamField path="query.p" type="integer" default="1">
+Page number, starting at 1.
+</ParamField>
+
+<ParamField path="query.page_size" type="integer" default="10">
+Number of orders per page, capped at 100. The legacy aliases `ps` and `size` are also accepted.
+</ParamField>
+
+<ParamField path="query.keyword" type="string">
+Fuzzy match on the order number `trade_no`. When omitted, all orders are listed.
+</ParamField>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": {
+    "page": 1,
+    "page_size": 10,
+    "total": 1,
+    "items": [
+      {
+        "id": 101,
+        "user_id": 2,
+        "amount": 100,
+        "money": 7.0,
+        "trade_no": "USR2NOab12cd1761234567",
+        "payment_method": "alipay",
+        "payment_provider": "epay",
+        "create_time": 1761234567,
+        "complete_time": 1761234800,
+        "status": "success"
+      }
+    ]
+  }
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+Whether the orders were returned.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+Error description when `success` is `false`; empty otherwise.
+</ResponseField>
+
+<ResponseField name="data" type="object" required>
+Paginated result.
+
+<Expandable title="data structure">
+  <ResponseField name="page" type="integer" required>
+Current page number, starting at 1.
+</ResponseField>
+  <ResponseField name="page_size" type="integer" required>
+Page size actually applied, capped at 100.
+</ResponseField>
+  <ResponseField name="total" type="integer" required>
+Total number of orders matching the query.
+</ResponseField>
+  <ResponseField name="items" type="object[]">
+Orders on the current page, ordered by `id` descending.
+
+<Expandable title="top-up order structure">
+  <ResponseField name="id" type="integer" required>
+Order ID.
+</ResponseField>
+  <ResponseField name="user_id" type="integer" required>
+User the order belongs to.
+</ResponseField>
+  <ResponseField name="amount" type="integer" required>
+Top-up amount chosen at order creation; for Epay orders the credited quota is this amount multiplied by the quota-per-unit conversion.
+</ResponseField>
+  <ResponseField name="money" type="number" required>
+Actual payment amount after group ratio and discount.
+</ResponseField>
+  <ResponseField name="trade_no" type="string" required>
+Unique order number.
+</ResponseField>
+  <ResponseField name="payment_method" type="string" required>
+Payment method chosen in the cashier, for example `alipay` or `wxpay` for Epay orders and `stripe` for Stripe orders.
+</ResponseField>
+  <ResponseField name="payment_provider" type="string" required>
+Payment provider: `epay` or `stripe`.
+</ResponseField>
+  <ResponseField name="create_time" type="integer" required>
+Order creation time as a Unix timestamp in seconds.
+</ResponseField>
+  <ResponseField name="complete_time" type="integer" required>
+Time the order was credited as a Unix timestamp in seconds; `0` while pending.
+</ResponseField>
+  <ResponseField name="status" type="string" required>
+Order status: `pending` awaiting payment, `success` credited, `expired` no longer payable.
+</ResponseField>
+</Expandable>
+  </ResponseField>
+</Expandable>
+</ResponseField>
+
+## Error messages
+
+| Condition | Description |
+| --- | --- |
+| Database error | Listing or searching the orders failed; see server logs |

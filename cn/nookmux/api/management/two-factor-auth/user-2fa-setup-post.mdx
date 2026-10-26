@@ -1,7 +1,75 @@
 ---
 title: 设置2FA
+description: 为当前登录账号初始化 TOTP 两步验证，返回密钥、二维码 URI 与初始备用码。
 api: "POST /api/user/2fa/setup"
 ---
 
-🔐 需要登录（User权限）
+为当前登录账号初始化两步验证（TOTP）设置。服务端生成与用户名绑定的 TOTP 密钥（6 位数字、30 秒周期）、拼接供验证器应用扫码的 `otpauth://` 配置 URI，并创建 4 个 `XXXX-XXXX` 格式的初始备用码。服务端保存一条**未启用**的 2FA 记录及备用码哈希；只有再通过[启用 2FA](/cn/nookmux/api/management/two-factor-auth/user-2fa-enable-post)确认当前 TOTP 验证码后设置才生效。本接口不接受请求体。
 
+需要**用户（User）**权限（任意登录用户）。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
+
+## 请求
+
+<RequestExample>
+
+```bash cURL
+curl --request POST \
+  --url 'https://your-nookmux-domain/api/user/2fa/setup' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1'
+```
+
+</RequestExample>
+
+## 响应
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "2FA setup initialized. Scan the QR code with an authenticator and enter the code to finish setup",
+  "data": {
+    "secret": "JBSWY3DPEHPK3PXPJBSWY3DPEHPK3PXP",
+    "qr_code_data": "otpauth://totp/NookMux:alice (NookMux)?secret=JBSWY3DPEHPK3PXPJBSWY3DPEHPK3PXP&issuer=NookMux&digits=6&period=30",
+    "backup_codes": ["A1B2-C3D4", "E5F6-G7H8", "J9K0-L1M2", "N3P4-Q5R6"]
+  }
+}
+```
+
+</ResponseExample>
+
+### 响应字段
+
+<ResponseField name="success" type="boolean" required>
+设置流程是否成功初始化。
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+成功时为本地化的成功提示；`success` 为 `false` 时为错误描述。
+</ResponseField>
+
+<ResponseField name="data.secret" type="string" required>
+Base32 编码的 TOTP 共享密钥，可手动输入验证器应用；同时作为 `secret` 参数包含在 `data.qr_code_data` 中。
+</ResponseField>
+
+<ResponseField name="data.qr_code_data" type="string" required>
+用于二维码扫描的 `otpauth://totp` 配置 URI。签发方为站点系统名称，账号标签为 `username (系统名称)`，TOTP 参数为 6 位数字、30 秒周期。
+</ResponseField>
+
+<ResponseField name="data.backup_codes" type="string[]" required>
+4 个 `XXXX-XXXX` 格式（8 位大写字母/数字）的初始备用恢复码。服务端只保存其哈希，明文仅在本响应中出现一次。
+</ResponseField>
+
+<Note>
+本接口创建的记录仍处于未启用状态。需再调用 `POST /api/user/2fa/enable` 确认当前 TOTP 验证码完成启用；此处返回的备用码在启用后继续有效。每个备用码只能使用一次。若此前存在未启用的 2FA 记录，会被删除并由新密钥和新备用码替换。
+</Note>
+
+## 错误说明
+
+| 条件 | 说明 |
+| --- | --- |
+| 2FA 已启用 | 需先禁用 2FA 才能重新设置 |
+| 数据库错误 | 读取账号或写入 2FA 记录失败，详见服务端日志 |
+| 密钥生成失败 | 服务端生成 TOTP 密钥失败，详见服务端日志 |
+| 备用码生成或保存失败 | 服务端生成或保存备用码失败，详见服务端日志 |

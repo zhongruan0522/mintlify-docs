@@ -1,7 +1,109 @@
 ---
 title: 获取指定供应商
+description: 按 ID 获取单个供应商元数据。
 api: "GET /api/vendors/{id}"
 ---
 
-👨‍💼 需要管理员权限（Admin）
+供应商元数据用于描述上游模型厂商：模型条目通过 `vendor_id` 关联供应商，图标、数据保留天数、训练退出等字段会展示在面向终端用户的定价页上。
 
+返回指定 ID 的供应商。
+
+需要**管理员（Admin）**权限。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
+
+## 请求
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url 'https://your-nookmux-domain/api/vendors/1' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1'
+```
+
+</RequestExample>
+
+### 路径参数
+
+<ParamField path="id" type="integer" required>
+  供应商 ID。
+</ParamField>
+
+## 响应
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": {
+    "id": 1,
+    "name": "OpenAI",
+    "description": "OpenAI models",
+    "icon": "openai",
+    "data_retention_days": 30,
+    "training_opt_out": true,
+    "status": 1,
+    "created_time": 1735689600,
+    "updated_time": 1735689600
+  }
+}
+```
+
+</ResponseExample>
+
+### 响应字段
+
+<ResponseField name="success" type="boolean" required>
+  请求是否成功。
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  `success` 为 `false` 时的错误描述；成功时为空字符串。
+</ResponseField>
+
+<ResponseField name="data" type="object" required>
+  供应商记录。
+
+  <Expandable title="vendor 结构">
+    <ResponseField name="id" type="integer" required>
+      供应商 ID。
+    </ResponseField>
+    <ResponseField name="name" type="string" required>
+      供应商名称，在未删除的供应商中唯一，最长 128 字符。
+    </ResponseField>
+    <ResponseField name="description" type="string">
+      自由描述，为空时省略。
+    </ResponseField>
+    <ResponseField name="icon" type="string">
+      `@lobehub/icons` 的图标名，由前端直接渲染，最长 128 字符，为空时省略。
+    </ResponseField>
+    <ResponseField name="data_retention_days" type="integer">
+      数据保留天数，展示在定价页（`0` 表示不留存），未设置时省略。
+    </ResponseField>
+    <ResponseField name="training_opt_out" type="boolean">
+      发往该供应商的请求是否默认不用于上游模型训练（展示在定价页），未设置时省略。
+    </ResponseField>
+    <ResponseField name="status" type="integer" required>
+      预留状态字段，`1` 表示启用。
+    </ResponseField>
+    <ResponseField name="created_time" type="integer" required>
+      创建时间的 Unix 时间戳（秒），由服务端写入。
+    </ResponseField>
+    <ResponseField name="updated_time" type="integer" required>
+      最近更新时间的 Unix 时间戳（秒），由服务端维护。
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<Note>
+管理接口在业务失败时同样返回 HTTP `200`，必须以 `success` 字段判断结果。
+</Note>
+
+## 错误说明
+
+| 条件 | 说明 |
+| --- | --- |
+| 无效的参数 | `id` 不是合法整数 |
+| 数据库错误，请稍后重试 | 读取供应商失败（含 ID 不存在的情况），详见服务端日志 |

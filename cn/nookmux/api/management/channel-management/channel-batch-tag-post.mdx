@@ -1,7 +1,76 @@
 ---
 title: 批量设置渠道标签
+description: 一次调用为多个渠道设置或清除标签。
 api: "POST /api/channel/batch/tag"
 ---
 
-👨‍💼 需要管理员权限（Admin）
+按 ID 为多个渠道设置（或清除）标签。标签列在事务中更新，受影响渠道的路由能力（abilities）随之重建，随后重新加载内存中的渠道缓存，并把该操作记入管理员审计日志。
 
+需要**管理员（Admin）**权限。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
+
+## 请求
+
+<RequestExample>
+
+```bash cURL
+curl --request POST \
+  --url 'https://your-nookmux-domain/api/channel/batch/tag' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1' \
+  --header 'Content-Type: application/json' \
+  --data '{
+  "ids": [1, 2, 3],
+  "tag": "production"
+}'
+```
+
+</RequestExample>
+
+### 请求体
+
+<ParamField path="body.ids" type="array" required>
+  要更新的渠道 ID 列表，至少包含一个元素。
+</ParamField>
+
+<ParamField path="body.tag" type="string">
+  要设置的标签。传 `null` 可清除所列渠道的标签。
+</ParamField>
+
+## 响应
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": 3
+}
+```
+
+</ResponseExample>
+
+### 响应字段
+
+<ResponseField name="success" type="boolean" required>
+  标签是否更新成功。
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  `success` 为 `false` 时的错误描述；成功时为空字符串。
+</ResponseField>
+
+<ResponseField name="data" type="integer" required>
+  请求中的 ID 数量。
+</ResponseField>
+
+<Note>
+  管理接口在业务失败时同样返回 HTTP `200`，必须以 `success` 字段判断结果。
+</Note>
+
+## 错误说明
+
+| 条件 | 说明 |
+| --- | --- |
+| 参数无效 | JSON 格式错误或 `ids` 为空 |
+| 数据库错误 | 更新标签或重建能力记录失败，详见服务端日志 |

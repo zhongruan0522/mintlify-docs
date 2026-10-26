@@ -1,7 +1,87 @@
 ---
 title: 开始Passkey登录
+description: 发起可发现凭据（Discoverable）的 Passkey/WebAuthn 登录，返回断言请求参数。
 api: "POST /api/user/passkey/login/begin"
 ---
 
-🔓 无需鉴权
+Passkey 登录第一步。发起可发现凭据（驻留密钥）的 WebAuthn 认证仪式：服务端生成一次性挑战值（challenge），存入服务端会话，并返回需交给 `navigator.credentials.get()` 的请求参数。随后携带同一会话 Cookie 调用 `POST /api/user/passkey/login/finish` 完成登录。挑战值按 2 分钟超时强制校验。
 
+本接口为 **Public（公开）**——无需鉴权。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
+
+<Note>
+需要管理员开启 Passkey 登录。本接口挂载了更严格的按 IP 限流（CriticalRateLimit），并对匿名请求体大小做了限制，超限返回 HTTP `413`。本接口不读取请求体。
+</Note>
+
+## 请求
+
+<RequestExample>
+
+```bash cURL
+curl --request POST \
+  --url 'https://your-nookmux-domain/api/user/passkey/login/begin'
+```
+
+</RequestExample>
+
+## 响应
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": {
+    "options": {
+      "publicKey": {
+        "challenge": "k3oU9xQ0ZjX2vB7nM1cS4eF6gH8iJ0kL2mN4oP6qR8s",
+        "timeout": 120000,
+        "rpId": "your-nookmux-domain",
+        "userVerification": "preferred"
+      }
+    }
+  }
+}
+```
+
+</ResponseExample>
+
+### 响应字段
+
+<ResponseField name="success" type="boolean" required>
+登录仪式是否成功启动且挑战值会话已保存。
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+`success` 为 `false` 时的错误描述；成功时为空字符串。
+</ResponseField>
+
+<ResponseField name="data.options" type="object" required>
+可发现登录的标准 WebAuthn `CredentialAssertion`。不返回 `allowCredentials`，由浏览器在本依赖方的驻留凭据中自行选择。
+
+<Expandable title="options.publicKey 结构">
+  <ResponseField name="challenge" type="string" required>
+    URL 安全 base64 编码的待签名挑战值。一次性，由完成步骤消费。
+  </ResponseField>
+  <ResponseField name="timeout" type="integer">
+    仪式超时时间，毫秒（120000 即 2 分钟）。
+  </ResponseField>
+  <ResponseField name="rpId" type="string">
+    凭据必须归属的依赖方（Relying Party）ID。
+  </ResponseField>
+  <ResponseField name="userVerification" type="string">
+    用户验证要求，例如 `preferred` 或 `required`。
+  </ResponseField>
+</Expandable>
+</ResponseField>
+
+<Note>
+`publicKey` 内部字段遵循 WebAuthn 规范（`PublicKeyCredentialRequestOptions`），NookMux 未对协议做任何扩展。
+</Note>
+
+## 错误说明
+
+| 条件 | 说明 |
+| --- | --- |
+| Passkey 登录未开启 | 管理员未启用 Passkey 登录 |
+| 数据库错误 | WebAuthn 实例构建失败、登录仪式启动失败或挑战值会话保存失败 |

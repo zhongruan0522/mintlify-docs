@@ -1,7 +1,145 @@
 ---
 title: Search Redemption Codes
+description: Search redemption codes by id or name prefix with pagination; redemption keys are masked.
 api: "GET /api/redemption/search"
 ---
 
-👨‍💼 Requires Admin Permissions
+Search redemption codes by keyword with pagination, ordered by `id` descending. When the keyword is a valid integer, codes whose `id` equals it or whose `name` starts with it are returned; otherwise codes whose `name` starts with the keyword are returned. Redemption keys are redeemable credentials, so this endpoint always returns the `key` field as an empty string.
 
+Requires **Admin** permissions. See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url 'https://your-nookmux-domain/api/redemption/search?keyword=welcome&p=1&page_size=10' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1'
+```
+
+</RequestExample>
+
+### Query parameters
+
+<ParamField path="query.keyword" type="string">
+  Search keyword. If it parses as an integer, codes with that `id` or with a `name` starting with the keyword match; otherwise codes with a `name` starting with the keyword match. An empty keyword matches all codes.
+</ParamField>
+
+<ParamField path="query.p" type="integer" default="1">
+  Page number.
+</ParamField>
+
+<ParamField path="query.page_size" type="integer" default="10">
+  Items per page, capped at 100. The pagination helper also accepts the legacy aliases `ps` and `size`.
+</ParamField>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": {
+    "page": 1,
+    "page_size": 10,
+    "total": 3,
+    "items": [
+      {
+        "id": 42,
+        "user_id": 1,
+        "key": "",
+        "status": 1,
+        "name": "welcome-bonus",
+        "quota": 100,
+        "created_time": 1748000000,
+        "redeemed_time": 0,
+        "count": 0,
+        "used_user_id": 0,
+        "DeletedAt": null,
+        "expired_time": 0
+      }
+    ]
+  }
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+  Whether the request succeeded.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  Error description when `success` is `false`; empty otherwise.
+</ResponseField>
+
+<ResponseField name="data.page" type="integer" required>
+  Current page number.
+</ResponseField>
+
+<ResponseField name="data.page_size" type="integer" required>
+  Page size applied to the query.
+</ResponseField>
+
+<ResponseField name="data.total" type="integer" required>
+  Total number of matching redemption codes.
+</ResponseField>
+
+<ResponseField name="data.items" type="array" required>
+  Matching redemption codes on the current page.
+
+  <Expandable title="redemption structure">
+    <ResponseField name="id" type="integer" required>
+      Redemption code id.
+    </ResponseField>
+    <ResponseField name="user_id" type="integer" required>
+      Id of the administrator who created the code.
+    </ResponseField>
+    <ResponseField name="key" type="string" required>
+      The redemption key (a 32-character UUID without dashes). Always returned as an empty string by this endpoint; see the note below.
+    </ResponseField>
+    <ResponseField name="status" type="integer" required>
+      Code status: `1` enabled, `2` disabled, `3` used.
+    </ResponseField>
+    <ResponseField name="name" type="string" required>
+      Display name of the code.
+    </ResponseField>
+    <ResponseField name="quota" type="integer" required>
+      Quota credited to the user who redeems the code.
+    </ResponseField>
+    <ResponseField name="created_time" type="integer" required>
+      Unix timestamp (seconds) of creation.
+    </ResponseField>
+    <ResponseField name="redeemed_time" type="integer" required>
+      Unix timestamp (seconds) of redemption; `0` if the code has not been redeemed.
+    </ResponseField>
+    <ResponseField name="count" type="integer" required>
+      Number of codes to generate in one create call. Request-only field, always `0` in responses.
+    </ResponseField>
+    <ResponseField name="used_user_id" type="integer" required>
+      Id of the user who redeemed the code; `0` if the code has not been redeemed.
+    </ResponseField>
+    <ResponseField name="DeletedAt" type="string" required>
+      Soft-delete marker; always `null` because soft-deleted rows are excluded from queries.
+    </ResponseField>
+    <ResponseField name="expired_time" type="integer" required>
+      Unix timestamp (seconds) after which the code can no longer be redeemed; `0` means no expiry.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<Note>
+Management endpoints return HTTP `200` even on business failures; always check the `success` field. The full redemption key is never returned by search endpoints; fetch it on demand from `GET /api/redemption/{id}/key`, which records the view in the operation logs.
+</Note>
+
+## Error messages
+
+| Condition | Description |
+| --- | --- |
+| Database error | Counting or searching redemption codes failed; see server logs |

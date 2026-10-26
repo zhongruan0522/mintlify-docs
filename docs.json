@@ -264,6 +264,7 @@
                       "cn/nookmux/api/management/redemption/redemption-id-delete",
                       "cn/nookmux/api/management/redemption/redemption-id-get",
                       "cn/nookmux/api/management/redemption/redemption-invalid-delete",
+                      "cn/nookmux/api/management/redemption/redemption-id-key-get",
                       "cn/nookmux/api/management/redemption/redemption-post",
                       "cn/nookmux/api/management/redemption/redemption-put",
                       "cn/nookmux/api/management/redemption/redemption-search-get"
@@ -312,10 +313,13 @@
                     "group": "令牌管理",
                     "pages": [
                       "cn/nookmux/api/management/token-management/token-batch-post",
+                      "cn/nookmux/api/management/token-management/token-batch-keys-post",
                       "cn/nookmux/api/management/token-management/token-get",
                       "cn/nookmux/api/management/token-management/token-id-delete",
                       "cn/nookmux/api/management/token-management/token-id-get",
                       "cn/nookmux/api/management/token-management/token-post",
+                      "cn/nookmux/api/management/token-management/token-id-key-post",
+                      "cn/nookmux/api/management/token-management/token-id-key-put",
                       "cn/nookmux/api/management/token-management/token-put",
                       "cn/nookmux/api/management/token-management/token-search-get",
                       "cn/nookmux/api/management/token-management/usage-token-get"
@@ -336,7 +340,6 @@
                     "group": "用户登陆注册",
                     "pages": [
                       "cn/nookmux/api/management/user-auth/reset_password-get",
-                      "cn/nookmux/api/management/user-auth/user-groups-get",
                       "cn/nookmux/api/management/user-auth/user-login-2fa-post",
                       "cn/nookmux/api/management/user-auth/user-login-post",
                       "cn/nookmux/api/management/user-auth/user-logout-get",
@@ -665,6 +668,7 @@
                       "nookmux/api/management/redemption/redemption-id-delete",
                       "nookmux/api/management/redemption/redemption-id-get",
                       "nookmux/api/management/redemption/redemption-invalid-delete",
+                      "nookmux/api/management/redemption/redemption-id-key-get",
                       "nookmux/api/management/redemption/redemption-post",
                       "nookmux/api/management/redemption/redemption-put",
                       "nookmux/api/management/redemption/redemption-search-get"
@@ -713,10 +717,13 @@
                     "group": "Token Management",
                     "pages": [
                       "nookmux/api/management/token-management/token-batch-post",
+                      "nookmux/api/management/token-management/token-batch-keys-post",
                       "nookmux/api/management/token-management/token-get",
                       "nookmux/api/management/token-management/token-id-delete",
                       "nookmux/api/management/token-management/token-id-get",
                       "nookmux/api/management/token-management/token-post",
+                      "nookmux/api/management/token-management/token-id-key-post",
+                      "nookmux/api/management/token-management/token-id-key-put",
                       "nookmux/api/management/token-management/token-put",
                       "nookmux/api/management/token-management/token-search-get",
                       "nookmux/api/management/token-management/usage-token-get"
@@ -737,7 +744,6 @@
                     "group": "User Authentication",
                     "pages": [
                       "nookmux/api/management/user-auth/reset_password-get",
-                      "nookmux/api/management/user-auth/user-groups-get",
                       "nookmux/api/management/user-auth/user-login-2fa-post",
                       "nookmux/api/management/user-auth/user-login-post",
                       "nookmux/api/management/user-auth/user-logout-get",

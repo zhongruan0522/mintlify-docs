@@ -1,7 +1,91 @@
 ---
 title: 获取指定模型
+description: 按 ID 获取单条模型元数据记录，附带绑定信息。
 api: "GET /api/models/{id}"
 ---
 
-👨‍💼 需要管理员权限（Admin）
+按 ID 获取单条模型元数据记录。返回的记录附带绑定信息：服务该模型的已启用渠道、可使用它的用户分组、计费方式、支持的端点类型；规则类记录还附带命中的具体模型名。
 
+需要**管理员（Admin）**权限。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
+
+## 请求
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url 'https://your-nookmux-domain/api/models/42' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1'
+```
+
+</RequestExample>
+
+### 路径参数
+
+<ParamField path="id" type="integer" required>
+模型元数据记录 ID。
+</ParamField>
+
+## 响应
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": {
+    "id": 42,
+    "model_name": "gpt-4o",
+    "description": "OpenAI flagship multimodal model",
+    "icon": "openai",
+    "tags": "llm,chat",
+    "vendor_id": 1,
+    "endpoints": "[\"openai\",\"anthropic\"]",
+    "context_length": 128000,
+    "max_output_tokens": 16384,
+    "input_modalities": ["text", "image"],
+    "output_modalities": ["text"],
+    "knowledge_cutoff": "2023-10",
+    "release_date": "2024-05-13",
+    "parameter_count": "unknown",
+    "status": 1,
+    "created_time": 1715587200,
+    "updated_time": 1718100000,
+    "name_rule": 0,
+    "bound_channels": [
+      { "name": "my-openai", "type": 1 }
+    ],
+    "enable_groups": ["default"],
+    "quota_types": [0]
+  }
+}
+```
+
+</ResponseExample>
+
+### 响应字段
+
+<ResponseField name="success" type="boolean" required>
+查询是否成功执行。
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+`success` 为 `false` 时的错误描述；成功时为空字符串。
+</ResponseField>
+
+<ResponseField name="data" type="object" required>
+附带绑定信息的模型元数据记录。字段结构与[获取所有模型元数据](/cn/nookmux/api/management/model-management/models-get)完全一致。
+</ResponseField>
+
+<Note>
+管理接口在业务失败时同样返回 HTTP `200`，必须以 `success` 字段判断结果。
+</Note>
+
+## 错误说明
+
+| 条件 | 说明 |
+| --- | --- |
+| 无效的参数 | `id` 不是整数 |
+| 数据库错误 | 该 ID 的记录不存在，或查询失败 |

@@ -1,7 +1,99 @@
 ---
 title: 获取模型列表
+description: 用给定的密钥从任意上游拉取模型列表，无需先保存渠道。
 api: "POST /api/channel/fetch_models"
 ---
 
-👨‍💼 需要管理员权限（Admin）
+直接提交 Base URL、渠道类型和密钥，从任意上游拉取模型列表，无需已保存的渠道。这是渠道创建时的辅助接口：返回的列表可直接粘贴到新渠道的 `models` 字段。行为依 `type` 而异：
 
+- Ollama 请求 Ollama 的 `/v1/models` 接口。
+- AWS Bedrock 用给定密钥与密钥类型拉取 Claude 模型列表。
+- Gemini 请求 Gemini 的模型列表接口。
+- Vertex AI 直接返回适配器内置的模型清单，不发起上游请求。
+- 其余类型请求 `{base_url}/v1/models`（Zhipu v4 使用 `/api/paas/v4/models`，Moonshot 使用 `/v1/models`；已知套餐 Base URL 会替换为其 OpenAI 兼容端点），返回 `data[].id` 的值。
+
+目标 URL 会按拉取安全设置（SSRF 防护、内网 IP 放行、域名与 IP 过滤、端口白名单）校验。
+
+需要**超级管理员（Root）**权限。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
+
+## 请求
+
+<RequestExample>
+
+```bash cURL
+curl --request POST \
+  --url 'https://your-nookmux-domain/api/channel/fetch_models' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1' \
+  --header 'Content-Type: application/json' \
+  --data '{
+  "base_url": "https://api.openai.com",
+  "type": 1,
+  "key": "sk-xxxxxxxxxxxxxxxxxxxx"
+}'
+```
+
+</RequestExample>
+
+### 请求体
+
+<ParamField path="body.base_url" type="string">
+  上游 Base URL。为空时使用给定 `type` 的内置接口地址。
+</ParamField>
+
+<ParamField path="body.type" type="integer" required>
+  渠道类型常量，决定拉取方式（例如 Ollama、AWS Bedrock、Gemini、Vertex AI、Zhipu v4、Moonshot 或通用 OpenAI 风格路径）。
+</ParamField>
+
+<ParamField path="body.key" type="string">
+  上游密钥。自动去除首尾空白并只取第一行，直接粘贴多 Key 文本也能工作。
+</ParamField>
+
+<ParamField path="body.aws_key_type" type="string" default="ak_sk">
+  AWS Bedrock 渠道的凭据类型：`ak_sk`（访问密钥 + 私钥）或 `api_key`。
+</ParamField>
+
+<ParamField path="body.proxy" type="string">
+  上游请求使用的代理（作用于 AWS Bedrock 拉取）。
+</ParamField>
+
+## 响应
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "data": [
+    "gpt-4o",
+    "gpt-4o-mini"
+  ]
+}
+```
+
+</ResponseExample>
+
+### 响应字段
+
+<ResponseField name="success" type="boolean" required>
+  模型列表是否拉取成功。
+</ResponseField>
+
+<ResponseField name="data" type="array" required>
+  上游返回的模型 ID 列表。ID 为空的条目会被丢弃。
+</ResponseField>
+
+<Note>
+  与多数管理接口不同，本接口并不总是返回 HTTP `200`：URL 校验失败返回 `400`，上游传输失败返回 `500`，响应体同样为 `{ success, message }` 结构。Ollama 与 Gemini 路径的业务拉取失败返回 `200` 且 `success: false`。成功时不包含 `message` 字段。
+</Note>
+
+## 错误说明
+
+| 条件 | 说明 |
+| --- | --- |
+| 请求体非法 | HTTP 400 —— JSON 格式错误 |
+| URL 被拒绝 | HTTP 400 —— 目标 URL 违反拉取安全设置 |
+| 上游请求失败 | HTTP 500 —— 构造或发送上游请求失败 |
+| 上游非 200 | HTTP 500 —— 上游返回了非 200 状态码 |
+| 响应解析失败 | HTTP 500 —— 上游响应不是合法 JSON |
+| Ollama 或 Gemini 拉取失败 | HTTP 200 且 `success: false`，附本地化错误信息 |

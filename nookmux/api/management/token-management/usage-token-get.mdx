@@ -1,7 +1,186 @@
 ---
 title: Get Token Usage
+description: Query the quota and usage summary of the token key presented in the Authorization header.
 api: "GET /api/usage/token/"
 ---
 
-🔑 Token Authentication Required (TokenAuth)
+Return the quota mode, consumption and reset schedule of the API token whose key is presented in the request. This endpoint is authenticated by the token key itself — the `Authorization` header must carry the token key (for example `sk-xxxx`), not a management access token.
 
+The token is resolved by the read-only token authentication middleware. See [Authentication](/nookmux/api/management/auth) for the general authentication model of the management API.
+
+<Note>
+This route is protected by the strict critical rate limit. Unlike the other management endpoints, the success envelope uses `code` instead of `success`, and authentication failures return HTTP `401` / `403` instead of `200`.
+</Note>
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url 'https://your-nookmux-domain/api/usage/token/' \
+  --header 'Authorization: Bearer sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
+```
+
+</RequestExample>
+
+### Headers
+
+<ParamField path="header.Authorization" type="string" required>
+  The API token key, in the form `Bearer sk-xxxx`.
+</ParamField>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "code": true,
+  "message": "Authorized",
+  "data": {
+    "object": "token_usage",
+    "name": "my-token",
+    "total_granted": 500000,
+    "total_used": 0,
+    "total_available": 500000,
+    "unlimited_quota": false,
+    "model_limits": {},
+    "model_limits_enabled": false,
+    "expires_at": 0,
+    "quota_type": 1,
+    "created_time": 1748000000,
+    "accessed_time": 1748086400,
+    "window_hours": 0,
+    "window_quota": 0,
+    "window_used_quota": 0,
+    "window_start_hour": 0,
+    "window_start_time": 0,
+    "window_next_reset_time": 0,
+    "cycle_days": 0,
+    "cycle_quota": 0,
+    "cycle_used_quota": 0,
+    "cycle_start_time": 0,
+    "cycle_next_reset_time": 0
+  }
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="code" type="boolean" required>
+  Legacy success flag; `true` when the token was authorized. This endpoint uses `code` instead of `success` in the success envelope.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  `Authorized` on success; error description otherwise.
+</ResponseField>
+
+<ResponseField name="data.object" type="string" required>
+  Constant `token_usage`.
+</ResponseField>
+
+<ResponseField name="data.name" type="string" required>
+  Display name of the token.
+</ResponseField>
+
+<ResponseField name="data.total_granted" type="integer" required>
+  Granted quota of the currently binding limit: permanent quota (`remain_quota + used_quota`) for types `0` and `1`, the window quota for type `2`, and the more binding of window and cycle quota for type `3`.
+</ResponseField>
+
+<ResponseField name="data.total_used" type="integer" required>
+  Quota already consumed under the same limit as `total_granted`. Window and cycle counters that are due for reset are reported as `0`.
+</ResponseField>
+
+<ResponseField name="data.total_available" type="integer" required>
+  Remaining quota under the same limit as `total_granted`, never negative.
+</ResponseField>
+
+<ResponseField name="data.unlimited_quota" type="boolean" required>
+  Whether the token has unlimited quota.
+</ResponseField>
+
+<ResponseField name="data.model_limits" type="object" required>
+  Map of model names allowed for this token (each value is `true`); empty object when no limits are configured.
+</ResponseField>
+
+<ResponseField name="data.model_limits_enabled" type="boolean" required>
+  Whether `model_limits` is enforced for this token.
+</ResponseField>
+
+<ResponseField name="data.expires_at" type="integer" required>
+  Unix timestamp (seconds) when the token expires; `0` when the token never expires.
+</ResponseField>
+
+<ResponseField name="data.quota_type" type="integer" required>
+  Effective quota mode: `0` unlimited, `1` permanent quota, `2` time-window quota, `3` time-window plus cycle quota. For legacy tokens without `quota_type`, a non-unlimited token is reported as `1`.
+</ResponseField>
+
+<ResponseField name="data.created_time" type="integer" required>
+  Unix timestamp (seconds) of token creation.
+</ResponseField>
+
+<ResponseField name="data.accessed_time" type="integer" required>
+  Unix timestamp (seconds) of the last use of the token key.
+</ResponseField>
+
+<ResponseField name="data.window_hours" type="integer" required>
+  Length of each quota window in hours.
+</ResponseField>
+
+<ResponseField name="data.window_quota" type="integer" required>
+  Quota granted per window.
+</ResponseField>
+
+<ResponseField name="data.window_used_quota" type="integer" required>
+  Quota already used in the current window.
+</ResponseField>
+
+<ResponseField name="data.window_start_hour" type="integer" required>
+  Hour of day (`0`-`23`) the window grid is aligned to.
+</ResponseField>
+
+<ResponseField name="data.window_start_time" type="integer" required>
+  Unix timestamp (seconds) of the current window start.
+</ResponseField>
+
+<ResponseField name="data.window_next_reset_time" type="integer" required>
+  Unix timestamp (seconds) when the current window ends and the window quota resets; `0` when the quota mode has no window (`quota_type` `0` or `1`).
+</ResponseField>
+
+<ResponseField name="data.cycle_days" type="integer" required>
+  Length of each quota cycle in days.
+</ResponseField>
+
+<ResponseField name="data.cycle_quota" type="integer" required>
+  Quota granted per cycle.
+</ResponseField>
+
+<ResponseField name="data.cycle_used_quota" type="integer" required>
+  Quota already used in the current cycle.
+</ResponseField>
+
+<ResponseField name="data.cycle_start_time" type="integer" required>
+  Unix timestamp (seconds) of the current cycle start.
+</ResponseField>
+
+<ResponseField name="data.cycle_next_reset_time" type="integer" required>
+  Unix timestamp (seconds) when the current cycle ends and the cycle quota resets; `0` when the quota mode has no cycle (`quota_type` other than `3`).
+</ResponseField>
+
+<Note>
+Window and cycle reset times are computed from the server-side anchors (windows are aligned to `window_start_hour` with a fixed grid; cycles start from `cycle_start_time`), so clients do not need to re-implement the anchoring logic.
+</Note>
+
+## Error messages
+
+| Condition | Status | Description |
+| --- | --- | --- |
+| No Authorization header | `401` | The `Authorization` header is missing |
+| Invalid Bearer token | `401` | The header is not in `Bearer <key>` form |
+| Invalid token | `401` | The key does not match any token |
+| User banned | `403` | The token owner is disabled |
+| Failed to get token info | `200` | Reloading the token for window/cycle modes failed; returned as `success: false` |
+| Database error | `500` | Loading the token owner's user cache failed |

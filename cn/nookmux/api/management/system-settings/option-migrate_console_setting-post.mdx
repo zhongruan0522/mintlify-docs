@@ -1,7 +1,63 @@
 ---
 title: 迁移控制台设置
+description: 将旧版控制台选项键（ApiInfo、Announcements、FAQ、Uptime Kuma）一次性迁移到 console.* 命名空间。
 api: "POST /api/option/migrate_console_setting"
 ---
 
-👑 需要超级管理员权限（Root）
+把旧版部署遗留的控制台相关选项键迁移到现行 `console.*` 命名空间，随后删除旧键并重载内存选项表。迁移映射如下：
 
+- `ApiInfo` 迁移为 `console.api_info`（JSON 数组，最多保留 50 条）。
+- `Announcements` 原样复制为 `console.announcements`。
+- `FAQ` 转换为 `console.faq`，每条为一个 `question`/`answer` 对象（输入字段接受 `question`/`title` 与 `answer`/`content`），最多保留 50 条。
+- `UptimeKumaUrl` 与 `UptimeKumaSlug`（仅两者都存在时）合并为一条 `console.uptime_kuma_groups` 记录。
+
+无需请求体。当所有旧键都不再有值时，端点不会执行任何写入，因此对已迁移完成的部署重复调用是安全的。
+
+需要**超级管理员（Root）**权限。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
+
+## 请求
+
+<RequestExample>
+
+```bash cURL
+curl --request POST \
+  --url 'https://your-nookmux-domain/api/option/migrate_console_setting' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1'
+```
+
+</RequestExample>
+
+## 响应
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "迁移完成"
+}
+```
+
+</ResponseExample>
+
+### 响应字段
+
+<ResponseField name="success" type="boolean" required>
+  迁移是否完成。
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  成功时为 `迁移完成`；`success` 为 `false` 时为错误描述。
+</ResponseField>
+
+<Note>
+  迁移写入按步整体执行：任一步写入失败即立即中止并返回 HTTP `500`，避免出现部分迁移的中间状态。本端点是为升级检测保留的旧键迁移辅助接口，未来版本将移除。
+</Note>
+
+## 错误说明
+
+| 条件 | 说明 |
+| --- | --- |
+| 获取配置失败，请稍后重试 | 读取选项表失败；HTTP `500` |
+| 更新失败 | 写入某个迁移后的选项失败，迁移在该步中止；HTTP `500` |

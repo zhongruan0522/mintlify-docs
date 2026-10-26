@@ -1,7 +1,63 @@
 ---
 title: Migrate Console Settings
+description: One-shot migration of legacy console option keys (ApiInfo, Announcements, FAQ, Uptime Kuma) to the console.* namespace.
 api: "POST /api/option/migrate_console_setting"
 ---
 
-👑 Requires Super Administrator (Root) Privileges
+Migrates the legacy console-related option keys still stored by older deployments into the current `console.*` namespace, then deletes the old keys and reloads the in-memory option map. The mapping performed:
 
+- `ApiInfo` becomes `console.api_info` (JSON array, truncated to at most 50 entries).
+- `Announcements` is copied verbatim to `console.announcements`.
+- `FAQ` is converted to `console.faq` with one `question`/`answer` object per item (accepting `question`/`title` and `answer`/`content` as input fields), truncated to at most 50 entries.
+- `UptimeKumaUrl` + `UptimeKumaSlug` (only when both are set) become a single `console.uptime_kuma_groups` entry.
+
+No request body is required. When no legacy key holds a value anymore, the endpoint performs no writes, so it is safe to call on an already-migrated deployment.
+
+Requires **Root** (super administrator) permissions. See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request POST \
+  --url 'https://your-nookmux-domain/api/option/migrate_console_setting' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1'
+```
+
+</RequestExample>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "Migrated"
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+  Whether the migration completed.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  `Migrated` on success; error description when `success` is `false`.
+</ResponseField>
+
+<Note>
+  Migration writes are all-or-nothing per step: if any write fails the endpoint stops immediately and returns HTTP `500`, avoiding a partially migrated state. This is a legacy-key migration helper kept for upgrade detection and will be removed in a future version.
+</Note>
+
+## Error messages
+
+| Condition | Description |
+| --- | --- |
+| Failed to get configuration, please try again later | Reading the option table failed; HTTP `500` |
+| Update failed | Writing one of the migrated options failed; the migration stopped at that step, HTTP `500` |

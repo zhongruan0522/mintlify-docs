@@ -1,7 +1,143 @@
 ---
 title: Search Tokens
+description: Search the current user's tokens by name, key, group and status with pagination.
 api: "GET /api/token/search"
 ---
 
-🔐 Login Required (User Permission)
+Search the API tokens owned by the current user. `keyword` and `token` support SQL `LIKE` patterns with `%` wildcards, subject to server-side sanitization. Tokens are returned newest first (`id` descending) and the `key` of every token is masked.
 
+Requires a logged-in user (**User** permissions). See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
+
+<Note>
+This endpoint has a dedicated per-user search rate limit (10 requests per 60 seconds per user when enabled by the server) in addition to the global API rate limit.
+</Note>
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url 'https://your-nookmux-domain/api/token/search?keyword=my-%25token%25&p=1&page_size=10' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1'
+```
+
+</RequestExample>
+
+### Query parameters
+
+<ParamField path="query.keyword" type="string">
+  Matches the token name. Without `%` it is an exact match; with `%` it becomes a fuzzy `LIKE` pattern — at most two `%` wildcards, no consecutive `%%`, and at least 2 characters besides the wildcards.
+</ParamField>
+
+<ParamField path="query.token" type="string">
+  Matches the token key with the same pattern rules as `keyword`.
+</ParamField>
+
+<ParamField path="query.all" type="boolean" default="false">
+  Set to `true` (or `1`) for single-box search: a token matches when its name matches `keyword` **or** its key matches `token`. Requires both `keyword` and `token` to be non-empty; otherwise the two filters are combined with AND (each applied only when non-empty).
+</ParamField>
+
+<ParamField path="query.group" type="string">
+  Exact group filter. Empty disables the filter.
+</ParamField>
+
+<ParamField path="query.status" type="integer" default="0">
+  Status filter: `0` or omitted disables the filter; `1` enabled, `2` disabled, `3` expired, `4` quota exhausted.
+</ParamField>
+
+<ParamField path="query.p" type="integer" default="1">
+  Page number.
+</ParamField>
+
+<ParamField path="query.page_size" type="integer" default="10">
+  Items per page. The store clamps it to 100: values below 1 or above 100 become 100.
+</ParamField>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": {
+    "page": 1,
+    "page_size": 10,
+    "total": 1,
+    "items": [
+      {
+        "id": 3,
+        "user_id": 1,
+        "key": "***************************************************",
+        "status": 1,
+        "name": "my-token",
+        "created_time": 1748000000,
+        "accessed_time": 1748086400,
+        "expired_time": -1,
+        "remain_quota": 500000,
+        "unlimited_quota": false,
+        "model_limits_enabled": false,
+        "model_limits": "",
+        "model_mapping": null,
+        "allow_ips": null,
+        "used_quota": 0,
+        "group": "default",
+        "cross_group_retry": false,
+        "quota_type": 1,
+        "window_hours": 0,
+        "window_quota": 0,
+        "window_start_hour": 0,
+        "cycle_days": 0,
+        "cycle_quota": 0,
+        "window_used_quota": 0,
+        "window_start_time": 0,
+        "cycle_used_quota": 0,
+        "cycle_start_time": 0
+      }
+    ]
+  }
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+  Whether the request succeeded.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  Error description when `success` is `false`; empty otherwise.
+</ResponseField>
+
+<ResponseField name="data.page" type="integer" required>
+  Current page number.
+</ResponseField>
+
+<ResponseField name="data.page_size" type="integer" required>
+  Items per page actually applied.
+</ResponseField>
+
+<ResponseField name="data.total" type="integer" required>
+  Number of tokens matching the filters. The count query is capped at 1000.
+</ResponseField>
+
+<ResponseField name="data.items" type="array" required>
+  Token objects on the current page. Same structure as in [Get All Tokens](/nookmux/api/management/token-management/token-get); the `key` of each token is masked.
+</ResponseField>
+
+<Note>
+The full token key never appears in search results, even when matched via the `token` parameter. Users who own more than 1000 tokens can only search exactly — fuzzy patterns with `%` are rejected for them.
+</Note>
+
+## Error messages
+
+| Condition | Description |
+| --- | --- |
+| Invalid search pattern | `keyword` or `token` contains consecutive `%%`, more than two `%` wildcards, or a fuzzy pattern shorter than 2 characters excluding `%` |
+| Fuzzy search not allowed | The user owns more than 1000 tokens and used `%` wildcards; only exact search is allowed |
+| Database error | Searching or counting the tokens failed; see server logs |

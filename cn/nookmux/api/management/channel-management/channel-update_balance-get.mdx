@@ -1,7 +1,55 @@
 ---
 title: 更新所有渠道余额
+description: 刷新所有启用状态单 Key 渠道的上游余额。
 api: "GET /api/channel/update_balance"
 ---
 
-👨‍💼 需要管理员权限（Admin）
+刷新所有启用状态、单 Key 渠道的上游余额。刷新过程是同步的：按配置的请求间隔逐个渠道查询，全部完成后接口才返回。刷新后余额小于等于 0 的渠道会被以额度耗尽为由禁用。
 
+需要**管理员（Admin）**权限。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
+
+## 请求
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url 'https://your-nookmux-domain/api/channel/update_balance' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1'
+```
+
+</RequestExample>
+
+## 响应
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": ""
+}
+```
+
+</ResponseExample>
+
+### 响应字段
+
+<ResponseField name="success" type="boolean" required>
+余额刷新是否完成。
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+`success` 为 `false` 时的错误描述；成功时为空字符串。
+</ResponseField>
+
+<Note>
+禁用渠道与多 Key 渠道会被跳过。单个渠道的余额查询失败会被静默跳过，只有加载渠道列表失败才会使整个请求失败。余额查询支持 OpenAI 兼容计费端点（OpenAI 与自定义 Base URL）、SiliconFlow、DeepSeek、OpenRouter、Moonshot 与智谱 GLM 渠道；Azure 及其他不支持的类型会按渠道报"未实现"并跳过。需要刷新单个渠道并取回数值时，请使用[更新指定渠道余额](/cn/nookmux/api/management/channel-management/channel-update_balance-id-get)。
+</Note>
+
+## 错误说明
+
+| 条件 | 说明 |
+| --- | --- |
+| 数据库错误 | 加载渠道列表失败 |

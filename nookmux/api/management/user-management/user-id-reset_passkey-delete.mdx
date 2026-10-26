@@ -1,7 +1,69 @@
 ---
 title: Admin Reset User Passkey
+description: Delete all passkey (WebAuthn) credentials bound to a user, for example after losing every device.
 api: "DELETE /api/user/{id}/reset_passkey"
 ---
 
-👨‍💼 Requires Admin Permissions (Admin)
+Deletes all passkey (WebAuthn) credentials bound to the target user. Use this when a user loses every passkey device and can no longer pass secure verification. After the reset, the user can register new passkeys again. The operation writes an audit record.
 
+Requires **Admin** permissions. See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request DELETE \
+  --url 'https://your-nookmux-domain/api/user/2/reset_passkey' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1'
+```
+
+</RequestExample>
+
+### Path parameters
+
+<ParamField path="path.id" type="integer" required>
+ID of the target user.
+</ParamField>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "Passkey has been reset",
+  "data": null
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+Whether the passkeys were deleted.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+Localized success message when `success` is `true`; error description otherwise.
+</ResponseField>
+
+<ResponseField name="data" type="null">
+Always `null` for this endpoint.
+</ResponseField>
+
+<Note>
+A non-root admin can only reset passkeys for users with a strictly lower role. The root admin can reset passkeys for any user.
+</Note>
+
+## Error messages
+
+| Condition | Description |
+| --- | --- |
+| Invalid user ID | `id` in the path is not an integer |
+| Database error | Counting or deleting the passkeys failed; see server logs |
+| No permission | The caller is not root and the target user has the same or a higher role |
+| Passkey not bound | The target user has no passkeys to reset |

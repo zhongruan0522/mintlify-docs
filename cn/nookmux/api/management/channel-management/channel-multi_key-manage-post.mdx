@@ -1,7 +1,177 @@
 ---
 title: 管理多密钥
+description: 查询、启用、禁用与删除多 Key 渠道中的单个密钥。
 api: "POST /api/channel/multi_key/manage"
 ---
 
-👨‍💼 需要管理员权限（Admin）
+通过统一的动作式接口管理多 Key 渠道的单个密钥：分页查询密钥状态及统计信息、手动禁用或重新启用单个/全部密钥、删除单个密钥、清理全部自动禁用的密钥。只有以多 Key 模式创建（`is_multi_key: true`）的渠道可以在此管理。
 
+需要**管理员（Admin）**权限。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
+
+## 请求
+
+<RequestExample>
+
+```bash cURL
+curl --request POST \
+  --url 'https://your-nookmux-domain/api/channel/multi_key/manage' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1' \
+  --header 'Content-Type: application/json' \
+  --data '{
+  "channel_id": 1,
+  "action": "get_key_status",
+  "page": 1,
+  "page_size": 50
+}'
+```
+
+</RequestExample>
+
+### 请求体
+
+<ParamField path="body.channel_id" type="integer" required>
+要管理的多 Key 渠道 ID。
+</ParamField>
+
+<ParamField path="body.action" type="string" required>
+要执行的操作：
+
+- `get_key_status`：分页返回密钥状态列表及总体统计。
+- `disable_key`：手动禁用 `key_index` 处的密钥（状态变为 `2`）。
+- `enable_key`：重新启用 `key_index` 处的密钥，并清除其禁用时间与原因。
+- `enable_all_keys`：重新启用渠道的全部密钥。
+- `disable_all_keys`：手动禁用当前所有启用的密钥。
+- `delete_key`：从渠道删除 `key_index` 处的密钥，剩余密钥重新编号。
+- `delete_disabled_keys`：从渠道删除全部自动禁用（状态 `3`）的密钥。
+</ParamField>
+
+<ParamField path="body.key_index" type="integer">
+要操作的密钥索引，从 0 开始。`disable_key`、`enable_key`、`delete_key` 必填，其他操作忽略。取值范围为 `0` 到 `multi_key_size - 1`。
+</ParamField>
+
+<ParamField path="body.page" type="integer" default="1">
+`get_key_status` 的页码；小于等于 `0` 时回退为 `1`。
+</ParamField>
+
+<ParamField path="body.page_size" type="integer" default="50">
+`get_key_status` 的每页条数；小于等于 `0` 时回退为 `50`。
+</ParamField>
+
+<ParamField path="body.status" type="integer">
+`get_key_status` 的过滤条件：`1` 启用、`2` 手动禁用、`3` 自动禁用。省略返回全部状态的密钥。分页作用于过滤后的列表；统计始终覆盖全部密钥。
+</ParamField>
+
+## 响应
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": {
+    "keys": [
+      {
+        "index": 0,
+        "status": 1,
+        "key_preview": "sk-xxxx1234..."
+      },
+      {
+        "index": 1,
+        "status": 3,
+        "disabled_time": 1718100000,
+        "reason": "quota used up",
+        "key_preview": "sk-xxxx5678..."
+      }
+    ],
+    "total": 8,
+    "page": 1,
+    "page_size": 50,
+    "total_pages": 1,
+    "enabled_count": 5,
+    "manual_disabled_count": 1,
+    "auto_disabled_count": 2
+  }
+}
+```
+
+</ResponseExample>
+
+### 响应字段
+
+<ResponseField name="success" type="boolean" required>
+操作是否执行成功。
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+`success` 为 `false` 时的错误描述；变更类操作成功时为本地化的确认信息；`get_key_status` 成功时为空字符串。
+</ResponseField>
+
+<ResponseField name="data" type="object">
+仅 `get_key_status`（密钥状态页）与 `delete_disabled_keys`（被删除密钥数的整数值）返回该字段。
+
+  <Expandable title="get_key_status 的 data 结构">
+    <ResponseField name="keys" type="array">
+      当前页的密钥状态条目，已应用可选的 `status` 过滤。
+
+      <Expandable title="密钥状态结构">
+        <ResponseField name="index" type="integer">
+          密钥在渠道内的索引，从 0 开始。
+        </ResponseField>
+        <ResponseField name="status" type="integer">
+          密钥状态：`1` 启用，`2` 手动禁用，`3` 自动禁用。
+        </ResponseField>
+        <ResponseField name="disabled_time" type="integer">
+          密钥被禁用的 Unix 时间戳；仅被禁用的密钥返回。
+        </ResponseField>
+        <ResponseField name="reason" type="string">
+          密钥被禁用的原因；仅被禁用的密钥返回。
+        </ResponseField>
+        <ResponseField name="key_preview" type="string">
+          密钥的前 10 个字符，超过 10 个字符时以 `...` 结尾。不会返回完整密钥。
+        </ResponseField>
+      </Expandable>
+    </ResponseField>
+    <ResponseField name="total" type="integer">
+      匹配 `status` 过滤条件的密钥数。
+    </ResponseField>
+    <ResponseField name="page" type="integer">
+      当前页码，超出时收敛到 `total_pages`。
+    </ResponseField>
+    <ResponseField name="page_size" type="integer">
+      实际生效的每页条数。
+    </ResponseField>
+    <ResponseField name="total_pages" type="integer">
+      过滤后列表的总页数，最少为 `1`。
+    </ResponseField>
+    <ResponseField name="enabled_count" type="integer">
+      渠道全部密钥中处于启用状态的数量。
+    </ResponseField>
+    <ResponseField name="manual_disabled_count" type="integer">
+      渠道全部密钥中手动禁用的数量。
+    </ResponseField>
+    <ResponseField name="auto_disabled_count" type="integer">
+      渠道全部密钥中自动禁用的数量。
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<Note>
+管理接口在业务失败时同样返回 HTTP `200`，必须以 `success` 字段判断结果。变更类操作在渠道级锁下执行，同一渠道的并发调用会被串行化；每次变更后渠道缓存都会刷新。删除密钥后剩余密钥会重新编号；渠道必须至少保留一个密钥，`delete_key` 拒绝删除最后一个密钥。
+</Note>
+
+## 错误说明
+
+| 条件 | 说明 |
+| --- | --- |
+| 请求体非法 | JSON 缺失或格式错误 |
+| 渠道不存在 | 给定 `channel_id` 的渠道不存在 |
+| 非多 Key 渠道 | 渠道的 `channel_info.is_multi_key` 为 `false` |
+| 密钥索引必填 | `disable_key`、`enable_key` 或 `delete_key` 缺少 `key_index` |
+| 密钥索引越界 | `key_index` 为负数或不小于 `multi_key_size` |
+| 不能删除最后一个密钥 | `delete_key` 的目标是渠道仅剩的密钥 |
+| 无可禁用密钥 | `disable_all_keys` 找不到启用状态的密钥 |
+| 无自动禁用密钥可删除 | `delete_disabled_keys` 找不到自动禁用的密钥 |
+| 操作不支持 | `action` 不是列出的取值之一 |
+| 数据库错误 | 变更落库失败，详见服务端日志 |

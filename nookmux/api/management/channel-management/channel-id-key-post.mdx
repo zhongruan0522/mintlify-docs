@@ -1,7 +1,74 @@
 ---
 title: Get Channel Key
+description: Reveal the full upstream key of a channel after passing security verification.
 api: "POST /api/channel/{id}/key"
 ---
 
-👑 Requires Super Administrator (Root) Permissions + Security Verification
+Return the full upstream key of a channel. This is the only channel endpoint that reveals the key, so it is locked down: it requires Root permissions, is subject to strict rate limiting, must not be cached, and the caller must have passed [security verification](/nookmux/api/management/security-verification/verify-post) beforehand. Every call is recorded in the system log.
 
+Requires **Root** permissions. See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
+
+<Note>
+  This endpoint is protected by strict rate limiting and by the security verification middleware: requests that have not passed security verification are rejected before the handler runs. Responses are sent with no-store cache directives.
+</Note>
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request POST \
+  --url 'https://your-nookmux-domain/api/channel/1/key' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1'
+```
+
+</RequestExample>
+
+### Path parameters
+
+<ParamField path="id" type="integer" required>
+  Id of the channel whose key should be revealed.
+</ParamField>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "Retrieved successfully",
+  "data": {
+    "key": "sk-xxxxxxxxxxxxxxxxxxxx"
+  }
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+  Whether the key was returned.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  Localized success message; error description when `success` is `false`.
+</ResponseField>
+
+<ResponseField name="data.key" type="string" required>
+  The full upstream key stored on the channel. Multi-key channels return all keys joined by newlines.
+</ResponseField>
+
+<Note>
+  Management endpoints return HTTP `200` even on business failures; always check the `success` field.
+</Note>
+
+## Error messages
+
+| Condition | Description |
+| --- | --- |
+| Channel id format error | `id` in the path is not an integer |
+| Channel not found | No channel exists with the given id |
+| Channel info failed | The channel could not be loaded; see server logs |

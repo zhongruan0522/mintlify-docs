@@ -1,7 +1,94 @@
 ---
 title: Get Uptime Kuma Status
+description: Fetch monitor availability aggregated from the configured Uptime Kuma status pages.
 api: "GET /api/uptime/status"
 ---
 
-🔓 No authentication required
+Returns service availability for the dashboard Uptime Kuma panel. The server reads the Uptime Kuma groups configured in console content settings, queries each group's Uptime Kuma instance (status page and heartbeat APIs) in parallel, and aggregates monitor names, latest heartbeat status and 24-hour uptime per group. When no groups are configured, `data` is an empty array.
 
+Requires **User** permissions (any logged-in account). Login is enforced because the request makes the server issue internal-network requests to the configured Uptime Kuma instances. See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url 'https://your-nookmux-domain/api/uptime/status' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1'
+```
+
+</RequestExample>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": [
+    {
+      "categoryName": "Core Services",
+      "monitors": [
+        {
+          "name": "API Gateway",
+          "uptime": 0.9995,
+          "status": 1,
+          "group": "Public"
+        }
+      ]
+    }
+  ]
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+  Whether the request succeeded.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  Error description when `success` is `false`; empty otherwise.
+</ResponseField>
+
+<ResponseField name="data" type="array" required>
+  One entry per configured Uptime Kuma group, in configuration order.
+
+  <Expandable title="group structure">
+    <ParamField path="categoryName" type="string" required>
+      Display name of the group as configured in console content settings.
+    </ParamField>
+    <ParamField path="monitors" type="array" required>
+      Monitors of this group. Empty when the Uptime Kuma instance is unreachable or returns a non-200 response.
+    </ParamField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="data[].monitors[]" type="object">
+  Monitor entry aggregated from the Uptime Kuma instance.
+
+  <Expandable title="monitor structure">
+    <ParamField path="name" type="string" required>
+      Monitor name as published by the Uptime Kuma status page.
+    </ParamField>
+    <ParamField path="uptime" type="number" required>
+      24-hour uptime ratio reported by Uptime Kuma (between 0 and 1). `0` when the instance does not report it for this monitor.
+    </ParamField>
+    <ParamField path="status" type="integer" required>
+      Latest heartbeat status integer from the Uptime Kuma instance. `0` when no heartbeat is available.
+    </ParamField>
+    <ParamField path="group" type="string">
+      Name of the public group inside the Uptime Kuma status page that contains this monitor. Omitted when empty.
+    </ParamField>
+  </Expandable>
+</ResponseField>
+
+<Note>
+  Each upstream Uptime Kuma call has a 10-second timeout and the whole aggregation a 30-second timeout; a group whose instance cannot be reached is returned with an empty `monitors` array instead of failing the whole request. The endpoint is only enabled on the dashboard when the Uptime Kuma panel is switched on.
+</Note>

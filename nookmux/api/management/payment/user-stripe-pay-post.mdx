@@ -1,7 +1,98 @@
 ---
 title: Initiate Stripe Payment
+description: Create a pending Stripe top-up order and get a hosted Stripe Checkout payment link.
 api: "POST /api/user/stripe/pay"
 ---
 
-🔐 Login required (User permission)
+Initiates a Stripe top-up. The server creates a Stripe Checkout session for the requested quantity with the configured Stripe price, stores a pending top-up order, and returns the hosted payment link. The order is credited later by the Stripe webhook (`POST /api/stripe/webhook`).
 
+Requires **User** permissions (any logged-in account). See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
+
+<Note>
+This endpoint applies a stricter per-IP rate limit (CriticalRateLimit, when enabled); exceeding it returns HTTP `429`. Also unlike the other business errors on this page, an untrusted `success_url` or `cancel_url` is rejected with HTTP `400` (instead of HTTP `200` with `success: false`).
+</Note>
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request POST \
+  --url 'https://your-nookmux-domain/api/user/stripe/pay' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1' \
+  --header 'Content-Type: application/json' \
+  --data '{
+  "amount": 10,
+  "payment_method": "stripe"
+}'
+```
+
+</RequestExample>
+
+### Body
+
+<ParamField path="body.amount" type="integer" required>
+Top-up quantity. Must be at least the configured Stripe minimum top-up amount and at most `10000`.
+</ParamField>
+
+<ParamField path="body.payment_method" type="string" required>
+Payment method; must be `stripe`.
+</ParamField>
+
+<ParamField path="body.success_url" type="string">
+URL to redirect the user to after a successful payment. When provided, it must use `http`/`https` and its domain must be in the server's trusted redirect domains (an entry of the `TRUSTED_REDIRECT_DOMAINS` environment variable, matched exactly or as a parent domain). When empty, the console log page is used.
+</ParamField>
+
+<ParamField path="body.cancel_url" type="string">
+URL to redirect the user to when the payment is canceled, with the same validation rules as `success_url`. When empty, the console top-up page is used.
+</ParamField>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "Top-up successful",
+  "data": {
+    "pay_link": "https://checkout.stripe.com/c/pay/cs_test_ExampleSession"
+  }
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+Whether the Checkout session and the top-up order were created.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+Localized status message; error description when `success` is `false`. The exact wording depends on the request language.
+</ResponseField>
+
+<ResponseField name="data" type="object" required>
+
+<Expandable title="data structure">
+  <ParamField path="pay_link" type="string" required>
+    URL of the created Stripe Checkout session. Redirect the user to this link to complete the payment.
+  </ParamField>
+</Expandable>
+</ResponseField>
+
+## Error messages
+
+| Condition | Description |
+| --- | --- |
+| Invalid parameters | The JSON body is missing or malformed |
+| Unsupported payment channel | `payment_method` is not `stripe` |
+| Top-up amount cannot be less than the minimum | `amount` is lower than the configured Stripe minimum top-up amount |
+| Top-up amount cannot exceed 10000 | `amount` is greater than `10000` |
+| Payment success redirect URL is not in the trusted domain list | `success_url` is set but untrusted; rejected with HTTP `400` |
+| Payment cancel redirect URL is not in the trusted domain list | `cancel_url` is set but untrusted; rejected with HTTP `400` |
+| Failed to get user info | The caller's user record could not be loaded |
+| Failed to initiate payment | The Stripe API key is missing/invalid or Checkout session creation failed |
+| Failed to create order | Persisting the top-up order failed; see server logs |

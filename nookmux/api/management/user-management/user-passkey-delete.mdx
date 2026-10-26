@@ -1,7 +1,76 @@
 ---
 title: Delete Passkey
+description: Unbind one passkey credential by ID, or all passkeys of the current user, after step-up secure verification.
 api: "DELETE /api/user/passkey"
 ---
 
-🔐 Login Required (User Permission)
+Unbinds passkey (WebAuthn) credentials from the current user. Called with `/{id}`, only that credential is deleted and it must belong to the caller. Called without the path segment (`DELETE /api/user/passkey`), every passkey of the current user is deleted.
 
+Requires **User** permission (any logged-in user). See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request DELETE \
+  --url 'https://your-nookmux-domain/api/user/passkey/1' \
+  --header 'Cookie: session={session_cookie}' \
+  --header 'New-Api-User: 1'
+```
+
+</RequestExample>
+
+### Path parameters
+
+<ParamField path="path.id" type="integer">
+ID of the passkey credential to delete. Optional: omit it (call `DELETE /api/user/passkey`) to delete all passkeys of the current user.
+</ParamField>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "Passkey has been unbound",
+  "data": null
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+Whether the passkeys were deleted.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+Localized success message when `success` is `true`; error description otherwise.
+</ResponseField>
+
+<ResponseField name="data" type="null">
+Always `null` for this endpoint.
+</ResponseField>
+
+<Note>
+The call requires a completed step-up secure verification bound to the current user and no older than 5 minutes:
+
+- With 2FA enabled, verification with the `2fa` method is required (`POST /api/verify` with a TOTP or backup code).
+- Without 2FA, at least one passkey must be bound and verification with the `passkey` method is required: finish `POST /api/user/passkey/verify/begin` and `POST /api/user/passkey/verify/finish`, then call `POST /api/verify` with `{"method": "passkey"}`.
+
+See [Universal secure verification](/nookmux/api/management/security-verification/verify-post). Like the other passkey endpoints, this endpoint resolves the user from the server-side session cookie; access-token-only authentication is rejected with HTTP `401`.
+</Note>
+
+## Error messages
+
+| Condition | Description |
+| --- | --- |
+| Not logged in / user disabled | The session cannot be resolved; returned as HTTP `401` |
+| Secure verification required | No valid step-up verification (`2fa` or `passkey` method, within 5 minutes) for this user |
+| Passkey not bound | Without 2FA, deletion requires a bound passkey but none exists |
+| Invalid Passkey ID | `{id}` in the path is not an integer |
+| No permission to delete this Passkey | The credential belongs to another user; returned as HTTP `403` |
+| Database error | Loading or deleting the credential failed; see server logs |

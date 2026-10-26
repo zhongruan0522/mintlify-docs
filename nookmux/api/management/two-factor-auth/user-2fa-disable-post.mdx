@@ -1,7 +1,73 @@
 ---
 title: Disable 2FA
+description: Turn off two-factor authentication for the logged-in account with a TOTP code or a backup code.
 api: "POST /api/user/2fa/disable"
 ---
 
-🔐 Login required (User permission)
+Disables two-factor authentication for the logged-in account and permanently deletes the 2FA record together with all remaining backup codes. The request must carry a valid current 6-digit TOTP code or one unused backup code.
 
+Requires **User** permission (any logged-in user). See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request POST \
+  --url 'https://your-nookmux-domain/api/user/2fa/disable' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1' \
+  --header 'Content-Type: application/json' \
+  --data '{
+  "code": "A1B2-C3D4"
+}'
+```
+
+</RequestExample>
+
+### Body
+
+<ParamField path="body.code" type="string" required>
+Either the current 6-digit TOTP code, or one unused backup code in `XXXX-XXXX` format (matching is case-insensitive and the hyphen is optional). The server validates the TOTP code first and falls back to the backup code.
+</ParamField>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "Two-factor authentication disabled",
+  "data": null
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+Whether 2FA was disabled.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+Localized success message; error description when `success` is `false`.
+</ResponseField>
+
+<ResponseField name="data" type="null" required>
+Always `null`; this endpoint returns no data payload.
+</ResponseField>
+
+<Note>
+Disabling permanently deletes the 2FA record and every remaining backup code; to use 2FA again, repeat setup and enable. Failed verifications are counted: after 5 consecutive wrong codes, 2FA verification is locked for 300 seconds and even correct codes are rejected until the lock expires.
+</Note>
+
+## Error messages
+
+| Condition | Description |
+| --- | --- |
+| Invalid request body | The JSON body is missing or `code` is empty |
+| 2FA not enabled | There is no enabled 2FA record for this account |
+| Verification code or backup code invalid | Neither the TOTP code nor any unused backup code matched, or verification is temporarily locked |
+| Database error | Loading, verifying, or deleting the 2FA record failed; see server logs |

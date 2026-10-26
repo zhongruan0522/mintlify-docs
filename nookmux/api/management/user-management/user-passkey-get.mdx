@@ -1,7 +1,114 @@
 ---
 title: Get Passkey Status
+description: List the passkey (WebAuthn) credentials bound to the current user along with the per-user binding limit.
 api: "GET /api/user/passkey"
 ---
 
-🔐 Login required (User permission)
+Returns the passkey (WebAuthn) binding status of the current user: whether at least one credential is bound, the credential list with device metadata, and the per-user limit configured in the server passkey settings.
 
+Requires **User** permission (any logged-in user). See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url 'https://your-nookmux-domain/api/user/passkey' \
+  --header 'Cookie: session={session_cookie}' \
+  --header 'New-Api-User: 1'
+```
+
+</RequestExample>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": {
+    "enabled": true,
+    "passkeys": [
+      {
+        "id": 1,
+        "device_name": "MacBook Touch ID",
+        "attachment": "platform",
+        "backup_eligible": false,
+        "backup_state": false,
+        "last_used_at": "2026-01-02T03:04:05Z",
+        "created_at": "2025-12-01T08:00:00Z"
+      }
+    ],
+    "count": 1,
+    "max_passkeys": 1
+  }
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+Whether the status was returned.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+Error description when `success` is `false`; empty otherwise.
+</ResponseField>
+
+<ResponseField name="data" type="object" required>
+Passkey binding status.
+
+<Expandable title="data structure">
+  <ResponseField name="enabled" type="boolean" required>
+Whether the user has at least one passkey bound (`true` when `passkeys` is non-empty).
+</ResponseField>
+  <ResponseField name="passkeys" type="object[]">
+Bound passkey credentials.
+
+<Expandable title="passkey structure">
+  <ResponseField name="id" type="integer" required>
+Passkey credential record ID, used as the `{id}` path segment of the delete and rename endpoints.
+</ResponseField>
+  <ResponseField name="device_name" type="string" required>
+Device name provided at registration; empty when none was provided.
+</ResponseField>
+  <ResponseField name="attachment" type="string" required>
+WebAuthn authenticator attachment, for example `platform` (authenticator built into the device) or `cross-platform` (security key or phone).
+</ResponseField>
+  <ResponseField name="backup_eligible" type="boolean" required>
+Whether the credential is eligible for cloud-synced multi-device backup.
+</ResponseField>
+  <ResponseField name="backup_state" type="boolean" required>
+Whether the credential is currently backed up.
+</ResponseField>
+  <ResponseField name="last_used_at" type="string">
+Last successful use of the credential (RFC 3339); `null` when it has never been used.
+</ResponseField>
+  <ResponseField name="created_at" type="string" required>
+When the credential was registered (RFC 3339).
+</ResponseField>
+</Expandable>
+  </ResponseField>
+  <ResponseField name="count" type="integer" required>
+Number of bound credentials.
+</ResponseField>
+  <ResponseField name="max_passkeys" type="integer" required>
+Per-user passkey limit from the server passkey settings; configured values below 1 are treated as 1.
+</ResponseField>
+</Expandable>
+</ResponseField>
+
+<Note>
+Passkey endpoints resolve the current user from the server-side session. Requests must carry the login session cookie (obtained from `POST /api/user/login`); access-token-only authentication is rejected, while the `New-Api-User` header is still required. When the session cannot be resolved (not logged in, user disabled), the endpoint returns HTTP `401` instead of the usual HTTP `200` envelope.
+</Note>
+
+## Error messages
+
+| Condition | Description |
+| --- | --- |
+| Database error | Loading the passkey credentials failed; see server logs |

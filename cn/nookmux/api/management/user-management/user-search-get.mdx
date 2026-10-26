@@ -1,7 +1,229 @@
 ---
 title: 搜索用户
+description: 按用户名、邮箱、OAuth ID、状态、角色与分组分页搜索用户。
 api: "GET /api/user/search"
 ---
 
-👨‍💼 需要管理员权限（Admin）
+按字段级条件分页搜索用户，结果按 `id` 降序排列。文本条件为模糊 `LIKE` 匹配；`status`、`role` 与 `group` 为精确匹配。密码与访问令牌永不返回。
 
+需要**管理员（Admin）**权限。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
+
+## 请求
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url 'https://your-nookmux-domain/api/user/search?username=ali&status=1&p=1&page_size=10' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1'
+```
+
+</RequestExample>
+
+### 查询参数
+
+<ParamField path="query.keyword" type="string">
+旧版关键词，对 `username` 做模糊匹配。仅当 `username`、`display_name` 与 `email` 均为空时生效，否则忽略。
+</ParamField>
+
+<ParamField path="query.username" type="string">
+用户名模糊匹配。
+</ParamField>
+
+<ParamField path="query.display_name" type="string">
+显示名称模糊匹配。
+</ParamField>
+
+<ParamField path="query.email" type="string">
+邮箱地址模糊匹配。
+</ParamField>
+
+<ParamField path="query.linux_do_id" type="string">
+绑定的 LinuxDO ID 模糊匹配。
+</ParamField>
+
+<ParamField path="query.github_id" type="string">
+绑定的 GitHub ID 模糊匹配。
+</ParamField>
+
+<ParamField path="query.status" type="string">
+状态过滤：`1` 启用用户，`2` 禁用用户，`3` 软删除用户。取 `1` 或 `2` 时会排除软删除用户。省略时返回所有状态的用户，含软删除用户。
+</ParamField>
+
+<ParamField path="query.role" type="string">
+角色精确过滤：`1` 普通用户，`10` 管理员，`100` 超级管理员。非整数值会被忽略。
+</ParamField>
+
+<ParamField path="query.group" type="string">
+用户分组精确匹配。
+</ParamField>
+
+<ParamField path="query.p" type="integer" default="1">
+页码，从 1 开始。
+</ParamField>
+
+<ParamField path="query.page_size" type="integer" default="10">
+每页用户数，上限 100。兼容旧参数名 `ps` 与 `size`。
+</ParamField>
+
+## 响应
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": {
+    "page": 1,
+    "page_size": 10,
+    "total": 1,
+    "items": [
+      {
+        "id": 2,
+        "username": "alice",
+        "original_password": "",
+        "display_name": "alice",
+        "role": 1,
+        "status": 1,
+        "email": "alice@example.com",
+        "github_id": "",
+        "verification_code": "",
+        "quota": 500000,
+        "used_quota": 100000,
+        "request_count": 42,
+        "group": "default",
+        "aff_code": "ab12",
+        "aff_count": 3,
+        "aff_quota": 100000,
+        "aff_history_quota": 1500000,
+        "inviter_id": 0,
+        "DeletedAt": null,
+        "linux_do_id": "",
+        "stripe_customer": "",
+        "image_converted_count": 0,
+        "video_converted_count": 0,
+        "created_at": 1761000000,
+        "last_login_at": 1761100000
+      }
+    ]
+  }
+}
+```
+
+</ResponseExample>
+
+### 响应字段
+
+<ResponseField name="success" type="boolean" required>
+是否成功返回搜索结果。
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+`success` 为 `false` 时的错误描述；成功时为空字符串。
+</ResponseField>
+
+<ResponseField name="data" type="object">
+  <Expandable title="data 结构">
+    <ResponseField name="page" type="integer" required>
+      当前页码，从 1 开始。
+    </ResponseField>
+    <ResponseField name="page_size" type="integer" required>
+      实际生效的每页数量，上限 100。
+    </ResponseField>
+    <ResponseField name="total" type="integer" required>
+      满足过滤条件的用户总数。
+    </ResponseField>
+    <ResponseField name="items" type="object[]">
+      当前页的匹配用户列表，按 `id` 降序排列。
+
+      <Expandable title="user 结构">
+        <ResponseField name="id" type="integer" required>
+          用户 ID。
+        </ResponseField>
+        <ResponseField name="username" type="string" required>
+          登录用户名，最长 20 字符。
+        </ResponseField>
+        <ResponseField name="original_password" type="string" required>
+          改密校验用的请求辅助字段；响应中恒为空字符串。
+        </ResponseField>
+        <ResponseField name="display_name" type="string" required>
+          显示名称，最长 20 字符。
+        </ResponseField>
+        <ResponseField name="role" type="integer" required>
+          角色等级：`1` 普通用户，`10` 管理员，`100` 超级管理员。
+        </ResponseField>
+        <ResponseField name="status" type="integer" required>
+          账号状态：`1` 启用，`2` 禁用。
+        </ResponseField>
+        <ResponseField name="email" type="string" required>
+          绑定的邮箱地址；未绑定时为空字符串。
+        </ResponseField>
+        <ResponseField name="github_id" type="string" required>
+          绑定的 GitHub ID；未绑定时为空字符串。
+        </ResponseField>
+        <ResponseField name="verification_code" type="string" required>
+          邮箱验证用的请求辅助字段；响应中恒为空字符串。
+        </ResponseField>
+        <ResponseField name="quota" type="integer" required>
+          剩余额度（默认 500,000 额度折合 $1）。
+        </ResponseField>
+        <ResponseField name="used_quota" type="integer" required>
+          已消耗额度。
+        </ResponseField>
+        <ResponseField name="request_count" type="integer" required>
+          用户发起的请求总数。
+        </ResponseField>
+        <ResponseField name="group" type="string" required>
+          用户分组，例如 `default`。
+        </ResponseField>
+        <ResponseField name="aff_code" type="string" required>
+          该用户的邀请码。
+        </ResponseField>
+        <ResponseField name="aff_count" type="integer" required>
+          使用该用户邀请码注册的用户数。
+        </ResponseField>
+        <ResponseField name="aff_quota" type="integer" required>
+          尚可转换的剩余邀请奖励额度。
+        </ResponseField>
+        <ResponseField name="aff_history_quota" type="integer" required>
+          累计邀请奖励额度。
+        </ResponseField>
+        <ResponseField name="inviter_id" type="integer" required>
+          邀请人用户 ID；未使用邀请码注册时为 `0`。
+        </ResponseField>
+        <ResponseField name="DeletedAt" type="string">
+          软删除时间（RFC 3339 格式）；账号未删除时为 `null`。
+        </ResponseField>
+        <ResponseField name="linux_do_id" type="string" required>
+          绑定的 LinuxDO ID；未绑定时为空字符串。
+        </ResponseField>
+        <ResponseField name="remark" type="string">
+          管理员备注，最长 255 字符。为空时不输出。
+        </ResponseField>
+        <ResponseField name="stripe_customer" type="string" required>
+          在线充值使用的 Stripe 客户 ID；未使用时为空字符串。
+        </ResponseField>
+        <ResponseField name="image_converted_count" type="integer" required>
+          多模态适配转换的图片数。
+        </ResponseField>
+        <ResponseField name="video_converted_count" type="integer" required>
+          多模态适配转换的视频数。
+        </ResponseField>
+        <ResponseField name="created_at" type="integer" required>
+          账号创建时间，Unix 秒级时间戳。
+        </ResponseField>
+        <ResponseField name="last_login_at" type="integer" required>
+          最近登录时间，Unix 秒级时间戳；从未登录过为 `0`。
+        </ResponseField>
+      </Expandable>
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+## 错误说明
+
+| 条件 | 说明 |
+| --- | --- |
+| 数据库错误 | 搜索查询执行失败，详见服务端日志 |

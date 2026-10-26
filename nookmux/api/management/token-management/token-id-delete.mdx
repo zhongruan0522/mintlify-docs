@@ -1,7 +1,61 @@
 ---
 title: Delete Token
+description: Delete a token owned by the current user by its id.
 api: "DELETE /api/token/{id}"
 ---
 
-🔐 Login Required (User Permission)
+Delete a single token by its id. Only tokens owned by the current user can be deleted; the token cache is invalidated alongside the database row.
 
+Requires a logged-in user (**User** permissions). See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request DELETE \
+  --url 'https://your-nookmux-domain/api/token/3' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1'
+```
+
+</RequestExample>
+
+### Path parameters
+
+<ParamField path="id" type="integer" required>
+  Token id.
+</ParamField>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": ""
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+  Whether the token was deleted.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  Error description when `success` is `false`; empty otherwise.
+</ResponseField>
+
+<Note>
+Management endpoints return HTTP `200` even on business failures; always check the `success` field. This endpoint returns no `data` field on success.
+</Note>
+
+## Error messages
+
+| Condition | Description |
+| --- | --- |
+| Database error | `id` is missing or invalid, no token with this id belongs to the current user, or the delete failed; see server logs |

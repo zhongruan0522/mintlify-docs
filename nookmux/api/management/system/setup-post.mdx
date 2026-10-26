@@ -1,7 +1,86 @@
 ---
 title: Initialize System
+description: Complete the one-time initialization of a fresh NookMux deployment and create the root administrator account.
 api: "POST /api/setup"
 ---
 
-🔓 No Authentication Required
+Performs the one-time initialization of a fresh deployment: it creates the root administrator account (when none exists yet) and writes the setup record that marks the system as initialized. The call only succeeds while the system is uninitialized; afterwards the endpoint permanently rejects any further calls.
 
+This endpoint is public and requires no authentication. It exists only during the pre-initialization bootstrap phase. See [Authentication](/nookmux/api/management/auth) for details on how management API requests are authenticated.
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request POST \
+  --url 'https://your-nookmux-domain/api/setup' \
+  --header 'Content-Type: application/json' \
+  --data '{
+  "username": "root",
+  "password": "{your_password}",
+  "confirmPassword": "{your_password}"
+}'
+```
+
+</RequestExample>
+
+### Body
+
+<ParamField path="body.username" type="string">
+  Username of the root administrator to create. At most 12 characters. Ignored when a root user already exists (the existing root account is reused).
+</ParamField>
+
+<ParamField path="body.password" type="string">
+  Password of the root administrator. At least 8 characters.
+</ParamField>
+
+<ParamField path="body.confirmPassword" type="string">
+  Confirmation of `password`; must match it exactly.
+</ParamField>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "System initialized successfully",
+  "data": null
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+  Whether initialization completed.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  Success description, or the error description when `success` is `false`.
+</ResponseField>
+
+<ResponseField name="data" type="null" required>
+  Always `null`; this endpoint returns no data payload.
+</ResponseField>
+
+<Note>
+  Concurrent setup calls are serialized: only one in-flight initialization is allowed per process, and the database-level setup record ensures that in multi-instance deployments only one instance can complete initialization; all other instances receive the "already initialized" error. The operation is recorded in the audit log (module `setup`, action `create`).
+
+  When a root user already exists, the account is reused and only the setup record is written; username and password validation are skipped in that case.
+</Note>
+
+## Error messages
+
+| Condition | Description |
+| --- | --- |
+| Already initialized | The system has already completed initialization; the endpoint no longer accepts calls |
+| Invalid request parameters | The JSON body is missing or malformed |
+| Username too long | `username` exceeds 12 characters |
+| Password mismatch | `password` and `confirmPassword` differ |
+| Password too short | `password` is shorter than 8 characters |
+| System error | Hashing the password failed; see server logs |
+| System initialization failed | Writing the root user or setup record to the database failed; see server logs |

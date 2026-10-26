@@ -1,7 +1,78 @@
 ---
 title: Get System Options
+description: List all non-sensitive system option key/value pairs currently loaded in memory.
 api: "GET /api/option/"
 ---
 
-👑 Requires Super Administrator (Root) Permissions
+Returns every system option currently held in the in-memory option map, as `key`/`value` pairs. Sensitive keys are filtered out server-side: any key that ends with `Token`, `Secret`, `Key`, `secret`, or `api_key`, or that contains `Password`/`password`, is omitted — except the boolean switches `PasswordLoginEnabled` and `PasswordRegisterEnabled`, which are explicitly exempted.
 
+Requires **Root** (super administrator) permissions. See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url 'https://your-nookmux-domain/api/option/' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1'
+```
+
+</RequestExample>
+
+### Query parameters
+
+<ParamField path="exclude_large_options" type="string" default="">
+  Set to `true` to replace the value of removed legacy large JSON options with `{}` and keep the response small. Any other value (including omitting the parameter) returns the stored values.
+</ParamField>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": [
+    {
+      "key": "SystemName",
+      "value": "NookMux"
+    },
+    {
+      "key": "PasswordLoginEnabled",
+      "value": "true"
+    }
+  ]
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+  Whether the options were read.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  Error description when `success` is `false`; empty otherwise.
+</ResponseField>
+
+<ResponseField name="data" type="array" required>
+  Option entries.
+
+  <Expandable title="option entry structure">
+    <ResponseField name="key" type="string" required>
+      Option key, for example `SystemName`.
+    </ResponseField>
+    <ResponseField name="value" type="string" required>
+      Option value serialized as a string; booleans and numbers are rendered as their string form.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<Note>
+  The list reflects the in-memory option map, which is refreshed from the database at startup and after every option update. Values of sensitive keys (OAuth client secrets, SMTP passwords, and similar) are never returned by this endpoint; use the console or database directly if you need to verify them.
+</Note>

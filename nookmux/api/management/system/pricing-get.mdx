@@ -1,7 +1,229 @@
 ---
 title: Get Pricing Information
+description: Fetch per-model pricing, vendor metadata, group ratios and supported endpoints for the model square page.
 api: "GET /api/pricing"
 ---
 
-🔓 No Authentication Required (Optional Login)
+Returns the model pricing table used by the model square page: every model currently served by enabled channels, its billing ratios or fixed price, vendor metadata, the group ratios visible to the caller, and the mapping of supported endpoint types to relay paths.
 
+The endpoint is gated by the header navigation module configuration of the `pricing` module. By default the module is enabled and public: no authentication is required, and the caller's identity is resolved from the login session when one is present. If the module is configured to require login, a valid login is enforced (User permission). See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url 'https://your-nookmux-domain/api/pricing'
+```
+
+</RequestExample>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "data": [
+    {
+      "model_name": "gpt-4o",
+      "quota_type": 0,
+      "available": true,
+      "model_ratio": 1.25,
+      "model_price": 0,
+      "owner_by": "",
+      "completion_ratio": 2.5,
+      "enable_groups": ["default"],
+      "supported_endpoint_types": ["openai"]
+    },
+    {
+      "model_name": "text-embedding-3-small",
+      "quota_type": 1,
+      "available": true,
+      "model_ratio": 0,
+      "model_price": 0.02,
+      "owner_by": "",
+      "completion_ratio": 0,
+      "enable_groups": ["default"],
+      "supported_endpoint_types": ["openai"]
+    }
+  ],
+  "vendors": [
+    {
+      "id": 1,
+      "name": "OpenAI"
+    }
+  ],
+  "group_ratio": {
+    "default": 1.0
+  },
+  "usable_group": {
+    "default": "Default group"
+  },
+  "supported_endpoint": {
+    "openai": {
+      "path": "/v1/chat/completions",
+      "method": "POST"
+    }
+  },
+  "auto_groups": []
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+  Whether the request succeeded.
+</ResponseField>
+
+<ResponseField name="data" type="array" required>
+  Pricing entries for every model served by at least one enabled channel. Entries for models disabled in model metadata are excluded.
+
+  <Expandable title="pricing entry structure">
+    <ParamField path="model_name" type="string" required>
+      Model name as accepted by the relay.
+    </ParamField>
+    <ParamField path="quota_type" type="integer" required>
+      Billing mode: `0` ratio-based (billed by tokens through `model_ratio` and `completion_ratio`), `1` fixed price per call (`model_price`).
+    </ParamField>
+    <ParamField path="available" type="boolean" required>
+      Whether a ratio or price configuration exists for the model.
+    </ParamField>
+    <ParamField path="model_ratio" type="number" required>
+      Base token ratio applied to input (prompt) tokens in ratio-based billing.
+    </ParamField>
+    <ParamField path="model_price" type="number" required>
+      Fixed price per call in fixed-price billing; `0` otherwise.
+    </ParamField>
+    <ParamField path="owner_by" type="string" required>
+      Reserved owner field; typically empty.
+    </ParamField>
+    <ParamField path="completion_ratio" type="number" required>
+      Ratio applied to output (completion) tokens relative to `model_ratio` in ratio-based billing.
+    </ParamField>
+    <ParamField path="cache_ratio" type="number">
+      Cached-token read ratio. Present only when explicitly configured for the model.
+    </ParamField>
+    <ParamField path="create_cache_ratio" type="number">
+      Cache-write token ratio. Present only when explicitly configured for the model.
+    </ParamField>
+    <ParamField path="audio_ratio" type="number">
+      Audio input token ratio. Present only when explicitly configured for the model.
+    </ParamField>
+    <ParamField path="audio_completion_ratio" type="number">
+      Audio output token ratio. Present only when explicitly configured for the model.
+    </ParamField>
+    <ParamField path="context_pricing" type="object">
+      Context-tiered pricing configuration. Present only when the model has an enabled tiered context pricing rule with at least one tier; in that case the first tier's ratios are also copied into the flat ratio fields.
+
+      <Expandable title="context_pricing structure">
+        <ParamField path="enabled" type="boolean" required>
+          Whether the tiered rule is enabled.
+        </ParamField>
+        <ParamField path="tiers" type="array" required>
+          Tier list ordered by context length. Each tier has `name` (optional string), `min_tokens` (integer), `max_tokens` (integer, absent for the top tier), and the tier's `model_ratio`, `completion_ratio`, `cache_ratio`, `create_cache_ratio`, `audio_ratio`, `audio_completion_ratio` (numbers).
+        </ParamField>
+      </Expandable>
+    </ParamField>
+    <ParamField path="enable_groups" type="array">
+      User groups through which the model is currently served. Omitted entirely for anonymous callers.
+    </ParamField>
+    <ParamField path="supported_endpoint_types" type="array" required>
+      Endpoint type names this model can be called through, for example `openai` or `anthropic`. The first entry is the preferred endpoint.
+    </ParamField>
+    <ParamField path="description" type="string">
+      Model description from model metadata.
+    </ParamField>
+    <ParamField path="icon" type="string">
+      Model icon URL from model metadata.
+    </ParamField>
+    <ParamField path="tags" type="string">
+      Comma-separated tags from model metadata.
+    </ParamField>
+    <ParamField path="vendor_id" type="integer">
+      ID of the vendor this model belongs to, matching an entry in `vendors`.
+    </ParamField>
+    <ParamField path="context_length" type="integer">
+      Maximum context length from model metadata.
+    </ParamField>
+    <ParamField path="max_output_tokens" type="integer">
+      Maximum output tokens from model metadata.
+    </ParamField>
+    <ParamField path="input_modalities" type="array">
+      Supported input modalities (for example text, image) from model metadata.
+    </ParamField>
+    <ParamField path="output_modalities" type="array">
+      Supported output modalities from model metadata.
+    </ParamField>
+    <ParamField path="capabilities" type="array">
+      Capability tags from model metadata, such as tool use or vision.
+    </ParamField>
+    <ParamField path="knowledge_cutoff" type="string">
+      Knowledge cutoff date from model metadata.
+    </ParamField>
+    <ParamField path="release_date" type="string">
+      Release date from model metadata.
+    </ParamField>
+    <ParamField path="parameter_count" type="string">
+      Parameter count from model metadata.
+    </ParamField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="vendors" type="array" required>
+  Vendor metadata referenced by the pricing entries.
+
+  <Expandable title="vendor structure">
+    <ParamField path="id" type="integer" required>
+      Vendor ID.
+    </ParamField>
+    <ParamField path="name" type="string" required>
+      Vendor display name.
+    </ParamField>
+    <ParamField path="description" type="string">
+      Vendor description.
+    </ParamField>
+    <ParamField path="icon" type="string">
+      Vendor icon URL.
+    </ParamField>
+    <ParamField path="data_retention_days" type="integer">
+      Number of days request data is retained by the vendor, when declared.
+    </ParamField>
+    <ParamField path="training_opt_out" type="boolean">
+      Whether the vendor opts out of training on request data, when declared.
+    </ParamField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="group_ratio" type="object" required>
+  Billing ratio per user group, restricted to the groups listed in `usable_group`. For an identified caller, group-specific ratio overrides configured for their own group are applied on top of the base ratios.
+</ResponseField>
+
+<ResponseField name="usable_group" type="object" required>
+  Groups the caller can use, as an object mapping group name to its display description.
+</ResponseField>
+
+<ResponseField name="supported_endpoint" type="object" required>
+  Map of endpoint type name to its relay request info: `path` (relay path, model placeholders such as `{model}` possible) and `method` (HTTP method).
+</ResponseField>
+
+<ResponseField name="auto_groups" type="array" required>
+  Auto-routing groups configured for the deployment, filtered to the groups usable by the caller.
+</ResponseField>
+
+<Note>
+  Anonymous callers receive a reduced payload: the `enable_groups` field is removed from every pricing entry so internal group names are not exposed to the public pricing page, and `group_ratio` only covers the default usable groups. Sending a valid login session identifies the caller and returns the full payload.
+
+  The pricing table is refreshed from the database at most once per minute; changes to channels, model metadata or ratios may take up to one minute to appear.
+</Note>
+
+## Error messages
+
+| Condition | Description |
+| --- | --- |
+| Module disabled | HTTP `403` with message `pricing is disabled` when the pricing module is switched off in header navigation module settings |
+| Login required | Standard authentication errors (HTTP `401`) when the pricing module is configured to require login and the caller is not authenticated |

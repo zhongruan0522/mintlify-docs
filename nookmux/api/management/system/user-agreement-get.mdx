@@ -1,7 +1,48 @@
 ---
 title: Get User Agreement
+description: Fetch the user agreement text configured in system legal settings.
 api: "GET /api/user-agreement"
 ---
 
-🔓 No authentication required
+Returns the user agreement text configured by the administrator in system legal settings. The value is returned as a raw string and rendering is handled by the frontend. Returns an empty string when no user agreement is configured (the presence flag exposed by the status endpoint is `user_agreement_enabled`).
 
+This endpoint is public and requires no authentication. See [Authentication](/nookmux/api/management/auth) for details on how management API requests are authenticated.
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url 'https://your-nookmux-domain/api/user-agreement'
+```
+
+</RequestExample>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": "# User Agreement\nBy using this service you agree ..."
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+  Whether the request succeeded.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  Error description when `success` is `false`; empty otherwise.
+</ResponseField>
+
+<ResponseField name="data" type="string" required>
+  The user agreement text configured in system legal settings. Empty string when not set.
+</ResponseField>

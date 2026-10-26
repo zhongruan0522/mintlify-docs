@@ -1,7 +1,97 @@
 ---
 title: Stripe Webhook
+description: 接收 Stripe Webhook 事件，验签后对 Stripe Checkout 充值订单执行入账、过期或失败标记。
 api: "POST /api/stripe/webhook"
 ---
 
-🔓 无需鉴权（Webhook回调）
+接收 Stripe Checkout 充值的 Webhook 通知。接口读取原始请求体，用配置的 Stripe Webhook Secret 校验 `Stripe-Signature` 请求头，并按事件类型分发处理：支付完成的会话为用户入账额度，过期的会话将订单标记为过期，异步支付失败的会话将订单标记为失败。
 
+该接口为**公开（Public）**接口——无需鉴权。它由 Stripe 服务器调用，请求通过 `Stripe-Signature` 请求头验签。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
+
+<Note>
+该接口**不**使用标准的 `{"success", "message", "data"}` JSON 包裹结构，而是按 Stripe Webhook 约定返回纯 HTTP 状态码和空响应体。原始请求体必须原样转发（签名基于原始字节计算，重新序列化会导致验签失败）。同时该接口受匿名请求体大小限制约束，超出限制返回 HTTP `413`。
+</Note>
+
+## 请求
+
+<RequestExample>
+
+```bash cURL
+curl --request POST \
+  --url 'https://your-nookmux-domain/api/stripe/webhook' \
+  --header 'Content-Type: application/json' \
+  --header 'Stripe-Signature: t=1730000000,v1=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx' \
+  --data '{
+  "id": "evt_1QExampleWebhook",
+  "type": "checkout.session.completed",
+  "data": {
+    "object": {
+      "client_reference_id": "ref_a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0",
+      "customer": "cus_ExampleCustomer",
+      "status": "complete",
+      "payment_status": "paid",
+      "currency": "usd",
+      "amount_total": 8000,
+      "total_details": { "amount_discount": 0 }
+    }
+  }
+}'
+```
+
+</RequestExample>
+
+### 请求体
+
+请求体是标准的 Stripe `Event` 对象。NookMux 只读取以下字段，Stripe 载荷的其余部分会被忽略。
+
+<ParamField path="body.type" type="string" required>
+事件类型。支持处理：`checkout.session.completed`、`checkout.session.expired`、`checkout.session.async_payment_succeeded`、`checkout.session.async_payment_failed`。其他事件类型仅记录日志并直接确认，不做处理。
+</ParamField>
+
+<ParamField path="body.data.object" type="object" required>
+事件载荷对象（一个 Stripe Checkout Session）。
+
+<Expandable title="data.object 结构">
+  <ParamField path="client_reference_id" type="string">
+    由 `POST /api/user/stripe/pay` 创建的充值订单号（`trade_no`）。缺失该字段的事件会被跳过。
+  </ParamField>
+  <ParamField path="customer" type="string">
+    Stripe 客户 ID；订单入账时保存到付款用户上。
+  </ParamField>
+  <ParamField path="status" type="string">
+    Checkout 会话状态。`complete` 的会话进入入账流程；`expired` 的会话被标记为过期；其他值仅记录日志并忽略。
+  </ParamField>
+  <ParamField path="payment_status" type="string">
+    会话的支付状态。`completed` 事件只有在该值为 `paid` 时才入账；仍在等待支付结果的会话保持待支付，由异步支付事件补齐。
+  </ParamField>
+  <ParamField path="currency" type="string">
+    支付币种，与 `amount_total` 一起在入账前核对实付金额与配置的 Stripe 单价是否一致。
+  </ParamField>
+  <ParamField path="amount_total" type="integer">
+    实付总额，以该币种最小单位计。入账前核对。
+  </ParamField>
+  <ParamField path="total_details.amount_discount" type="integer">
+    促销码折扣金额，以该币种最小单位计。金额核对时一并计入。
+  </ParamField>
+</Expandable>
+</ParamField>
+
+## 响应
+
+<ResponseExample>
+
+```text 200
+（空响应体）
+```
+
+</ResponseExample>
+
+响应体始终为空，结果仅通过 HTTP 状态码表达。
+
+| HTTP 状态码 | 条件 |
+| --- | --- |
+| 200 | 事件已处理；不支持的事件类型被忽略；或属终态直接确认（重复投递且订单此前已入账、本地不存在该订单号） |
+| 400 | `Stripe-Signature` 请求头缺失或验签失败 |
+| 403 | 服务端未配置 Stripe Webhook Secret |
+| 500 | 事件处理失败（数据库错误、实付金额与配置单价不一致）；Stripe 会重新投递 |
+| 503 | 请求体读取失败 |

@@ -1,7 +1,81 @@
 ---
 title: 重置密码
+description: 使用密码重置邮件中的一次性令牌设置新密码。
 api: "POST /api/user/reset"
 ---
 
-🔓 无需鉴权
+完成 `GET /api/reset_password` 发起的密码重置流程：校验通过邮件下发的一次性令牌，将新密码以 bcrypt 哈希落库，并作废该令牌。令牌 10 分钟内有效，且只能使用一次。
 
+本接口为 **Public（公开）**——无需鉴权。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
+
+<Note>
+本接口挂载了更严格的按 IP 限流（CriticalRateLimit），并对匿名请求体大小做了限制，超限返回 HTTP `413`。
+</Note>
+
+## 请求
+
+<RequestExample>
+
+```bash cURL
+curl --request POST \
+  --url 'https://your-nookmux-domain/api/user/reset' \
+  --header 'Content-Type: application/json' \
+  --data '{
+  "email": "user@example.com",
+  "token": "5f8d2a4c1b9e4d7f8a2c6e3b1d4f7a8c9e2b5d8f",
+  "new_password": "your-new-password"
+}'
+```
+
+</RequestExample>
+
+### 请求体
+
+<ParamField path="body.email" type="string" required>
+接收重置邮件的邮箱，须与重置链接中携带的邮箱一致。
+</ParamField>
+
+<ParamField path="body.token" type="string" required>
+重置链接（`?token=...`）中的一次性令牌。
+</ParamField>
+
+<ParamField path="body.new_password" type="string" required>
+新密码，长度 8 到 20 字符。入库前哈希，不会出现在任何响应中。
+</ParamField>
+
+## 响应
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "密码重置成功，请使用新密码登录",
+  "data": null
+}
+```
+
+</ResponseExample>
+
+### 响应字段
+
+<ResponseField name="success" type="boolean" required>
+密码是否重置成功。
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+成功时为本地化的确认提示；`success` 为 `false` 时为本地化的错误描述。
+</ResponseField>
+
+<ResponseField name="data" type="null" required>
+本接口恒为 `null`。
+</ResponseField>
+
+## 错误说明
+
+| 条件 | 说明 |
+| --- | --- |
+| 参数无效 | 请求体不是合法 JSON，或任一字段为空 |
+| 重置链接非法或已过期 | 令牌不匹配、已超过 10 分钟有效期或已被使用 |
+| 密码不合法 | `new_password` 长度不在 8 到 20 字符之间 |
+| 数据库错误 | 新密码落库失败，详见服务端日志 |

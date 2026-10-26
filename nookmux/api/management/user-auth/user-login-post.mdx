@@ -1,7 +1,126 @@
 ---
 title: User Login
+description: Log in with username and password to create a session, or start a two-factor login.
 api: "POST /api/user/login"
 ---
 
-🔓 No Authentication Required
+Authenticates a user with a username (or the email bound to the account) and a password. On success the server creates a login session, returns basic account information, and sets the `session` cookie used by authenticated endpoints. If the account has two-factor authentication (2FA) enabled, no login session is created; the server stores a short-lived pending login in the session instead and the client must complete `POST /api/user/login/2fa`.
 
+This endpoint is **Public** — no authentication is required. See [Authentication](/nookmux/api/management/auth) for how management API requests are authenticated.
+
+<Note>
+This endpoint applies a stricter per-IP rate limit (CriticalRateLimit) and limits the anonymous request body size (oversized bodies are rejected with HTTP `413`). When Cloudflare Turnstile verification is enabled on the server, a valid `turnstile` query token must be supplied (unless the current session has already passed the check).
+</Note>
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request POST \
+  --url 'https://your-nookmux-domain/api/user/login?turnstile=XXXX.DUMMY.TOKEN.XXXX' \
+  --header 'Content-Type: application/json' \
+  --data '{
+  "username": "alice",
+  "password": "your-password"
+}'
+```
+
+</RequestExample>
+
+### Query parameters
+
+<ParamField path="turnstile" type="string">
+Cloudflare Turnstile token. Required only when Turnstile verification is enabled on the server and the current session has not already passed the check.
+</ParamField>
+
+### Body
+
+<ParamField path="body.username" type="string" required>
+Username or the email address bound to the account. The lookup matches both.
+</ParamField>
+
+<ParamField path="body.password" type="string" required>
+Account password.
+</ParamField>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": {
+    "id": 1,
+    "username": "alice",
+    "display_name": "alice",
+    "role": 1,
+    "status": 1,
+    "group": "default"
+  }
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+Whether the credentials were accepted.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+Error description when `success` is `false`; empty otherwise.
+</ResponseField>
+
+<ResponseField name="data" type="object" required>
+Account snapshot returned when the login completes in a single step. The fields below are only present in this branch.
+
+<Expandable title="data structure">
+  <ResponseField name="id" type="integer" required>
+    User ID.
+  </ResponseField>
+  <ResponseField name="username" type="string" required>
+    Username.
+  </ResponseField>
+  <ResponseField name="display_name" type="string" required>
+    Display name.
+  </ResponseField>
+  <ResponseField name="role" type="integer" required>
+    Role: `1` common user, `10` admin, `100` root.
+  </ResponseField>
+  <ResponseField name="status" type="integer" required>
+    Account status: `1` enabled, `2` disabled.
+  </ResponseField>
+  <ResponseField name="group" type="string" required>
+    User group.
+  </ResponseField>
+</Expandable>
+</ResponseField>
+
+<Note>
+When the account has 2FA enabled, the first step succeeds without creating a login session. The response is:
+
+```json
+{
+  "success": true,
+  "message": "Please enter two-factor authentication code",
+  "data": {
+    "require_2fa": true
+  }
+}
+```
+
+Complete the login with `POST /api/user/login/2fa` using the same session cookie within 5 minutes.
+</Note>
+
+## Error messages
+
+| Condition | Description |
+| --- | --- |
+| Password login disabled | Password login has been turned off by the administrator |
+| Invalid parameters | The body is not valid JSON, or `username`/`password` is empty |
+| Login service unavailable | A database error occurred while checking the credentials |
+| Username or password incorrect | The credentials are wrong, the account does not exist, or the account is disabled/banned |
