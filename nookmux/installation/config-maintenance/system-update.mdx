@@ -49,6 +49,8 @@ If you need to stop first and then start again:
 docker compose pull && docker compose down && docker compose up -d
 ```
 
+On receiving SIGTERM (the default behavior of `docker stop` / `docker compose down`) the process shuts down gracefully: it first drains HTTP connections, then flushes batched statistics deltas (used quota, request count) to the database. Normal shutdowns lose no data; only force-killing (`kill -9` or exceeding the grace period) may drop statistics deltas from the most recent batch interval, while balance deductions are always written synchronously and remain unaffected.
+
 ## 1Panel / Baota Panel Update
 
 - For instances installed through the panel app store, prefer the panel's built-in upgrade entry.

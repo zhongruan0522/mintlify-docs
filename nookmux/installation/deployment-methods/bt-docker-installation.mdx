@@ -97,3 +97,4 @@ The first visit opens the initialization page. After creating the administrator 
 
 - Confirm `/data` is mapped correctly.
 - Confirm the host directory permissions allow container read/write access.
+- If the process is force-killed (e.g. host power loss, `kill -9`), at most the last few seconds of statistics deltas (used quota, request count) may be lost; balance and quota deductions are written synchronously, so negative balances cannot occur.

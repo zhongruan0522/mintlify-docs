@@ -49,7 +49,7 @@ This document lists common NookMux environment variables and their defaults. The
 | `REDIS_MAX_RETRIES` | Redis command retry count | `3` | - |
 | `MEMORY_CACHE_ENABLED` | Enable in-process memory cache | `false` | `MEMORY_CACHE_ENABLED=true` |
 | `SYNC_FREQUENCY` | Cache and database sync frequency (seconds) | `60` | `SYNC_FREQUENCY=60` |
-| `BATCH_UPDATE_ENABLED` | Enable batch database update aggregation | `false` | `BATCH_UPDATE_ENABLED=true` |
+| `BATCH_UPDATE_ENABLED` | Batch database update aggregation. Only applies to statistics fields (user/token/channel used quota, request count); balance and token remain-quota deductions are always synchronous and atomic, unaffected by this switch, and safe to enable without Redis | `false` | `BATCH_UPDATE_ENABLED=true` |
 | `BATCH_UPDATE_INTERVAL` | Batch update aggregation interval (seconds) | `5` | `BATCH_UPDATE_INTERVAL=10` |
 
 <Info>

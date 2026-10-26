@@ -49,6 +49,8 @@ docker compose up -d
 docker compose pull && docker compose down && docker compose up -d
 ```
 
+进程收到 SIGTERM（`docker stop` / `docker compose down` 默认行为）时会优雅停机：先完成 HTTP 优雅关闭，再把批量暂存的统计增量（已用额度、请求计数）落库。正常停机不丢失数据；只有强杀（`kill -9` 或超过宽限期被强制终止）才可能丢失最近一个批量周期内的统计增量，余额扣减始终实时落库、不受影响。
+
 ## 1Panel / 宝塔面板更新
 
 - 通过面板应用商店安装的实例，优先使用面板提供的升级入口。

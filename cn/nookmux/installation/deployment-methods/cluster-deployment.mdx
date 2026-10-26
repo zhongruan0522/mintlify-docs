@@ -154,7 +154,7 @@ server {
 | 环境变量 | 说明 | 推荐值 |
 | --- | --- | --- |
 | `SYNC_FREQUENCY` | 缓存与数据库同步频率（秒） | `60` |
-| `BATCH_UPDATE_ENABLED` | 启用数据库批量更新聚合 | `true` |
+| `BATCH_UPDATE_ENABLED` | 启用数据库批量更新聚合（仅统计型字段：已用额度、请求计数；不影响额度扣减正确性） | `true` |
 | `BATCH_UPDATE_INTERVAL` | 批量更新间隔（秒） | `5` |
 
 ### 会话安全配置

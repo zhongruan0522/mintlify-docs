@@ -20,3 +20,4 @@ Recent local checks include:
 - Log query sorting and composite index optimization.
 - Zhipu GLM quota lookup and dedicated Responses endpoint adaptation.
 - Migration to the table layout standard for frontend list pages.
+- Billing deductions switched to synchronous atomic updates (insufficient balance rejects the request, eliminating concurrent overspend and negative balances); `BATCH_UPDATE_ENABLED` narrowed to statistics-field batching, plus graceful shutdown and negative-balance startup scanning.

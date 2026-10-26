@@ -49,7 +49,7 @@ title: 环境变量配置指南
 | `REDIS_MAX_RETRIES` | Redis 命令重试次数 | `3` | - |
 | `MEMORY_CACHE_ENABLED` | 是否启用进程内存缓存 | `false` | `MEMORY_CACHE_ENABLED=true` |
 | `SYNC_FREQUENCY` | 缓存与数据库同步频率（秒） | `60` | `SYNC_FREQUENCY=60` |
-| `BATCH_UPDATE_ENABLED` | 是否启用数据库批量更新聚合 | `false` | `BATCH_UPDATE_ENABLED=true` |
+| `BATCH_UPDATE_ENABLED` | 数据库批量更新聚合。仅作用于统计型字段（用户/令牌/渠道已用额度、请求计数）的攒批落库；余额与令牌剩余额度扣减始终同步原子执行，不受此开关影响，无 Redis 部署亦可安全开启 | `false` | `BATCH_UPDATE_ENABLED=true` |
 | `BATCH_UPDATE_INTERVAL` | 批量更新聚合时间间隔（秒） | `5` | `BATCH_UPDATE_INTERVAL=10` |
 
 <Info>
