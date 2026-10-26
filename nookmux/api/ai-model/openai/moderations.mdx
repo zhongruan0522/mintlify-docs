@@ -1,0 +1,181 @@
+---
+title: Moderations
+description: Classify whether text violates content policies, returning flags and confidence scores per category.
+api: "POST /v1/moderations"
+---
+
+Classify whether the given text violates content safety policies, returning an overall flag plus per-category flags (hate, violence, sexual, self-harm, and others) with confidence scores. The request and response formats are compatible with the OpenAI Moderations API.
+
+NookMux routes the request to the appropriate upstream channel based on the `model` name. Moderation is a synchronous endpoint with no streaming and no generated completions; scoring thresholds are decided by the upstream model.
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request POST \
+  --url https://your-nookmux-domain/v1/moderations \
+  --header 'Authorization: Bearer $NOOKMUX_API_KEY' \
+  --header 'Content-Type: application/json' \
+  --data '{
+  "model": "omni-moderation-latest",
+  "input": [
+    "Stay off this forum if you know what is good for you.",
+    "The weather is perfect for a walk outside today."
+  ]
+}'
+```
+
+```python Python
+from openai import OpenAI
+
+client = OpenAI(
+    base_url="https://your-nookmux-domain/v1",
+    api_key="$NOOKMUX_API_KEY",
+)
+
+response = client.moderations.create(
+    model="omni-moderation-latest",
+    input=[
+        "Stay off this forum if you know what is good for you.",
+        "The weather is perfect for a walk outside today.",
+    ],
+)
+for i, result in enumerate(response.results):
+    print(i, result.flagged, result.category_scores["harassment/threatening"])
+```
+
+</RequestExample>
+
+### Authentication
+
+<ParamField path="header.Authorization" type="string" required>
+  A NookMux API token prefixed with `Bearer`, in the form `Authorization: Bearer <token>`. Create tokens on the Console → Tokens page.
+</ParamField>
+
+### Body
+
+<ParamField path="body.model" type="string">
+  Moderation model name, such as `omni-moderation-latest` or `text-moderation-latest`. When omitted, NookMux fills in a default model; the models actually available depend on the channel configuration. See the List models endpoint for available values.
+</ParamField>
+
+<ParamField path="body.input" type="string | string[]" required>
+  The text to moderate. A string is a single input; an array is a batch, where each item maps to one entry in `results`. Up to 32 items with a maximum of 32768 characters total per request (as limited by the upstream).
+</ParamField>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "id": "modr-abc123",
+  "model": "omni-moderation-latest",
+  "results": [
+    {
+      "flagged": true,
+      "categories": {
+        "harassment": true,
+        "harassment/threatening": true,
+        "hate": false,
+        "hate/threatening": false,
+        "illicit": false,
+        "illicit/violent": false,
+        "self-harm": false,
+        "self-harm/instructions": false,
+        "self-harm/intent": false,
+        "sexual": false,
+        "sexual/minors": false,
+        "violence": false,
+        "violence/graphic": false
+      },
+      "category_scores": {
+        "harassment": 0.8341222405433655,
+        "harassment/threatening": 0.7123412489891052,
+        "hate": 0.00021347592163085937,
+        "hate/threatening": 7.585385046729636e-05,
+        "illicit": 0.0006212319722175598,
+        "illicit/violent": 3.4159219831277275e-05,
+        "self-harm": 0.00011530733109458536,
+        "self-harm/instructions": 1.5447157330617251e-06,
+        "self-harm/intent": 6.032653822531551e-06,
+        "sexual": 5.234103381097734e-05,
+        "sexual/minors": 2.0834324742939363e-07,
+        "violence": 0.0003204514443874359,
+        "violence/graphic": 1.946543832013262e-06
+      }
+    },
+    {
+      "flagged": false,
+      "categories": {
+        "harassment": false,
+        "harassment/threatening": false,
+        "hate": false,
+        "hate/threatening": false,
+        "illicit": false,
+        "illicit/violent": false,
+        "self-harm": false,
+        "self-harm/instructions": false,
+        "self-harm/intent": false,
+        "sexual": false,
+        "sexual/minors": false,
+        "violence": false,
+        "violence/graphic": false
+      },
+      "category_scores": {
+        "harassment": 0.00010123451214526594,
+        "harassment/threatening": 9.4234105219841e-07,
+        "hate": 3.412361254311555e-06,
+        "hate/threatening": 5.1234129841231e-08,
+        "illicit": 8.7341234123e-06,
+        "illicit/violent": 1.2341234e-07,
+        "self-harm": 4.123412e-06,
+        "self-harm/instructions": 5.12341e-08,
+        "self-harm/intent": 2.1234e-07,
+        "sexual": 1.2341e-06,
+        "sexual/minors": 1.234e-09,
+        "violence": 7.123412e-06,
+        "violence/graphic": 3.1234e-07
+      }
+    }
+  ]
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="id" type="string" required>
+  Unique identifier for the moderation request.
+</ResponseField>
+
+<ResponseField name="model" type="string" required>
+  Moderation model actually used.
+</ResponseField>
+
+<ResponseField name="results" type="object[]" required>
+  List of moderation results, one per item in the request `input`.
+
+  <Expandable title="results structure">
+    <ResponseField name="flagged" type="boolean">
+      Overall flag. `true` when any category score exceeds the upstream threshold.
+    </ResponseField>
+    <ResponseField name="categories" type="object">
+      Boolean flags per violation category, keyed by category name and true when the threshold is exceeded. Categories include `harassment`, `harassment/threatening`, `hate`, `hate/threatening`, `illicit`, `illicit/violent`, `self-harm`, `self-harm/instructions`, `self-harm/intent`, `sexual`, `sexual/minors`, `violence`, and `violence/graphic` (the exact set varies by model; see the actual response).
+    </ResponseField>
+    <ResponseField name="category_scores" type="object">
+      Confidence score per category, keyed the same as `categories`, ranging from `0.0` to `1.0`; higher means more likely to match the category.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+## Error codes
+
+| HTTP status | Description |
+| --- | --- |
+| 400 | Invalid request parameters, or the model does not support the requested capability |
+| 401 | Token is invalid, disabled, or expired |
+| 403 | Token cannot access the model, or quota is insufficient |
+| 429 | Rate limit triggered |
+| 500 | Upstream channel error; `error.message` contains the upstream details |

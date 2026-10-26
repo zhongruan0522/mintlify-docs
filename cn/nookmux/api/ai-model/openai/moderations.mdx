@@ -1,0 +1,181 @@
+---
+title: 内容审查
+description: 判断文本是否违反内容安全政策，返回各违规类别的标记与置信度评分。
+api: "POST /v1/moderations"
+---
+
+判断给定文本是否包含违反内容安全政策的内容，返回整体标记与各类别（仇恨、暴力、色情、自残等）的标记与置信度评分。请求与响应格式兼容 OpenAI Moderations API。
+
+NookMux 根据请求中的 `model` 名称将请求分发到对应渠道。审查为同步接口，不支持流式输出，也不产生补全内容；评分阈值由上游模型决定。
+
+## 请求
+
+<RequestExample>
+
+```bash cURL
+curl --request POST \
+  --url https://your-nookmux-domain/v1/moderations \
+  --header 'Authorization: Bearer $NOOKMUX_API_KEY' \
+  --header 'Content-Type: application/json' \
+  --data '{
+  "model": "omni-moderation-latest",
+  "input": [
+    "别让我在论坛上再见到你，否则你会后悔的。",
+    "今天的天气很适合出去散步。"
+  ]
+}'
+```
+
+```python Python
+from openai import OpenAI
+
+client = OpenAI(
+    base_url="https://your-nookmux-domain/v1",
+    api_key="$NOOKMUX_API_KEY",
+)
+
+response = client.moderations.create(
+    model="omni-moderation-latest",
+    input=[
+        "别让我在论坛上再见到你，否则你会后悔的。",
+        "今天的天气很适合出去散步。",
+    ],
+)
+for i, result in enumerate(response.results):
+    print(i, result.flagged, result.category_scores["harassment/threatening"])
+```
+
+</RequestExample>
+
+### 认证
+
+<ParamField path="header.Authorization" type="string" required>
+  以 `Bearer` 开头的 NookMux API 令牌，格式为 `Authorization: Bearer <token>`。令牌在控制台「令牌」页创建。
+</ParamField>
+
+### 请求体
+
+<ParamField path="body.model" type="string">
+  审查模型名称，如 `omni-moderation-latest`、`text-moderation-latest`。省略时由 NookMux 填充默认模型；实际可用模型以渠道配置为准，可通过「模型列表」接口获取。
+</ParamField>
+
+<ParamField path="body.input" type="string | string[]" required>
+  待审查的文本。字符串为单条输入；数组为批量输入，每项对应 `results` 中的一个结果。单次请求最多 32 条、总计不超过 32768 个字符（由上游限制）。
+</ParamField>
+
+## 响应
+
+<ResponseExample>
+
+```json 200
+{
+  "id": "modr-abc123",
+  "model": "omni-moderation-latest",
+  "results": [
+    {
+      "flagged": true,
+      "categories": {
+        "harassment": true,
+        "harassment/threatening": true,
+        "hate": false,
+        "hate/threatening": false,
+        "illicit": false,
+        "illicit/violent": false,
+        "self-harm": false,
+        "self-harm/instructions": false,
+        "self-harm/intent": false,
+        "sexual": false,
+        "sexual/minors": false,
+        "violence": false,
+        "violence/graphic": false
+      },
+      "category_scores": {
+        "harassment": 0.8341222405433655,
+        "harassment/threatening": 0.7123412489891052,
+        "hate": 0.00021347592163085937,
+        "hate/threatening": 7.585385046729636e-05,
+        "illicit": 0.0006212319722175598,
+        "illicit/violent": 3.4159219831277275e-05,
+        "self-harm": 0.00011530733109458536,
+        "self-harm/instructions": 1.5447157330617251e-06,
+        "self-harm/intent": 6.032653822531551e-06,
+        "sexual": 5.234103381097734e-05,
+        "sexual/minors": 2.0834324742939363e-07,
+        "violence": 0.0003204514443874359,
+        "violence/graphic": 1.946543832013262e-06
+      }
+    },
+    {
+      "flagged": false,
+      "categories": {
+        "harassment": false,
+        "harassment/threatening": false,
+        "hate": false,
+        "hate/threatening": false,
+        "illicit": false,
+        "illicit/violent": false,
+        "self-harm": false,
+        "self-harm/instructions": false,
+        "self-harm/intent": false,
+        "sexual": false,
+        "sexual/minors": false,
+        "violence": false,
+        "violence/graphic": false
+      },
+      "category_scores": {
+        "harassment": 0.00010123451214526594,
+        "harassment/threatening": 9.4234105219841e-07,
+        "hate": 3.412361254311555e-06,
+        "hate/threatening": 5.1234129841231e-08,
+        "illicit": 8.7341234123e-06,
+        "illicit/violent": 1.2341234e-07,
+        "self-harm": 4.123412e-06,
+        "self-harm/instructions": 5.12341e-08,
+        "self-harm/intent": 2.1234e-07,
+        "sexual": 1.2341e-06,
+        "sexual/minors": 1.234e-09,
+        "violence": 7.123412e-06,
+        "violence/graphic": 3.1234e-07
+      }
+    }
+  ]
+}
+```
+
+</ResponseExample>
+
+### 响应字段
+
+<ResponseField name="id" type="string" required>
+  本次审查请求的唯一标识。
+</ResponseField>
+
+<ResponseField name="model" type="string" required>
+  实际使用的审查模型名称。
+</ResponseField>
+
+<ResponseField name="results" type="object[]" required>
+  审查结果列表，与请求 `input` 中的条目一一对应。
+
+  <Expandable title="results 结构">
+    <ResponseField name="flagged" type="boolean">
+      整体标记。任一类别评分超过上游阈值时为 `true`。
+    </ResponseField>
+    <ResponseField name="categories" type="object">
+      各违规类别的布尔标记，键为类别名，值为是否超阈值。类别包括 `harassment`、`harassment/threatening`、`hate`、`hate/threatening`、`illicit`、`illicit/violent`、`self-harm`、`self-harm/instructions`、`self-harm/intent`、`sexual`、`sexual/minors`、`violence`、`violence/graphic`（不同模型的类别集合略有差异，以实际响应为准）。
+    </ResponseField>
+    <ResponseField name="category_scores" type="object">
+      各类别的置信度评分，键与 `categories` 一致，取值 `0.0 ~ 1.0`，数值越高表示越可能命中该类别。
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+## 错误码
+
+| HTTP 状态码 | 说明 |
+| --- | --- |
+| 400 | 请求参数错误或模型不支持所请求的能力 |
+| 401 | 令牌无效、已禁用或已过期 |
+| 403 | 令牌无权访问该模型，或额度不足 |
+| 429 | 触发速率限制 |
+| 500 | 上游渠道返回错误，`error.message` 中包含上游错误详情 |

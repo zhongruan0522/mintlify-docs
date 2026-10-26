@@ -276,7 +276,7 @@ GET    /mcp/video/:id
   兼容模型列表。
 - Responses compact body：`model`、`input`、`instructions`、
   `previous_response_id`。
-- `/v1/edits` 是图像编辑兼容入口。
+- `/v1/edits` 路由保留但当前不可用：请求会被解析为图像请求后落入文本处理器，返回 400。图像编辑请使用 `/v1/images/edits`。
 - `/v1/images/variations` 和 `DELETE /v1/models/:model` 当前明确返回“未实现”。
 - 两个 `*path` 是 Gemini 动态 action 路由，实际 URL 形如
   `/v1beta/models/{model}:generateContent`。

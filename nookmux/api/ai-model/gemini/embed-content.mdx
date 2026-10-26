@@ -1,0 +1,146 @@
+---
+title: Embed content
+description: Generate a text embedding vector for a single piece of content in native Gemini format.
+api: "POST /v1beta/models/{model}:embedContent"
+---
+
+Generate a text embedding for a single piece of content, compatible with the `embedContent` method of the Google Gemini API. The model is specified in the URL path and must be an embedding model (such as `gemini-embedding-001` or `text-embedding-004`).
+
+NookMux forwards the request to the channel matching `{model}` and returns the upstream response verbatim; embedding requests are billed on input tokens.
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request POST \
+  --url https://your-nookmux-domain/v1beta/models/gemini-embedding-001:embedContent \
+  --header 'x-goog-api-key: $NOOKMUX_API_KEY' \
+  --header 'Content-Type: application/json' \
+  --data '{
+  "content": {
+    "parts": [
+      { "text": "NookMux is an AI API aggregation gateway." }
+    ]
+  },
+  "taskType": "RETRIEVAL_DOCUMENT",
+  "outputDimensionality": 768
+}'
+```
+
+```python Python
+from google import genai
+
+client = genai.Client(
+    api_key="$NOOKMUX_API_KEY",
+    http_options={"base_url": "https://your-nookmux-domain"},
+)
+
+response = client.models.embed_content(
+    model="gemini-embedding-001",
+    contents="NookMux is an AI API aggregation gateway.",
+    config={
+        "task_type": "RETRIEVAL_DOCUMENT",
+        "output_dimensionality": 768,
+    },
+)
+print(response.embeddings[0].values[:5])
+```
+
+</RequestExample>
+
+### Authentication
+
+Pass the NookMux API token in the `x-goog-api-key` header (create tokens on the Console → Tokens page). The gateway also accepts `Authorization: Bearer <token>` and the `?key=<token>` query parameter as compatible alternatives.
+
+<ParamField path="header.x-goog-api-key" type="string" required>
+  A NookMux API token, in the form `x-goog-api-key: <token>`.
+</ParamField>
+
+### Path parameters
+
+The action is fixed to `embedContent`.
+
+<ParamField path="path.model" type="string" required>
+  Embedding model name, such as `gemini-embedding-001` or `text-embedding-004`. Use any model configured in NookMux; see the List models endpoint for available values.
+</ParamField>
+
+### Body
+
+<ParamField path="body.content" type="object" required>
+  The content to embed, with the same structure as a `contents` entry of Generate content.
+
+  <Expandable title="content structure">
+    <ParamField path="parts[].text" type="string" required>
+      Text fragment. Multiple `text` fragments are joined into one input.
+    </ParamField>
+    <ParamField path="role" type="string">
+      Author role of the content; usually omitted for embeddings.
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+<ParamField path="body.model" type="string">
+  Optional. The model in the URL path `{model}` always wins; the gateway rewrites it to the `models/{model}` form when forwarding, so you do not need to specify it in the body.
+</ParamField>
+
+<ParamField path="body.taskType" type="string">
+  Embedding task type, used to optimize the vector per scenario: `RETRIEVAL_DOCUMENT`, `RETRIEVAL_QUERY`, `SEMANTIC_SIMILARITY`, `CLASSIFICATION`, `CLUSTERING`, `QUESTION_ANSWERING`, `FACT_VERIFICATION`, `CODE_RETRIEVAL_QUERY`.
+</ParamField>
+
+<ParamField path="body.title" type="string">
+  Document title. Only effective when `taskType` is `RETRIEVAL_DOCUMENT`; improves retrieval quality.
+</ParamField>
+
+<ParamField path="body.outputDimensionality" type="integer">
+  Output vector dimension, such as `768` or `256`. Omit to use the model default; dimensionality reduction is supported only by newer embedding models.
+</ParamField>
+
+<Note>
+  The request body is parsed and rebuilt from the native Gemini DTO before being forwarded; only the fields listed above are passed through to the upstream. Whether a field is forwarded also depends on the Console → Models → parameter override configuration.
+</Note>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "embedding": {
+    "values": [
+      0.011027313,
+      -0.018682647,
+      0.029431311,
+      -0.0076551883,
+      0.020473024,
+      -0.014091599
+    ]
+  }
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="embedding" type="object" required>
+  The embedding object.
+
+  <Expandable title="embedding structure">
+    <ResponseField name="values" type="number[]" required>
+      The embedding vector as an array of floats. Its dimension follows the model default or the requested `outputDimensionality` (the example shows only the first few components).
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+## Error codes
+
+| HTTP status | Description |
+| --- | --- |
+| 400 | Invalid request parameters, or the selected model is not an embedding model |
+| 401 | Token is invalid, disabled, or expired |
+| 403 | Token cannot access the model, or quota is insufficient |
+| 429 | Rate limit triggered |
+| 500 | Upstream channel error; `error.message` contains the upstream details |
+
+Error responses use the unified JSON structure `{"error": {"message": ..., "type": ...}}`.

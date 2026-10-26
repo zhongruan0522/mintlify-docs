@@ -1,0 +1,170 @@
+---
+title: Context compaction
+description: Compact a long-running conversation into a summary response that later Responses API requests can reference via previous_response_id.
+api: "POST /v1/responses/compact"
+---
+
+Compact a long-running conversation: the previous turns are condensed into a summary response, and later requests reference that result through `previous_response_id` to continue the conversation without replaying the full history. The request and response formats are compatible with OpenAI's `/v1/responses/compact` endpoint.
+
+NookMux routes the request to the appropriate upstream channel based on the `model` name. This endpoint requires the target channel to speak the Responses protocol (that is, the channel's `openai_wire_api` must not be `chat`); otherwise the request fails with a `400`. NookMux does not perform Chat protocol auto-conversion for this endpoint.
+
+<Note>
+  This endpoint is billed independently against a virtual model named after the original model plus the `-openai-compact` suffix (for example, a compaction request for `gpt-5.1` is settled with the `gpt-5.1-openai-compact` ratio). Configure the ratio separately under Console → Model ratios.
+</Note>
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request POST \
+  --url https://your-nookmux-domain/v1/responses/compact \
+  --header 'Authorization: Bearer $NOOKMUX_API_KEY' \
+  --header 'Content-Type: application/json' \
+  --data '{
+  "model": "gpt-5.1",
+  "instructions": "Keep the conclusions about gateway configuration and billing; drop the greetings.",
+  "input": [
+    { "role": "user", "content": "How do I configure a channel's openai_wire_api in NookMux?" },
+    { "role": "assistant", "content": "Choose Chat or Responses under Console -> Channels -> Settings." },
+    { "role": "user", "content": "Can per-token and pay-as-you-go billing be mixed?" },
+    { "role": "assistant", "content": "Yes. Billing mode is set at the token level, and channel ratios still apply." }
+  ]
+}'
+```
+
+```python Python
+from openai import OpenAI
+
+client = OpenAI(
+    base_url="https://your-nookmux-domain/v1",
+    api_key="$NOOKMUX_API_KEY",
+)
+
+response = client.responses.compact(
+    model="gpt-5.1",
+    instructions="Keep the conclusions about gateway configuration and billing; drop the greetings.",
+    input=[
+        {"role": "user", "content": "How do I configure a channel's openai_wire_api in NookMux?"},
+        {"role": "assistant", "content": "Choose Chat or Responses under Console -> Channels -> Settings."},
+        {"role": "user", "content": "Can per-token and pay-as-you-go billing be mixed?"},
+        {"role": "assistant", "content": "Yes. Billing mode is set at the token level, and channel ratios still apply."},
+    ],
+)
+print(response.id)
+```
+
+</RequestExample>
+
+### Authentication
+
+<ParamField path="header.Authorization" type="string" required>
+  A NookMux API token prefixed with `Bearer`, in the form `Authorization: Bearer <token>`. Create tokens on the Console → Tokens page.
+</ParamField>
+
+### Body
+
+<ParamField path="body.model" type="string" required>
+  Model used to generate the compaction summary. Use any model configured in NookMux; see the List models endpoint for available values.
+</ParamField>
+
+<ParamField path="body.input" type="string | object[]" required>
+  The conversation to compact. A string is treated as plain text; an array is a list of message items, each containing `role` and `content`, with the same structure as the `input` of the Responses endpoint.
+</ParamField>
+
+<ParamField path="body.instructions" type="string">
+  Compaction instructions. Tells the model what to keep and what to drop; used as the system instruction when generating the summary.
+</ParamField>
+
+<ParamField path="body.previous_response_id" type="string">
+  Unique ID of the previous response. When provided, the referenced response and everything before it are included in the compaction (OpenAI channels only).
+</ParamField>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "id": "resp_compact123",
+  "object": "response.compaction",
+  "created_at": 1735689600,
+  "output": [
+    {
+      "type": "message",
+      "id": "msg_compact123",
+      "status": "completed",
+      "role": "assistant",
+      "content": [
+        {
+          "type": "output_text",
+          "text": "The user asked about NookMux channel configuration and billing: openai_wire_api is set under Console -> Channels -> Settings; billing mode can be set at the token level and channel ratios still apply.",
+          "annotations": []
+        }
+      ]
+    },
+    {
+      "type": "compaction",
+      "encrypted_content": "gAAAAABlX3dE..."
+    }
+  ],
+  "usage": {
+    "input_tokens": 10240,
+    "output_tokens": 512,
+    "total_tokens": 10752
+  }
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="id" type="string" required>
+  Unique identifier for the compaction response. Pass it as `previous_response_id` in a later Responses request so the model continues from the compacted context.
+</ResponseField>
+
+<ResponseField name="object" type="string" required>
+  Object type, always `response.compaction`.
+</ResponseField>
+
+<ResponseField name="created_at" type="integer" required>
+  Unix timestamp (seconds) of when the response was created.
+</ResponseField>
+
+<ResponseField name="output" type="object[]" required>
+  List of output items, typically a `message` item (the summary text, with `output_text` content blocks) and a `compaction` item (carrying `encrypted_content` generated by the upstream; treat it as opaque).
+
+  <Expandable title="output structure">
+    <ResponseField name="type" type="string">
+      Output item type: `message` (summary message) or `compaction` (encrypted compacted context).
+    </ResponseField>
+    <ResponseField name="role" type="string">
+      Role of a `message` item, always `assistant`.
+    </ResponseField>
+    <ResponseField name="content" type="object[]">
+      Content blocks of a `message` item; an `output_text` block contains the summary `text` and `annotations`.
+    </ResponseField>
+    <ResponseField name="encrypted_content" type="string">
+      Encrypted context carried by a `compaction` item. Generated by the upstream and passed through verbatim to later requests.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="usage" type="object" required>
+  Token usage statistics: `input_tokens` (the compacted context), `output_tokens` (the generated summary), and `total_tokens` (their sum).
+</ResponseField>
+
+<ResponseField name="error" type="object">
+  Error object returned when the upstream fails, containing `message`, `type`, and `code`; omitted on success.
+</ResponseField>
+
+## Error codes
+
+| HTTP status | Description |
+| --- | --- |
+| 400 | Invalid request parameters, or the target channel's `openai_wire_api` is `chat` (this endpoint does not support Chat protocol conversion) |
+| 401 | Token is invalid, disabled, or expired |
+| 403 | Token cannot access the model, or quota is insufficient |
+| 429 | Rate limit triggered |
+| 500 | Upstream channel error; `error.message` contains the upstream details |

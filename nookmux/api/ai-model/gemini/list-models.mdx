@@ -1,0 +1,141 @@
+---
+title: List models
+description: List the models available to the current token in native Gemini format.
+api: "GET /v1beta/models"
+---
+
+List the models callable with the current token in native Gemini format, compatible with the `models.list` method of the Google Gemini API, so native Gemini clients can discover available models before generating.
+
+The result covers models configured in NookMux: enabled models with pricing configured for the token's group; if the token has a model restriction, only models within that restriction are returned.
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url https://your-nookmux-domain/v1beta/models \
+  --header 'x-goog-api-key: $NOOKMUX_API_KEY'
+```
+
+```python Python
+from google import genai
+
+client = genai.Client(
+    api_key="$NOOKMUX_API_KEY",
+    http_options={"base_url": "https://your-nookmux-domain"},
+)
+
+for model in client.models.list():
+    print(model.name, "-", model.display_name)
+```
+
+</RequestExample>
+
+### Authentication
+
+Pass the NookMux API token in the `x-goog-api-key` header (create tokens on the Console → Tokens page). The gateway also accepts `Authorization: Bearer <token>` and the `?key=<token>` query parameter as compatible alternatives.
+
+<ParamField path="header.x-goog-api-key" type="string" required>
+  A NookMux API token, in the form `x-goog-api-key: <token>`.
+</ParamField>
+
+### Body
+
+This is a GET endpoint with no request body. Pagination query parameters such as `pageSize` and `page` are not supported — all available models are returned at once.
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "models": [
+    {
+      "name": "gemini-2.5-pro",
+      "baseModelId": null,
+      "version": null,
+      "displayName": "gemini-2.5-pro",
+      "description": null,
+      "inputTokenLimit": null,
+      "outputTokenLimit": null,
+      "supportedGenerationMethods": null
+    },
+    {
+      "name": "gemini-2.5-flash",
+      "baseModelId": null,
+      "version": null,
+      "displayName": "gemini-2.5-flash",
+      "description": null,
+      "inputTokenLimit": null,
+      "outputTokenLimit": null,
+      "supportedGenerationMethods": null
+    },
+    {
+      "name": "gemini-embedding-001",
+      "baseModelId": null,
+      "version": null,
+      "displayName": "gemini-embedding-001",
+      "description": null,
+      "inputTokenLimit": null,
+      "outputTokenLimit": null,
+      "supportedGenerationMethods": null
+    }
+  ],
+  "nextPageToken": null
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="models" type="object[]" required>
+  The list of model objects.
+
+  <Expandable title="models structure">
+    <ResponseField name="name" type="string" required>
+      Model name, i.e. the model name configured in the console (such as `gemini-2.5-pro`), without the official API `models/` prefix; it can be used directly as `{model}` in other endpoint URL paths.
+    </ResponseField>
+    <ResponseField name="displayName" type="string" required>
+      Display name of the model; currently identical to `name`.
+    </ResponseField>
+    <ResponseField name="baseModelId" type="string">
+      Base model ID; a placeholder that is always `null` in the current implementation.
+    </ResponseField>
+    <ResponseField name="version" type="string">
+      Model version; a placeholder that is always `null` in the current implementation.
+    </ResponseField>
+    <ResponseField name="description" type="string">
+      Model description; a placeholder that is always `null` in the current implementation.
+    </ResponseField>
+    <ResponseField name="inputTokenLimit" type="integer">
+      Input token limit; a placeholder that is always `null` in the current implementation.
+    </ResponseField>
+    <ResponseField name="outputTokenLimit" type="integer">
+      Output token limit; a placeholder that is always `null` in the current implementation.
+    </ResponseField>
+    <ResponseField name="supportedGenerationMethods" type="string[]">
+      Supported generation methods; a placeholder that is always `null` in the current implementation.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="nextPageToken" type="string">
+  Pagination cursor. Pagination is not supported in the current implementation; always `null`.
+</ResponseField>
+
+<Note>
+  For an OpenAI-format (`/v1/models` style) model list, use `GET /v1beta/openai/models` from the compatibility summary, or call `GET /v1/models` directly.
+</Note>
+
+## Error codes
+
+| HTTP status | Description |
+| --- | --- |
+| 401 | Token is invalid, disabled, or expired |
+| 403 | Token cannot be used, or quota is insufficient |
+| 429 | Rate limit triggered |
+| 500 | Internal server error |
+
+Error responses use the unified JSON structure `{"error": {"message": ..., "type": ...}}`.

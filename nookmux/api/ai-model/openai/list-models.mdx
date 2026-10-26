@@ -1,0 +1,122 @@
+---
+title: List models
+description: List the models available to the current token, compatible with the OpenAI Models API.
+api: "GET /v1/models"
+---
+
+Returns the list of models available to the current token, compatible with the OpenAI Models list API.
+
+The list is determined by the token and the user group: when a token has a model restriction enabled, only the models it allows are returned; otherwise the models served by the enabled channels under the user's (or the token's) group are returned, limited to models with pricing configured. This endpoint auto-detects the response format from request headers; see Header-based routing below.
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url https://your-nookmux-domain/v1/models \
+  --header 'Authorization: Bearer $NOOKMUX_API_KEY'
+```
+
+```python Python
+from openai import OpenAI
+
+client = OpenAI(
+    base_url="https://your-nookmux-domain/v1",
+    api_key="$NOOKMUX_API_KEY",
+)
+
+models = client.models.list()
+for model in models.data:
+    print(model.id)
+```
+
+</RequestExample>
+
+### Authentication
+
+<ParamField path="header.Authorization" type="string" required>
+  A NookMux API token prefixed with `Bearer`, in the form `Authorization: Bearer <token>`. Create tokens on the Console → Tokens page.
+</ParamField>
+
+### Header-based routing
+
+This single endpoint auto-detects the response format from request headers:
+
+- Both `x-api-key` and `anthropic-version` headers: returns the list in Anthropic format; see [Claude list models](/nookmux/api/ai-model/claude/list-models).
+- `x-goog-api-key` header or `?key=` query parameter: handled as a Gemini model query; see [Gemini compatibility endpoints](/nookmux/api/ai-model/gemini/openai-compat).
+- Otherwise: returns the OpenAI format described on this page.
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "data": [
+    {
+      "id": "gpt-4o",
+      "object": "model",
+      "created": 1626777600,
+      "owned_by": "openai",
+      "supported_endpoint_types": ["openai", "openai-response"]
+    },
+    {
+      "id": "text-embedding-3-small",
+      "object": "model",
+      "created": 1626777600,
+      "owned_by": "openai",
+      "supported_endpoint_types": ["embeddings"]
+    },
+    {
+      "id": "claude-sonnet-4.5",
+      "object": "model",
+      "created": 1626777600,
+      "owned_by": "claude",
+      "supported_endpoint_types": ["openai", "anthropic"]
+    }
+  ],
+  "object": "list",
+  "success": true
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="object" type="string" required>
+  Object type, always `list`.
+</ResponseField>
+
+<ResponseField name="data" type="object[]" required>
+  List of model objects.
+
+  <Expandable title="data structure">
+    <ResponseField name="id" type="string" required>
+      Model name. Use this value as the `model` parameter when calling other endpoints.
+    </ResponseField>
+    <ResponseField name="object" type="string" required>
+      Object type, always `model`.
+    </ResponseField>
+    <ResponseField name="created" type="integer" required>
+      Unix timestamp (in seconds) of when the model record was created.
+    </ResponseField>
+    <ResponseField name="owned_by" type="string" required>
+      Name of the owning channel (for example `openai`, `claude`, `google gemini`); `custom` for manually added models.
+    </ResponseField>
+    <ResponseField name="supported_endpoint_types" type="string[]">
+      NookMux extension field: the endpoint types this model supports, such as `openai`, `openai-response`, `anthropic`, `gemini`, `embeddings`, `image-generation`, `jina-rerank`.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="success" type="boolean">
+  NookMux extension field, always `true`.
+</ResponseField>
+
+## Error codes
+
+| HTTP status | Description |
+| --- | --- |
+| 401 | Token is invalid, disabled, or expired |

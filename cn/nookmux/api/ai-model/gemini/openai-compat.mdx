@@ -1,0 +1,114 @@
+---
+title: OpenAI 路径兼容入口
+description: 让 OpenAI 风格客户端与 Gemini 原生客户端互通的三个兼容入口汇总。
+api: "GET /v1beta/openai/models"
+---
+
+除 `/v1beta` 主路径外，NookMux 还提供三个兼容入口，用于打通「OpenAI base_url 客户端」与「Gemini 原生客户端」两侧：在 Gemini 官方 OpenAI 兼容层风格路径下获取 OpenAI 格式模型列表、让 base_url 统一配置为 `/v1` 的 Gemini 原生 SDK 直接调用，以及用旧版 OpenAI 引擎风格路径调用 Gemini 嵌入。
+
+三个入口与 `/v1beta` 主路径共用同一套 NookMux 令牌、渠道与计费体系。
+
+| 入口 | 用途 | 接受的认证方式 |
+| --- | --- | --- |
+| `GET /v1beta/openai/models` | Gemini 官方 OpenAI 兼容层风格的模型列表，返回 OpenAI 格式 | `x-goog-api-key`、`Authorization: Bearer`、`?key=` |
+| `POST /v1/models/{model}:{action}` | `/v1` 前缀下的 Gemini 原生端点镜像，与 `/v1beta` 同构 | `x-goog-api-key`、`Authorization: Bearer`、`?key=` |
+| `POST /v1/engines/{model}/embeddings` | 旧版 OpenAI 引擎风格路径调用 Gemini 嵌入 | `Authorization: Bearer` |
+
+## 请求
+
+### 认证
+
+`/v1beta/openai/models` 与 `/v1/models/{model}:{action}` 两个前缀的认证方式与 Gemini 端点一致：推荐 `x-goog-api-key` 请求头，兼容 `Authorization: Bearer <token>` 与 `?key=<token>` 查询参数。`/v1/engines/{model}/embeddings` 仅接受 `Authorization: Bearer <token>`。
+
+<ParamField path="header.x-goog-api-key" type="string">
+  NookMux API 令牌，格式为 `x-goog-api-key: <token>`。仅 `/v1beta/openai/models` 与 `/v1/models/{model}:{action}` 前缀接受该头。
+</ParamField>
+
+### GET /v1beta/openai/models
+
+对应 Gemini 官方 OpenAI 兼容层的模型列表路径，返回 OpenAI `/v1/models` 风格的响应，方便 OpenAI 客户端发现可用模型。列表内容与「模型列表」接口一致（当前令牌可用、已启用且已配置价格的模型）。
+
+```bash cURL
+curl --request GET \
+  --url https://your-nookmux-domain/v1beta/openai/models \
+  --header 'x-goog-api-key: $NOOKMUX_API_KEY'
+```
+
+```json 200
+{
+  "success": true,
+  "data": [
+    {
+      "id": "gemini-2.5-pro",
+      "object": "model",
+      "created": 1626777600,
+      "owned_by": "google gemini",
+      "supported_endpoint_types": ["openai", "gemini"]
+    },
+    {
+      "id": "gemini-embedding-001",
+      "object": "model",
+      "created": 1626777600,
+      "owned_by": "google gemini",
+      "supported_endpoint_types": ["embeddings"]
+    }
+  ],
+  "object": "list"
+}
+```
+
+### POST /v1/models/{model}:{action}
+
+把网关 base_url 配置为 `https://your-nookmux-domain/v1` 的 Gemini 原生客户端可直接调用本入口：路径与 `/v1beta` 系列完全同构，将 `/v1beta` 换成 `/v1` 即可，支持同样的 5 个 action（`generateContent`、`streamGenerateContent`、`countTokens`、`embedContent`、`batchEmbedContents`），请求体与响应格式不变。
+
+```bash cURL
+curl --request POST \
+  --url https://your-nookmux-domain/v1/models/gemini-2.5-flash:generateContent \
+  --header 'x-goog-api-key: $NOOKMUX_API_KEY' \
+  --header 'Content-Type: application/json' \
+  --data '{
+  "contents": [
+    { "role": "user", "parts": [{ "text": "你好" }] }
+  ]
+}'
+```
+
+请求与响应字段说明见对应的 Gemini 页面：[生成内容](/cn/nookmux/api/ai-model/gemini/generate-content)、[流式生成内容](/cn/nookmux/api/ai-model/gemini/stream-generate-content)、[统计 Token](/cn/nookmux/api/ai-model/gemini/count-tokens)、[文本嵌入](/cn/nookmux/api/ai-model/gemini/embed-content)、[批量文本嵌入](/cn/nookmux/api/ai-model/gemini/batch-embed-contents)。
+
+<Note>
+  该前缀的 TokenAuth 同样接受 `x-goog-api-key` 头与 `?key=` 查询参数。注意与 OpenAI 原生的 `GET /v1/models` 区分：直接请求 `GET /v1/models` 且携带 `x-goog-api-key` 头（或 `?key=`）时，网关会将其识别为 Gemini 侧请求并按 Gemini 模型分支处理；OpenAI 客户端请使用普通的 `Authorization: Bearer` 调用 `GET /v1/models`。
+</Note>
+
+### POST /v1/engines/{model}/embeddings
+
+旧版 OpenAI 引擎风格路径，用于调用 Gemini 嵌入模型。`{model}` 为嵌入模型名（如 `gemini-embedding-001`、`text-embedding-004`），请求体与「文本嵌入」相同（单条 `content` 及可选的 `taskType`、`title`、`outputDimensionality`），响应同 `embedContent`（`{"embedding": {"values": [...]}}`）。
+
+```bash cURL
+curl --request POST \
+  --url https://your-nookmux-domain/v1/engines/gemini-embedding-001/embeddings \
+  --header 'Authorization: Bearer $NOOKMUX_API_KEY' \
+  --header 'Content-Type: application/json' \
+  --data '{
+  "content": {
+    "parts": [
+      { "text": "NookMux 是一个 AI API 聚合网关。" }
+    ]
+  }
+}'
+```
+
+<Warning>
+  本入口的 `{model}` 必须是嵌入模型（以 `gemini-embedding`、`text-embedding` 或 `embedding` 开头的模型名），且认证仅支持 `Authorization: Bearer`，不接受 `x-goog-api-key` 与 `?key=`。OpenAI 格式的标准嵌入请求请改用 `POST /v1/embeddings`。
+</Warning>
+
+## 错误码
+
+| HTTP 状态码 | 说明 |
+| --- | --- |
+| 400 | 请求参数错误，或所选模型/入口不匹配（如引擎路径使用非嵌入模型） |
+| 401 | 令牌无效、已禁用或已过期 |
+| 403 | 令牌无权访问该模型，或额度不足 |
+| 429 | 触发速率限制 |
+| 500 | 上游渠道返回错误，`error.message` 中包含上游错误详情 |
+
+错误响应统一为 `{"error": {"message": ..., "type": ...}}` 的 JSON 结构。

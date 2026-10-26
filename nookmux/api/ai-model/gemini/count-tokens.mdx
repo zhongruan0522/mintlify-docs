@@ -1,0 +1,140 @@
+---
+title: Count tokens
+description: Estimate the number of tokens consumed by given content in native Gemini format.
+api: "POST /v1beta/models/{model}:countTokens"
+---
+
+Count the tokens that given input content will consume for a model, compatible with the `countTokens` method of the Google Gemini API. Useful for estimating cost and managing context length before an actual generation.
+
+NookMux forwards the request to the channel matching `{model}` and returns the upstream count verbatim. Note that NookMux bills this endpoint on the returned `totalTokens` (settled as input tokens), so the counting call itself carries a small cost.
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request POST \
+  --url https://your-nookmux-domain/v1beta/models/gemini-2.5-flash:countTokens \
+  --header 'x-goog-api-key: $NOOKMUX_API_KEY' \
+  --header 'Content-Type: application/json' \
+  --data '{
+  "contents": [
+    {
+      "role": "user",
+      "parts": [
+        { "text": "NookMux is an AI API aggregation gateway." }
+      ]
+    }
+  ]
+}'
+```
+
+```python Python
+from google import genai
+
+client = genai.Client(
+    api_key="$NOOKMUX_API_KEY",
+    http_options={"base_url": "https://your-nookmux-domain"},
+)
+
+response = client.models.count_tokens(
+    model="gemini-2.5-flash",
+    contents="NookMux is an AI API aggregation gateway.",
+)
+print(response.total_tokens)
+```
+
+</RequestExample>
+
+### Authentication
+
+Pass the NookMux API token in the `x-goog-api-key` header (create tokens on the Console → Tokens page). The gateway also accepts `Authorization: Bearer <token>` and the `?key=<token>` query parameter as compatible alternatives.
+
+<ParamField path="header.x-goog-api-key" type="string" required>
+  A NookMux API token, in the form `x-goog-api-key: <token>`.
+</ParamField>
+
+### Path parameters
+
+The action is fixed to `countTokens`.
+
+<ParamField path="path.model" type="string" required>
+  Model used to count tokens, such as `gemini-2.5-flash`. Tokenization results differ across models.
+</ParamField>
+
+### Body
+
+Two shapes are accepted: top-level `contents`, or a full generate request wrapped in `generateContentRequest`. Provide exactly one of them.
+
+<ParamField path="body.contents" type="object[]">
+  The content entries to count. The structure is identical to the `contents` of Generate content (`role`, `parts[]` with `text`, `inlineData`, and more).
+
+  <Expandable title="contents structure">
+    <ParamField path="role" type="string">
+      Author role of the content: `user` or `model`.
+    </ParamField>
+    <ParamField path="parts[].text" type="string">
+      A text fragment.
+    </ParamField>
+    <ParamField path="parts[].inlineData" type="object">
+      Inline multimodal data (Base64-encoded), containing `mimeType` and `data`. Images, audio, and video are converted to tokens per modality.
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+<ParamField path="body.generateContentRequest" type="object">
+  A wrapper around a complete `generateContent` request, handy for reusing the actual generation request for estimation. The structure matches the body of Generate content.
+
+  <Expandable title="generateContentRequest structure">
+    <ParamField path="contents" type="object[]" required>
+      Content entries, with the same structure as `contents` above.
+    </ParamField>
+    <ParamField path="systemInstruction" type="object">
+      System instruction, also included in the count.
+    </ParamField>
+    <ParamField path="tools" type="object[]">
+      Tool list (such as `functionDeclarations`, `googleSearch`); tool declarations are included in the count.
+    </ParamField>
+    <ParamField path="generationConfig" type="object">
+      Generation configuration. `maxOutputTokens` participates in the output limit estimate.
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+<Note>
+  As with Generate content, the request body is parsed and rebuilt from the native Gemini DTO before being forwarded; only the documented fields are passed through. Most fields accept both camelCase and snake_case forms.
+</Note>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "totalTokens": 315
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="totalTokens" type="integer" required>
+  Total number of tokens consumed by the input content. NookMux bills this endpoint on this value.
+</ResponseField>
+
+<ResponseField name="totalBillableCharacters" type="integer">
+  Total number of billable characters. Returned only by some upstreams.
+</ResponseField>
+
+## Error codes
+
+| HTTP status | Description |
+| --- | --- |
+| 400 | Invalid request parameters (neither `contents` nor `generateContentRequest` provided, and similar) |
+| 401 | Token is invalid, disabled, or expired |
+| 403 | Token cannot access the model, or quota is insufficient |
+| 429 | Rate limit triggered |
+| 500 | Upstream channel error; `error.message` contains the upstream details |
+
+Error responses use the unified JSON structure `{"error": {"message": ..., "type": ...}}`.

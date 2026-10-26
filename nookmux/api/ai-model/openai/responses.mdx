@@ -1,0 +1,369 @@
+---
+title: Responses
+description: Create a model response with support for multimodal input, tool calls, reasoning configuration, and streaming, compatible with the OpenAI Responses API.
+api: "POST /v1/responses"
+---
+
+Create a model response. The request and response formats are compatible with the OpenAI Responses API, with support for text and multimodal input, function and built-in tool calls, reasoning configuration, and streaming output.
+
+NookMux routes the request to the appropriate upstream channel based on the `model` name. When the target channel is configured with `openai_wire_api: chat`, NookMux automatically converts the request to the upstream Chat Completions protocol and converts the response (including stream events) back to the Responses format, so clients never see the upstream difference.
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request POST \
+  --url https://your-nookmux-domain/v1/responses \
+  --header 'Authorization: Bearer $NOOKMUX_API_KEY' \
+  --header 'Content-Type: application/json' \
+  --data '{
+  "model": "gpt-4o",
+  "instructions": "You are a technical writer. Answer concisely and accurately.",
+  "input": "Explain what an API gateway is in one sentence.",
+  "stream": false
+}'
+```
+
+```python Python
+from openai import OpenAI
+
+client = OpenAI(
+    base_url="https://your-nookmux-domain/v1",
+    api_key="$NOOKMUX_API_KEY",
+)
+
+response = client.responses.create(
+    model="gpt-4o",
+    instructions="You are a technical writer. Answer concisely and accurately.",
+    input="Explain what an API gateway is in one sentence.",
+)
+print(response.output_text)
+```
+
+</RequestExample>
+
+### Authentication
+
+<ParamField path="header.Authorization" type="string" required>
+  A NookMux API token prefixed with `Bearer`, in the form `Authorization: Bearer <token>`. Create tokens on the Console → Tokens page.
+</ParamField>
+
+### Body
+
+<ParamField path="body.model" type="string" required>
+  Name of the model to call. Use any model configured in NookMux; see the List models endpoint for available values.
+</ParamField>
+
+<ParamField path="body.input" type="string | object[]" required>
+  Input to the model. A string is treated as plain text; an array is a list of input items, each containing `type`, `role`, and `content`, and can mix multi-turn conversation with multimodal content. See the table below for details.
+
+  <Expandable title="input structure">
+    <ParamField path="type" type="string">
+      Input item type. Message items are always `message`; you can also pass history items such as `function_call`, `function_call_output`, and `reasoning` to continue a previous tool-call loop.
+    </ParamField>
+    <ParamField path="role" type="string">
+      Message role: `user` (user input), `assistant` (previous model replies), `system`, `developer`.
+    </ParamField>
+    <ParamField path="content" type="string | object[]">
+      Message content. A string for plain text; an array of content blocks for multimodal input, where `type` is one of `input_text`, `input_image`, `input_file`.
+    </ParamField>
+    <ParamField path="content[].text" type="string">
+      Text content of an `input_text` block.
+    </ParamField>
+    <ParamField path="content[].image_url" type="string">
+      Image URL or Base64-encoded data of an `input_image` block (in the `data:image/jpeg;base64,...` form).
+    </ParamField>
+    <ParamField path="content[].file_url" type="string">
+      File URL or Base64-encoded data of an `input_file` block.
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+<ParamField path="body.instructions" type="string">
+  System (or developer) instructions inserted at the front of the model's context to steer its behavior.
+</ParamField>
+
+<ParamField path="body.max_output_tokens" type="integer">
+  Upper bound for the number of tokens generated in one response, including visible output and reasoning. When reached, `status` becomes `incomplete`.
+</ParamField>
+
+<ParamField path="body.previous_response_id" type="string">
+  Unique ID of the previous response. When provided, the model can access that response and everything before it to build a multi-turn conversation (OpenAI channels only).
+</ParamField>
+
+<ParamField path="body.stream" type="boolean" default="false">
+  Whether to stream the response. When `true`, incremental events are returned via Server-Sent Events; see Streaming.
+</ParamField>
+
+<ParamField path="body.temperature" type="number">
+  Sampling temperature between `0.0` and `2.0`. Higher values make output more random and creative; lower values make it more deterministic. Adjust either `temperature` or `top_p`, not both.
+</ParamField>
+
+<ParamField path="body.top_p" type="number">
+  Nucleus sampling parameter. The model only considers tokens whose cumulative probability reaches `top_p`.
+</ParamField>
+
+<ParamField path="body.top_logprobs" type="integer">
+  Return the n most probable tokens per output position (`0` to `20`).
+</ParamField>
+
+<ParamField path="body.truncation" type="string">
+  Truncation strategy for the model's context window: `auto` (drop the oldest input items when the input exceeds the window) or `disabled` (fail with a `400` when it exceeds).
+</ParamField>
+
+<ParamField path="body.reasoning" type="object">
+  Reasoning configuration for reasoning models.
+
+  <Expandable title="reasoning structure">
+    <ParamField path="effort" type="string">
+      Thinking effort: `minimal`, `low`, `medium`, `high`.
+    </ParamField>
+    <ParamField path="summary" type="string">
+      Whether to generate reasoning summaries: `auto`, `concise`, `detailed`.
+    </ParamField>
+    <ParamField path="max_tokens" type="integer">
+      Maximum number of reasoning tokens (supported by some channels, such as OpenRouter).
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+<ParamField path="body.text" type="object">
+  Text output configuration.
+
+  <Expandable title="text structure">
+    <ParamField path="format" type="object">
+      Output format: `text` (default, plain text), `json_object` (JSON object), `json_schema` (structured output following a JSON Schema; when set to `json_schema`, provide `name`, `schema`, `strict` and more via the `json_schema` object).
+    </ParamField>
+    <ParamField path="verbosity" type="string">
+      Output verbosity: `low`, `medium`, `high` (supported by gpt-5 models).
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+<ParamField path="body.tools" type="object[]">
+  A list of tools the model may call, including custom functions (`type` of `function`) and built-in tools (such as `web_search_preview` and `file_search`).
+</ParamField>
+
+<ParamField path="body.tool_choice" type="string | object">
+  Controls how the model picks tools: `none`, `auto` (default), `required`, or a specific function in object form (with `type` fixed to `function` and `function.name` set to the function name).
+</ParamField>
+
+<ParamField path="body.parallel_tool_calls" type="boolean">
+  Whether the model may issue multiple tool calls in parallel within one reply.
+</ParamField>
+
+<ParamField path="body.max_tool_calls" type="integer">
+  Maximum number of total tool calls the model can make in one response (supported by some models, such as the codex series).
+</ParamField>
+
+<ParamField path="body.include" type="string[]">
+  Additional fields to include in the response, such as `reasoning.encrypted_content`.
+</ParamField>
+
+<ParamField path="body.metadata" type="object">
+  Additional key-value metadata, up to 16 pairs, stored with the response object.
+</ParamField>
+
+<ParamField path="body.store" type="boolean">
+  Whether to store the response for later reference through `previous_response_id` (OpenAI channels only).
+</ParamField>
+
+<ParamField path="body.prompt_cache_key" type="string">
+  Cache key used to improve prompt cache hit rates; can replace `user` as a stable end-user identifier.
+</ParamField>
+
+<ParamField path="body.prompt_cache_retention" type="string">
+  Prompt cache retention policy: `in_memory` or `24h` (`24h` enables extended caching; OpenAI channels only).
+</ParamField>
+
+<ParamField path="body.user" type="string">
+  End-user identifier used by NookMux for identification and abuse monitoring.
+</ParamField>
+
+<ParamField path="body.safety_identifier" type="string">
+  A stable application-side user identifier that helps the upstream (OpenAI) detect and mitigate abuse. Filtered out by default for privacy.
+</ParamField>
+
+<ParamField path="body.service_tier" type="string">
+  Service tier (such as `auto`, `flex`, `priority`) that affects processing and billing. NookMux filters this field out by default to avoid unexpected charges.
+</ParamField>
+
+<ParamField path="body.prompt" type="object">
+  Reference to a saved prompt template and its variables (the object contains the template `id` and `version`); OpenAI channels only.
+</ParamField>
+
+<ParamField path="body.enable_thinking" type="boolean">
+  Thinking switch for the Qwen3 series (passthrough field).
+</ParamField>
+
+<ParamField path="body.provider" type="object">
+  Provider routing preferences for OpenRouter channels (passthrough field).
+</ParamField>
+
+<ParamField path="body.preset" type="string">
+  Search preset for Perplexity channels (passthrough field).
+</ParamField>
+
+<Note>
+  Vendor passthrough fields (`enable_thinking`, `provider`, `preset`, and others) only take effect on their matching channels; other channels drop them per the parameter filtering rules. Sensitive fields such as `safety_identifier` and `service_tier` are filtered out by default, and whether a field is forwarded also depends on the Console → Models → parameter override configuration.
+</Note>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "id": "resp_abc123",
+  "object": "response",
+  "created_at": 1735689600,
+  "status": "completed",
+  "model": "gpt-4o",
+  "output": [
+    {
+      "type": "message",
+      "id": "msg_abc123",
+      "status": "completed",
+      "role": "assistant",
+      "content": [
+        {
+          "type": "output_text",
+          "text": "An API gateway is a unified entry point between clients and backend services that handles routing, authentication, rate limiting, and protocol translation.",
+          "annotations": []
+        }
+      ]
+    }
+  ],
+  "usage": {
+    "input_tokens": 34,
+    "input_tokens_details": {
+      "cached_tokens": 0
+    },
+    "output_tokens": 38,
+    "output_tokens_details": {
+      "reasoning_tokens": 0
+    },
+    "total_tokens": 72
+  }
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="id" type="string" required>
+  Unique identifier for the response; can be used as `previous_response_id` in the next turn.
+</ResponseField>
+
+<ResponseField name="object" type="string" required>
+  Object type, always `response`.
+</ResponseField>
+
+<ResponseField name="created_at" type="integer" required>
+  Unix timestamp (seconds) of when the response was created.
+</ResponseField>
+
+<ResponseField name="status" type="string" required>
+  Response status: `in_progress`, `completed`, `incomplete` (truncated by the `max_output_tokens` limit), or `failed`.
+</ResponseField>
+
+<ResponseField name="model" type="string" required>
+  Model that generated the response.
+</ResponseField>
+
+<ResponseField name="output" type="object[]" required>
+  List of output items in generation order.
+
+  <Expandable title="output structure">
+    <ResponseField name="type" type="string">
+      Output item type: `reasoning` (chain of thought), `message` (assistant message), `function_call` (custom function call), `web_search_call` (built-in tool call), and more.
+    </ResponseField>
+    <ResponseField name="id" type="string">
+      Output item ID, such as `msg_abc123` or `fc_abc123`.
+    </ResponseField>
+    <ResponseField name="status" type="string">
+      Item status: `in_progress`, `completed`.
+    </ResponseField>
+    <ResponseField name="role" type="string">
+      Role of a `message` item, always `assistant`.
+    </ResponseField>
+    <ResponseField name="content" type="object[]">
+      Content blocks of a `message` item. A text block with `type` of `output_text` contains `text` and `annotations` (citations and other annotations).
+    </ResponseField>
+    <ResponseField name="summary" type="object[]">
+      Summary blocks of a `reasoning` item, with `type` of `summary_text` and a `text` field.
+    </ResponseField>
+    <ResponseField name="call_id" type="string">
+      Call ID of a `function_call` item, used to send back a `function_call_output` in a later request.
+    </ResponseField>
+    <ResponseField name="name" type="string">
+      Name of the function invoked by a `function_call` item.
+    </ResponseField>
+    <ResponseField name="arguments" type="string">
+      Arguments of a `function_call` item as a JSON-encoded string.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="usage" type="object" required>
+  Token usage statistics.
+
+  <Expandable title="usage structure">
+    <ResponseField name="input_tokens" type="integer">
+      Tokens consumed by the input.
+    </ResponseField>
+    <ResponseField name="input_tokens_details" type="object">
+      Input breakdown, including `cached_tokens` (tokens served from cache).
+    </ResponseField>
+    <ResponseField name="output_tokens" type="integer">
+      Tokens consumed by the output (including reasoning).
+    </ResponseField>
+    <ResponseField name="output_tokens_details" type="object">
+      Output breakdown, including `reasoning_tokens` (tokens used for reasoning).
+    </ResponseField>
+    <ResponseField name="total_tokens" type="integer">
+      Total tokens consumed.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+## Streaming
+
+With `"stream": true`, the response is returned as `text/event-stream`. Each event starts with an `event:` line (the event type) followed by a `data:` line with the payload:
+
+```json
+event: response.created
+data: {"type":"response.created","response":{"id":"resp_abc123","object":"response","created_at":1735689600,"status":"in_progress","model":"gpt-4o","output":[]}}
+
+event: response.output_item.added
+data: {"type":"response.output_item.added","output_index":0,"item":{"type":"message","id":"msg_abc123","status":"in_progress","role":"assistant","content":[]}}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","item_id":"msg_abc123","output_index":0,"content_index":0,"delta":"An"}
+
+event: response.output_item.done
+data: {"type":"response.output_item.done","output_index":0,"item":{"type":"message","id":"msg_abc123","status":"completed","role":"assistant","content":[{"type":"output_text","text":"An API gateway is ...","annotations":[]}]}}
+
+event: response.completed
+data: {"type":"response.completed","response":{"id":"resp_abc123","object":"response","created_at":1735689600,"status":"completed","model":"gpt-4o","output":[{"type":"message","id":"msg_abc123","status":"completed","role":"assistant","content":[{"type":"output_text","text":"An API gateway is ...","annotations":[]}]}],"usage":{"input_tokens":34,"output_tokens":38,"total_tokens":72}}}
+```
+
+<ResponseField name="delta" type="string">
+  Incremental text. `response.output_text.delta` events return output content incrementally in `delta`, located by `item_id`, `output_index`, and `content_index`.
+</ResponseField>
+
+<Note>
+  Other common events include `response.output_text.done` (text block finished), `response.function_call_arguments.delta` (incremental function arguments), `response.incomplete` (output limit reached), and `response.failed` (generation failed). An abnormal termination ends with the corresponding event instead of `data: [DONE]`.
+</Note>
+
+## Error codes
+
+| HTTP status | Description |
+| --- | --- |
+| 400 | Invalid request parameters, the model does not support the requested capability, or the converted request was rejected by the upstream |
+| 401 | Token is invalid, disabled, or expired |
+| 403 | Token cannot access the model, or quota is insufficient |
+| 429 | Rate limit triggered |
+| 500 | Upstream channel error; `error.message` contains the upstream details |

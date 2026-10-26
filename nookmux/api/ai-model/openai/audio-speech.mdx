@@ -1,0 +1,146 @@
+---
+title: Create speech
+description: Convert text into spoken audio, compatible with the OpenAI Audio Speech API.
+api: "POST /v1/audio/speech"
+---
+
+Convert text into spoken audio. The request and response formats are compatible with the OpenAI Audio Speech endpoint.
+
+NookMux routes the request to the appropriate upstream channel based on the `model` name and bills accordingly: usage is measured by input text tokens plus output audio duration (output audio is converted at 1000 tokens per minute). Available models are defined under Console → Channels → Models; common choices include `tts-1`, `tts-1-hd`, and `gpt-4o-mini-tts`.
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request POST \
+  --url https://your-nookmux-domain/v1/audio/speech \
+  --header 'Authorization: Bearer $NOOKMUX_API_KEY' \
+  --header 'Content-Type: application/json' \
+  --output speech.mp3 \
+  --data '{
+  "model": "gpt-4o-mini-tts",
+  "input": "Welcome to the NookMux text-to-speech service.",
+  "voice": "coral",
+  "instructions": "Friendly and natural tone, moderate pace",
+  "response_format": "mp3"
+}'
+```
+
+```python Python
+from openai import OpenAI
+
+client = OpenAI(
+    base_url="https://your-nookmux-domain/v1",
+    api_key="$NOOKMUX_API_KEY",
+)
+
+response = client.audio.speech.create(
+    model="gpt-4o-mini-tts",
+    voice="coral",
+    input="Welcome to the NookMux text-to-speech service.",
+    instructions="Friendly and natural tone, moderate pace",
+)
+response.stream_to_file("speech.mp3")
+```
+
+</RequestExample>
+
+### Authentication
+
+<ParamField path="header.Authorization" type="string" required>
+  A NookMux API token prefixed with `Bearer`, in the form `Authorization: Bearer <token>`. Create tokens on the Console → Tokens page.
+</ParamField>
+
+### Body
+
+<ParamField path="body.model" type="string" required>
+  Name of the TTS model to use. Defaults to `tts-1` when omitted. Common values are `tts-1`, `tts-1-hd`, and `gpt-4o-mini-tts`; other speech models may be configured on your channels.
+</ParamField>
+
+<ParamField path="body.input" type="string" required>
+  The text to synthesize, up to 4096 characters.
+</ParamField>
+
+<ParamField path="body.voice" type="string" required>
+  The voice to speak with. OpenAI channels support `alloy`, `ash`, `ballad`, `coral`, `echo`, `fable`, `onyx`, `nova`, `sage`, and `shimmer`; available voices on other channels (such as MiniMax) depend on the channel and the system voice configuration.
+</ParamField>
+
+<ParamField path="body.instructions" type="string">
+  Voice style instructions (tone, emotion, pacing); only effective on models that support it, such as `gpt-4o-mini-tts`.
+</ParamField>
+
+<ParamField path="body.response_format" type="string" default="mp3">
+  Audio output format: `mp3`, `opus`, `aac`, `flac`, `wav`, or `pcm`. `pcm` is raw 24kHz 16-bit mono PCM data (no file header).
+</ParamField>
+
+<ParamField path="body.speed" type="number" default="1.0">
+  Synthesis speed, from `0.25` to `4.0`; `1.0` is the normal pace.
+</ParamField>
+
+<ParamField path="body.stream_format" type="string">
+  Set to `sse` to return audio in chunks via Server-Sent Events; see Streaming below.
+</ParamField>
+
+<ParamField path="body.metadata" type="object">
+  Additional key-value metadata, passed through to the channel (for example, MiniMax channels use it to carry vendor-specific fields).
+</ParamField>
+
+<Note>
+  OpenAI-compatible channels forward `voice`, `response_format`, and other fields verbatim without a whitelist; the MiniMax channel only supports `mp3` / `opus` / `flac` / `wav` / `pcm` (passing `aac` returns an error), and its voices must be configured on the Console → Voice Management page or resolved via voice redirection.
+</Note>
+
+## Response
+
+By default the response is a binary audio stream whose `Content-Type` matches the requested `response_format`:
+
+| response_format | Content-Type |
+| --- | --- |
+| `mp3` | `audio/mpeg` |
+| `opus` | `audio/ogg` |
+| `aac` | `audio/aac` |
+| `flac` | `audio/flac` |
+| `wav` | `audio/wav` |
+| `pcm` | `audio/pcm` |
+
+<ResponseExample>
+
+```text 200
+HTTP/1.1 200 OK
+Content-Type: audio/mpeg
+Content-Length: 18240
+
+Binary audio data (mp3 encoded)
+```
+
+</ResponseExample>
+
+## Streaming
+
+With `"stream_format": "sse"` in the request, the response is returned as `text/event-stream`; each `data:` line is one JSON frame:
+
+```json
+data: {"delta":"SUQzBAAAAAAAI1RTU0AAAAAAAAPMYAAADAQMDAwMDAwMDAwMDAwMDAwMDAw"}
+
+data: {"delta":"SUQzBAAAAAAAI1RTU0AAAAAAAAPMYAAADAwMDAwMDAwMDAwMDAwMDAwMDA"}
+
+data: {"usage":{"input_tokens":18,"output_tokens":120,"total_tokens":138}}
+```
+
+<ResponseField name="delta" type="string">
+  One frame of audio data; the payload and its encoding are determined by the upstream channel and forwarded verbatim by NookMux.
+</ResponseField>
+
+<Note>
+  The exact frame structure is determined by the upstream channel. Frames carrying `usage` are used for NookMux billing and are also forwarded to the client.
+</Note>
+
+## Error codes
+
+| HTTP status | Description |
+| --- | --- |
+| 400 | Invalid request parameters (for example, a `response_format` the channel does not support) |
+| 401 | Token is invalid, disabled, or expired |
+| 403 | Token cannot access the model, or quota is insufficient |
+| 429 | Rate limit triggered |
+| 500 | Upstream channel error; `error.message` contains the upstream details |

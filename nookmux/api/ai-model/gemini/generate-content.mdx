@@ -1,0 +1,416 @@
+---
+title: Generate content
+description: Generate content in native Gemini format, with support for multimodal input, tool use, structured output, and TTS passthrough.
+api: "POST /v1beta/models/{model}:generateContent"
+---
+
+Generate content using the native Gemini request format. The request and response structures are compatible with the `generateContent` method of the Google Gemini API, suitable for clients built against the Gemini REST protocol and the official `google-genai` SDK.
+
+NookMux routes the request to the appropriate upstream channel based on the `{model}` segment in the URL path: the request body is parsed and rebuilt from the native Gemini DTO before being forwarded, and the upstream response body is returned to the client verbatim. `model` can be any configured Gemini-family model name (as defined under Console → Channels → Models).
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request POST \
+  --url https://your-nookmux-domain/v1beta/models/gemini-2.5-flash:generateContent \
+  --header 'x-goog-api-key: $NOOKMUX_API_KEY' \
+  --header 'Content-Type: application/json' \
+  --data '{
+  "contents": [
+    {
+      "role": "user",
+      "parts": [
+        { "text": "Write a Python function that returns the n-th Fibonacci number." }
+      ]
+    }
+  ],
+  "generationConfig": {
+    "temperature": 0.7,
+    "maxOutputTokens": 1024
+  }
+}'
+```
+
+```python Python
+from google import genai
+
+client = genai.Client(
+    api_key="$NOOKMUX_API_KEY",
+    http_options={"base_url": "https://your-nookmux-domain"},
+)
+
+response = client.models.generate_content(
+    model="gemini-2.5-flash",
+    contents="Write a Python function that returns the n-th Fibonacci number.",
+)
+print(response.text)
+```
+
+</RequestExample>
+
+### Authentication
+
+Pass the NookMux API token in the `x-goog-api-key` header (create tokens on the Console → Tokens page). The gateway also accepts `Authorization: Bearer <token>` and the `?key=<token>` query parameter as compatible alternatives.
+
+<ParamField path="header.x-goog-api-key" type="string" required>
+  A NookMux API token, in the form `x-goog-api-key: <token>`.
+</ParamField>
+
+### Path parameters
+
+The action is fixed to `generateContent`.
+
+<ParamField path="path.model" type="string" required>
+  Name of the model to call, such as `gemini-2.5-pro` or `gemini-2.5-flash`. Use any model configured in NookMux; see the List models endpoint for available values.
+</ParamField>
+
+### Body
+
+<ParamField path="body.contents" type="object[]" required>
+  A list of content entries in chronological order. Each entry contains `role` and `parts`; see the table below for details.
+
+  <Expandable title="contents structure">
+    <ParamField path="role" type="string">
+      Author role of the content: `user` (user input) or `model` (model reply, passed back in multi-turn conversations). If the first entry omits `role`, it defaults to `user`.
+    </ParamField>
+    <ParamField path="parts" type="object[]" required>
+      A list of parts that make up one message. Each part uses one of the structures below.
+
+      <Expandable title="parts structure">
+        <ParamField path="text" type="string">
+          A text fragment.
+        </ParamField>
+        <ParamField path="inlineData" type="object">
+          Inline multimodal data (Base64-encoded), used to pass in images, audio, video, and documents. Accepts both `inlineData` and `inline_data`.
+
+          <Expandable title="inlineData structure">
+            <ParamField path="mimeType" type="string" required>
+              MIME type of the data, such as `image/jpeg`, `audio/wav`, `video/mp4`, or `application/pdf`. Accepts both `mimeType` and `mime_type`.
+            </ParamField>
+            <ParamField path="data" type="string" required>
+              Base64-encoded file content.
+            </ParamField>
+          </Expandable>
+        </ParamField>
+        <ParamField path="fileData" type="object">
+          References a media file by URI. NookMux does not host or proxy the Gemini File API, so use `inlineData` for regular multimodal input; this field only works when the upstream channel itself recognizes the URI (not a guaranteed capability).
+
+          <Expandable title="fileData structure">
+            <ParamField path="mimeType" type="string">
+              MIME type of the file.
+            </ParamField>
+            <ParamField path="fileUri" type="string" required>
+              The file URI.
+            </ParamField>
+          </Expandable>
+        </ParamField>
+        <ParamField path="functionCall" type="object">
+          A function call fragment initiated by the model, containing `name` (function name) and `args` (arguments object).
+        </ParamField>
+        <ParamField path="functionResponse" type="object">
+          A function execution result passed back to the model, containing `name`, `response` (result object), and optional `id`.
+        </ParamField>
+        <ParamField path="thought" type="boolean">
+          Marks whether the fragment is thinking (thought summary) content.
+        </ParamField>
+        <ParamField path="thoughtSignature" type="string">
+          Thought signature. Returned by the model for thinking-enabled function calling; pass it back verbatim in subsequent turns.
+        </ParamField>
+        <ParamField path="videoMetadata" type="object">
+          Metadata for a video fragment (such as `fps`), used for video cutting and similar scenarios.
+        </ParamField>
+        <ParamField path="executableCode" type="object">
+          A code fragment produced by the code execution tool, containing `language` and `code`.
+        </ParamField>
+        <ParamField path="codeExecutionResult" type="object">
+          A code execution result fragment, containing `outcome` and `output`.
+        </ParamField>
+      </Expandable>
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+<ParamField path="body.systemInstruction" type="object">
+  System instruction that gives the model context for the entire conversation. Its structure is the same as a single `contents` entry (`parts[]` with optional `role`), usually with a single `text` part. Accepts both `systemInstruction` and `system_instruction`.
+</ParamField>
+
+<ParamField path="body.tools" type="object[]">
+  A list of tools the model may use. It can be an array or a single tool object.
+
+  <Expandable title="tools structure">
+    <ParamField path="functionDeclarations" type="object[]">
+      A list of custom function declarations. Each declaration contains `name` (function name), `description`, and `parameters` (an OpenAPI/JSON Schema object with `type` set to `object`).
+    </ParamField>
+    <ParamField path="googleSearch" type="object">
+      Enables the Google Search retrieval tool (Gemini 2.0 and later); pass `{}`.
+    </ParamField>
+    <ParamField path="googleSearchRetrieval" type="object">
+      Google Search retrieval tool configuration for Gemini 1.5 models (contains `dynamicRetrievalConfig`).
+    </ParamField>
+    <ParamField path="codeExecution" type="object">
+      Enables the code execution tool, allowing the model to generate and run Python code.
+    </ParamField>
+    <ParamField path="urlContext" type="object">
+      Enables the URL context tool, allowing the model to fetch and understand the content of given URLs.
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+<ParamField path="body.toolConfig" type="object">
+  Tool use configuration.
+
+  <Expandable title="toolConfig structure">
+    <ParamField path="functionCallingConfig" type="object">
+      Function calling behavior: `mode` is `AUTO` (default, the model decides), `ANY` (forced), or `NONE` (disabled); `allowedFunctionNames` restricts the functions that may be called.
+    </ParamField>
+    <ParamField path="retrievalConfig" type="object">
+      Retrieval tool configuration, containing `latLng` (`latitude`, `longitude`) and `languageCode`.
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+<ParamField path="body.safetySettings" type="object[]">
+  A list of safety settings that adjust blocking thresholds per harm category.
+
+  <Expandable title="safetySettings structure">
+    <ParamField path="category" type="string" required>
+      Harm category: `HARM_CATEGORY_HARASSMENT`, `HARM_CATEGORY_HATE_SPEECH`, `HARM_CATEGORY_SEXUALLY_EXPLICIT`, `HARM_CATEGORY_DANGEROUS_CONTENT`, `HARM_CATEGORY_CIVIC_INTEGRITY`.
+    </ParamField>
+    <ParamField path="threshold" type="string" required>
+      Blocking threshold: `BLOCK_NONE`, `BLOCK_LOW_AND_ABOVE`, `BLOCK_MEDIUM_AND_ABOVE`, `BLOCK_HIGH_ONLY`, `OFF`.
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+<ParamField path="body.cachedContent" type="string">
+  Name of the cached context content (such as `cachedContents/abc123`), referencing a pre-cached context to reduce cost.
+</ParamField>
+
+<ParamField path="body.generationConfig" type="object">
+  Generation parameters.
+
+  <Expandable title="generationConfig structure">
+    <ParamField path="temperature" type="number">
+      Sampling temperature between `0.0` and `2.0`. Higher values make output more random and creative; lower values make it more deterministic.
+    </ParamField>
+    <ParamField path="topP" type="number">
+      Nucleus sampling parameter. The model only considers tokens whose cumulative probability reaches `topP`. Accepts both `topP` and `top_p`.
+    </ParamField>
+    <ParamField path="topK" type="integer">
+      Sample only from the k most probable tokens at each step. Accepts both `topK` and `top_k`.
+    </ParamField>
+    <ParamField path="candidateCount" type="integer" default="1">
+      Number of candidate responses to generate.
+    </ParamField>
+    <ParamField path="maxOutputTokens" type="integer">
+      Maximum number of tokens to generate (visible output plus thinking). Output is truncated when the limit is reached (`finishReason` becomes `MAX_TOKENS`).
+    </ParamField>
+    <ParamField path="stopSequences" type="string[]">
+      A list of stop sequences. Generation stops when the output contains any of them.
+    </ParamField>
+    <ParamField path="responseMimeType" type="string" default="text/plain">
+      MIME type of the response: `text/plain` (default) or `application/json` (JSON output).
+    </ParamField>
+    <ParamField path="responseSchema" type="object">
+      Response schema for structured output (an OpenAPI-style subset), used with `responseMimeType: application/json`.
+    </ParamField>
+    <ParamField path="responseJsonSchema" type="object">
+      Standard JSON Schema for structured output, used with `responseMimeType: application/json`.
+    </ParamField>
+    <ParamField path="presencePenalty" type="number">
+      Presence penalty. Positive values reduce the chance of repeating tokens that already appeared.
+    </ParamField>
+    <ParamField path="frequencyPenalty" type="number">
+      Frequency penalty. Positive values reduce the chance of repeating tokens based on their existing frequency.
+    </ParamField>
+    <ParamField path="responseLogprobs" type="boolean">
+      Whether to return log probabilities of output tokens.
+    </ParamField>
+    <ParamField path="logprobs" type="integer">
+      Return the n most probable tokens per output position. Requires `responseLogprobs`.
+    </ParamField>
+    <ParamField path="seed" type="integer">
+      Random seed for sampling. With the same seed and parameters, output is made as reproducible as possible.
+    </ParamField>
+    <ParamField path="responseModalities" type="string[]">
+      Output modalities to request: `TEXT`, `IMAGE`, `AUDIO`. Text generation defaults to `["TEXT"]`; image generation models require `IMAGE`; for TTS set it to `["AUDIO"]`.
+    </ParamField>
+    <ParamField path="mediaResolution" type="string">
+      Processing resolution of input media: `LOW`, `MEDIUM`, or `HIGH`. Lower resolutions consume fewer tokens.
+    </ParamField>
+    <ParamField path="thinkingConfig" type="object">
+      Thinking (reasoning) configuration.
+
+      <Expandable title="thinkingConfig structure">
+        <ParamField path="thinkingBudget" type="integer">
+          Thinking token budget. `0` disables thinking; `-1` means dynamic thinking (the model decides).
+        </ParamField>
+        <ParamField path="includeThoughts" type="boolean">
+          Whether to return thought summary fragments in the response (parts with `thought` set to `true`).
+        </ParamField>
+        <ParamField path="thinkingLevel" type="string">
+          Thinking level (such as `low` or `high`); use this or `thinkingBudget`, not both.
+        </ParamField>
+      </Expandable>
+    </ParamField>
+    <ParamField path="speechConfig" type="object">
+      TTS speech configuration. Accepts both `speechConfig` and `speech_config`.
+
+      <Expandable title="speechConfig structure">
+        <ParamField path="voiceConfig.prebuiltVoiceConfig.voiceName" type="string" required>
+          Prebuilt voice name, such as `Kore`, `Puck`, `Charon`, or `Fenrir`.
+        </ParamField>
+        <ParamField path="voiceConfig.prebuiltVoiceConfig.languageCode" type="string">
+          Language of the voice (such as `zh-CN`); inferred by the model by default.
+        </ParamField>
+      </Expandable>
+    </ParamField>
+    <ParamField path="imageConfig" type="object">
+      Image output configuration, such as `aspectRatio` and image size, for image generation models.
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+<Note>
+  The request body is parsed and rebuilt from the native Gemini DTO before being forwarded; only the fields listed on this page are passed through to the upstream. Whether `tools`, `speechConfig`, `imageConfig`, and similar fields are forwarded also depends on the Console → Models → parameter override configuration. Most fields accept both the camelCase and snake_case forms of the official REST API (such as `system_instruction`, `inline_data`, `mime_type`, `top_p`); they are normalized to camelCase when forwarded.
+</Note>
+
+<Warning>
+  The native Gemini relay supports exactly 5 actions: `generateContent`, `streamGenerateContent`, `countTokens`, `embedContent`, and `batchEmbedContents`. Other actions (such as `generateAnswer`, `createTunedModel`, direct `:predict` calls, and video generation via Veo `generateVideos`) are not supported: the action suffix in the client URL is dropped by the gateway, and the request is handled as `generateContent` or fails validation.
+</Warning>
+
+<Note>
+  Text-to-speech (TTS) is supported as `generateContent` passthrough: set `generationConfig.responseModalities` to `["AUDIO"]` and pick a voice through `generationConfig.speechConfig.voiceConfig.prebuiltVoiceConfig.voiceName`, together with TTS models such as `gemini-2.5-flash-preview-tts` and `gemini-2.5-pro-preview-tts`. Image generation models (`gemini-2.5-flash-image`, `gemini-3-pro-image`, the `nano-banana` series, and more) are also called through this endpoint, with `responseModalities` including `IMAGE`.
+
+  ```json
+  {
+    "contents": [
+      {
+        "role": "user",
+        "parts": [
+          { "text": "Say cheerfully: welcome to NookMux." }
+        ]
+      }
+    ],
+    "generationConfig": {
+      "responseModalities": ["AUDIO"],
+      "speechConfig": {
+        "voiceConfig": {
+          "prebuiltVoiceConfig": { "voiceName": "Kore" }
+        }
+      }
+    }
+  }
+  ```
+</Note>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "candidates": [
+    {
+      "content": {
+        "parts": [
+          {
+            "text": "def fibonacci(n):\n    if n <= 1:\n        return n\n    a, b = 0, 1\n    for _ in range(n - 1):\n        a, b = b, a + b\n    return a"
+          }
+        ],
+        "role": "model"
+      },
+      "finishReason": "STOP",
+      "index": 0,
+      "safetyRatings": [
+        { "category": "HARM_CATEGORY_HARASSMENT", "probability": "NEGLIGIBLE" },
+        { "category": "HARM_CATEGORY_HATE_SPEECH", "probability": "NEGLIGIBLE" },
+        { "category": "HARM_CATEGORY_SEXUALLY_EXPLICIT", "probability": "NEGLIGIBLE" },
+        { "category": "HARM_CATEGORY_DANGEROUS_CONTENT", "probability": "NEGLIGIBLE" }
+      ]
+    }
+  ],
+  "usageMetadata": {
+    "promptTokenCount": 24,
+    "candidatesTokenCount": 62,
+    "totalTokenCount": 86,
+    "thoughtsTokenCount": 0
+  },
+  "modelVersion": "gemini-2.5-flash"
+}
+```
+
+</ResponseExample>
+
+The upstream response body is returned verbatim by the gateway; the key fields of the standard Gemini response are documented below.
+
+### Response fields
+
+<ResponseField name="candidates" type="object[]" required>
+  List of candidate responses; its length equals the requested `candidateCount` (default 1).
+
+  <Expandable title="candidates structure">
+    <ResponseField name="content" type="object">
+      The response content, with the same structure as a `contents` entry (`role` is `model`; `parts[]` contains `text`, `inlineData` (image/audio output), `functionCall`, `thought`, and other fragments).
+    </ResponseField>
+    <ResponseField name="finishReason" type="string">
+      Why generation stopped: `STOP` (natural end), `MAX_TOKENS` (maxOutputTokens limit), `SAFETY` (blocked by safety policy), `RECITATION` (citation restriction triggered), `MALFORMED_FUNCTION_CALL` (malformed function call), `IMAGE_SAFETY`, `OTHER`.
+    </ResponseField>
+    <ResponseField name="index" type="integer">
+      Index of this candidate in the list (starting at 0).
+    </ResponseField>
+    <ResponseField name="safetyRatings" type="object[]">
+      Safety ratings, each containing `category` (harm category) and `probability` (`NEGLIGIBLE`, `LOW`, `MEDIUM`, `HIGH`).
+    </ResponseField>
+    <ResponseField name="groundingMetadata" type="object">
+      Citation metadata returned when retrieval tools such as `googleSearch` or `urlContext` are used, containing `groundingChunks`, `groundingSupports`, `webSearchQueries`, and more.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="promptFeedback" type="object">
+  Prompt feedback. Returned when the input is blocked by safety policy; contains `blockReason` and `safetyRatings`.
+</ResponseField>
+
+<ResponseField name="usageMetadata" type="object" required>
+  Token usage statistics, used by NookMux for billing.
+
+  <Expandable title="usageMetadata structure">
+    <ResponseField name="promptTokenCount" type="integer">
+      Tokens consumed by the input.
+    </ResponseField>
+    <ResponseField name="candidatesTokenCount" type="integer">
+      Tokens consumed by the output.
+    </ResponseField>
+    <ResponseField name="thoughtsTokenCount" type="integer">
+      Tokens consumed by thinking.
+    </ResponseField>
+    <ResponseField name="totalTokenCount" type="integer">
+      Total tokens consumed.
+    </ResponseField>
+    <ResponseField name="cachedContentTokenCount" type="integer">
+      Tokens served from context cache.
+    </ResponseField>
+    <ResponseField name="toolUsePromptTokenCount" type="integer">
+      Tokens consumed by tool use sections.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="modelVersion" type="string">
+  Model version that generated the response.
+</ResponseField>
+
+## Error codes
+
+| HTTP status | Description |
+| --- | --- |
+| 400 | Invalid request parameters (such as missing `contents`), or the model does not support the requested capability |
+| 401 | Token is invalid, disabled, or expired |
+| 403 | Token cannot access the model, or quota is insufficient |
+| 429 | Rate limit triggered |
+| 500 | Upstream channel error; `error.message` contains the upstream details |
+
+Error responses use the unified JSON structure `{"error": {"message": ..., "type": ...}}`.

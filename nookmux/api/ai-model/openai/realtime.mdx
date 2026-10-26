@@ -1,0 +1,125 @@
+---
+title: Realtime
+description: Establish a Realtime WebSocket session for low-latency bidirectional speech and text.
+api: "GET /v1/realtime"
+---
+
+Establish an OpenAI Realtime session over WebSocket for low-latency speech input, speech output, and text interaction — suitable for voice assistants, live interpretation, and similar scenarios.
+
+NookMux relays events bidirectionally between the client and an upstream channel that supports Realtime (such as OpenAI or Azure, depending on your channel configuration): every event sent by the client is forwarded to the upstream verbatim, and every event returned by the upstream is passed back verbatim. Text and audio usage within the session is measured by NookMux for billing.
+
+## Connecting
+
+Connect over the WebSocket protocol (`wss://`) and specify the `model` as a query parameter:
+
+```text
+wss://your-nookmux-domain/v1/realtime?model=gpt-4o-realtime-preview
+```
+
+<RequestExample>
+
+```javascript JavaScript
+const apiKey = "$NOOKMUX_API_KEY";
+
+const ws = new WebSocket(
+  "wss://your-nookmux-domain/v1/realtime?model=gpt-4o-realtime-preview",
+  ["openai-insecure-api-key." + apiKey, "realtime.v1"]
+);
+
+ws.onopen = () => {
+  ws.send(JSON.stringify({
+    type: "response.create",
+    response: { modalities: ["text", "audio"] },
+  }));
+};
+
+ws.onmessage = (event) => {
+  const data = JSON.parse(event.data);
+  console.log(data.type);
+};
+
+ws.onerror = (event) => console.error(event);
+```
+
+```python Python
+import asyncio
+import json
+import websockets
+
+API_KEY = "$NOOKMUX_API_KEY"
+
+
+async def main():
+    url = "wss://your-nookmux-domain/v1/realtime?model=gpt-4o-realtime-preview"
+    subprotocols = ["openai-insecure-api-key." + API_KEY, "realtime.v1"]
+
+    async with websockets.connect(url, subprotocols=subprotocols) as ws:
+        await ws.send(json.dumps({
+            "type": "response.create",
+            "response": {"modalities": ["text", "audio"]},
+        }))
+        async for message in ws:
+            event = json.loads(message)
+            print(event["type"])
+
+
+asyncio.run(main())
+```
+
+</RequestExample>
+
+### Authentication
+
+<ParamField path="header.Sec-WebSocket-Protocol" type="string" required>
+  A WebSocket handshake cannot carry a normal `Authorization` header, so the token is passed via subprotocols in the form `openai-insecure-api-key.<your token>, realtime.v1`. Create tokens on the Console → Tokens page.
+</ParamField>
+
+### Connection parameters
+
+<ParamField path="query.model" type="string" required>
+  Name of the Realtime model to use, taken from the `model` query parameter of the connection URL, such as `gpt-4o-realtime-preview`. It must be a model configured in NookMux whose channel supports Realtime.
+</ParamField>
+
+## Session events
+
+Once connected, events follow the semantics of the OpenAI Realtime API. A typical flow:
+
+- After a successful connection, the upstream first sends `session.created` with the default session configuration (model, voice, audio formats, tools, and more); the client can adjust it with `session.update`.
+- The client appends Base64-encoded audio (24kHz 16-bit mono PCM) with `input_audio_buffer.append` and commits it explicitly with `input_audio_buffer.commit`, or relies on server-side voice activity detection (`input_audio_buffer.speech_started` / `input_audio_buffer.speech_committed`) for automatic segmentation.
+- The client triggers generation with `response.create`; the upstream returns synthesized audio and text incrementally via `response.audio.delta` and `response.audio_transcript.delta`, and signals completion with `response.done`.
+- Conversation content is maintained through events such as `conversation.item.create` / `conversation.item.created`; errors are delivered as `error` events.
+
+Some typical event frames:
+
+```json
+{"type": "session.created", "event_id": "evt_server_1", "session": {"id": "sess_abc123", "model": "gpt-4o-realtime-preview"}}
+```
+
+```json
+{"type": "input_audio_buffer.append", "event_id": "evt_1", "audio": "dGhlIHF1aWNrIGJyb3duIGZveCBqdW1wcyBvdmVyIHRoZSBsYXp5IGRvZw=="}
+```
+
+```json
+{"type": "response.audio.delta", "event_id": "evt_2", "response_id": "resp_abc123", "delta": "c2hvcnQgYXVkaW8gZnJhbWU="}
+```
+
+<Note>
+  NookMux does not rewrite event payloads; they are relayed verbatim in both directions. See the OpenAI Realtime API documentation for the complete event definitions. Text and audio token usage within the session is billed at the model's price.
+</Note>
+
+## Error codes
+
+| HTTP status | Description |
+| --- | --- |
+| 401 | Token is invalid, disabled, or expired (rejected during the handshake) |
+| 403 | Token cannot access the model, or quota is insufficient |
+| 429 | Rate limit triggered |
+| 500 | Upstream channel error |
+
+<Note>
+  Errors that occur after a successful handshake (for example, no available channel or a failed upstream Realtime connection) are not returned as HTTP status codes; instead, NookMux delivers an `error` event in the OpenAI error format over the WebSocket and then closes the connection:
+</Note>
+
+```json
+{"type": "error", "event_id": "evt_3", "error": {"type": "invalid_request_error", "code": "model_not_found", "message": "The model 'gpt-4o-realtime-preview' does not exist or you do not have access to it."}}
+```

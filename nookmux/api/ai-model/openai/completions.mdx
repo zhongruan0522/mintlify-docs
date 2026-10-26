@@ -1,0 +1,239 @@
+---
+title: Completions
+description: Generate text completions for a given prompt, compatible with the legacy OpenAI Completions API, with support for streaming.
+api: "POST /v1/completions"
+---
+
+Generate text completions for a given prompt. The request and response formats are compatible with the legacy OpenAI Completions API.
+
+<Warning>
+  This is OpenAI's legacy text endpoint and is no longer evolving. For new applications, use the <a href="/nookmux/api/ai-model/openai/chat-completions">Chat completions</a> endpoint instead.
+</Warning>
+
+NookMux routes the request to the appropriate upstream channel based on the `model` name and returns a unified response in OpenAI format. This endpoint does not use a `messages` conversation history; input is provided through `prompt`, which suits prefix-continuation and code-completion scenarios.
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request POST \
+  --url https://your-nookmux-domain/v1/completions \
+  --header 'Authorization: Bearer $NOOKMUX_API_KEY' \
+  --header 'Content-Type: application/json' \
+  --data '{
+  "model": "gpt-3.5-turbo-instruct",
+  "prompt": "Write a Python function that checks whether a string is a palindrome:\n\ndef is_palindrome(s):",
+  "suffix": "\n\n# Unit tests",
+  "stream": false
+}'
+```
+
+```python Python
+from openai import OpenAI
+
+client = OpenAI(
+    base_url="https://your-nookmux-domain/v1",
+    api_key="$NOOKMUX_API_KEY",
+)
+
+response = client.completions.create(
+    model="gpt-3.5-turbo-instruct",
+    prompt="Write a Python function that checks whether a string is a palindrome:\n\ndef is_palindrome(s):",
+    suffix="\n\n# Unit tests",
+)
+print(response.choices[0].text)
+```
+
+</RequestExample>
+
+### Authentication
+
+<ParamField path="header.Authorization" type="string" required>
+  A NookMux API token prefixed with `Bearer`, in the form `Authorization: Bearer <token>`. Create tokens on the Console → Tokens page.
+</ParamField>
+
+### Body
+
+<ParamField path="body.model" type="string" required>
+  Name of the model to call. Use any model configured in NookMux; see the List models endpoint for available values.
+</ParamField>
+
+<ParamField path="body.prompt" type="string | string[]" required>
+  The prompt to generate completions for, as a string or an array of strings. When an array is provided, each item is an independent completion request, and the results are returned merged in order in `choices`. This endpoint does not use the `messages` field.
+</ParamField>
+
+<ParamField path="body.suffix" type="string">
+  The suffix that comes after the generated completion. Useful for code-completion scenarios; supported by some models (such as code models).
+</ParamField>
+
+<ParamField path="body.stream" type="boolean" default="false">
+  Whether to stream the response. When `true`, output is returned in chunks via Server-Sent Events and terminated with `data: [DONE]`.
+</ParamField>
+
+<ParamField path="body.stream_options" type="object">
+  Streaming options.
+
+  <Expandable title="stream_options structure">
+    <ParamField path="include_usage" type="boolean" default="false">
+      Whether the final streamed chunk carries the `usage` field.
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+<ParamField path="body.max_tokens" type="integer">
+  Maximum number of tokens to generate. Output is truncated when the limit is reached and `finish_reason` becomes `length`.
+</ParamField>
+
+<ParamField path="body.temperature" type="number">
+  Sampling temperature between `0.0` and `2.0`. Higher values make output more random and creative; lower values make it more deterministic. Adjust either `temperature` or `top_p`, not both.
+</ParamField>
+
+<ParamField path="body.top_p" type="number">
+  Nucleus sampling parameter. The model only considers tokens whose cumulative probability reaches `top_p`; for example, `0.1` keeps the top 10% probability mass.
+</ParamField>
+
+<ParamField path="body.n" type="integer" default="1">
+  Number of completions to generate for each prompt.
+</ParamField>
+
+<ParamField path="body.stop" type="string | string[]">
+  Up to 4 stop sequences. Generation stops when the output contains any of them; the sequence itself is not included in the output.
+</ParamField>
+
+<ParamField path="body.frequency_penalty" type="number">
+  Frequency penalty between `-2.0` and `2.0`. Positive values reduce the chance of repeating tokens based on their existing frequency.
+</ParamField>
+
+<ParamField path="body.presence_penalty" type="number">
+  Presence penalty between `-2.0` and `2.0`. Positive values reduce the chance of repeating tokens that have already appeared.
+</ParamField>
+
+<ParamField path="body.logprobs" type="boolean">
+  Whether to return log probabilities of output tokens.
+</ParamField>
+
+<ParamField path="body.top_logprobs" type="integer">
+  Return the n most probable tokens per output position (`0` to `20`). Requires `logprobs`.
+</ParamField>
+
+<ParamField path="body.logit_bias" type="object">
+  Biases the likelihood of specific tokens; keys are token IDs and values range from `-100` to `100`.
+</ParamField>
+
+<ParamField path="body.user" type="string">
+  End-user identifier used by NookMux for identification and abuse monitoring.
+</ParamField>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "id": "cmpl-abc123",
+  "object": "text_completion",
+  "created": 1735689600,
+  "model": "gpt-3.5-turbo-instruct",
+  "choices": [
+    {
+      "index": 0,
+      "text": "\n    s = s.lower()\n    return s == s[::-1]",
+      "logprobs": null,
+      "finish_reason": "stop"
+    }
+  ],
+  "usage": {
+    "prompt_tokens": 48,
+    "completion_tokens": 18,
+    "total_tokens": 66
+  }
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="id" type="string" required>
+  Unique identifier for the completion.
+</ResponseField>
+
+<ResponseField name="object" type="string" required>
+  Object type, always `text_completion`.
+</ResponseField>
+
+<ResponseField name="created" type="integer" required>
+  Unix timestamp (seconds) of when the response was created.
+</ResponseField>
+
+<ResponseField name="model" type="string" required>
+  Model that generated the response.
+</ResponseField>
+
+<ResponseField name="choices" type="object[]" required>
+  List of completions; its length equals the requested `n` (when `prompt` is an array, it is the sum across all prompts).
+
+  <Expandable title="choices structure">
+    <ResponseField name="index" type="integer">
+      Index of this completion in the list.
+    </ResponseField>
+    <ResponseField name="text" type="string">
+      The completion text, excluding the prompt itself.
+    </ResponseField>
+    <ResponseField name="logprobs" type="object">
+      Returned when the request sets `logprobs`; contains `tokens`, `token_logprobs`, and `top_logprobs` per position.
+    </ResponseField>
+    <ResponseField name="finish_reason" type="string">
+      Why generation stopped: `stop` (natural end or stop sequence), `length` (max token limit), `content_filter` (blocked by safety policy).
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="usage" type="object" required>
+  Token usage statistics.
+
+  <Expandable title="usage structure">
+    <ResponseField name="prompt_tokens" type="integer">
+      Tokens consumed by the input.
+    </ResponseField>
+    <ResponseField name="completion_tokens" type="integer">
+      Tokens consumed by the output.
+    </ResponseField>
+    <ResponseField name="total_tokens" type="integer">
+      Total tokens consumed.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+## Streaming
+
+With `"stream": true`, the response is returned as `text/event-stream`; each `data:` line is a chunk (with `object` set to `text_completion.chunk`):
+
+```json
+data: {"id":"cmpl-abc123","object":"text_completion.chunk","created":1735689600,"model":"gpt-3.5-turbo-instruct","choices":[{"text":"    s","index":0,"logprobs":null,"finish_reason":null}]}
+
+data: {"id":"cmpl-abc123","object":"text_completion.chunk","created":1735689600,"model":"gpt-3.5-turbo-instruct","choices":[{"text":" = s.lower()","index":0,"logprobs":null,"finish_reason":null}]}
+
+data: {"id":"cmpl-abc123","object":"text_completion.chunk","created":1735689600,"model":"gpt-3.5-turbo-instruct","choices":[{"text":"","index":0,"logprobs":null,"finish_reason":"stop"}]}
+
+data: [DONE]
+```
+
+<ResponseField name="text" type="string">
+  Incremental completion text. Each chunk returns a fragment in `choices[].text`; the final chunk carries `finish_reason`.
+</ResponseField>
+
+<Note>
+  When the request sets `stream_options.include_usage: true`, an extra chunk after the one with `finish_reason` carries the `usage` field with an empty `choices` array.
+</Note>
+
+## Error codes
+
+| HTTP status | Description |
+| --- | --- |
+| 400 | Invalid request parameters, or the model does not support the requested capability |
+| 401 | Token is invalid, disabled, or expired |
+| 403 | Token cannot access the model, or quota is insufficient |
+| 429 | Rate limit triggered |
+| 500 | Upstream channel error; `error.message` contains the upstream details |

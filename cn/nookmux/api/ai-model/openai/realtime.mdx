@@ -1,0 +1,125 @@
+---
+title: 实时语音
+description: 建立 Realtime WebSocket 会话，低延迟双向语音与文本交互。
+api: "GET /v1/realtime"
+---
+
+建立 OpenAI Realtime 实时会话，通过 WebSocket 进行低延迟的语音输入、语音输出与文本交互，适用于语音助手、实时翻译等场景。
+
+NookMux 在客户端与支持 Realtime 的上游渠道（如 OpenAI、Azure，以渠道配置为准）之间双向中继事件：客户端发送的每个事件原样转发给上游，上游返回的事件原样回传；会话中的文本与音频用量由 NookMux 统计并计费。
+
+## 连接
+
+通过 WebSocket 协议（`wss://`）连接，`model` 通过查询参数指定：
+
+```text
+wss://your-nookmux-domain/v1/realtime?model=gpt-4o-realtime-preview
+```
+
+<RequestExample>
+
+```javascript JavaScript
+const apiKey = "$NOOKMUX_API_KEY";
+
+const ws = new WebSocket(
+  "wss://your-nookmux-domain/v1/realtime?model=gpt-4o-realtime-preview",
+  ["openai-insecure-api-key." + apiKey, "realtime.v1"]
+);
+
+ws.onopen = () => {
+  ws.send(JSON.stringify({
+    type: "response.create",
+    response: { modalities: ["text", "audio"] },
+  }));
+};
+
+ws.onmessage = (event) => {
+  const data = JSON.parse(event.data);
+  console.log(data.type);
+};
+
+ws.onerror = (event) => console.error(event);
+```
+
+```python Python
+import asyncio
+import json
+import websockets
+
+API_KEY = "$NOOKMUX_API_KEY"
+
+
+async def main():
+    url = "wss://your-nookmux-domain/v1/realtime?model=gpt-4o-realtime-preview"
+    subprotocols = ["openai-insecure-api-key." + API_KEY, "realtime.v1"]
+
+    async with websockets.connect(url, subprotocols=subprotocols) as ws:
+        await ws.send(json.dumps({
+            "type": "response.create",
+            "response": {"modalities": ["text", "audio"]},
+        }))
+        async for message in ws:
+            event = json.loads(message)
+            print(event["type"])
+
+
+asyncio.run(main())
+```
+
+</RequestExample>
+
+### 认证
+
+<ParamField path="header.Sec-WebSocket-Protocol" type="string" required>
+  WebSocket 握手无法携带普通的 `Authorization` 请求头，令牌通过子协议传递，格式为 `openai-insecure-api-key.<你的令牌>, realtime.v1`。令牌在控制台「令牌」页创建。
+</ParamField>
+
+### 连接参数
+
+<ParamField path="query.model" type="string" required>
+  要使用的 Realtime 模型名，取自连接 URL 的 `model` 查询参数，如 `gpt-4o-realtime-preview`。必须是 NookMux 中已配置且渠道支持 Realtime 的模型。
+</ParamField>
+
+## 会话事件流
+
+连接建立后的事件遵循 OpenAI Realtime API 的语义，典型流程如下：
+
+- 连接成功后，上游首先下发 `session.created`，携带默认会话配置（模型、语音、音频格式、工具等）；客户端可通过 `session.update` 调整配置。
+- 客户端通过 `input_audio_buffer.append` 追加 Base64 编码的音频（24kHz 16-bit 单声道 PCM），通过 `input_audio_buffer.commit` 显式提交；或依赖服务端语音活动检测（`input_audio_buffer.speech_started` / `input_audio_buffer.speech_committed`）自动分段。
+- 客户端通过 `response.create` 触发模型生成；上游通过 `response.audio.delta`、`response.audio_transcript.delta` 增量返回合成音频与文本，以 `response.done` 表示完成。
+- 对话内容以 `conversation.item.create` / `conversation.item.created` 等事件维护；错误统一以 `error` 事件下发。
+
+部分典型事件帧：
+
+```json
+{"type": "session.created", "event_id": "evt_server_1", "session": {"id": "sess_abc123", "model": "gpt-4o-realtime-preview"}}
+```
+
+```json
+{"type": "input_audio_buffer.append", "event_id": "evt_1", "audio": "dGhlIHF1aWNrIGJyb3duIGZveCBqdW1wcyBvdmVyIHRoZSBsYXp5IGRvZw=="}
+```
+
+```json
+{"type": "response.audio.delta", "event_id": "evt_2", "response_id": "resp_abc123", "delta": "c2hvcnQgYXVkaW8gZnJhbWU="}
+```
+
+<Note>
+  NookMux 对事件内容不做改写，双向原样转发；各事件的完整定义参见 OpenAI Realtime API 文档。会话事件中的文本与音频 token 用量按模型价格计费。
+</Note>
+
+## 错误码
+
+| HTTP 状态码 | 说明 |
+| --- | --- |
+| 401 | 令牌无效、已禁用或已过期（握手阶段拒绝） |
+| 403 | 令牌无权访问该模型，或额度不足 |
+| 429 | 触发速率限制 |
+| 500 | 上游渠道错误 |
+
+<Note>
+  握手成功后发生的错误（如无可用渠道、上游 Realtime 连接失败）不会以 HTTP 状态码返回，而是通过 WebSocket 下发 OpenAI 错误格式的 `error` 事件，随后关闭连接：
+</Note>
+
+```json
+{"type": "error", "event_id": "evt_3", "error": {"type": "invalid_request_error", "code": "model_not_found", "message": "The model 'gpt-4o-realtime-preview' does not exist or you do not have access to it."}}
+```

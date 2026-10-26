@@ -1,0 +1,120 @@
+---
+title: 模型列表（Claude 格式）
+description: 获取当前令牌可用的模型列表，以 Anthropic Models API 格式返回。
+api: "GET /v1/models"
+---
+
+获取当前令牌可用的模型列表，响应格式兼容 Anthropic Models API。
+
+`GET /v1/models` 同时也是 OpenAI 格式的模型列表端点：仅当请求**同时**携带 `x-api-key` 与 `anthropic-version` 两个 header 时，NookMux 才返回 Anthropic 格式；否则默认返回 OpenAI 格式，见[模型列表](/cn/nookmux/api/ai-model/openai/list-models)。
+
+列表范围为当前令牌可用的模型：令牌设置了模型限制时返回限制内的模型，否则返回令牌分组（或用户分组）当前启用的模型。NookMux 一次性返回全部模型，不支持 `limit` / `after_id` / `before_id` 分页参数，`has_more` 恒为 `false`。
+
+## 请求
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url https://your-nookmux-domain/v1/models \
+  --header "x-api-key: $NOOKMUX_API_KEY" \
+  --header "anthropic-version: 2023-06-01"
+```
+
+```python Python
+from anthropic import Anthropic
+
+client = Anthropic(
+    base_url="https://your-nookmux-domain",
+    api_key="$NOOKMUX_API_KEY",
+)
+
+models = client.models.list()
+for model in models.data:
+    print(model.id)
+```
+
+</RequestExample>
+
+### 认证
+
+<ParamField path="header.x-api-key" type="string" required>
+  NookMux API 令牌，格式为 `x-api-key: <token>`。令牌在控制台「令牌」页创建。
+</ParamField>
+
+<ParamField path="header.anthropic-version" type="string" required>
+  Claude API 版本号，如 `2023-06-01`。与 `x-api-key` 同时携带时才会返回 Anthropic 格式；只带 `Authorization: Bearer <token>` 或缺少本 header 时，本端点退化为 OpenAI 格式响应。
+</ParamField>
+
+## 响应
+
+<ResponseExample>
+
+```json 200
+{
+  "data": [
+    {
+      "id": "claude-opus-4.5",
+      "created_at": "2021-07-20T12:00:00Z",
+      "display_name": "claude-opus-4.5",
+      "type": "model"
+    },
+    {
+      "id": "claude-sonnet-4.5",
+      "created_at": "2021-07-20T12:00:00Z",
+      "display_name": "claude-sonnet-4.5",
+      "type": "model"
+    },
+    {
+      "id": "gpt-4o",
+      "created_at": "2021-07-20T12:00:00Z",
+      "display_name": "gpt-4o",
+      "type": "model"
+    }
+  ],
+  "first_id": "claude-opus-4.5",
+  "has_more": false,
+  "last_id": "gpt-4o"
+}
+```
+
+</ResponseExample>
+
+### 响应字段
+
+<ResponseField name="data" type="object[]" required>
+  模型对象列表，包含当前令牌可用的全部模型。
+
+  <Expandable title="模型对象结构">
+    <ResponseField name="id" type="string">
+      模型标识，即调用 [对话消息](/cn/nookmux/api/ai-model/claude/messages) 时使用的 `model` 名称。
+    </ResponseField>
+    <ResponseField name="created_at" type="string">
+      RFC 3339 格式的时间字符串。NookMux 返回固定占位时间，不代表模型发布时间。
+    </ResponseField>
+    <ResponseField name="display_name" type="string">
+      模型显示名，与 `id` 相同。
+    </ResponseField>
+    <ResponseField name="type" type="string">
+      对象类型，固定为 `model`。
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="first_id" type="string" required>
+  列表中第一个模型的 `id`。
+</ResponseField>
+
+<ResponseField name="has_more" type="boolean" required>
+  是否还有更多结果，NookMux 恒返回 `false`（一次性返回全部）。
+</ResponseField>
+
+<ResponseField name="last_id" type="string" required>
+  列表中最后一个模型的 `id`。
+</ResponseField>
+
+## 错误码
+
+| HTTP 状态码 | 说明 |
+| --- | --- |
+| 401 | 令牌无效、已禁用或已过期 |

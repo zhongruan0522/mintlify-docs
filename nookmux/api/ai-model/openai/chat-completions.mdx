@@ -1,0 +1,407 @@
+---
+title: Chat completions
+description: Create a model response based on a conversation history, with support for streaming, tool calls, and multimodal input.
+api: "POST /v1/chat/completions"
+---
+
+Create a model response based on a conversation history. Supports both streaming and non-streaming responses, and is fully compatible with the OpenAI Chat Completions API.
+
+NookMux routes the request to the appropriate upstream channel based on the `model` name and returns a unified response in OpenAI format. `model` can be any model configured in your instance (OpenAI, Claude, Gemini, Qwen, and more, as defined under Console → Channels → Models).
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request POST \
+  --url https://your-nookmux-domain/v1/chat/completions \
+  --header 'Authorization: Bearer $NOOKMUX_API_KEY' \
+  --header 'Content-Type: application/json' \
+  --data '{
+  "model": "gpt-4o",
+  "messages": [
+    { "role": "system", "content": "You are a coding assistant that writes concise, efficient code." },
+    { "role": "user", "content": "Write a Python function that returns the n-th Fibonacci number." }
+  ],
+  "stream": false
+}'
+```
+
+```python Python
+from openai import OpenAI
+
+client = OpenAI(
+    base_url="https://your-nookmux-domain/v1",
+    api_key="$NOOKMUX_API_KEY",
+)
+
+response = client.chat.completions.create(
+    model="gpt-4o",
+    messages=[
+        {"role": "system", "content": "You are a coding assistant that writes concise, efficient code."},
+        {"role": "user", "content": "Write a Python function that returns the n-th Fibonacci number."},
+    ],
+)
+print(response.choices[0].message.content)
+```
+
+</RequestExample>
+
+### Authentication
+
+<ParamField path="header.Authorization" type="string" required>
+  A NookMux API token prefixed with `Bearer`, in the form `Authorization: Bearer <token>`. Create tokens on the Console → Tokens page.
+</ParamField>
+
+### Body
+
+<ParamField path="body.model" type="string" required>
+  Name of the model to call. Use any model configured in NookMux; see the List models endpoint for available values.
+</ParamField>
+
+<ParamField path="body.messages" type="object[]" required>
+  A list of conversation messages in chronological order. Each message contains `role` and `content`; see the table below for details.
+
+  <Expandable title="messages structure">
+    <ParamField path="role" type="string" required>
+      Message role: `system` (sets assistant behavior), `user` (user input), `assistant` (assistant reply), `tool` (tool call result).
+    </ParamField>
+    <ParamField path="content" type="string | object[]" required>
+      Message content. A string for plain text; an array of content blocks for multimodal input, where `type` is one of `text`, `image_url`, `input_audio`, `file`, `video_url`.
+    </ParamField>
+    <ParamField path="content[].image_url.url" type="string">
+      Image URL or Base64-encoded data (in the `data:image/jpeg;base64,...` form).
+    </ParamField>
+    <ParamField path="content[].image_url.detail" type="string" default="high">
+      Image detail level: `high` (more accurate, consumes more tokens) or `low`.
+    </ParamField>
+    <ParamField path="content[].input_audio.data" type="string">
+      Base64-encoded audio data.
+    </ParamField>
+    <ParamField path="content[].input_audio.format" type="string">
+      Audio format: `wav` or `mp3`.
+    </ParamField>
+    <ParamField path="name" type="string">
+      Optional identifier for the participant, used to distinguish multiple participants of the same role.
+    </ParamField>
+    <ParamField path="tool_calls" type="object[]">
+      Tool calls attached to an assistant message. Each item contains `id`, `type`, and `function` (`name`, `arguments`).
+    </ParamField>
+    <ParamField path="tool_call_id" type="string">
+      Required when `role` is `tool`; the ID of the corresponding tool call.
+    </ParamField>
+    <ParamField path="reasoning_content" type="string">
+      Reasoning content. Pass back the thinking process from a previous turn for reasoning models (such as DeepSeek-R1).
+    </ParamField>
+    <ParamField path="prefix" type="boolean">
+      Whether to treat this message's content as a continuation prefix for the model (supported by some models, such as DeepSeek).
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+<ParamField path="body.stream" type="boolean" default="false">
+  Whether to stream the response. When `true`, output is returned in chunks via Server-Sent Events and terminated with `data: [DONE]`.
+</ParamField>
+
+<ParamField path="body.stream_options" type="object">
+  Streaming options.
+
+  <Expandable title="stream_options structure">
+    <ParamField path="include_usage" type="boolean" default="false">
+      Whether the final streamed chunk carries the `usage` field.
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+<ParamField path="body.max_tokens" type="integer">
+  Maximum number of tokens to generate (visible output plus reasoning). Output is truncated when the limit is reached (`finish_reason` becomes `length`).
+</ParamField>
+
+<ParamField path="body.max_completion_tokens" type="integer">
+  New name for `max_tokens` for next-generation reasoning models (o series, gpt-5, and later). When both are set, the larger value wins.
+</ParamField>
+
+<ParamField path="body.reasoning_effort" type="string">
+  Thinking depth for reasoning models: `minimal`, `low`, `medium`, `high`. Only effective for models that support reasoning.
+</ParamField>
+
+<ParamField path="body.verbosity" type="string">
+  Output verbosity supported by gpt-5 models: `low` or `high`.
+</ParamField>
+
+<ParamField path="body.temperature" type="number">
+  Sampling temperature between `0.0` and `2.0`. Higher values make output more random and creative; lower values make it more deterministic. Adjust either `temperature` or `top_p`, not both.
+</ParamField>
+
+<ParamField path="body.top_p" type="number">
+  Nucleus sampling parameter. The model only considers tokens whose cumulative probability reaches `top_p`; for example, `0.1` keeps the top 10% probability mass.
+</ParamField>
+
+<ParamField path="body.top_k" type="integer">
+  Sample only from the k most probable tokens at each step (supported by some models, such as Gemini).
+</ParamField>
+
+<ParamField path="body.n" type="integer" default="1">
+  Number of completions to generate for each input message.
+</ParamField>
+
+<ParamField path="body.stop" type="string | string[]">
+  Up to 4 stop sequences. Generation stops when the output contains any of them; the sequence itself is not included in the output.
+</ParamField>
+
+<ParamField path="body.frequency_penalty" type="number">
+  Frequency penalty between `-2.0` and `2.0`. Positive values reduce the chance of repeating tokens based on their existing frequency.
+</ParamField>
+
+<ParamField path="body.presence_penalty" type="number">
+  Presence penalty between `-2.0` and `2.0`. Positive values increase the chance of introducing new topics.
+</ParamField>
+
+<ParamField path="body.seed" type="integer">
+  Random seed for sampling. With the same seed and parameters, output is made as reproducible as possible.
+</ParamField>
+
+<ParamField path="body.response_format" type="object">
+  Output format specification.
+
+  <Expandable title="response_format structure">
+    <ParamField path="type" type="string" default="text">
+      Output format: `text` (default, plain text), `json_object` (JSON object), `json_schema` (structured output following a JSON Schema).
+    </ParamField>
+    <ParamField path="json_schema" type="object">
+      Schema definition when `type` is `json_schema`: `name` (required), `description`, `schema`, `strict`.
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+<ParamField path="body.tools" type="object[]">
+  A list of tools the model may call.
+
+  <Expandable title="tools structure">
+    <ParamField path="type" type="string" required>
+      Tool type; currently `function` is supported.
+    </ParamField>
+    <ParamField path="function.name" type="string" required>
+      Function name. Must match `^[a-zA-Z0-9_-]{1,64}$`.
+    </ParamField>
+    <ParamField path="function.description" type="string">
+      What the function does; the model uses it to decide when to call.
+    </ParamField>
+    <ParamField path="function.parameters" type="object">
+      JSON Schema for the function parameters, with `type` set to `object`.
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+<ParamField path="body.tool_choice" type="string | object">
+  Controls how the model picks tools: `none`, `auto` (default), `required`, or a specific function `{"type": "function", "function": {"name": "my_func"}}`.
+</ParamField>
+
+<ParamField path="body.parallel_tool_calls" type="boolean">
+  Whether the model may issue multiple tool calls in parallel within one reply.
+</ParamField>
+
+<ParamField path="body.logprobs" type="boolean">
+  Whether to return log probabilities of output tokens.
+</ParamField>
+
+<ParamField path="body.top_logprobs" type="integer">
+  Return the n most probable tokens per output position (0 to 20). Requires `logprobs`.
+</ParamField>
+
+<ParamField path="body.logit_bias" type="object">
+  Biases the likelihood of specific tokens; keys are token IDs and values range from `-100` to `100`.
+</ParamField>
+
+<ParamField path="body.modalities" type="string[]">
+  Output modalities to request: `text`, `audio`.
+</ParamField>
+
+<ParamField path="body.audio" type="object">
+  Audio output options: `voice` and `format` (`wav` or `mp3`).
+</ParamField>
+
+<ParamField path="body.user" type="string">
+  End-user identifier used by NookMux for identification and abuse monitoring.
+</ParamField>
+
+<ParamField path="body.metadata" type="object">
+  Additional key-value metadata, up to 16 pairs.
+</ParamField>
+
+<ParamField path="body.store" type="boolean">
+  Whether to store the output of this request (for distillation and evals products; OpenAI channels only).
+</ParamField>
+
+<ParamField path="body.prediction" type="object">
+  Predicted output. Providing an approximation of the expected content speeds up generation.
+</ParamField>
+
+<ParamField path="body.prompt_cache_key" type="string">
+  Cache key used to improve prompt cache hit rates.
+</ParamField>
+
+<ParamField path="body.web_search_options" type="object">
+  Web search options for Claude channels: `search_context_size` (`low` / `medium` / `high`) and `user_location`.
+</ParamField>
+
+<ParamField path="body.search_parameters" type="object">
+  Search parameters for Perplexity and similar channels (`search_domain_filter`, `search_recency_filter`, `return_images`, and more).
+</ParamField>
+
+<ParamField path="body.reasoning" type="object">
+  OpenRouter-style reasoning parameters: `effort`, `max_tokens`.
+</ParamField>
+
+<ParamField path="body.thinking" type="object">
+  Thinking switch for GLM-4.5 and later / Claude channels, such as `{"type": "enabled", "budget_tokens": 1024}`.
+</ParamField>
+
+<ParamField path="body.enable_thinking" type="boolean">
+  Thinking switch for the Qwen3 series.
+</ParamField>
+
+<ParamField path="body.extra_body" type="object">
+  Extra parameters for Gemini channels, passed through to the upstream verbatim.
+</ParamField>
+
+<ParamField path="body.think" type="object">
+  Thinking parameters for Ollama channels.
+</ParamField>
+
+<Note>
+  Vendor passthrough fields (`thinking`, `enable_thinking`, `extra_body`, `web_search_options`, and others) only take effect on their matching channels; other channels drop them per the parameter filtering rules. Whether a field is forwarded also depends on the Console → Models → parameter override configuration.
+</Note>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "id": "chatcmpl-abc123",
+  "object": "chat.completion",
+  "created": 1735689600,
+  "model": "gpt-4o",
+  "choices": [
+    {
+      "index": 0,
+      "message": {
+        "role": "assistant",
+        "content": "def fibonacci(n):\n    if n <= 1:\n        return n\n    a, b = 0, 1\n    for _ in range(n - 1):\n        a, b = b, a + b\n    return a"
+      },
+      "finish_reason": "stop"
+    }
+  ],
+  "usage": {
+    "prompt_tokens": 42,
+    "completion_tokens": 68,
+    "total_tokens": 110
+  }
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="id" type="string" required>
+  Unique identifier for the completion.
+</ResponseField>
+
+<ResponseField name="object" type="string" required>
+  Object type, always `chat.completion`.
+</ResponseField>
+
+<ResponseField name="created" type="integer" required>
+  Unix timestamp (seconds) of when the response was created.
+</ResponseField>
+
+<ResponseField name="model" type="string" required>
+  Model that generated the response.
+</ResponseField>
+
+<ResponseField name="choices" type="object[]" required>
+  List of model replies; its length equals the requested `n`.
+
+  <Expandable title="choices structure">
+    <ResponseField name="index" type="integer">
+      Index of this reply in the list.
+    </ResponseField>
+    <ResponseField name="message" type="object">
+      The reply message object.
+
+      <Expandable title="message structure">
+        <ResponseField name="role" type="string">
+          Always `assistant`.
+        </ResponseField>
+        <ResponseField name="content" type="string">
+          The reply text. `null` when the model requests tool calls.
+        </ResponseField>
+        <ResponseField name="reasoning_content" type="string">
+          Reasoning content (returned by reasoning models such as DeepSeek-R1).
+        </ResponseField>
+        <ResponseField name="tool_calls" type="object[]">
+          Tool calls requested by the model. Each item contains `id`, `type` (always `function`), `function.name`, and `function.arguments` (a JSON-encoded string of parameters).
+        </ResponseField>
+      </Expandable>
+    </ResponseField>
+    <ResponseField name="finish_reason" type="string">
+      Why generation stopped: `stop` (natural end or stop sequence), `length` (max token limit), `tool_calls` (model requests tools), `content_filter` (blocked by safety policy).
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="usage" type="object" required>
+  Token usage statistics.
+
+  <Expandable title="usage structure">
+    <ResponseField name="prompt_tokens" type="integer">
+      Tokens consumed by the input.
+    </ResponseField>
+    <ResponseField name="completion_tokens" type="integer">
+      Tokens consumed by the output.
+    </ResponseField>
+    <ResponseField name="total_tokens" type="integer">
+      Total tokens consumed.
+    </ResponseField>
+    <ResponseField name="prompt_tokens_details" type="object">
+      Input breakdown, including `cached_tokens` (tokens served from cache).
+    </ResponseField>
+    <ResponseField name="completion_tokens_details" type="object">
+      Output breakdown, including `reasoning_tokens` (tokens used for reasoning).
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+## Streaming
+
+With `"stream": true`, the response is returned as `text/event-stream`; each `data:` line is a chunk:
+
+```json
+data: {"id":"chatcmpl-abc123","object":"chat.completion.chunk","created":1735689600,"model":"gpt-4o","choices":[{"index":0,"delta":{"role":"assistant"},"finish_reason":null}]}
+
+data: {"id":"chatcmpl-abc123","object":"chat.completion.chunk","created":1735689600,"model":"gpt-4o","choices":[{"index":0,"delta":{"content":"def"},"finish_reason":null}]}
+
+data: {"id":"chatcmpl-abc123","object":"chat.completion.chunk","created":1735689600,"model":"gpt-4o","choices":[{"index":0,"delta":{},"finish_reason":"stop"}]}
+
+data: [DONE]
+```
+
+<ResponseField name="delta" type="object">
+  Incremental content. The first chunk carries `role`; subsequent chunks return text incrementally in `content`, reasoning in `reasoning_content`, and tool call fragments in `tool_calls`.
+</ResponseField>
+
+<Note>
+  When the request sets `stream_options.include_usage: true`, an extra chunk after the one with `finish_reason` carries the `usage` field with an empty `choices` array.
+</Note>
+
+## Error codes
+
+| HTTP status | Description |
+| --- | --- |
+| 400 | Invalid request parameters, or the model does not support the requested capability |
+| 401 | Token is invalid, disabled, or expired |
+| 403 | Token cannot access the model, or quota is insufficient |
+| 429 | Rate limit triggered |
+| 500 | Upstream channel error; `error.message` contains the upstream details |

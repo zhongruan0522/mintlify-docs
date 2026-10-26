@@ -1,0 +1,147 @@
+---
+title: 文档重排序
+description: 对一组文档按与查询的相关性重新排序，返回带相关性分数的排序结果。
+api: "POST /v1/rerank"
+---
+
+对一组候选文档按与查询（query）的相关性重新排序。请求与响应格式兼容 Jina/Cohere 风格的 Rerank API，配合重排序模型（如 `qwen-rerank`、`bge-reranker` 系列）使用，常用于 RAG 检索后处理。
+
+NookMux 按模型名将请求分发到配置了对应重排序模型的渠道。此接口不支持流式。
+
+## 请求
+
+<RequestExample>
+
+```bash cURL
+curl --request POST \
+  --url https://your-nookmux-domain/v1/rerank \
+  --header 'Authorization: Bearer $NOOKMUX_API_KEY' \
+  --header 'Content-Type: application/json' \
+  --data '{
+  "model": "qwen-rerank-plus",
+  "query": "什么是 AI API 网关？",
+  "documents": [
+    "AI 网关统一聚合多家模型供应商的接口。",
+    "今天的午餐菜单是红烧肉和炒青菜。",
+    "重排序模型按相关性给文档打分。"
+  ],
+  "top_n": 2,
+  "return_documents": false
+}'
+```
+
+```python Python
+import requests
+
+response = requests.post(
+    "https://your-nookmux-domain/v1/rerank",
+    headers={"Authorization": "Bearer $NOOKMUX_API_KEY"},
+    json={
+        "model": "qwen-rerank-plus",
+        "query": "什么是 AI API 网关？",
+        "documents": [
+            "AI 网关统一聚合多家模型供应商的接口。",
+            "今天的午餐菜单是红烧肉和炒青菜。",
+            "重排序模型按相关性给文档打分。",
+        ],
+        "top_n": 2,
+    },
+)
+print(response.json())
+```
+
+</RequestExample>
+
+### 认证
+
+<ParamField path="header.Authorization" type="string" required>
+  以 `Bearer` 开头的 NookMux API 令牌，格式为 `Authorization: Bearer <token>`。令牌在控制台「令牌」页创建。
+</ParamField>
+
+### 请求体
+
+<ParamField path="body.model" type="string" required>
+  重排序模型名称，如 `qwen-rerank-plus`、`bge-reranker-v2-m3`。取值为 NookMux 中已配置的模型。
+</ParamField>
+
+<ParamField path="body.query" type="string" required>
+  查询文本。模型按各文档与该查询的相关性打分排序。
+</ParamField>
+
+<ParamField path="body.documents" type="string[] | object[]" required>
+  候选文档列表。元素可以是字符串，或 `{"text": "..."}` 形式的对象。至少 1 条。
+</ParamField>
+
+<ParamField path="body.top_n" type="integer">
+  返回相关性最高的前 n 条结果。缺省时返回全部文档的排序结果。
+</ParamField>
+
+<ParamField path="body.return_documents" type="boolean" default="false">
+  是否在结果中回显原始文档内容。`false` 时仅返回 `index` 与 `relevance_score`。
+</ParamField>
+
+<ParamField path="body.max_chunk_per_doc" type="integer">
+  长文档分块上限：每个文档最多切成多少个块参与重排（部分渠道支持）。
+</ParamField>
+
+<ParamField path="body.overlap_tokens" type="integer">
+  长文档分块时相邻块之间的重叠 token 数（部分渠道支持）。
+</ParamField>
+
+## 响应
+
+<ResponseExample>
+
+```json 200
+{
+  "results": [
+    {
+      "index": 0,
+      "relevance_score": 0.98
+    },
+    {
+      "index": 2,
+      "relevance_score": 0.71
+    }
+  ],
+  "usage": {
+    "prompt_tokens": 86,
+    "completion_tokens": 0,
+    "total_tokens": 86
+  }
+}
+```
+
+</ResponseExample>
+
+### 响应字段
+
+<ResponseField name="results" type="object[]" required>
+  按相关性从高到低排序的结果列表。
+
+  <Expandable title="results 结构">
+    <ResponseField name="index" type="integer">
+      对应请求 `documents` 数组中的下标。
+    </ResponseField>
+    <ResponseField name="relevance_score" type="number">
+      相关性分数，`0.0 ~ 1.0`，越高越相关。
+    </ResponseField>
+    <ResponseField name="document" type="string | object">
+      原始文档内容，仅当请求 `return_documents` 为 `true` 时返回。
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="usage" type="object" required>
+  Token 使用统计，字段同[对话补全](/cn/nookmux/api/ai-model/openai/chat-completions)的 `usage`。重排序按输入 token 计费。
+</ResponseField>
+
+## 错误码
+
+| HTTP 状态码 | 说明 |
+| --- | --- |
+| 400 | `query` 或 `documents` 为空，或请求格式错误 |
+| 401 | 令牌无效、已禁用或已过期 |
+| 403 | 令牌无权访问该模型，或额度不足 |
+| 429 | 触发速率限制 |
+| 500 | 上游渠道返回错误，`error.message` 中包含上游错误详情 |

@@ -20,38 +20,20 @@ NookMux provides RESTful APIs, categorized into **AI Model APIs** and **Manageme
 
 ## AI Model APIs
 
-AI Model APIs provide calls for various AI capabilities, compatible with the OpenAI API format.
+AI Model APIs are the unified entry point for callers, grouped by request protocol into OpenAI, Claude, and Gemini families, plus a rerank endpoint. See the [AI model APIs overview](/nookmux/api/ai-model/index) for authentication and shared conventions.
 
 <Columns cols={2}>
-  <Card icon="list" title="Model List" href="/nookmux/api/ai-model/models/list/listmodels">
-  Get a list of available models.
+  <Card icon="square-terminal" title="OpenAI APIs" href="/nookmux/api/ai-model/openai/chat-completions">
+  Chat completions, completions, Responses, embeddings, images, audio, moderations, Realtime, and more.
   </Card>
-  <Card icon="message-square" title="Chat" href="/nookmux/api/ai-model/chat/openai/createchatcompletion">
-  Conversation completion API.
+  <Card icon="message-square" title="Claude APIs" href="/nookmux/api/ai-model/claude/messages">
+  The Messages conversation API and model listing.
   </Card>
-  <Card icon="file-text" title="Completions" href="/nookmux/api/ai-model/completions/createcompletion">
-  Traditional text completion API.
+  <Card icon="gem" title="Gemini APIs" href="/nookmux/api/ai-model/gemini/generate-content">
+  generateContent, countTokens, embeddings, model listing, and other native endpoints.
   </Card>
-  <Card icon="database" title="Embeddings" href="/nookmux/api/ai-model/embeddings/createembedding">
-  Text embedding vector generation API.
-  </Card>
-  <Card icon="search" title="Rerank" href="/nookmux/api/ai-model/rerank/creatererank">
+  <Card icon="search" title="Rerank" href="/nookmux/api/ai-model/rerank">
   Document reranking API.
-  </Card>
-  <Card icon="shield-check" title="Moderations" href="/nookmux/api/ai-model/moderations/createmoderation">
-  Content safety moderation API.
-  </Card>
-  <Card icon="headphones" title="Audio" href="/nookmux/api/ai-model/audio/openai/createspeech">
-  Speech recognition and speech synthesis API.
-  </Card>
-  <Card icon="radio" title="Real-time Audio" href="/nookmux/api/ai-model/realtime/createrealtimesession">
-  Real-time audio streaming API.
-  </Card>
-  <Card icon="image" title="Images" href="/nookmux/api/ai-model/images/openai/post-v1-images-generations">
-  AI image generation API.
-  </Card>
-  <Card icon="file-question" title="Unimplemented" href="/nookmux/api/ai-model/unimplemented/files/listfiles">
-  Placeholder API, not yet implemented.
   </Card>
 </Columns>
 

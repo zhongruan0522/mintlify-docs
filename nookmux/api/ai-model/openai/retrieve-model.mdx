@@ -1,0 +1,102 @@
+---
+title: Retrieve model
+description: Retrieve a single model object by its ID, compatible with the OpenAI Models API.
+api: "GET /v1/models/{model}"
+---
+
+Retrieve a single model object by its ID, compatible with the OpenAI Models retrieve API.
+
+The model ID must be one of the names in NookMux's built-in channel model lists; custom model names (manually added in the console but not in the built-in lists) return a `model_not_found` error, even though they can be called from other endpoints. When both `x-api-key` and `anthropic-version` headers are present, a single-model object in Anthropic format is returned; see Header-based routing below.
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url https://your-nookmux-domain/v1/models/gpt-4o \
+  --header 'Authorization: Bearer $NOOKMUX_API_KEY'
+```
+
+```python Python
+from openai import OpenAI
+
+client = OpenAI(
+    base_url="https://your-nookmux-domain/v1",
+    api_key="$NOOKMUX_API_KEY",
+)
+
+model = client.models.retrieve("gpt-4o")
+print(model.id, model.owned_by)
+```
+
+</RequestExample>
+
+### Authentication
+
+<ParamField path="header.Authorization" type="string" required>
+  A NookMux API token prefixed with `Bearer`, in the form `Authorization: Bearer <token>`. Create tokens on the Console → Tokens page.
+</ParamField>
+
+### Path parameters
+
+<ParamField path="path.model" type="string" required>
+  ID of the model to retrieve, such as `gpt-4o`.
+</ParamField>
+
+### Header-based routing
+
+- Both `x-api-key` and `anthropic-version` headers: returns the model in Anthropic format; see [Claude retrieve model](/nookmux/api/ai-model/claude/retrieve-model).
+- Otherwise: returns the OpenAI format described on this page.
+
+<Note>
+  `DELETE /v1/models/{model}` (delete a model) is not implemented; calling it returns `501 Not Implemented`.
+</Note>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "id": "gpt-4o",
+  "object": "model",
+  "created": 1626777600,
+  "owned_by": "openai",
+  "supported_endpoint_types": null
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="id" type="string" required>
+  Model name.
+</ResponseField>
+
+<ResponseField name="object" type="string" required>
+  Object type, always `model`.
+</ResponseField>
+
+<ResponseField name="created" type="integer" required>
+  Unix timestamp (in seconds) of when the model record was created.
+</ResponseField>
+
+<ResponseField name="owned_by" type="string" required>
+  Name of the owning channel (for example `openai`, `claude`, `google gemini`).
+</ResponseField>
+
+<ResponseField name="supported_endpoint_types" type="string[]">
+  NookMux extension field. Always `null` on this endpoint; only the List models endpoint populates it.
+</ResponseField>
+
+<Note>
+  When the model does not exist, this endpoint still returns `200` with an `error` object: `code` is `model_not_found`, `param` is `model`, and `message` states that the model does not exist.
+</Note>
+
+## Error codes
+
+| HTTP status | Description |
+| --- | --- |
+| 401 | Token is invalid, disabled, or expired |

@@ -1,0 +1,45 @@
+---
+title: AI model APIs overview
+description: Authentication, base URL, and shared conventions for NookMux AI model APIs.
+---
+
+NookMux AI model APIs are the unified entry point for callers: you send requests in any of the native OpenAI, Claude, or Gemini formats, and NookMux routes each request to the matching upstream channel by model name and returns the response in the same format.
+
+The APIs are grouped by request protocol:
+
+<Columns cols={3}>
+  <Card icon="square-terminal" title="OpenAI APIs" href="/nookmux/api/ai-model/openai/chat-completions">
+    Chat completions, completions, Responses, embeddings, images, audio, moderations, Realtime, and more; paths start with /v1.
+  </Card>
+  <Card icon="message-square" title="Claude APIs" href="/nookmux/api/ai-model/claude/messages">
+    The Messages conversation API and model listing, at /v1/messages.
+  </Card>
+  <Card icon="gem" title="Gemini APIs" href="/nookmux/api/ai-model/gemini/generate-content">
+    generateContent, streamGenerateContent, countTokens, and more; paths start with /v1beta.
+  </Card>
+</Columns>
+
+## Base URL
+
+Send all requests to your deployed NookMux instance, shown as `https://your-nookmux-domain` in these docs. For example, `/v1/chat/completions` resolves to `https://your-nookmux-domain/v1/chat/completions`.
+
+## Authentication
+
+All AI model APIs use an API token (starting with `sk-`) created on the Console → Tokens page. Each protocol family passes the token the way its vendor defines it, and NookMux additionally accepts all three methods on every endpoint:
+
+| Protocol | Recommended | Also accepted |
+| --- | --- | --- |
+| OpenAI (`/v1/*`) | `Authorization: Bearer sk-xxx` | `x-api-key`, `x-goog-api-key` |
+| Claude (`/v1/messages`) | `x-api-key: sk-xxx` | `Authorization: Bearer sk-xxx` |
+| Gemini (`/v1beta/*`) | `x-goog-api-key: sk-xxx` | `Authorization: Bearer sk-xxx`, query parameter `?key=sk-xxx` |
+
+## Shared behavior
+
+- **Streaming**: text APIs accept the `stream` parameter and return `text/event-stream` (SSE), terminated with `data: [DONE]` (Claude and Gemini native formats follow their own event specifications).
+- **Model routing**: `model` must be a model name configured in NookMux; see the [List models](/nookmux/api/ai-model/openai/list-models) endpoint or the Console → Models page for available values.
+- **Billing and limits**: each call is billed at the model ratio and consumes token quota; exceeding rate limits returns `429`.
+- **Errors**: errors are returned as JSON in the form `{"error": {"message": "...", "type": "..."}}`; upstream channel errors are passed through inside it.
+
+## Scope
+
+This section documents every API NookMux relays. Endpoints not listed here (such as OpenAI Files and Fine-tuning, or standalone Gemini TTS/video generation) are not implemented or supported; calling them returns an explicit error rather than failing silently.

@@ -1,0 +1,114 @@
+---
+title: Create transcription
+description: Transcribe an audio file into text, compatible with the OpenAI Audio Transcriptions API.
+api: "POST /v1/audio/transcriptions"
+---
+
+Transcribe an audio file into text. The request and response formats are compatible with the OpenAI Audio Transcriptions endpoint, submitted as `multipart/form-data`.
+
+NookMux validates and parses `model` and `file` for routing and billing, and forwards every form field other than `model` to the upstream channel verbatim; the response body is passed through from the upstream. Available models are defined under Console → Channels → Models; common choices include `whisper-1`, `gpt-4o-transcribe`, and `gpt-4o-mini-transcribe`.
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request POST \
+  --url https://your-nookmux-domain/v1/audio/transcriptions \
+  --header 'Authorization: Bearer $NOOKMUX_API_KEY' \
+  --form 'model=whisper-1' \
+  --form 'file=@/path/to/speech.mp3'
+```
+
+```python Python
+from openai import OpenAI
+
+client = OpenAI(
+    base_url="https://your-nookmux-domain/v1",
+    api_key="$NOOKMUX_API_KEY",
+)
+
+transcription = client.audio.transcriptions.create(
+    model="whisper-1",
+    file=open("/path/to/speech.mp3", "rb"),
+)
+print(transcription.text)
+```
+
+</RequestExample>
+
+### Authentication
+
+<ParamField path="header.Authorization" type="string" required>
+  A NookMux API token prefixed with `Bearer`, in the form `Authorization: Bearer <token>`. Create tokens on the Console → Tokens page.
+</ParamField>
+
+### Body
+
+When submitted as `multipart/form-data`, each field is a form part:
+
+<ParamField path="body.file" type="string" required>
+  The audio file to transcribe (common formats such as `flac`, `mp3`, `mp4`, `m4a`, `ogg`, `wav`, and `webm`). Only the first `file` part is used; the supported formats and size limits depend on the upstream channel. Returns 400 when missing.
+</ParamField>
+
+<ParamField path="body.model" type="string" required>
+  Name of the transcription model to use. Defaults to `whisper-1` when omitted.
+</ParamField>
+
+<ParamField path="body.language" type="string">
+  The ISO-639-1 language code of the source audio (for example, `zh` or `en`). Supplying the language improves accuracy and reduces hallucination.
+</ParamField>
+
+<ParamField path="body.prompt" type="string">
+  A guide or style hint, optionally containing the spelling of proper nouns, to help the model keep a consistent output style.
+</ParamField>
+
+<ParamField path="body.response_format" type="string" default="json">
+  Output format of the transcription: `json`, `text`, `srt`, `verbose_json`, or `vtt`. When omitted, NookMux fills in `json` before forwarding.
+</ParamField>
+
+<ParamField path="body.temperature" type="number">
+  Sampling temperature between `0` and `1`. Higher values make the output more random; `0` is generally recommended.
+</ParamField>
+
+<ParamField path="body.timestamp_granularities[]" type="string[]">
+  Timestamp granularities: `word` / `segment`. Requires `response_format=verbose_json`.
+</ParamField>
+
+<Note>
+  Every form field other than `model` and `file` is forwarded to the upstream channel verbatim; whether a field takes effect depends on the channel and the Console → Models → parameter override configuration.
+</Note>
+
+## Response
+
+When `response_format` is `json` (the default):
+
+<ResponseExample>
+
+```json 200
+{
+  "text": "今天天气不错，我们一起去公园散步吧。"
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="text" type="string" required>
+  The transcribed text.
+</ResponseField>
+
+<Note>
+  With `response_format` set to `verbose_json`, the response additionally includes `task`, `language`, `duration`, and `segments` (each with `id`, `start`, `end`, `text`, `tokens`, and other fields); with `text` / `srt` / `vtt`, the body is plain text in that format. The response body is passed through from the upstream channel verbatim.
+</Note>
+
+## Error codes
+
+| HTTP status | Description |
+| --- | --- |
+| 400 | Invalid request parameters (for example, the `file` part is missing) |
+| 401 | Token is invalid, disabled, or expired |
+| 403 | Token cannot access the model, or quota is insufficient |
+| 429 | Rate limit triggered |
+| 500 | Upstream channel error; `error.message` contains the upstream details |

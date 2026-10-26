@@ -1,0 +1,177 @@
+---
+title: Edit image
+description: Create an edited version of an existing image from a prompt, compatible with the OpenAI Images Edits API.
+api: "POST /v1/images/edits"
+---
+
+Create an edited version of an existing image, supporting inpainting, outpainting, and compositing.
+
+Requests are submitted as `multipart/form-data`, matching the official OpenAI Images Edits endpoint; when `Content-Type` is `application/json`, the body is parsed as JSON and `image` may be an image URL or Base64 data. NookMux routes the request to the appropriate upstream channel based on the `model` name and bills accordingly.
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request POST \
+  --url https://your-nookmux-domain/v1/images/edits \
+  --header 'Authorization: Bearer $NOOKMUX_API_KEY' \
+  --form 'model=gpt-image-1' \
+  --form 'prompt=Replace the grass background with snow while keeping the cat in the same pose' \
+  --form 'image=@/path/to/cat.png' \
+  --form 'size=1024x1024'
+```
+
+```python Python
+from openai import OpenAI
+
+client = OpenAI(
+    base_url="https://your-nookmux-domain/v1",
+    api_key="$NOOKMUX_API_KEY",
+)
+
+result = client.images.edit(
+    model="gpt-image-1",
+    image=open("/path/to/cat.png", "rb"),
+    prompt="Replace the grass background with snow while keeping the cat in the same pose",
+    size="1024x1024",
+)
+print(result.data[0].b64_json)
+```
+
+</RequestExample>
+
+### Authentication
+
+<ParamField path="header.Authorization" type="string" required>
+  A NookMux API token prefixed with `Bearer`, in the form `Authorization: Bearer <token>`. Create tokens on the Console → Tokens page.
+</ParamField>
+
+### Body
+
+When submitted as `multipart/form-data`, each field is a form part:
+
+<ParamField path="body.model" type="string" required>
+  Name of the image model to use. `gpt-image-1` supports image editing; other editing models depend on your channel configuration.
+</ParamField>
+
+<ParamField path="body.prompt" type="string" required>
+  A description of the desired edit. Describe the changes to make; content outside the transparent area of the `mask` (or outside the input image) stays unchanged.
+</ParamField>
+
+<ParamField path="body.image" type="string" required>
+  The image to edit. With `multipart/form-data` this is a file part (PNG and other common formats) and may be repeated (use the `image` / `image[]` field names for multiple images); with a JSON body this is an image URL or Base64-encoded string.
+</ParamField>
+
+<ParamField path="body.mask" type="string">
+  An additional PNG mask file (`multipart/form-data` only). Fully transparent areas (alpha of 0) indicate where the image should be edited; non-transparent areas stay unchanged. The mask must have the same dimensions as the input image.
+</ParamField>
+
+<ParamField path="body.n" type="integer" default="1">
+  Number of images to generate, between `1` and `100`. Defaults to `1`; values outside the range return 400.
+</ParamField>
+
+<ParamField path="body.size" type="string">
+  Output image size, with width and height separated by a lowercase `x`. `gpt-image-1` supports `1024x1024`, `1024x1536`, `1536x1024`, and `auto`; `dall-e-2` supports `256x256`, `512x512`, and `1024x1024`.
+</ParamField>
+
+<ParamField path="body.quality" type="string">
+  Image quality. `gpt-image-1`: `auto` / `high` / `medium` / `low`; `dall-e-2`: `standard` / `hd`.
+</ParamField>
+
+<ParamField path="body.watermark" type="boolean">
+  Whether to add an AIGC watermark to the generated image (pass `watermark=true` / `watermark=false` in the form). Only effective on channels that support it.
+</ParamField>
+
+<Note>
+  With `multipart/form-data`, every form field other than `model` (including the `image` and `mask` files) is forwarded to the upstream channel verbatim; whether a field takes effect depends on the channel and the Console → Models → parameter override configuration.
+</Note>
+
+<Note>
+  The legacy path `/v1/edits` (without the `/images` prefix) still has a route in the current version, but calling it returns 400 because the request is parsed as a different type. Use `/v1/images/edits` instead.
+</Note>
+
+<Note>
+  The image variations endpoint `/v1/images/variations` is not implemented and returns 501 (`api_not_implemented`).
+</Note>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "created": 1760822400,
+  "data": [
+    {
+      "b64_json": "iVBORw0KGgoAAAANSUhEUgAABAAAAAQACAYAAABXPYanAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAFUlEQVR4nO3BMQEAAADCoPVPbQofoAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABaOc9mAAGkPFcuAAAAAElFTkSuQmCC"
+    }
+  ],
+  "usage": {
+    "total_tokens": 1188,
+    "input_tokens": 1167,
+    "output_tokens": 21,
+    "input_tokens_details": {
+      "text_tokens": 22,
+      "image_tokens": 1145
+    },
+    "output_tokens_details": {
+      "text_tokens": 21
+    }
+  }
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="created" type="integer" required>
+  Unix timestamp (seconds) of when the image was created.
+</ResponseField>
+
+<ResponseField name="data" type="object[]" required>
+  List of generated results; its length equals the requested `n`.
+
+  <Expandable title="data structure">
+    <ResponseField name="url" type="string">
+      Temporary download URL for the image, returned when `response_format` is `url` (`dall-e` series only); valid for about 60 minutes.
+    </ResponseField>
+    <ResponseField name="b64_json" type="string">
+      Base64-encoded image data. `gpt-image-1` always returns this field.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="usage" type="object">
+  Token usage for this edit; returned by `gpt-image-1` models only.
+
+  <Expandable title="usage structure">
+    <ResponseField name="total_tokens" type="integer">
+      Total tokens consumed.
+    </ResponseField>
+    <ResponseField name="input_tokens" type="integer">
+      Tokens consumed by the input (prompt and input images).
+    </ResponseField>
+    <ResponseField name="output_tokens" type="integer">
+      Tokens consumed by the output (prorated by generated images).
+    </ResponseField>
+    <ResponseField name="input_tokens_details" type="object">
+      Input breakdown, including `text_tokens` and `image_tokens`.
+    </ResponseField>
+    <ResponseField name="output_tokens_details" type="object">
+      Output breakdown, including `text_tokens`.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+## Error codes
+
+| HTTP status | Description |
+| --- | --- |
+| 400 | Invalid request parameters (for example, `image` missing, `n` outside `1` to `100`, or `model` omitted) |
+| 401 | Token is invalid, disabled, or expired |
+| 403 | Token cannot access the model, or quota is insufficient |
+| 429 | Rate limit triggered |
+| 500 | Upstream channel error; `error.message` contains the upstream details |
+| 501 | Endpoint not implemented (for example, `/v1/images/variations`) |

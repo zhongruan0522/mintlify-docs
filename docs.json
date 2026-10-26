@@ -126,134 +126,49 @@
               {
                 "group": "AI 模型接口",
                 "pages": [
+                  "cn/nookmux/api/ai-model/index",
                   {
-                    "group": "音频（Audio）",
+                    "group": "OpenAI 接口",
                     "pages": [
-                      "cn/nookmux/api/ai-model/audio/geminirelayv1beta-383836364",
-                      {
-                        "group": "原生OpenAI格式",
-                        "pages": [
-                          "cn/nookmux/api/ai-model/audio/openai/createspeech",
-                          "cn/nookmux/api/ai-model/audio/openai/createtranscription",
-                          "cn/nookmux/api/ai-model/audio/openai/createtranslation"
-                        ]
-                      }
+                      "cn/nookmux/api/ai-model/openai/chat-completions",
+                      "cn/nookmux/api/ai-model/openai/completions",
+                      "cn/nookmux/api/ai-model/openai/responses",
+                      "cn/nookmux/api/ai-model/openai/responses-compact",
+                      "cn/nookmux/api/ai-model/openai/embeddings",
+                      "cn/nookmux/api/ai-model/openai/image-generations",
+                      "cn/nookmux/api/ai-model/openai/image-edits",
+                      "cn/nookmux/api/ai-model/openai/audio-speech",
+                      "cn/nookmux/api/ai-model/openai/audio-transcriptions",
+                      "cn/nookmux/api/ai-model/openai/audio-translations",
+                      "cn/nookmux/api/ai-model/openai/realtime",
+                      "cn/nookmux/api/ai-model/openai/list-models",
+                      "cn/nookmux/api/ai-model/openai/retrieve-model",
+                      "cn/nookmux/api/ai-model/openai/moderations",
+                      "cn/nookmux/api/ai-model/openai/files",
+                      "cn/nookmux/api/ai-model/openai/fine-tunes"
                     ]
                   },
                   {
-                    "group": "聊天（Chat）",
+                    "group": "Claude 接口",
                     "pages": [
-                      "cn/nookmux/api/ai-model/chat/createmessage",
-                      {
-                        "group": "原生Gemini格式",
-                        "pages": [
-                          "cn/nookmux/api/ai-model/chat/gemini/geminirelayv1beta",
-                          "cn/nookmux/api/ai-model/chat/gemini/geminirelayv1beta-391536411"
-                        ]
-                      },
-                      {
-                        "group": "原生OpenAI格式",
-                        "pages": [
-                          "cn/nookmux/api/ai-model/chat/openai/createchatcompletion",
-                          "cn/nookmux/api/ai-model/chat/openai/createresponse"
-                        ]
-                      }
+                      "cn/nookmux/api/ai-model/claude/messages",
+                      "cn/nookmux/api/ai-model/claude/list-models",
+                      "cn/nookmux/api/ai-model/claude/retrieve-model"
                     ]
                   },
                   {
-                    "group": "补全（Completions）",
+                    "group": "Gemini 接口",
                     "pages": [
-                      "cn/nookmux/api/ai-model/completions/createcompletion"
+                      "cn/nookmux/api/ai-model/gemini/generate-content",
+                      "cn/nookmux/api/ai-model/gemini/stream-generate-content",
+                      "cn/nookmux/api/ai-model/gemini/count-tokens",
+                      "cn/nookmux/api/ai-model/gemini/embed-content",
+                      "cn/nookmux/api/ai-model/gemini/batch-embed-contents",
+                      "cn/nookmux/api/ai-model/gemini/list-models",
+                      "cn/nookmux/api/ai-model/gemini/openai-compat"
                     ]
                   },
-                  {
-                    "group": "嵌入（Embeddings）",
-                    "pages": [
-                      "cn/nookmux/api/ai-model/embeddings/createembedding",
-                      "cn/nookmux/api/ai-model/embeddings/createengineembedding"
-                    ]
-                  },
-                  {
-                    "group": "图像（Images）",
-                    "pages": [
-                      {
-                        "group": "原生Gemini格式",
-                        "pages": [
-                          "cn/nookmux/api/ai-model/images/gemini/geminirelayv1beta-383837589",
-                          "cn/nookmux/api/ai-model/images/gemini/geminirelayv1beta-389846313"
-                        ]
-                      },
-                      {
-                        "group": "原生OpenAI格式",
-                        "pages": [
-                          "cn/nookmux/api/ai-model/images/openai/post-v1-images-edits",
-                          "cn/nookmux/api/ai-model/images/openai/post-v1-images-generations"
-                        ]
-                      },
-                      {
-                        "group": "通义千问OpenAI格式",
-                        "pages": [
-                          "cn/nookmux/api/ai-model/images/qwen/createimage",
-                          "cn/nookmux/api/ai-model/images/qwen/editimage"
-                        ]
-                      }
-                    ]
-                  },
-                  {
-                    "group": "模型（Models）",
-                    "pages": [
-                      {
-                        "group": "列出模型",
-                        "pages": [
-                          "cn/nookmux/api/ai-model/models/list/listmodels",
-                          "cn/nookmux/api/ai-model/models/list/listmodelsgemini"
-                        ]
-                      }
-                    ]
-                  },
-                  {
-                    "group": "审查（Moderations）",
-                    "pages": [
-                      "cn/nookmux/api/ai-model/moderations/createmoderation"
-                    ]
-                  },
-                  {
-                    "group": "实时语音（Realtime）",
-                    "pages": [
-                      "cn/nookmux/api/ai-model/realtime/createrealtimesession"
-                    ]
-                  },
-                  {
-                    "group": "重排序（Rerank）",
-                    "pages": [
-                      "cn/nookmux/api/ai-model/rerank/creatererank"
-                    ]
-                  },
-                  {
-                    "group": "未实现（Unimplemented）",
-                    "pages": [
-                      {
-                        "group": "文件（Files）",
-                        "pages": [
-                          "cn/nookmux/api/ai-model/unimplemented/files/createfile",
-                          "cn/nookmux/api/ai-model/unimplemented/files/deletefile",
-                          "cn/nookmux/api/ai-model/unimplemented/files/downloadfile",
-                          "cn/nookmux/api/ai-model/unimplemented/files/listfiles",
-                          "cn/nookmux/api/ai-model/unimplemented/files/retrievefile"
-                        ]
-                      },
-                      {
-                        "group": "微调（Fine-tuning）",
-                        "pages": [
-                          "cn/nookmux/api/ai-model/unimplemented/fine-tuning/cancelfinetune",
-                          "cn/nookmux/api/ai-model/unimplemented/fine-tuning/createfinetune",
-                          "cn/nookmux/api/ai-model/unimplemented/fine-tuning/listfinetuneevents",
-                          "cn/nookmux/api/ai-model/unimplemented/fine-tuning/listfinetunes",
-                          "cn/nookmux/api/ai-model/unimplemented/fine-tuning/retrievefinetune"
-                        ]
-                      }
-                    ]
-                  }
+                  "cn/nookmux/api/ai-model/rerank"
                 ]
               },
               {
@@ -612,134 +527,49 @@
               {
                 "group": "AI Model API",
                 "pages": [
+                  "nookmux/api/ai-model/index",
                   {
-                    "group": "Audio",
+                    "group": "OpenAI",
                     "pages": [
-                      "nookmux/api/ai-model/audio/geminirelayv1beta-383836364",
-                      {
-                        "group": "OpenAI",
-                        "pages": [
-                          "nookmux/api/ai-model/audio/openai/createspeech",
-                          "nookmux/api/ai-model/audio/openai/createtranscription",
-                          "nookmux/api/ai-model/audio/openai/createtranslation"
-                        ]
-                      }
+                      "nookmux/api/ai-model/openai/chat-completions",
+                      "nookmux/api/ai-model/openai/completions",
+                      "nookmux/api/ai-model/openai/responses",
+                      "nookmux/api/ai-model/openai/responses-compact",
+                      "nookmux/api/ai-model/openai/embeddings",
+                      "nookmux/api/ai-model/openai/image-generations",
+                      "nookmux/api/ai-model/openai/image-edits",
+                      "nookmux/api/ai-model/openai/audio-speech",
+                      "nookmux/api/ai-model/openai/audio-transcriptions",
+                      "nookmux/api/ai-model/openai/audio-translations",
+                      "nookmux/api/ai-model/openai/realtime",
+                      "nookmux/api/ai-model/openai/list-models",
+                      "nookmux/api/ai-model/openai/retrieve-model",
+                      "nookmux/api/ai-model/openai/moderations",
+                      "nookmux/api/ai-model/openai/files",
+                      "nookmux/api/ai-model/openai/fine-tunes"
                     ]
                   },
                   {
-                    "group": "Chat",
+                    "group": "Claude",
                     "pages": [
-                      "nookmux/api/ai-model/chat/createmessage",
-                      {
-                        "group": "Gemini",
-                        "pages": [
-                          "nookmux/api/ai-model/chat/gemini/geminirelayv1beta",
-                          "nookmux/api/ai-model/chat/gemini/geminirelayv1beta-391536411"
-                        ]
-                      },
-                      {
-                        "group": "OpenAI",
-                        "pages": [
-                          "nookmux/api/ai-model/chat/openai/createchatcompletion",
-                          "nookmux/api/ai-model/chat/openai/createresponse"
-                        ]
-                      }
+                      "nookmux/api/ai-model/claude/messages",
+                      "nookmux/api/ai-model/claude/list-models",
+                      "nookmux/api/ai-model/claude/retrieve-model"
                     ]
                   },
                   {
-                    "group": "Completions",
+                    "group": "Gemini",
                     "pages": [
-                      "nookmux/api/ai-model/completions/createcompletion"
+                      "nookmux/api/ai-model/gemini/generate-content",
+                      "nookmux/api/ai-model/gemini/stream-generate-content",
+                      "nookmux/api/ai-model/gemini/count-tokens",
+                      "nookmux/api/ai-model/gemini/embed-content",
+                      "nookmux/api/ai-model/gemini/batch-embed-contents",
+                      "nookmux/api/ai-model/gemini/list-models",
+                      "nookmux/api/ai-model/gemini/openai-compat"
                     ]
                   },
-                  {
-                    "group": "Embeddings",
-                    "pages": [
-                      "nookmux/api/ai-model/embeddings/createembedding",
-                      "nookmux/api/ai-model/embeddings/createengineembedding"
-                    ]
-                  },
-                  {
-                    "group": "Images",
-                    "pages": [
-                      {
-                        "group": "Gemini",
-                        "pages": [
-                          "nookmux/api/ai-model/images/gemini/geminirelayv1beta-383837589",
-                          "nookmux/api/ai-model/images/gemini/geminirelayv1beta-389846313"
-                        ]
-                      },
-                      {
-                        "group": "OpenAI",
-                        "pages": [
-                          "nookmux/api/ai-model/images/openai/post-v1-images-edits",
-                          "nookmux/api/ai-model/images/openai/post-v1-images-generations"
-                        ]
-                      },
-                      {
-                        "group": "Qwen",
-                        "pages": [
-                          "nookmux/api/ai-model/images/qwen/createimage",
-                          "nookmux/api/ai-model/images/qwen/editimage"
-                        ]
-                      }
-                    ]
-                  },
-                  {
-                    "group": "Models",
-                    "pages": [
-                      {
-                        "group": "List",
-                        "pages": [
-                          "nookmux/api/ai-model/models/list/listmodels",
-                          "nookmux/api/ai-model/models/list/listmodelsgemini"
-                        ]
-                      }
-                    ]
-                  },
-                  {
-                    "group": "Moderations",
-                    "pages": [
-                      "nookmux/api/ai-model/moderations/createmoderation"
-                    ]
-                  },
-                  {
-                    "group": "Realtime",
-                    "pages": [
-                      "nookmux/api/ai-model/realtime/createrealtimesession"
-                    ]
-                  },
-                  {
-                    "group": "Rerank",
-                    "pages": [
-                      "nookmux/api/ai-model/rerank/creatererank"
-                    ]
-                  },
-                  {
-                    "group": "Unimplemented",
-                    "pages": [
-                      {
-                        "group": "Files",
-                        "pages": [
-                          "nookmux/api/ai-model/unimplemented/files/createfile",
-                          "nookmux/api/ai-model/unimplemented/files/deletefile",
-                          "nookmux/api/ai-model/unimplemented/files/downloadfile",
-                          "nookmux/api/ai-model/unimplemented/files/listfiles",
-                          "nookmux/api/ai-model/unimplemented/files/retrievefile"
-                        ]
-                      },
-                      {
-                        "group": "Fine-tuning",
-                        "pages": [
-                          "nookmux/api/ai-model/unimplemented/fine-tuning/cancelfinetune",
-                          "nookmux/api/ai-model/unimplemented/fine-tuning/createfinetune",
-                          "nookmux/api/ai-model/unimplemented/fine-tuning/listfinetuneevents",
-                          "nookmux/api/ai-model/unimplemented/fine-tuning/listfinetunes",
-                          "nookmux/api/ai-model/unimplemented/fine-tuning/retrievefinetune"
-                        ]
-                      }
-                    ]
-                  }
+                  "nookmux/api/ai-model/rerank"
                 ]
               },
               {

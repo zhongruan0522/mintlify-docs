@@ -1,0 +1,102 @@
+---
+title: 获取模型
+description: 按模型 ID 获取单个模型对象，兼容 OpenAI Models API。
+api: "GET /v1/models/{model}"
+---
+
+按模型 ID 获取单个模型对象，响应格式兼容 OpenAI Models retrieve API。
+
+模型 ID 需为 NookMux 内置渠道模型清单中的名称；手动添加且不在内置清单内的自定义模型会返回 `model_not_found` 错误，即使它们可以通过其他接口调用。同时携带 `x-api-key` 与 `anthropic-version` 头时返回 Anthropic 格式的单模型对象，详见下文「Header 分流说明」。
+
+## 请求
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url https://your-nookmux-domain/v1/models/gpt-4o \
+  --header 'Authorization: Bearer $NOOKMUX_API_KEY'
+```
+
+```python Python
+from openai import OpenAI
+
+client = OpenAI(
+    base_url="https://your-nookmux-domain/v1",
+    api_key="$NOOKMUX_API_KEY",
+)
+
+model = client.models.retrieve("gpt-4o")
+print(model.id, model.owned_by)
+```
+
+</RequestExample>
+
+### 认证
+
+<ParamField path="header.Authorization" type="string" required>
+  以 `Bearer` 开头的 NookMux API 令牌，格式为 `Authorization: Bearer <token>`。令牌在控制台「令牌」页创建。
+</ParamField>
+
+### 路径参数
+
+<ParamField path="path.model" type="string" required>
+  要获取的模型 ID，如 `gpt-4o`。
+</ParamField>
+
+### Header 分流说明
+
+- 同时携带 `x-api-key` 与 `anthropic-version` 头：返回 Anthropic 格式的单模型对象，见 [Claude 获取模型](/cn/nookmux/api/ai-model/claude/retrieve-model)。
+- 其他情况：返回本页的 OpenAI 格式。
+
+<Note>
+  `DELETE /v1/models/{model}`（删除模型）未实现，调用会返回 `501 Not Implemented`。
+</Note>
+
+## 响应
+
+<ResponseExample>
+
+```json 200
+{
+  "id": "gpt-4o",
+  "object": "model",
+  "created": 1626777600,
+  "owned_by": "openai",
+  "supported_endpoint_types": null
+}
+```
+
+</ResponseExample>
+
+### 响应字段
+
+<ResponseField name="id" type="string" required>
+  模型名称。
+</ResponseField>
+
+<ResponseField name="object" type="string" required>
+  对象类型，固定为 `model`。
+</ResponseField>
+
+<ResponseField name="created" type="integer" required>
+  模型记录创建时间的 Unix 时间戳（秒）。
+</ResponseField>
+
+<ResponseField name="owned_by" type="string" required>
+  归属渠道名称（如 `openai`、`claude`、`google gemini`）。
+</ResponseField>
+
+<ResponseField name="supported_endpoint_types" type="string[]">
+  NookMux 扩展字段。本接口固定返回 `null`；仅「模型列表」接口会填充该字段。
+</ResponseField>
+
+<Note>
+  模型不存在时本接口仍返回 `200`，响应体为 `error` 对象：`code` 为 `model_not_found`，`param` 为 `model`，`message` 提示模型不存在。
+</Note>
+
+## 错误码
+
+| HTTP 状态码 | 说明 |
+| --- | --- |
+| 401 | 令牌无效、已禁用或已过期 |

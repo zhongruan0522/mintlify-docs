@@ -1,0 +1,369 @@
+---
+title: Responses
+description: 创建模型响应，支持多模态输入、工具调用、推理配置与流式输出，兼容 OpenAI Responses API。
+api: "POST /v1/responses"
+---
+
+创建模型响应。请求与响应格式兼容 OpenAI Responses API，支持文本与多模态输入、函数与内置工具调用、推理配置和流式输出。
+
+NookMux 根据请求中的 `model` 名称将请求分发到对应渠道。当目标渠道配置的 `openai_wire_api` 为 `chat` 时，NookMux 会自动将请求转换为上游 Chat Completions 协议，并将响应（含流式事件）转换回 Responses 格式，客户端无需感知上游差异。
+
+## 请求
+
+<RequestExample>
+
+```bash cURL
+curl --request POST \
+  --url https://your-nookmux-domain/v1/responses \
+  --header 'Authorization: Bearer $NOOKMUX_API_KEY' \
+  --header 'Content-Type: application/json' \
+  --data '{
+  "model": "gpt-4o",
+  "instructions": "你是技术科普作者，回答简洁准确。",
+  "input": "用一句话解释什么是 API 网关。",
+  "stream": false
+}'
+```
+
+```python Python
+from openai import OpenAI
+
+client = OpenAI(
+    base_url="https://your-nookmux-domain/v1",
+    api_key="$NOOKMUX_API_KEY",
+)
+
+response = client.responses.create(
+    model="gpt-4o",
+    instructions="你是技术科普作者，回答简洁准确。",
+    input="用一句话解释什么是 API 网关。",
+)
+print(response.output_text)
+```
+
+</RequestExample>
+
+### 认证
+
+<ParamField path="header.Authorization" type="string" required>
+  以 `Bearer` 开头的 NookMux API 令牌，格式为 `Authorization: Bearer <token>`。令牌在控制台「令牌」页创建。
+</ParamField>
+
+### 请求体
+
+<ParamField path="body.model" type="string" required>
+  要调用的模型名称。取值为 NookMux 中已配置的模型，可通过「模型列表」接口获取可用模型。
+</ParamField>
+
+<ParamField path="body.input" type="string | object[]" required>
+  输入内容。字符串为纯文本输入；数组为输入项列表，每项含 `type`、`role`、`content`，可混合多轮对话与多模态内容，详细结构见下表。
+
+  <Expandable title="input 结构">
+    <ParamField path="type" type="string">
+      输入项类型。消息项固定为 `message`；也可传入 `function_call`、`function_call_output`、`reasoning` 等历史项以延续上一轮的工具调用。
+    </ParamField>
+    <ParamField path="role" type="string">
+      消息角色：`user`（用户输入）、`assistant`（模型的历史回复）、`system`、`developer`。
+    </ParamField>
+    <ParamField path="content" type="string | object[]">
+      消息内容。纯文本时为字符串；多模态输入时为内容块数组，`type` 可取 `input_text`、`input_image`、`input_file`。
+    </ParamField>
+    <ParamField path="content[].text" type="string">
+      `input_text` 块的文本内容。
+    </ParamField>
+    <ParamField path="content[].image_url" type="string">
+      `input_image` 块的图像 URL 或 Base64 编码数据（`data:image/jpeg;base64,...` 格式）。
+    </ParamField>
+    <ParamField path="content[].file_url" type="string">
+      `input_file` 块的文件 URL 或 Base64 编码数据。
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+<ParamField path="body.instructions" type="string">
+  插入在上下文最前方的系统（或开发者）指令，用于设定模型行为。
+</ParamField>
+
+<ParamField path="body.max_output_tokens" type="integer">
+  单次响应生成的 token 数量上限（含可见输出与推理内容）。达到上限时 `status` 为 `incomplete`。
+</ParamField>
+
+<ParamField path="body.previous_response_id" type="string">
+  上一轮响应的唯一 ID。携带后模型可访问该响应及其之前的上下文，用于构建多轮对话（仅 OpenAI 渠道生效）。
+</ParamField>
+
+<ParamField path="body.stream" type="boolean" default="false">
+  是否启用流式输出。`true` 时通过 Server-Sent Events 返回增量事件，见「流式响应」。
+</ParamField>
+
+<ParamField path="body.temperature" type="number">
+  采样温度，取值 `0.0 ~ 2.0`。较高的值使输出更随机、更具创造性；较低的值使输出更稳定。建议调整 `temperature` 或 `top_p` 其中之一。
+</ParamField>
+
+<ParamField path="body.top_p" type="number">
+  核采样参数。模型仅考虑累积概率达到 `top_p` 的候选词。
+</ParamField>
+
+<ParamField path="body.top_logprobs" type="integer">
+  每个输出位置返回概率最高的 n 个 token（`0 ~ 20`）。
+</ParamField>
+
+<ParamField path="body.truncation" type="string">
+  上下文窗口的截断策略：`auto`（输入超出上下文窗口时丢弃最早的输入项）、`disabled`（超出时请求返回 `400`）。
+</ParamField>
+
+<ParamField path="body.reasoning" type="object">
+  推理模型的思考配置。
+
+  <Expandable title="reasoning 结构">
+    <ParamField path="effort" type="string">
+      思考深度：`minimal`、`low`、`medium`、`high`。
+    </ParamField>
+    <ParamField path="summary" type="string">
+      是否生成思维链摘要：`auto`、`concise`、`detailed`。
+    </ParamField>
+    <ParamField path="max_tokens" type="integer">
+      推理 token 数量上限（部分渠道支持，如 OpenRouter）。
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+<ParamField path="body.text" type="object">
+  文本输出配置。
+
+  <Expandable title="text 结构">
+    <ParamField path="format" type="object">
+      输出格式：`text`（默认，纯文本）、`json_object`（JSON 对象）、`json_schema`（按 JSON Schema 输出；为 `json_schema` 时通过 `json_schema` 对象提供 `name`、`schema`、`strict` 等定义）。
+    </ParamField>
+    <ParamField path="verbosity" type="string">
+      输出详细程度：`low`、`medium`、`high`（gpt-5 系列支持）。
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+<ParamField path="body.tools" type="object[]">
+  模型可调用的工具列表，含自定义函数（`type` 为 `function`）与内置工具（如 `web_search_preview`、`file_search`）。
+</ParamField>
+
+<ParamField path="body.tool_choice" type="string | object">
+  控制模型如何选择工具：`none`（禁用）、`auto`（默认，由模型决定）、`required`（强制调用），或以对象形式指定具体函数（`type` 固定为 `function`，`function.name` 为函数名）。
+</ParamField>
+
+<ParamField path="body.parallel_tool_calls" type="boolean">
+  是否允许模型在一次回复中并行发起多个工具调用。
+</ParamField>
+
+<ParamField path="body.max_tool_calls" type="integer">
+  单次响应内允许的工具调用总数上限（部分模型支持，如 codex 系列）。
+</ParamField>
+
+<ParamField path="body.include" type="string[]">
+  要求在响应中额外包含的字段，如 `reasoning.encrypted_content`。
+</ParamField>
+
+<ParamField path="body.metadata" type="object">
+  附加的键值对元数据，最多 16 组，存储在响应对象中。
+</ParamField>
+
+<ParamField path="body.store" type="boolean">
+  是否存储本次响应，供后续 `previous_response_id` 引用（仅 OpenAI 渠道生效）。
+</ParamField>
+
+<ParamField path="body.prompt_cache_key" type="string">
+  缓存键。用于提高提示词缓存命中率，可替代 `user` 字段作为稳定的终端用户标识。
+</ParamField>
+
+<ParamField path="body.prompt_cache_retention" type="string">
+  缓存保留策略：`in_memory` 或 `24h`（`24h` 启用扩展缓存，仅 OpenAI 渠道支持）。
+</ParamField>
+
+<ParamField path="body.user" type="string">
+  终端用户标识符，用于 NookMux 识别与滥用监测。
+</ParamField>
+
+<ParamField path="body.safety_identifier" type="string">
+  稳定的应用侧用户标识，用于帮助上游（OpenAI）检测滥用行为。出于隐私保护，默认被过滤。
+</ParamField>
+
+<ParamField path="body.service_tier" type="string">
+  服务层级（如 `auto`、`flex`、`priority`），影响处理方式与计费。出于计费安全考虑，NookMux 默认过滤该字段。
+</ParamField>
+
+<ParamField path="body.prompt" type="object">
+  引用已保存的提示词模板及其变量（对象包含模板 `id` 与 `version`），仅 OpenAI 渠道支持。
+</ParamField>
+
+<ParamField path="body.enable_thinking" type="boolean">
+  通义千问 Qwen3 系列的思维链开关（透传字段）。
+</ParamField>
+
+<ParamField path="body.provider" type="object">
+  OpenRouter 渠道的供应商路由偏好（透传字段）。
+</ParamField>
+
+<ParamField path="body.preset" type="string">
+  Perplexity 渠道的搜索预设（透传字段）。
+</ParamField>
+
+<Note>
+  厂商透传字段（`enable_thinking`、`provider`、`preset` 等）仅在对应渠道生效，其余渠道会按参数过滤规则丢弃；`safety_identifier`、`service_tier` 等敏感字段默认被过滤，能否透传取决于控制台「模型 → 参数覆盖」的配置。
+</Note>
+
+## 响应
+
+<ResponseExample>
+
+```json 200
+{
+  "id": "resp_abc123",
+  "object": "response",
+  "created_at": 1735689600,
+  "status": "completed",
+  "model": "gpt-4o",
+  "output": [
+    {
+      "type": "message",
+      "id": "msg_abc123",
+      "status": "completed",
+      "role": "assistant",
+      "content": [
+        {
+          "type": "output_text",
+          "text": "API 网关是位于客户端与后端服务之间的统一入口，负责请求路由、鉴权、限流与协议转换。",
+          "annotations": []
+        }
+      ]
+    }
+  ],
+  "usage": {
+    "input_tokens": 34,
+    "input_tokens_details": {
+      "cached_tokens": 0
+    },
+    "output_tokens": 38,
+    "output_tokens_details": {
+      "reasoning_tokens": 0
+    },
+    "total_tokens": 72
+  }
+}
+```
+
+</ResponseExample>
+
+### 响应字段
+
+<ResponseField name="id" type="string" required>
+  本次响应的唯一标识，可作为下一轮请求的 `previous_response_id`。
+</ResponseField>
+
+<ResponseField name="object" type="string" required>
+  对象类型，固定为 `response`。
+</ResponseField>
+
+<ResponseField name="created_at" type="integer" required>
+  响应创建时间的 Unix 时间戳（秒）。
+</ResponseField>
+
+<ResponseField name="status" type="string" required>
+  响应状态：`in_progress`（进行中）、`completed`（完成）、`incomplete`（达到 `max_output_tokens` 上限被截断）、`failed`（失败）。
+</ResponseField>
+
+<ResponseField name="model" type="string" required>
+  生成本次响应的模型名称。
+</ResponseField>
+
+<ResponseField name="output" type="object[]" required>
+  输出项列表，按生成顺序排列。
+
+  <Expandable title="output 结构">
+    <ResponseField name="type" type="string">
+      输出项类型：`reasoning`（思维链）、`message`（助手消息）、`function_call`（自定义函数调用）、`web_search_call`（内置工具调用）等。
+    </ResponseField>
+    <ResponseField name="id" type="string">
+      输出项 ID，如 `msg_abc123`、`fc_abc123`。
+    </ResponseField>
+    <ResponseField name="status" type="string">
+      输出项状态：`in_progress`、`completed`。
+    </ResponseField>
+    <ResponseField name="role" type="string">
+      `message` 项的角色，固定为 `assistant`。
+    </ResponseField>
+    <ResponseField name="content" type="object[]">
+      `message` 项的内容块数组。`type` 为 `output_text` 的文本块含 `text` 与 `annotations`（引用来源等标注）。
+    </ResponseField>
+    <ResponseField name="summary" type="object[]">
+      `reasoning` 项的摘要块数组，`type` 为 `summary_text`，含 `text`。
+    </ResponseField>
+    <ResponseField name="call_id" type="string">
+      `function_call` 项的调用 ID，用于在后续请求中回传 `function_call_output`。
+    </ResponseField>
+    <ResponseField name="name" type="string">
+      `function_call` 项调用的函数名。
+    </ResponseField>
+    <ResponseField name="arguments" type="string">
+      `function_call` 项的参数，JSON 字符串形式。
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="usage" type="object" required>
+  Token 使用统计。
+
+  <Expandable title="usage 结构">
+    <ResponseField name="input_tokens" type="integer">
+      输入消耗的 token 数。
+    </ResponseField>
+    <ResponseField name="input_tokens_details" type="object">
+      输入明细，含 `cached_tokens`（命中缓存的 token 数）。
+    </ResponseField>
+    <ResponseField name="output_tokens" type="integer">
+      输出消耗的 token 数（含推理内容）。
+    </ResponseField>
+    <ResponseField name="output_tokens_details" type="object">
+      输出明细，含 `reasoning_tokens`（推理消耗的 token 数）。
+    </ResponseField>
+    <ResponseField name="total_tokens" type="integer">
+      总消耗 token 数。
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+## 流式响应
+
+设置 `"stream": true` 后，响应以 `text/event-stream` 返回。每个事件先带 `event:` 行（事件类型），随后 `data:` 行为事件载荷：
+
+```json
+event: response.created
+data: {"type":"response.created","response":{"id":"resp_abc123","object":"response","created_at":1735689600,"status":"in_progress","model":"gpt-4o","output":[]}}
+
+event: response.output_item.added
+data: {"type":"response.output_item.added","output_index":0,"item":{"type":"message","id":"msg_abc123","status":"in_progress","role":"assistant","content":[]}}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","item_id":"msg_abc123","output_index":0,"content_index":0,"delta":"API"}
+
+event: response.output_item.done
+data: {"type":"response.output_item.done","output_index":0,"item":{"type":"message","id":"msg_abc123","status":"completed","role":"assistant","content":[{"type":"output_text","text":"API 网关是……","annotations":[]}]}}
+
+event: response.completed
+data: {"type":"response.completed","response":{"id":"resp_abc123","object":"response","created_at":1735689600,"status":"completed","model":"gpt-4o","output":[{"type":"message","id":"msg_abc123","status":"completed","role":"assistant","content":[{"type":"output_text","text":"API 网关是……","annotations":[]}]}],"usage":{"input_tokens":34,"output_tokens":38,"total_tokens":72}}}
+```
+
+<ResponseField name="delta" type="string">
+  增量文本。`response.output_text.delta` 事件通过 `delta` 增量返回输出内容，配合 `item_id`、`output_index`、`content_index` 定位输出位置。
+</ResponseField>
+
+<Note>
+  其余常见事件包括 `response.output_text.done`（文本块结束）、`response.function_call_arguments.delta`（函数参数增量）、`response.incomplete`（达到输出上限）与 `response.failed`（生成失败）。响应异常终止时以对应事件结束，不带 `data: [DONE]`。
+</Note>
+
+## 错误码
+
+| HTTP 状态码 | 说明 |
+| --- | --- |
+| 400 | 请求参数错误、模型不支持所请求的能力，或转换后的请求无法被上游接受 |
+| 401 | 令牌无效、已禁用或已过期 |
+| 403 | 令牌无权访问该模型，或额度不足 |
+| 429 | 触发速率限制 |
+| 500 | 上游渠道返回错误，`error.message` 中包含上游错误详情 |

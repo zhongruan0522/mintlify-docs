@@ -1,0 +1,206 @@
+---
+title: Create image
+description: Generate an image from a text prompt, compatible with the OpenAI Images API.
+api: "POST /v1/images/generations"
+---
+
+Generate an image from a text prompt. The request and response formats are compatible with the OpenAI Images API.
+
+NookMux routes the request to the appropriate upstream channel based on the `model` name and bills accordingly. Available models are defined under Console → Channels → Models; common choices include `gpt-image-1`, `dall-e-3`, and `dall-e-2`, as well as other image models configured on your channels (such as `imagen-4.0-generate-001` and MiniMax `image-01`).
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request POST \
+  --url https://your-nookmux-domain/v1/images/generations \
+  --header 'Authorization: Bearer $NOOKMUX_API_KEY' \
+  --header 'Content-Type: application/json' \
+  --data '{
+  "model": "gpt-image-1",
+  "prompt": "An orange cat wearing an astronaut helmet floating in space with Earth in the background, Pixar-style illustration",
+  "n": 1,
+  "size": "1024x1024",
+  "quality": "high"
+}'
+```
+
+```python Python
+from openai import OpenAI
+
+client = OpenAI(
+    base_url="https://your-nookmux-domain/v1",
+    api_key="$NOOKMUX_API_KEY",
+)
+
+result = client.images.generate(
+    model="gpt-image-1",
+    prompt="An orange cat wearing an astronaut helmet floating in space with Earth in the background, Pixar-style illustration",
+    n=1,
+    size="1024x1024",
+)
+print(result.data[0].b64_json)
+```
+
+</RequestExample>
+
+### Authentication
+
+<ParamField path="header.Authorization" type="string" required>
+  A NookMux API token prefixed with `Bearer`, in the form `Authorization: Bearer <token>`. Create tokens on the Console → Tokens page.
+</ParamField>
+
+### Body
+
+<ParamField path="body.model" type="string" required>
+  Name of the image model to use; see the List models endpoint for available values. Returns 400 when omitted.
+</ParamField>
+
+<ParamField path="body.prompt" type="string" required>
+  A text description of the desired image. The length limit depends on the model (4000 characters for `dall-e-3`, 32000 for `gpt-image-1`).
+</ParamField>
+
+<ParamField path="body.n" type="integer" default="1">
+  Number of images to generate, between `1` and `100`. Defaults to `1`; values outside the range return 400.
+</ParamField>
+
+<ParamField path="body.size" type="string">
+  Image size, with width and height separated by a lowercase `x` (using the multiplication sign `×` returns 400). Values and defaults per model:
+
+  - `dall-e-2` / `dall-e`: `256x256`, `512x512`, `1024x1024`; defaults to `1024x1024`
+  - `dall-e-3`: `1024x1024`, `1024x1792`, `1792x1024`; defaults to `1024x1024`
+  - `gpt-image-1`: `1024x1024`, `1024x1536`, `1536x1024`, `auto`
+  - Other models follow what the channel supports
+</ParamField>
+
+<ParamField path="body.quality" type="string">
+  Image quality. `dall-e-3`: `standard` (default) / `hd`; `gpt-image-1`: `auto` (default) / `high` / `medium` / `low`. When omitted, NookMux fills in the default above before forwarding.
+</ParamField>
+
+<ParamField path="body.response_format" type="string">
+  Format in which generated images are returned: `url` or `b64_json`. Only supported by `dall-e-2` / `dall-e-3`; `gpt-image-1` always returns Base64.
+</ParamField>
+
+<ParamField path="body.style" type="string">
+  Generation style for `dall-e-3`: `vivid` (default) or `natural`.
+</ParamField>
+
+<ParamField path="body.user" type="string">
+  End-user identifier used by NookMux for identification and abuse monitoring.
+</ParamField>
+
+<ParamField path="body.background" type="string">
+  Background transparency (`gpt-image-1`): `transparent`, `opaque`, or `auto`.
+</ParamField>
+
+<ParamField path="body.moderation" type="string">
+  Content moderation strength (`gpt-image-1`): `low` or `auto`.
+</ParamField>
+
+<ParamField path="body.output_format" type="string">
+  Output image format (`gpt-image-1`): `png`, `jpeg`, or `webp`.
+</ParamField>
+
+<ParamField path="body.output_compression" type="integer">
+  Output compression level (`gpt-image-1`), from `0` to `100`. Takes effect when `output_format` is `jpeg` or `webp`.
+</ParamField>
+
+<ParamField path="body.partial_images" type="integer">
+  Number of partial images to stream (`gpt-image-1`); forwarded to the upstream channel.
+</ParamField>
+
+<ParamField path="body.watermark" type="boolean">
+  Whether to add an AIGC watermark to the generated image. Only effective on channels that support it (for example, the MiniMax image channel maps it to `aigc_watermark`).
+</ParamField>
+
+<Note>
+  When an `imagen-*` model is served through a Gemini channel, NookMux automatically converts the request to the Gemini `models/{model}:predict` endpoint: `size` is mapped to an aspect ratio (for example, `1792x1024` to `16:9`; aspect-ratio strings such as `16:9` may also be passed directly), and `quality` is mapped to `imageSize` (`1K` / `2K`).
+</Note>
+
+<Note>
+  `gpt-image-1`-specific parameters such as `background`, `moderation`, `output_format`, `output_compression`, and `partial_images` only take effect on channels that support them; other channels drop them per the parameter filtering rules. Whether a field is forwarded also depends on the Console → Models → parameter override configuration.
+</Note>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "created": 1760822400,
+  "data": [
+    {
+      "b64_json": "iVBORw0KGgoAAAANSUhEUgAABAAAAAQACAYAAABXPYanAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAFUlEQVR4nO3BMQEAAADCoPVPbQofoAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABaOc9mAAGkPFcuAAAAAElFTkSuQmCC"
+    }
+  ],
+  "usage": {
+    "total_tokens": 1105,
+    "input_tokens": 1084,
+    "output_tokens": 21,
+    "input_tokens_details": {
+      "text_tokens": 12,
+      "image_tokens": 1072
+    },
+    "output_tokens_details": {
+      "text_tokens": 21
+    }
+  }
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="created" type="integer" required>
+  Unix timestamp (seconds) of when the image was created.
+</ResponseField>
+
+<ResponseField name="data" type="object[]" required>
+  List of generated results; its length equals the requested `n`.
+
+  <Expandable title="data structure">
+    <ResponseField name="url" type="string">
+      Temporary download URL for the image, returned when `response_format` is `url` (`dall-e` series only); valid for about 60 minutes.
+    </ResponseField>
+    <ResponseField name="b64_json" type="string">
+      Base64-encoded image data. `gpt-image-1` always returns this field.
+    </ResponseField>
+    <ResponseField name="revised_prompt" type="string">
+      The prompt rewritten by the model; returned by `dall-e-3` only.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="usage" type="object">
+  Token usage for this generation; returned by `gpt-image-1` models only.
+
+  <Expandable title="usage structure">
+    <ResponseField name="total_tokens" type="integer">
+      Total tokens consumed.
+    </ResponseField>
+    <ResponseField name="input_tokens" type="integer">
+      Tokens consumed by the input (prompt and input images).
+    </ResponseField>
+    <ResponseField name="output_tokens" type="integer">
+      Tokens consumed by the output (prorated by generated images).
+    </ResponseField>
+    <ResponseField name="input_tokens_details" type="object">
+      Input breakdown, including `text_tokens` and `image_tokens`.
+    </ResponseField>
+    <ResponseField name="output_tokens_details" type="object">
+      Output breakdown, including `text_tokens`.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+## Error codes
+
+| HTTP status | Description |
+| --- | --- |
+| 400 | Invalid request parameters (for example, `size` outside the model's allowed range, `n` outside `1` to `100`, or `model` omitted) |
+| 401 | Token is invalid, disabled, or expired |
+| 403 | Token cannot access the model, or quota is insufficient |
+| 429 | Rate limit triggered |
+| 500 | Upstream channel error; `error.message` contains the upstream details |

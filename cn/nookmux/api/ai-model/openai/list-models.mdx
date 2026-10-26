@@ -1,0 +1,122 @@
+---
+title: 模型列表
+description: 获取当前令牌可用的模型列表，兼容 OpenAI Models API。
+api: "GET /v1/models"
+---
+
+返回当前令牌可用的模型列表，响应格式兼容 OpenAI Models list API。
+
+列表范围由令牌与用户分组决定：令牌启用「模型限制」时返回其允许的模型；否则返回用户（或令牌）分组下已启用渠道的模型，且仅包含已配置价格的模型。本端点按请求头自动分流，详见下文「Header 分流说明」。
+
+## 请求
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url https://your-nookmux-domain/v1/models \
+  --header 'Authorization: Bearer $NOOKMUX_API_KEY'
+```
+
+```python Python
+from openai import OpenAI
+
+client = OpenAI(
+    base_url="https://your-nookmux-domain/v1",
+    api_key="$NOOKMUX_API_KEY",
+)
+
+models = client.models.list()
+for model in models.data:
+    print(model.id)
+```
+
+</RequestExample>
+
+### 认证
+
+<ParamField path="header.Authorization" type="string" required>
+  以 `Bearer` 开头的 NookMux API 令牌，格式为 `Authorization: Bearer <token>`。令牌在控制台「令牌」页创建。
+</ParamField>
+
+### Header 分流说明
+
+同一端点按请求头自动识别返回格式：
+
+- 同时携带 `x-api-key` 与 `anthropic-version` 头：返回 Anthropic 格式的模型列表，见 [Claude 模型列表](/cn/nookmux/api/ai-model/claude/list-models)。
+- 携带 `x-goog-api-key` 头或 `?key=` 查询参数：按 Gemini 模型查询处理，见 [Gemini 兼容接口](/cn/nookmux/api/ai-model/gemini/openai-compat)。
+- 其他情况：返回本页的 OpenAI 格式。
+
+## 响应
+
+<ResponseExample>
+
+```json 200
+{
+  "data": [
+    {
+      "id": "gpt-4o",
+      "object": "model",
+      "created": 1626777600,
+      "owned_by": "openai",
+      "supported_endpoint_types": ["openai", "openai-response"]
+    },
+    {
+      "id": "text-embedding-3-small",
+      "object": "model",
+      "created": 1626777600,
+      "owned_by": "openai",
+      "supported_endpoint_types": ["embeddings"]
+    },
+    {
+      "id": "claude-sonnet-4.5",
+      "object": "model",
+      "created": 1626777600,
+      "owned_by": "claude",
+      "supported_endpoint_types": ["openai", "anthropic"]
+    }
+  ],
+  "object": "list",
+  "success": true
+}
+```
+
+</ResponseExample>
+
+### 响应字段
+
+<ResponseField name="object" type="string" required>
+  对象类型，固定为 `list`。
+</ResponseField>
+
+<ResponseField name="data" type="object[]" required>
+  模型对象列表。
+
+  <Expandable title="data 结构">
+    <ResponseField name="id" type="string" required>
+      模型名称。调用其他接口时作为 `model` 参数使用。
+    </ResponseField>
+    <ResponseField name="object" type="string" required>
+      对象类型，固定为 `model`。
+    </ResponseField>
+    <ResponseField name="created" type="integer" required>
+      模型记录创建时间的 Unix 时间戳（秒）。
+    </ResponseField>
+    <ResponseField name="owned_by" type="string" required>
+      归属渠道名称（如 `openai`、`claude`、`google gemini`），手动添加的自定义模型为 `custom`。
+    </ResponseField>
+    <ResponseField name="supported_endpoint_types" type="string[]">
+      NookMux 扩展字段：该模型支持的端点类型，取值如 `openai`、`openai-response`、`anthropic`、`gemini`、`embeddings`、`image-generation`、`jina-rerank`。
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="success" type="boolean">
+  NookMux 扩展字段，固定为 `true`。
+</ResponseField>
+
+## 错误码
+
+| HTTP 状态码 | 说明 |
+| --- | --- |
+| 401 | 令牌无效、已禁用或已过期 |

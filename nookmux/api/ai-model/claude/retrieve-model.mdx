@@ -1,0 +1,93 @@
+---
+title: Retrieve model (Claude format)
+description: Retrieve a single model by ID, returned in the Anthropic Models API format.
+api: "GET /v1/models/{model}"
+---
+
+Retrieve a single model object by its model ID, with the response compatible with the Anthropic Models API.
+
+As with List models, the response format of `GET /v1/models/{model}` depends on the request headers: NookMux returns the Anthropic format only when the request carries **both** the `x-api-key` and `anthropic-version` headers; otherwise it defaults to the OpenAI format, see [List models](/nookmux/api/ai-model/openai/list-models).
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url https://your-nookmux-domain/v1/models/claude-sonnet-4.5 \
+  --header "x-api-key: $NOOKMUX_API_KEY" \
+  --header "anthropic-version: 2023-06-01"
+```
+
+```python Python
+from anthropic import Anthropic
+
+client = Anthropic(
+    base_url="https://your-nookmux-domain",
+    api_key="$NOOKMUX_API_KEY",
+)
+
+model = client.models.retrieve("claude-sonnet-4.5")
+print(model.id, model.display_name)
+```
+
+</RequestExample>
+
+### Authentication
+
+<ParamField path="header.x-api-key" type="string" required>
+  A NookMux API token, in the form `x-api-key: <token>`. Create tokens on the Console → Tokens page.
+</ParamField>
+
+<ParamField path="header.anthropic-version" type="string" required>
+  The Claude API version, such as `2023-06-01`. Only returns the Anthropic format when sent together with `x-api-key`; with only `Authorization: Bearer <token>` or without this header, the endpoint falls back to the OpenAI-format response.
+</ParamField>
+
+### Path parameters
+
+<ParamField path="path.model" type="string" required>
+  The model ID to look up; get available values from [List models](/nookmux/api/ai-model/claude/list-models).
+</ParamField>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "id": "claude-sonnet-4.5",
+  "created_at": "2021-07-20T12:00:00Z",
+  "display_name": "claude-sonnet-4.5",
+  "type": "model"
+}
+```
+
+</ResponseExample>
+
+<Note>
+When the requested model does not exist, the endpoint still returns HTTP `200` with an error object in the form `{"error": {"message": "The model '...' does not exist", "type": "invalid_request_error", "code": "model_not_found"}}`.
+</Note>
+
+### Response fields
+
+<ResponseField name="id" type="string" required>
+  The model identifier; use it as the `model` name when calling [Messages](/nookmux/api/ai-model/claude/messages).
+</ResponseField>
+
+<ResponseField name="created_at" type="string" required>
+  An RFC 3339 datetime string. NookMux returns a fixed placeholder time, not the model's release date.
+</ResponseField>
+
+<ResponseField name="display_name" type="string" required>
+  Human-readable model name, identical to `id`.
+</ResponseField>
+
+<ResponseField name="type" type="string" required>
+  Object type, always `model`.
+</ResponseField>
+
+## Error codes
+
+| HTTP status | Description |
+| --- | --- |
+| 401 | Token is invalid, disabled, or expired |

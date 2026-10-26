@@ -1,0 +1,120 @@
+---
+title: List models (Claude format)
+description: List the models available to the current token, returned in the Anthropic Models API format.
+api: "GET /v1/models"
+---
+
+List the models available to the current token, with the response compatible with the Anthropic Models API.
+
+`GET /v1/models` is also the OpenAI-format list models endpoint: NookMux returns the Anthropic format only when the request carries **both** the `x-api-key` and `anthropic-version` headers; otherwise it defaults to the OpenAI format, see [List models](/nookmux/api/ai-model/openai/list-models).
+
+The list covers the models available to the current token: models within the token's model restriction when one is set, otherwise the models currently enabled for the token's group (or the user's group). NookMux returns all models in a single response; the `limit` / `after_id` / `before_id` pagination parameters are not supported, and `has_more` is always `false`.
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url https://your-nookmux-domain/v1/models \
+  --header "x-api-key: $NOOKMUX_API_KEY" \
+  --header "anthropic-version: 2023-06-01"
+```
+
+```python Python
+from anthropic import Anthropic
+
+client = Anthropic(
+    base_url="https://your-nookmux-domain",
+    api_key="$NOOKMUX_API_KEY",
+)
+
+models = client.models.list()
+for model in models.data:
+    print(model.id)
+```
+
+</RequestExample>
+
+### Authentication
+
+<ParamField path="header.x-api-key" type="string" required>
+  A NookMux API token, in the form `x-api-key: <token>`. Create tokens on the Console → Tokens page.
+</ParamField>
+
+<ParamField path="header.anthropic-version" type="string" required>
+  The Claude API version, such as `2023-06-01`. Only returns the Anthropic format when sent together with `x-api-key`; with only `Authorization: Bearer <token>` or without this header, the endpoint falls back to the OpenAI-format response.
+</ParamField>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "data": [
+    {
+      "id": "claude-opus-4.5",
+      "created_at": "2021-07-20T12:00:00Z",
+      "display_name": "claude-opus-4.5",
+      "type": "model"
+    },
+    {
+      "id": "claude-sonnet-4.5",
+      "created_at": "2021-07-20T12:00:00Z",
+      "display_name": "claude-sonnet-4.5",
+      "type": "model"
+    },
+    {
+      "id": "gpt-4o",
+      "created_at": "2021-07-20T12:00:00Z",
+      "display_name": "gpt-4o",
+      "type": "model"
+    }
+  ],
+  "first_id": "claude-opus-4.5",
+  "has_more": false,
+  "last_id": "gpt-4o"
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="data" type="object[]" required>
+  A list of model objects covering all models available to the current token.
+
+  <Expandable title="Model object structure">
+    <ResponseField name="id" type="string">
+      The model identifier; use it as the `model` name when calling [Messages](/nookmux/api/ai-model/claude/messages).
+    </ResponseField>
+    <ResponseField name="created_at" type="string">
+      An RFC 3339 datetime string. NookMux returns a fixed placeholder time, not the model's release date.
+    </ResponseField>
+    <ResponseField name="display_name" type="string">
+      Human-readable model name, identical to `id`.
+    </ResponseField>
+    <ResponseField name="type" type="string">
+      Object type, always `model`.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="first_id" type="string" required>
+  The `id` of the first model in the list.
+</ResponseField>
+
+<ResponseField name="has_more" type="boolean" required>
+  Whether more results exist; NookMux always returns `false` (everything is returned at once).
+</ResponseField>
+
+<ResponseField name="last_id" type="string" required>
+  The `id` of the last model in the list.
+</ResponseField>
+
+## Error codes
+
+| HTTP status | Description |
+| --- | --- |
+| 401 | Token is invalid, disabled, or expired |

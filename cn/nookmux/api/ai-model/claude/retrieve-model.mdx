@@ -1,0 +1,93 @@
+---
+title: 获取模型（Claude 格式）
+description: 按模型 ID 获取单个模型信息，以 Anthropic Models API 格式返回。
+api: "GET /v1/models/{model}"
+---
+
+按模型 ID 获取单个模型对象，响应格式兼容 Anthropic Models API。
+
+与「模型列表」相同，`GET /v1/models/{model}` 的返回格式取决于请求 header：仅当请求**同时**携带 `x-api-key` 与 `anthropic-version` 两个 header 时返回 Anthropic 格式；否则默认返回 OpenAI 格式，见[模型列表](/cn/nookmux/api/ai-model/openai/list-models)。
+
+## 请求
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url https://your-nookmux-domain/v1/models/claude-sonnet-4.5 \
+  --header "x-api-key: $NOOKMUX_API_KEY" \
+  --header "anthropic-version: 2023-06-01"
+```
+
+```python Python
+from anthropic import Anthropic
+
+client = Anthropic(
+    base_url="https://your-nookmux-domain",
+    api_key="$NOOKMUX_API_KEY",
+)
+
+model = client.models.retrieve("claude-sonnet-4.5")
+print(model.id, model.display_name)
+```
+
+</RequestExample>
+
+### 认证
+
+<ParamField path="header.x-api-key" type="string" required>
+  NookMux API 令牌，格式为 `x-api-key: <token>`。令牌在控制台「令牌」页创建。
+</ParamField>
+
+<ParamField path="header.anthropic-version" type="string" required>
+  Claude API 版本号，如 `2023-06-01`。与 `x-api-key` 同时携带时才会返回 Anthropic 格式；只带 `Authorization: Bearer <token>` 或缺少本 header 时，本端点退化为 OpenAI 格式响应。
+</ParamField>
+
+### 路径参数
+
+<ParamField path="path.model" type="string" required>
+  要查询的模型 ID，可通过[模型列表](/cn/nookmux/api/ai-model/claude/list-models)获取。
+</ParamField>
+
+## 响应
+
+<ResponseExample>
+
+```json 200
+{
+  "id": "claude-sonnet-4.5",
+  "created_at": "2021-07-20T12:00:00Z",
+  "display_name": "claude-sonnet-4.5",
+  "type": "model"
+}
+```
+
+</ResponseExample>
+
+<Note>
+查询的模型不存在时，接口仍返回 HTTP `200`，响应体为 `{"error": {"message": "The model '...' does not exist", "type": "invalid_request_error", "code": "model_not_found"}}` 形式的错误对象。
+</Note>
+
+### 响应字段
+
+<ResponseField name="id" type="string" required>
+  模型标识，即调用 [对话消息](/cn/nookmux/api/ai-model/claude/messages) 时使用的 `model` 名称。
+</ResponseField>
+
+<ResponseField name="created_at" type="string" required>
+  RFC 3339 格式的时间字符串。NookMux 返回固定占位时间，不代表模型发布时间。
+</ResponseField>
+
+<ResponseField name="display_name" type="string" required>
+  模型显示名，与 `id` 相同。
+</ResponseField>
+
+<ResponseField name="type" type="string" required>
+  对象类型，固定为 `model`。
+</ResponseField>
+
+## 错误码
+
+| HTTP 状态码 | 说明 |
+| --- | --- |
+| 401 | 令牌无效、已禁用或已过期 |

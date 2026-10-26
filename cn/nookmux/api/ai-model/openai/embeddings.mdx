@@ -1,0 +1,179 @@
+---
+title: 文本嵌入
+description: 为输入文本生成嵌入向量，兼容 OpenAI Embeddings API，可用于语义检索、聚类与相似度计算。
+api: "POST /v1/embeddings"
+---
+
+为输入文本生成嵌入向量。请求与响应格式兼容 OpenAI Embeddings API，可用于语义检索、聚类与相关性计算等场景。
+
+NookMux 根据请求中的 `model` 名称将请求分发到对应渠道（OpenAI、Gemini、Ollama 等），并以统一的 OpenAI 格式返回向量与用量统计。`input` 支持单条文本或字符串数组；批量输入时每条文本对应响应 `data` 中的一个元素，向量顺序与输入顺序一致。
+
+## 请求
+
+<RequestExample>
+
+```bash cURL
+curl --request POST \
+  --url https://your-nookmux-domain/v1/embeddings \
+  --header 'Authorization: Bearer $NOOKMUX_API_KEY' \
+  --header 'Content-Type: application/json' \
+  --data '{
+  "model": "text-embedding-3-small",
+  "input": "NookMux 是一个 AI API 聚合网关"
+}'
+```
+
+```python Python
+from openai import OpenAI
+
+client = OpenAI(
+    base_url="https://your-nookmux-domain/v1",
+    api_key="$NOOKMUX_API_KEY",
+)
+
+response = client.embeddings.create(
+    model="text-embedding-3-small",
+    input="NookMux 是一个 AI API 聚合网关",
+)
+print(response.data[0].embedding[:8])
+```
+
+</RequestExample>
+
+### 认证
+
+<ParamField path="header.Authorization" type="string" required>
+  以 `Bearer` 开头的 NookMux API 令牌，格式为 `Authorization: Bearer <token>`。令牌在控制台「令牌」页创建。
+</ParamField>
+
+### 请求体
+
+<ParamField path="body.model" type="string" required>
+  要调用的嵌入模型名称。取值为 NookMux 中已配置的模型，可通过「模型列表」接口获取可用模型。
+</ParamField>
+
+<ParamField path="body.input" type="string | string[] | integer[]" required>
+  要嵌入的输入文本。支持单个字符串或字符串数组（批量嵌入，每条文本对应响应 `data` 中的一个元素）；也接受 OpenAI 的 token ID 数组形式并透传给上游渠道。不允许为空。
+</ParamField>
+
+<ParamField path="body.encoding_format" type="string" default="float">
+  嵌入向量的返回格式：`float`（浮点数数组，默认）或 `base64`（Base64 编码的字节数组）。是否支持取决于上游渠道。
+</ParamField>
+
+<ParamField path="body.dimensions" type="integer">
+  输出向量的维度。仅对支持自定义维度的模型有效（如 `text-embedding-3` 系列）。
+</ParamField>
+
+<ParamField path="body.user" type="string">
+  终端用户标识符，用于 NookMux 识别与滥用监测。
+</ParamField>
+
+<ParamField path="body.seed" type="integer">
+  采样随机种子。NookMux 扩展参数，非 OpenAI 标准字段。
+</ParamField>
+
+<ParamField path="body.temperature" type="number">
+  采样温度。NookMux 扩展参数。
+</ParamField>
+
+<ParamField path="body.top_p" type="number">
+  核采样参数。NookMux 扩展参数。
+</ParamField>
+
+<ParamField path="body.frequency_penalty" type="number">
+  频率惩罚。NookMux 扩展参数。
+</ParamField>
+
+<ParamField path="body.presence_penalty" type="number">
+  存在惩罚。NookMux 扩展参数。
+</ParamField>
+
+<Note>
+  `seed`、`temperature`、`top_p`、`frequency_penalty`、`presence_penalty` 为 NookMux 接受的扩展参数，仅透传给兼容 OpenAI 格式的部分渠道时生效（Gemini 等渠道会丢弃这些字段）；能否透传还取决于控制台「模型 → 参数覆盖」的配置。
+</Note>
+
+## 响应
+
+<ResponseExample>
+
+```json 200
+{
+  "object": "list",
+  "data": [
+    {
+      "object": "embedding",
+      "index": 0,
+      "embedding": [
+        0.0023064255,
+        -0.009327292,
+        0.015542567,
+        -0.038050222,
+        0.026968576,
+        -0.0077484914,
+        0.012851204,
+        -0.021577374,
+        0.011302758,
+        -0.015198547,
+        0.020153816,
+        -0.014093169
+      ]
+    }
+  ],
+  "model": "text-embedding-3-small",
+  "usage": {
+    "prompt_tokens": 12,
+    "total_tokens": 12
+  }
+}
+```
+
+</ResponseExample>
+
+### 响应字段
+
+<ResponseField name="object" type="string" required>
+  对象类型，固定为 `list`。
+</ResponseField>
+
+<ResponseField name="data" type="object[]" required>
+  嵌入结果列表，顺序与请求 `input` 一致。
+
+  <Expandable title="data 结构">
+    <ResponseField name="object" type="string" required>
+      对象类型，固定为 `embedding`。
+    </ResponseField>
+    <ResponseField name="index" type="integer" required>
+      该条结果在 `data` 中的序号，对应输入的位置。
+    </ResponseField>
+    <ResponseField name="embedding" type="number[]" required>
+      嵌入向量。`encoding_format` 为 `float` 时是浮点数数组，为 `base64` 时是 Base64 字符串。维度由模型决定，或由请求中的 `dimensions` 指定。
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="model" type="string" required>
+  生成向量的模型名称。
+</ResponseField>
+
+<ResponseField name="usage" type="object" required>
+  Token 使用统计。
+
+  <Expandable title="usage 结构">
+    <ResponseField name="prompt_tokens" type="integer" required>
+      输入消耗的 token 数。
+    </ResponseField>
+    <ResponseField name="total_tokens" type="integer" required>
+      总消耗 token 数。
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+## 错误码
+
+| HTTP 状态码 | 说明 |
+| --- | --- |
+| 400 | 请求参数错误（如 `input` 为空），或模型不支持所请求的能力 |
+| 401 | 令牌无效、已禁用或已过期 |
+| 403 | 令牌无权访问该模型，或额度不足 |
+| 429 | 触发速率限制 |
+| 500 | 上游渠道返回错误，`error.message` 中包含上游错误详情 |

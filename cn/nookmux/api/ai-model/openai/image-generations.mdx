@@ -1,0 +1,206 @@
+---
+title: 生成图像
+description: 根据文本提示词生成图像，请求与响应兼容 OpenAI Images API。
+api: "POST /v1/images/generations"
+---
+
+根据文本提示词生成图像。请求与响应格式兼容 OpenAI Images API 的图像生成接口。
+
+NookMux 根据请求中的 `model` 将请求分发到对应渠道并计费。可用的模型由控制台「渠道 → 模型」配置决定，常见如 `gpt-image-1`、`dall-e-3`、`dall-e-2`，也可以是渠道中配置的其他图像模型（如 `imagen-4.0-generate-001`、MiniMax `image-01`）。
+
+## 请求
+
+<RequestExample>
+
+```bash cURL
+curl --request POST \
+  --url https://your-nookmux-domain/v1/images/generations \
+  --header 'Authorization: Bearer $NOOKMUX_API_KEY' \
+  --header 'Content-Type: application/json' \
+  --data '{
+  "model": "gpt-image-1",
+  "prompt": "一只戴着宇航员头盔的橘猫漂浮在太空中，背景是地球，皮克斯风格插画",
+  "n": 1,
+  "size": "1024x1024",
+  "quality": "high"
+}'
+```
+
+```python Python
+from openai import OpenAI
+
+client = OpenAI(
+    base_url="https://your-nookmux-domain/v1",
+    api_key="$NOOKMUX_API_KEY",
+)
+
+result = client.images.generate(
+    model="gpt-image-1",
+    prompt="一只戴着宇航员头盔的橘猫漂浮在太空中，背景是地球，皮克斯风格插画",
+    n=1,
+    size="1024x1024",
+)
+print(result.data[0].b64_json)
+```
+
+</RequestExample>
+
+### 认证
+
+<ParamField path="header.Authorization" type="string" required>
+  以 `Bearer` 开头的 NookMux API 令牌，格式为 `Authorization: Bearer <token>`。令牌在控制台「令牌」页创建。
+</ParamField>
+
+### 请求体
+
+<ParamField path="body.model" type="string" required>
+  要使用的图像模型名称，可通过「模型列表」接口获取。未指定时返回 400。
+</ParamField>
+
+<ParamField path="body.prompt" type="string" required>
+  期望生成图像的文本描述。长度上限以模型为准（`dall-e-3` 为 4000 字符，`gpt-image-1` 为 32000 字符）。
+</ParamField>
+
+<ParamField path="body.n" type="integer" default="1">
+  生成图像的数量，取值 `1 ~ 100`。未指定时为 `1`，超出范围返回 400。
+</ParamField>
+
+<ParamField path="body.size" type="string">
+  图像尺寸，宽与高以小写字母 `x` 分隔（使用乘号 `×` 会返回 400）。各模型的取值与默认值：
+
+  - `dall-e-2` / `dall-e`：`256x256`、`512x512`、`1024x1024`，默认 `1024x1024`
+  - `dall-e-3`：`1024x1024`、`1024x1792`、`1792x1024`，默认 `1024x1024`
+  - `gpt-image-1`：`1024x1024`、`1024x1536`、`1536x1024`、`auto`
+  - 其他模型以渠道实际支持为准
+</ParamField>
+
+<ParamField path="body.quality" type="string">
+  图像质量。`dall-e-3`：`standard`（默认）/ `hd`；`gpt-image-1`：`auto`（默认）/ `high` / `medium` / `low`。未指定时 NookMux 按上述默认值补全后转发。
+</ParamField>
+
+<ParamField path="body.response_format" type="string">
+  生成图像的返回格式：`url` 或 `b64_json`。仅 `dall-e-2` / `dall-e-3` 支持该参数，`gpt-image-1` 始终以 Base64 返回。
+</ParamField>
+
+<ParamField path="body.style" type="string">
+  `dall-e-3` 的生成风格：`vivid`（生动，默认）或 `natural`（自然）。
+</ParamField>
+
+<ParamField path="body.user" type="string">
+  终端用户标识符，用于 NookMux 识别与滥用监测。
+</ParamField>
+
+<ParamField path="body.background" type="string">
+  背景透明度（`gpt-image-1`）：`transparent`、`opaque` 或 `auto`。
+</ParamField>
+
+<ParamField path="body.moderation" type="string">
+  内容审核强度（`gpt-image-1`）：`low` 或 `auto`。
+</ParamField>
+
+<ParamField path="body.output_format" type="string">
+  输出图像格式（`gpt-image-1`）：`png`、`jpeg` 或 `webp`。
+</ParamField>
+
+<ParamField path="body.output_compression" type="integer">
+  输出压缩率（`gpt-image-1`），`0 ~ 100`。`output_format` 为 `jpeg` 或 `webp` 时生效。
+</ParamField>
+
+<ParamField path="body.partial_images" type="integer">
+  流式返回的部分图像数量（`gpt-image-1`），透传给上游渠道。
+</ParamField>
+
+<ParamField path="body.watermark" type="boolean">
+  是否为生成图像添加 AIGC 水印。仅支持该参数的渠道生效（如 MiniMax 图像渠道将其映射为 `aigc_watermark`）。
+</ParamField>
+
+<Note>
+  `imagen-*` 系列模型经 Gemini 渠道调用时，NookMux 会自动将请求转换为 Gemini 的 `models/{model}:predict` 接口：`size` 会被映射为宽高比（如 `1792x1024` → `16:9`），也允许直接传入 `16:9` 形式的宽高比字符串；`quality` 会被映射为 `imageSize`（`1K` / `2K`）。
+</Note>
+
+<Note>
+  `background`、`moderation`、`output_format`、`output_compression`、`partial_images` 等 `gpt-image-1` 专属参数仅在支持它们的渠道生效，其余渠道按参数过滤规则丢弃；字段能否透传还取决于控制台「模型 → 参数覆盖」的配置。
+</Note>
+
+## 响应
+
+<ResponseExample>
+
+```json 200
+{
+  "created": 1760822400,
+  "data": [
+    {
+      "b64_json": "iVBORw0KGgoAAAANSUhEUgAABAAAAAQACAYAAABXPYanAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAFUlEQVR4nO3BMQEAAADCoPVPbQofoAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABaOc9mAAGkPFcuAAAAAElFTkSuQmCC"
+    }
+  ],
+  "usage": {
+    "total_tokens": 1105,
+    "input_tokens": 1084,
+    "output_tokens": 21,
+    "input_tokens_details": {
+      "text_tokens": 12,
+      "image_tokens": 1072
+    },
+    "output_tokens_details": {
+      "text_tokens": 21
+    }
+  }
+}
+```
+
+</ResponseExample>
+
+### 响应字段
+
+<ResponseField name="created" type="integer" required>
+  图像生成时间的 Unix 时间戳（秒）。
+</ResponseField>
+
+<ResponseField name="data" type="object[]" required>
+  生成结果列表，长度等于请求的 `n`。
+
+  <Expandable title="data 结构">
+    <ResponseField name="url" type="string">
+      图像的临时下载 URL，`response_format` 为 `url` 时返回（仅 `dall-e` 系列），有效期约 60 分钟。
+    </ResponseField>
+    <ResponseField name="b64_json" type="string">
+      Base64 编码的图像数据。`gpt-image-1` 始终以该字段返回。
+    </ResponseField>
+    <ResponseField name="revised_prompt" type="string">
+      模型改写后的提示词，仅 `dall-e-3` 返回。
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="usage" type="object">
+  本次生成的 token 用量，仅 `gpt-image-1` 系列模型返回。
+
+  <Expandable title="usage 结构">
+    <ResponseField name="total_tokens" type="integer">
+      总消耗 token 数。
+    </ResponseField>
+    <ResponseField name="input_tokens" type="integer">
+      输入消耗的 token 数（提示词与输入图像）。
+    </ResponseField>
+    <ResponseField name="output_tokens" type="integer">
+      输出消耗的 token 数（按生成图像折算）。
+    </ResponseField>
+    <ResponseField name="input_tokens_details" type="object">
+      输入明细，含 `text_tokens`、`image_tokens`。
+    </ResponseField>
+    <ResponseField name="output_tokens_details" type="object">
+      输出明细，含 `text_tokens`。
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+## 错误码
+
+| HTTP 状态码 | 说明 |
+| --- | --- |
+| 400 | 请求参数错误（如 `size` 不在模型允许范围内、`n` 超出 `1 ~ 100`、未指定 `model`） |
+| 401 | 令牌无效、已禁用或已过期 |
+| 403 | 令牌无权访问该模型，或额度不足 |
+| 429 | 触发速率限制 |
+| 500 | 上游渠道返回错误，`error.message` 中包含上游错误详情 |

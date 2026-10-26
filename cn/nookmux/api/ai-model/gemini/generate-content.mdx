@@ -1,0 +1,416 @@
+---
+title: 生成内容
+description: 以 Gemini 原生格式发起内容生成，支持多模态输入、工具调用、结构化输出与 TTS 透传。
+api: "POST /v1beta/models/{model}:generateContent"
+---
+
+以 Gemini 原生请求格式生成内容。请求与响应结构兼容 Google Gemini API 的 `generateContent` 方法，适用于已按 Gemini REST 协议开发的客户端与官方 `google-genai` SDK。
+
+NookMux 根据 URL 路径 `{model}` 中的模型名称将请求分发到对应渠道：请求体按 Gemini 原生 DTO 解析重建后转发上游，上游响应体原样回传给客户端。`model` 可以是任意已配置的 Gemini 系模型名（由控制台「渠道 → 模型」决定）。
+
+## 请求
+
+<RequestExample>
+
+```bash cURL
+curl --request POST \
+  --url https://your-nookmux-domain/v1beta/models/gemini-2.5-flash:generateContent \
+  --header 'x-goog-api-key: $NOOKMUX_API_KEY' \
+  --header 'Content-Type: application/json' \
+  --data '{
+  "contents": [
+    {
+      "role": "user",
+      "parts": [
+        { "text": "写一个 Python 函数，计算斐波那契数列第 n 项。" }
+      ]
+    }
+  ],
+  "generationConfig": {
+    "temperature": 0.7,
+    "maxOutputTokens": 1024
+  }
+}'
+```
+
+```python Python
+from google import genai
+
+client = genai.Client(
+    api_key="$NOOKMUX_API_KEY",
+    http_options={"base_url": "https://your-nookmux-domain"},
+)
+
+response = client.models.generate_content(
+    model="gemini-2.5-flash",
+    contents="写一个 Python 函数，计算斐波那契数列第 n 项。",
+)
+print(response.text)
+```
+
+</RequestExample>
+
+### 认证
+
+推荐使用 `x-goog-api-key` 请求头传递 NookMux API 令牌（令牌在控制台「令牌」页创建）；网关同时接受 `Authorization: Bearer <token>` 与 `?key=<token>` 查询参数两种兼容写法。
+
+<ParamField path="header.x-goog-api-key" type="string" required>
+  NookMux API 令牌，格式为 `x-goog-api-key: <token>`。
+</ParamField>
+
+### 路径参数
+
+action 固定为 `generateContent`。
+
+<ParamField path="path.model" type="string" required>
+  要调用的模型名称，如 `gemini-2.5-pro`、`gemini-2.5-flash`。取值为 NookMux 中已配置的模型，可通过「模型列表」接口获取可用模型。
+</ParamField>
+
+### 请求体
+
+<ParamField path="body.contents" type="object[]" required>
+  对话内容列表，按时间顺序排列。每条内容包含 `role` 与 `parts`，详细结构见下表。
+
+  <Expandable title="contents 结构">
+    <ParamField path="role" type="string">
+      内容的作者角色：`user`（用户输入）或 `model`（模型回复，多轮对话时回传）。首条内容省略 `role` 时默认按 `user` 处理。
+    </ParamField>
+    <ParamField path="parts" type="object[]" required>
+      内容片段列表，按顺序组成一条消息。每个 part 取下列结构之一。
+
+      <Expandable title="parts 结构">
+        <ParamField path="text" type="string">
+          文本片段。
+        </ParamField>
+        <ParamField path="inlineData" type="object">
+          内联多模态数据（Base64 编码），用于传入图像、音频、视频与文档。接受 `inlineData` 与 `inline_data` 两种写法。
+
+          <Expandable title="inlineData 结构">
+            <ParamField path="mimeType" type="string" required>
+              数据的 MIME 类型，如 `image/jpeg`、`audio/wav`、`video/mp4`、`application/pdf`。接受 `mimeType` 与 `mime_type` 两种写法。
+            </ParamField>
+            <ParamField path="data" type="string" required>
+              Base64 编码的文件内容。
+            </ParamField>
+          </Expandable>
+        </ParamField>
+        <ParamField path="fileData" type="object">
+          以文件 URI 引用媒体文件。NookMux 未提供 Gemini File API 的上传与代管，常规多模态输入请使用 `inlineData` 内联数据；该字段仅在上游渠道自身能识别对应 URI 时可用（不作为通用能力承诺）。
+
+          <Expandable title="fileData 结构">
+            <ParamField path="mimeType" type="string">
+              文件的 MIME 类型。
+            </ParamField>
+            <ParamField path="fileUri" type="string" required>
+              文件 URI。
+            </ParamField>
+          </Expandable>
+        </ParamField>
+        <ParamField path="functionCall" type="object">
+          模型发起的函数调用片段，含 `name`（函数名）与 `args`（参数对象）。
+        </ParamField>
+        <ParamField path="functionResponse" type="object">
+          回传给模型的函数执行结果，含 `name`、`response`（结果对象）与可选的 `id`。
+        </ParamField>
+        <ParamField path="thought" type="boolean">
+          标记该片段是否为思维链（思考摘要）内容。
+        </ParamField>
+        <ParamField path="thoughtSignature" type="string">
+          思维签名。在开启思考的函数调用场景下由模型返回，多轮回传时应原样携带。
+        </ParamField>
+        <ParamField path="videoMetadata" type="object">
+          视频片段元数据（如 `fps`），用于视频剪辑等场景。
+        </ParamField>
+        <ParamField path="executableCode" type="object">
+          代码执行工具产生的代码片段，含 `language` 与 `code`。
+        </ParamField>
+        <ParamField path="codeExecutionResult" type="object">
+          代码执行结果片段，含 `outcome` 与 `output`。
+        </ParamField>
+      </Expandable>
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+<ParamField path="body.systemInstruction" type="object">
+  系统指令，为模型提供贯穿整个对话的上下文。结构与 `contents` 中的单条内容相同（`parts[]`，可选 `role`），通常只放一个 `text` 片段。接受 `systemInstruction` 与 `system_instruction` 两种写法。
+</ParamField>
+
+<ParamField path="body.tools" type="object[]">
+  模型可使用的工具列表。可以是数组，也可以是单个工具对象。
+
+  <Expandable title="tools 结构">
+    <ParamField path="functionDeclarations" type="object[]">
+      自定义函数声明列表。每个声明含 `name`（函数名）、`description`（功能描述）与 `parameters`（参数的 OpenAPI/JSON Schema 对象，`type` 固定为 `object`）。
+    </ParamField>
+    <ParamField path="googleSearch" type="object">
+      启用 Google Search 检索工具（Gemini 2.0 及以上），取 `{}` 即可。
+    </ParamField>
+    <ParamField path="googleSearchRetrieval" type="object">
+      Gemini 1.5 系列的 Google Search 检索工具配置（含 `dynamicRetrievalConfig`）。
+    </ParamField>
+    <ParamField path="codeExecution" type="object">
+      启用代码执行工具，允许模型生成并运行 Python 代码。
+    </ParamField>
+    <ParamField path="urlContext" type="object">
+      启用 URL 上下文工具，允许模型抓取并理解给定 URL 的内容。
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+<ParamField path="body.toolConfig" type="object">
+  工具调用配置。
+
+  <Expandable title="toolConfig 结构">
+    <ParamField path="functionCallingConfig" type="object">
+      函数调用行为配置：`mode` 取 `AUTO`（默认，由模型决定）、`ANY`（强制调用）、`NONE`（禁用）；`allowedFunctionNames` 限定允许调用的函数名列表。
+    </ParamField>
+    <ParamField path="retrievalConfig" type="object">
+      检索工具配置，含 `latLng`（`latitude`、`longitude`）与 `languageCode`。
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+<ParamField path="body.safetySettings" type="object[]">
+  安全设置列表，按危害类别调整拦截阈值。
+
+  <Expandable title="safetySettings 结构">
+    <ParamField path="category" type="string" required>
+      危害类别：`HARM_CATEGORY_HARASSMENT`、`HARM_CATEGORY_HATE_SPEECH`、`HARM_CATEGORY_SEXUALLY_EXPLICIT`、`HARM_CATEGORY_DANGEROUS_CONTENT`、`HARM_CATEGORY_CIVIC_INTEGRITY`。
+    </ParamField>
+    <ParamField path="threshold" type="string" required>
+      拦截阈值：`BLOCK_NONE`、`BLOCK_LOW_AND_ABOVE`、`BLOCK_MEDIUM_AND_ABOVE`、`BLOCK_HIGH_ONLY`、`OFF`。
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+<ParamField path="body.cachedContent" type="string">
+  上下文缓存的内容名称（如 `cachedContents/abc123`），引用预先缓存的上下文以降低成本。
+</ParamField>
+
+<ParamField path="body.generationConfig" type="object">
+  生成参数配置。
+
+  <Expandable title="generationConfig 结构">
+    <ParamField path="temperature" type="number">
+      采样温度，取值 `0.0 ~ 2.0`。较高的值使输出更随机、更具创造性；较低的值使输出更稳定。
+    </ParamField>
+    <ParamField path="topP" type="number">
+      核采样参数。模型仅考虑累积概率达到 `topP` 的候选词。接受 `topP` 与 `top_p` 两种写法。
+    </ParamField>
+    <ParamField path="topK" type="integer">
+      每步仅从概率最高的 k 个候选词中采样。接受 `topK` 与 `top_k` 两种写法。
+    </ParamField>
+    <ParamField path="candidateCount" type="integer" default="1">
+      生成的候选回复数量。
+    </ParamField>
+    <ParamField path="maxOutputTokens" type="integer">
+      生成的最大 token 数量（含可见输出与思维链）。达到上限时输出被截断（`finishReason` 为 `MAX_TOKENS`）。
+    </ParamField>
+    <ParamField path="stopSequences" type="string[]">
+      停止序列列表。模型生成包含任一序列的文本时停止输出。
+    </ParamField>
+    <ParamField path="responseMimeType" type="string" default="text/plain">
+      响应的 MIME 类型：`text/plain`（默认）或 `application/json`（JSON 输出）。
+    </ParamField>
+    <ParamField path="responseSchema" type="object">
+      结构化输出的响应 Schema（OpenAPI 风格子集），配合 `responseMimeType: application/json` 使用。
+    </ParamField>
+    <ParamField path="responseJsonSchema" type="object">
+      结构化输出的标准 JSON Schema，配合 `responseMimeType: application/json` 使用。
+    </ParamField>
+    <ParamField path="presencePenalty" type="number">
+      存在惩罚。正值根据词是否已出现降低其再次出现的概率。
+    </ParamField>
+    <ParamField path="frequencyPenalty" type="number">
+      频率惩罚。正值根据已有词的出现频率降低其重复概率。
+    </ParamField>
+    <ParamField path="responseLogprobs" type="boolean">
+      是否返回输出 token 的对数概率。
+    </ParamField>
+    <ParamField path="logprobs" type="integer">
+      每个输出位置返回概率最高的 n 个 token。设置 `responseLogprobs` 时生效。
+    </ParamField>
+    <ParamField path="seed" type="integer">
+      采样随机种子。相同种子与参数下尽量输出可复现的结果。
+    </ParamField>
+    <ParamField path="responseModalities" type="string[]">
+      请求的输出模态：`TEXT`、`IMAGE`、`AUDIO`。文本生成默认 `["TEXT"]`；图像生成模型需包含 `IMAGE`；TTS 设为 `["AUDIO"]`。
+    </ParamField>
+    <ParamField path="mediaResolution" type="string">
+      输入媒体的处理精度：`LOW`、`MEDIUM` 或 `HIGH`。较低精度可降低 token 消耗。
+    </ParamField>
+    <ParamField path="thinkingConfig" type="object">
+      思考（思维链）配置。
+
+      <Expandable title="thinkingConfig 结构">
+        <ParamField path="thinkingBudget" type="integer">
+          思考 token 预算。`0` 关闭思考；`-1` 表示动态思考（模型自行决定）。
+        </ParamField>
+        <ParamField path="includeThoughts" type="boolean">
+          是否在响应中返回思维链摘要片段（`parts[].thought` 为 `true`）。
+        </ParamField>
+        <ParamField path="thinkingLevel" type="string">
+          思考强度档位（如 `low`、`high`），与 `thinkingBudget` 二选一。
+        </ParamField>
+      </Expandable>
+    </ParamField>
+    <ParamField path="speechConfig" type="object">
+      TTS 语音配置。接受 `speechConfig` 与 `speech_config` 两种写法。
+
+      <Expandable title="speechConfig 结构">
+        <ParamField path="voiceConfig.prebuiltVoiceConfig.voiceName" type="string" required>
+          预置音色名称，如 `Kore`、`Puck`、`Charon`、`Fenrir`。
+        </ParamField>
+        <ParamField path="voiceConfig.prebuiltVoiceConfig.languageCode" type="string">
+          音色语言（如 `zh-CN`），默认由模型自动推断。
+        </ParamField>
+      </Expandable>
+    </ParamField>
+    <ParamField path="imageConfig" type="object">
+      图像输出配置，如图像宽高比 `aspectRatio`、尺寸等，供图像生成模型使用。
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+<Note>
+  请求体由网关按 Gemini 原生 DTO 解析并重建后转发，仅本页列出的字段会被透传至上游；`tools`、`speechConfig`、`imageConfig` 等字段能否透传还取决于控制台「模型 → 参数覆盖」的配置。大部分字段同时接受官方 REST 的 camelCase 与 snake_case 两种写法（如 `system_instruction`、`inline_data`、`mime_type`、`top_p`），转发时统一规范化为 camelCase。
+</Note>
+
+<Warning>
+  Gemini 原生中继仅支持 5 个 action：`generateContent`、`streamGenerateContent`、`countTokens`、`embedContent`、`batchEmbedContents`。其他 action（如 `generateAnswer`、`createTunedModel`、`:predict` 直调、视频生成 Veo 的 `generateVideos`）不支持：客户端 URL 中写入的 action 后缀会被网关丢弃，请求按 `generateContent` 处理或直接校验失败。
+</Warning>
+
+<Note>
+  TTS（文本转语音）以 `generateContent` 透传形式支持：`generationConfig.responseModalities` 设为 `["AUDIO"]`，并通过 `generationConfig.speechConfig.voiceConfig.prebuiltVoiceConfig.voiceName` 指定音色，配合 `gemini-2.5-flash-preview-tts`、`gemini-2.5-pro-preview-tts` 等 TTS 模型使用。图像生成模型（`gemini-2.5-flash-image`、`gemini-3-pro-image`、`nano-banana` 系列等）同样经本端点调用，`responseModalities` 需包含 `IMAGE`。
+
+  ```json
+  {
+    "contents": [
+      {
+        "role": "user",
+        "parts": [
+          { "text": "用轻快的语气说：欢迎使用 NookMux。" }
+        ]
+      }
+    ],
+    "generationConfig": {
+      "responseModalities": ["AUDIO"],
+      "speechConfig": {
+        "voiceConfig": {
+          "prebuiltVoiceConfig": { "voiceName": "Kore" }
+        }
+      }
+    }
+  }
+  ```
+</Note>
+
+## 响应
+
+<ResponseExample>
+
+```json 200
+{
+  "candidates": [
+    {
+      "content": {
+        "parts": [
+          {
+            "text": "def fibonacci(n):\n    if n <= 1:\n        return n\n    a, b = 0, 1\n    for _ in range(n - 1):\n        a, b = b, a + b\n    return a"
+          }
+        ],
+        "role": "model"
+      },
+      "finishReason": "STOP",
+      "index": 0,
+      "safetyRatings": [
+        { "category": "HARM_CATEGORY_HARASSMENT", "probability": "NEGLIGIBLE" },
+        { "category": "HARM_CATEGORY_HATE_SPEECH", "probability": "NEGLIGIBLE" },
+        { "category": "HARM_CATEGORY_SEXUALLY_EXPLICIT", "probability": "NEGLIGIBLE" },
+        { "category": "HARM_CATEGORY_DANGEROUS_CONTENT", "probability": "NEGLIGIBLE" }
+      ]
+    }
+  ],
+  "usageMetadata": {
+    "promptTokenCount": 24,
+    "candidatesTokenCount": 62,
+    "totalTokenCount": 86,
+    "thoughtsTokenCount": 0
+  },
+  "modelVersion": "gemini-2.5-flash"
+}
+```
+
+</ResponseExample>
+
+上游响应体由网关原样回传，以下为 Gemini 标准响应中的关键字段。
+
+### 响应字段
+
+<ResponseField name="candidates" type="object[]" required>
+  候选回复列表，长度等于请求中的 `candidateCount`（默认为 1）。
+
+  <Expandable title="candidates 结构">
+    <ResponseField name="content" type="object">
+      回复内容，结构与请求中的 `contents` 条目相同（`role` 为 `model`，`parts[]` 内含 `text`、`inlineData`（图像/音频输出）、`functionCall`、`thought` 等片段）。
+    </ResponseField>
+    <ResponseField name="finishReason" type="string">
+      生成结束原因：`STOP`（自然结束）、`MAX_TOKENS`（达到 maxOutputTokens 上限）、`SAFETY`（安全策略拦截）、`RECITATION`（触发引用限制）、`MALFORMED_FUNCTION_CALL`（函数调用格式异常）、`IMAGE_SAFETY`、`OTHER`。
+    </ResponseField>
+    <ResponseField name="index" type="integer">
+      该候选在列表中的序号（从 0 开始）。
+    </ResponseField>
+    <ResponseField name="safetyRatings" type="object[]">
+      安全评级列表，每项含 `category`（危害类别）与 `probability`（概率：`NEGLIGIBLE`、`LOW`、`MEDIUM`、`HIGH`）。
+    </ResponseField>
+    <ResponseField name="groundingMetadata" type="object">
+      使用 `googleSearch`、`urlContext` 等检索工具时返回的引用元数据，含 `groundingChunks`、`groundingSupports`、`webSearchQueries` 等。
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="promptFeedback" type="object">
+  提示词反馈。输入被安全策略拦截时返回，含 `blockReason`（拦截原因）与 `safetyRatings`。
+</ResponseField>
+
+<ResponseField name="usageMetadata" type="object" required>
+  Token 使用统计，NookMux 以此完成计费。
+
+  <Expandable title="usageMetadata 结构">
+    <ResponseField name="promptTokenCount" type="integer">
+      输入消耗的 token 数。
+    </ResponseField>
+    <ResponseField name="candidatesTokenCount" type="integer">
+      输出消耗的 token 数。
+    </ResponseField>
+    <ResponseField name="thoughtsTokenCount" type="integer">
+      思维链消耗的 token 数。
+    </ResponseField>
+    <ResponseField name="totalTokenCount" type="integer">
+      总消耗 token 数。
+    </ResponseField>
+    <ResponseField name="cachedContentTokenCount" type="integer">
+      命中上下文缓存的 token 数。
+    </ResponseField>
+    <ResponseField name="toolUsePromptTokenCount" type="integer">
+      工具使用部分消耗的 token 数。
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="modelVersion" type="string">
+  生成本次响应的模型版本。
+</ResponseField>
+
+## 错误码
+
+| HTTP 状态码 | 说明 |
+| --- | --- |
+| 400 | 请求参数错误（如缺少 `contents`），或模型不支持所请求的能力 |
+| 401 | 令牌无效、已禁用或已过期 |
+| 403 | 令牌无权访问该模型，或额度不足 |
+| 429 | 触发速率限制 |
+| 500 | 上游渠道返回错误，`error.message` 中包含上游错误详情 |
+
+错误响应统一为 `{"error": {"message": ..., "type": ...}}` 的 JSON 结构。

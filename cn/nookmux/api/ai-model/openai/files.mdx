@@ -1,0 +1,34 @@
+---
+title: 文件（未实现）
+description: OpenAI Files 系列接口在 NookMux 中保留路由但未实现，调用返回 501。
+api: "POST /v1/files"
+---
+
+<Warning>
+  Files 系列接口当前未实现。路由已保留（便于后续兼容），但所有调用都会返回 `501 Not Implemented`，不会转发到任何上游渠道。
+</Warning>
+
+涉及的端点：
+
+| 方法 | 路径 | 说明 |
+| --- | --- | --- |
+| `GET` | `/v1/files` | 列出文件 |
+| `POST` | `/v1/files` | 上传文件 |
+| `GET` | `/v1/files/{file_id}` | 获取文件信息 |
+| `DELETE` | `/v1/files/{file_id}` | 删除文件 |
+| `GET` | `/v1/files/{file_id}/content` | 下载文件内容 |
+
+## 响应
+
+```json 501
+{
+  "error": {
+    "message": "API not implemented",
+    "type": "nookmux_error",
+    "param": "",
+    "code": "api_not_implemented"
+  }
+}
+```
+
+需要引用文件内容的多模态请求，请改用内联方式：在消息内容块中以 Base64（`file_data`）或 URL（`file_url`）直接携带文件，参见[对话补全](/cn/nookmux/api/ai-model/openai/chat-completions)的 `messages[].content` 字段。

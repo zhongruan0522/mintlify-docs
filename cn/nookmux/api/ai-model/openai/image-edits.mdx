@@ -1,0 +1,177 @@
+---
+title: 编辑图像
+description: 基于已有图像与提示词创建编辑版本，兼容 OpenAI Images Edits API。
+api: "POST /v1/images/edits"
+---
+
+在已有图像的基础上按提示词创建编辑版本，支持局部重绘、扩展与合成。
+
+请求以 `multipart/form-data` 提交（与官方 OpenAI Images Edits 接口一致）；当 `Content-Type` 为 `application/json` 时按 JSON 请求体解析，此时 `image` 可传入图像 URL 或 Base64 数据。NookMux 根据请求中的 `model` 将请求分发到对应渠道并计费。
+
+## 请求
+
+<RequestExample>
+
+```bash cURL
+curl --request POST \
+  --url https://your-nookmux-domain/v1/images/edits \
+  --header 'Authorization: Bearer $NOOKMUX_API_KEY' \
+  --form 'model=gpt-image-1' \
+  --form 'prompt=把背景中的草地换成雪地，保持猫咪的姿势和神态不变' \
+  --form 'image=@/path/to/cat.png' \
+  --form 'size=1024x1024'
+```
+
+```python Python
+from openai import OpenAI
+
+client = OpenAI(
+    base_url="https://your-nookmux-domain/v1",
+    api_key="$NOOKMUX_API_KEY",
+)
+
+result = client.images.edit(
+    model="gpt-image-1",
+    image=open("/path/to/cat.png", "rb"),
+    prompt="把背景中的草地换成雪地，保持猫咪的姿势和神态不变",
+    size="1024x1024",
+)
+print(result.data[0].b64_json)
+```
+
+</RequestExample>
+
+### 认证
+
+<ParamField path="header.Authorization" type="string" required>
+  以 `Bearer` 开头的 NookMux API 令牌，格式为 `Authorization: Bearer <token>`。令牌在控制台「令牌」页创建。
+</ParamField>
+
+### 请求体
+
+以 `multipart/form-data` 表单提交时，各字段为表单项：
+
+<ParamField path="body.model" type="string" required>
+  要使用的图像模型名称。`gpt-image-1` 支持图像编辑，部分渠道的其他编辑模型以控制台配置为准。
+</ParamField>
+
+<ParamField path="body.prompt" type="string" required>
+  期望的编辑描述。说明要对图像做的修改，未在 `mask` 透明区域或输入图像范围内的内容保持不变。
+</ParamField>
+
+<ParamField path="body.image" type="string" required>
+  待编辑的原图。`multipart/form-data` 方式下为文件字段（PNG 等常见格式），可传多张（多张时使用 `image` / `image[]` 字段名）；JSON 请求体方式下为图像的 URL 或 Base64 编码字符串。
+</ParamField>
+
+<ParamField path="body.mask" type="string">
+  可选的 PNG 遮罩文件（`multipart/form-data` 方式）。完全透明（alpha 为 0）的区域表示需要编辑的部分，不透明区域保持原图不变。遮罩尺寸须与原图一致。
+</ParamField>
+
+<ParamField path="body.n" type="integer" default="1">
+  生成图像的数量，取值 `1 ~ 100`。未指定时为 `1`，超出范围返回 400。
+</ParamField>
+
+<ParamField path="body.size" type="string">
+  输出图像尺寸，宽与高以小写字母 `x` 分隔。`gpt-image-1` 支持 `1024x1024`、`1024x1536`、`1536x1024`、`auto`；`dall-e-2` 支持 `256x256`、`512x512`、`1024x1024`。
+</ParamField>
+
+<ParamField path="body.quality" type="string">
+  图像质量。`gpt-image-1`：`auto` / `high` / `medium` / `low`；`dall-e-2`：`standard` / `hd`。
+</ParamField>
+
+<ParamField path="body.watermark" type="boolean">
+  是否为生成图像添加 AIGC 水印（表单方式下传 `watermark=true` / `watermark=false`）。仅支持该参数的渠道生效。
+</ParamField>
+
+<Note>
+  `multipart/form-data` 方式下，除 `model` 外的所有表单字段（含 `image`、`mask` 文件）由 NookMux 原样转发到上游渠道；字段能否生效取决于渠道本身与控制台「模型 → 参数覆盖」的配置。
+</Note>
+
+<Note>
+  旧路径 `/v1/edits`（不带 `/images` 前缀）在当前版本仍保留路由，但调用会因请求解析类型不符而返回 400。请使用 `/v1/images/edits`。
+</Note>
+
+<Note>
+  图像变体接口 `/v1/images/variations` 未实现，调用返回 501（`api_not_implemented`）。
+</Note>
+
+## 响应
+
+<ResponseExample>
+
+```json 200
+{
+  "created": 1760822400,
+  "data": [
+    {
+      "b64_json": "iVBORw0KGgoAAAANSUhEUgAABAAAAAQACAYAAABXPYanAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAFUlEQVR4nO3BMQEAAADCoPVPbQofoAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABaOc9mAAGkPFcuAAAAAElFTkSuQmCC"
+    }
+  ],
+  "usage": {
+    "total_tokens": 1188,
+    "input_tokens": 1167,
+    "output_tokens": 21,
+    "input_tokens_details": {
+      "text_tokens": 22,
+      "image_tokens": 1145
+    },
+    "output_tokens_details": {
+      "text_tokens": 21
+    }
+  }
+}
+```
+
+</ResponseExample>
+
+### 响应字段
+
+<ResponseField name="created" type="integer" required>
+  图像生成时间的 Unix 时间戳（秒）。
+</ResponseField>
+
+<ResponseField name="data" type="object[]" required>
+  生成结果列表，长度等于请求的 `n`。
+
+  <Expandable title="data 结构">
+    <ResponseField name="url" type="string">
+      图像的临时下载 URL，`response_format` 为 `url` 时返回（仅 `dall-e` 系列），有效期约 60 分钟。
+    </ResponseField>
+    <ResponseField name="b64_json" type="string">
+      Base64 编码的图像数据。`gpt-image-1` 始终以该字段返回。
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="usage" type="object">
+  本次编辑的 token 用量，仅 `gpt-image-1` 系列模型返回。
+
+  <Expandable title="usage 结构">
+    <ResponseField name="total_tokens" type="integer">
+      总消耗 token 数。
+    </ResponseField>
+    <ResponseField name="input_tokens" type="integer">
+      输入消耗的 token 数（提示词与输入图像）。
+    </ResponseField>
+    <ResponseField name="output_tokens" type="integer">
+      输出消耗的 token 数（按生成图像折算）。
+    </ResponseField>
+    <ResponseField name="input_tokens_details" type="object">
+      输入明细，含 `text_tokens`、`image_tokens`。
+    </ResponseField>
+    <ResponseField name="output_tokens_details" type="object">
+      输出明细，含 `text_tokens`。
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+## 错误码
+
+| HTTP 状态码 | 说明 |
+| --- | --- |
+| 400 | 请求参数错误（如缺少 `image`、`n` 超出 `1 ~ 100`、未指定 `model`） |
+| 401 | 令牌无效、已禁用或已过期 |
+| 403 | 令牌无权访问该模型，或额度不足 |
+| 429 | 触发速率限制 |
+| 500 | 上游渠道返回错误，`error.message` 中包含上游错误详情 |
+| 501 | 接口未实现（如 `/v1/images/variations`） |

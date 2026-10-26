@@ -1,0 +1,148 @@
+---
+title: 批量文本嵌入
+description: 以 Gemini 原生格式一次为多条内容生成文本嵌入向量。
+api: "POST /v1beta/models/{model}:batchEmbedContents"
+---
+
+一次请求为多条内容生成文本嵌入向量，兼容 Google Gemini API 的 `batchEmbedContents` 方法。模型由 URL 路径指定，需为嵌入模型（如 `gemini-embedding-001`、`text-embedding-004`）；返回的向量顺序与请求顺序一致。
+
+NookMux 将请求转发到 `{model}` 对应的渠道并原样回传上游响应；按全部输入 token 计费。适合批量构建向量库的场景。
+
+## 请求
+
+<RequestExample>
+
+```bash cURL
+curl --request POST \
+  --url https://your-nookmux-domain/v1beta/models/gemini-embedding-001:batchEmbedContents \
+  --header 'x-goog-api-key: $NOOKMUX_API_KEY' \
+  --header 'Content-Type: application/json' \
+  --data '{
+  "requests": [
+    {
+      "content": { "parts": [{ "text": "NookMux 是一个 AI API 聚合网关。" }] },
+      "taskType": "RETRIEVAL_DOCUMENT"
+    },
+    {
+      "content": { "parts": [{ "text": "它将 OpenAI、Claude、Gemini 等上游聚合为统一入口。" }] },
+      "taskType": "RETRIEVAL_DOCUMENT"
+    }
+  ]
+}'
+```
+
+```python Python
+from google import genai
+
+client = genai.Client(
+    api_key="$NOOKMUX_API_KEY",
+    http_options={"base_url": "https://your-nookmux-domain"},
+)
+
+response = client.models.batch_embed_contents(
+    model="gemini-embedding-001",
+    requests=[
+        {
+            "model": "models/gemini-embedding-001",
+            "content": {"parts": [{"text": "NookMux 是一个 AI API 聚合网关。"}]},
+            "task_type": "RETRIEVAL_DOCUMENT",
+        },
+        {
+            "model": "models/gemini-embedding-001",
+            "content": {"parts": [{"text": "它将 OpenAI、Claude、Gemini 等上游聚合为统一入口。"}]},
+            "task_type": "RETRIEVAL_DOCUMENT",
+        },
+    ],
+)
+for embedding in response.embeddings:
+    print(embedding.values[:5])
+```
+
+</RequestExample>
+
+### 认证
+
+推荐使用 `x-goog-api-key` 请求头传递 NookMux API 令牌（令牌在控制台「令牌」页创建）；网关同时接受 `Authorization: Bearer <token>` 与 `?key=<token>` 查询参数两种兼容写法。
+
+<ParamField path="header.x-goog-api-key" type="string" required>
+  NookMux API 令牌，格式为 `x-goog-api-key: <token>`。
+</ParamField>
+
+### 路径参数
+
+action 固定为 `batchEmbedContents`。
+
+<ParamField path="path.model" type="string" required>
+  嵌入模型名称，如 `gemini-embedding-001`、`text-embedding-004`。取值为 NookMux 中已配置的模型，可通过「模型列表」接口获取可用模型。
+</ParamField>
+
+### 请求体
+
+<ParamField path="body.requests" type="object[]" required>
+  嵌入请求列表，每项结构与单条「文本嵌入」请求一致，返回向量顺序与之一致。
+
+  <Expandable title="requests 结构">
+    <ParamField path="content" type="object" required>
+      待嵌入的内容，含 `parts[].text`（多条 `text` 片段会合并为一条输入），可选 `role`。
+    </ParamField>
+    <ParamField path="model" type="string">
+      可选。模型名以 URL 路径中的 `{model}` 为准，网关转发时统一改写为 `models/{model}` 形式。
+    </ParamField>
+    <ParamField path="taskType" type="string">
+      嵌入任务类型：`RETRIEVAL_DOCUMENT`、`RETRIEVAL_QUERY`、`SEMANTIC_SIMILARITY`、`CLASSIFICATION`、`CLUSTERING`、`QUESTION_ANSWERING`、`FACT_VERIFICATION`、`CODE_RETRIEVAL_QUERY`。
+    </ParamField>
+    <ParamField path="title" type="string">
+      文档标题。仅在 `taskType` 为 `RETRIEVAL_DOCUMENT` 时生效。
+    </ParamField>
+    <ParamField path="outputDimensionality" type="integer">
+      输出向量维度。省略时返回模型默认维度；仅较新的嵌入模型支持降维。
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+<Note>
+  请求体由网关按 Gemini 原生 DTO 解析重建后转发，仅上述字段会被透传至上游；字段能否透传还取决于控制台「模型 → 参数覆盖」的配置。
+</Note>
+
+## 响应
+
+<ResponseExample>
+
+```json 200
+{
+  "embeddings": [
+    {
+      "values": [0.011027313, -0.018682647, 0.029431311, -0.0076551883, 0.020473024]
+    },
+    {
+      "values": [0.013412861, -0.021043852, 0.018312099, -0.009872115, 0.024108206]
+    }
+  ]
+}
+```
+
+</ResponseExample>
+
+### 响应字段
+
+<ResponseField name="embeddings" type="object[]" required>
+  嵌入向量列表，顺序与请求中的 `requests` 一致。
+
+  <Expandable title="embeddings 结构">
+    <ResponseField name="values" type="number[]" required>
+      嵌入向量的浮点数数组，维度由模型默认值或请求中的 `outputDimensionality` 决定（示例仅展示前几个分量）。
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+## 错误码
+
+| HTTP 状态码 | 说明 |
+| --- | --- |
+| 400 | 请求参数错误（如缺少 `requests`），或所选模型不是嵌入模型 |
+| 401 | 令牌无效、已禁用或已过期 |
+| 403 | 令牌无权访问该模型，或额度不足 |
+| 429 | 触发速率限制 |
+| 500 | 上游渠道返回错误，`error.message` 中包含上游错误详情 |
+
+错误响应统一为 `{"error": {"message": ..., "type": ...}}` 的 JSON 结构。

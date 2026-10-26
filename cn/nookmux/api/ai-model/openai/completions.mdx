@@ -1,0 +1,239 @@
+---
+title: 文本补全
+description: 为给定提示词生成文本补全，兼容 OpenAI 旧版 Completions API，支持流式输出。
+api: "POST /v1/completions"
+---
+
+为给定的提示词生成文本补全。请求与响应格式兼容 OpenAI 旧版 Completions API。
+
+<Warning>
+  这是 OpenAI 的旧版文本接口，已停止演进。新应用建议使用<a href="/cn/nookmux/api/ai-model/openai/chat-completions">对话补全</a>接口。
+</Warning>
+
+NookMux 根据请求中的 `model` 名称将请求分发到对应渠道，并以统一的 OpenAI 格式返回响应。此接口不使用 `messages` 对话历史，输入为 `prompt` 提示词，适合按前缀续写文本、代码补全等场景。
+
+## 请求
+
+<RequestExample>
+
+```bash cURL
+curl --request POST \
+  --url https://your-nookmux-domain/v1/completions \
+  --header 'Authorization: Bearer $NOOKMUX_API_KEY' \
+  --header 'Content-Type: application/json' \
+  --data '{
+  "model": "gpt-3.5-turbo-instruct",
+  "prompt": "写一个 Python 函数，判断字符串是否为回文：\n\ndef is_palindrome(s):",
+  "suffix": "\n\n# 单元测试",
+  "stream": false
+}'
+```
+
+```python Python
+from openai import OpenAI
+
+client = OpenAI(
+    base_url="https://your-nookmux-domain/v1",
+    api_key="$NOOKMUX_API_KEY",
+)
+
+response = client.completions.create(
+    model="gpt-3.5-turbo-instruct",
+    prompt="写一个 Python 函数，判断字符串是否为回文：\n\ndef is_palindrome(s):",
+    suffix="\n\n# 单元测试",
+)
+print(response.choices[0].text)
+```
+
+</RequestExample>
+
+### 认证
+
+<ParamField path="header.Authorization" type="string" required>
+  以 `Bearer` 开头的 NookMux API 令牌，格式为 `Authorization: Bearer <token>`。令牌在控制台「令牌」页创建。
+</ParamField>
+
+### 请求体
+
+<ParamField path="body.model" type="string" required>
+  要调用的模型名称。取值为 NookMux 中已配置的模型，可通过「模型列表」接口获取可用模型。
+</ParamField>
+
+<ParamField path="body.prompt" type="string | string[]" required>
+  生成补全的提示词。字符串或字符串数组；为数组时，每项对应一次独立的补全请求，响应的 `choices` 按顺序合并返回。此接口不使用 `messages` 字段。
+</ParamField>
+
+<ParamField path="body.suffix" type="string">
+  插入补全的后缀，即补全文本之后接续的内容。配合代码补全场景使用，仅部分模型支持（如代码类模型）。
+</ParamField>
+
+<ParamField path="body.stream" type="boolean" default="false">
+  是否启用流式输出。`true` 时通过 Server-Sent Events 分块返回生成内容，结束时会返回 `data: [DONE]`。
+</ParamField>
+
+<ParamField path="body.stream_options" type="object">
+  流式输出选项。
+
+  <Expandable title="stream_options 结构">
+    <ParamField path="include_usage" type="boolean" default="false">
+      流式输出的最后一个 chunk 是否携带 `usage` 统计字段。
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+<ParamField path="body.max_tokens" type="integer">
+  生成的最大 token 数量。达到上限时输出被截断，`finish_reason` 为 `length`。
+</ParamField>
+
+<ParamField path="body.temperature" type="number">
+  采样温度，取值 `0.0 ~ 2.0`。较高的值使输出更随机、更具创造性；较低的值使输出更稳定。建议调整 `temperature` 或 `top_p` 其中之一。
+</ParamField>
+
+<ParamField path="body.top_p" type="number">
+  核采样参数。模型仅考虑累积概率达到 `top_p` 的候选词，如 `0.1` 表示只考虑前 10% 概率的词。
+</ParamField>
+
+<ParamField path="body.n" type="integer" default="1">
+  为每个提示词生成的补全数量。
+</ParamField>
+
+<ParamField path="body.stop" type="string | string[]">
+  最多 4 个停止序列。模型生成包含任一序列的文本时停止输出，序列本身不包含在输出中。
+</ParamField>
+
+<ParamField path="body.frequency_penalty" type="number">
+  频率惩罚，`-2.0 ~ 2.0`。正值根据已有词的出现频率降低其重复概率。
+</ParamField>
+
+<ParamField path="body.presence_penalty" type="number">
+  存在惩罚，`-2.0 ~ 2.0`。正值根据词是否已出现降低其再次出现的概率。
+</ParamField>
+
+<ParamField path="body.logprobs" type="boolean">
+  是否返回输出 token 的对数概率。
+</ParamField>
+
+<ParamField path="body.top_logprobs" type="integer">
+  每个输出位置返回概率最高的 n 个 token（`0 ~ 20`）。设置 `logprobs` 时生效。
+</ParamField>
+
+<ParamField path="body.logit_bias" type="object">
+  修改指定 token 在采样中的出现概率，键为 token ID，值为 `-100 ~ 100`。
+</ParamField>
+
+<ParamField path="body.user" type="string">
+  终端用户标识符，用于 NookMux 识别与滥用监测。
+</ParamField>
+
+## 响应
+
+<ResponseExample>
+
+```json 200
+{
+  "id": "cmpl-abc123",
+  "object": "text_completion",
+  "created": 1735689600,
+  "model": "gpt-3.5-turbo-instruct",
+  "choices": [
+    {
+      "index": 0,
+      "text": "\n    s = s.lower()\n    return s == s[::-1]",
+      "logprobs": null,
+      "finish_reason": "stop"
+    }
+  ],
+  "usage": {
+    "prompt_tokens": 48,
+    "completion_tokens": 18,
+    "total_tokens": 66
+  }
+}
+```
+
+</ResponseExample>
+
+### 响应字段
+
+<ResponseField name="id" type="string" required>
+  本次补全的唯一标识。
+</ResponseField>
+
+<ResponseField name="object" type="string" required>
+  对象类型，固定为 `text_completion`。
+</ResponseField>
+
+<ResponseField name="created" type="integer" required>
+  响应创建时间的 Unix 时间戳（秒）。
+</ResponseField>
+
+<ResponseField name="model" type="string" required>
+  生成本次响应的模型名称。
+</ResponseField>
+
+<ResponseField name="choices" type="object[]" required>
+  补全结果列表，长度等于请求中的 `n`（`prompt` 为数组时为各提示词结果的总和）。
+
+  <Expandable title="choices 结构">
+    <ResponseField name="index" type="integer">
+      该条补全在列表中的序号。
+    </ResponseField>
+    <ResponseField name="text" type="string">
+      补全文本内容，不包含提示词本身。
+    </ResponseField>
+    <ResponseField name="logprobs" type="object">
+      请求设置 `logprobs` 时返回，含每个位置的 `tokens`、`token_logprobs` 与 `top_logprobs`。
+    </ResponseField>
+    <ResponseField name="finish_reason" type="string">
+      生成结束原因：`stop`（自然结束或命中停止序列）、`length`（达到 `max_tokens` 上限）、`content_filter`（内容被安全策略拦截）。
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="usage" type="object" required>
+  Token 使用统计。
+
+  <Expandable title="usage 结构">
+    <ResponseField name="prompt_tokens" type="integer">
+      输入消耗的 token 数。
+    </ResponseField>
+    <ResponseField name="completion_tokens" type="integer">
+      输出消耗的 token 数。
+    </ResponseField>
+    <ResponseField name="total_tokens" type="integer">
+      总消耗 token 数。
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+## 流式响应
+
+设置 `"stream": true` 后，响应以 `text/event-stream` 返回，每个 `data:` 行为一个 chunk（`object` 为 `text_completion.chunk`）：
+
+```json
+data: {"id":"cmpl-abc123","object":"text_completion.chunk","created":1735689600,"model":"gpt-3.5-turbo-instruct","choices":[{"text":"    s","index":0,"logprobs":null,"finish_reason":null}]}
+
+data: {"id":"cmpl-abc123","object":"text_completion.chunk","created":1735689600,"model":"gpt-3.5-turbo-instruct","choices":[{"text":" = s.lower()","index":0,"logprobs":null,"finish_reason":null}]}
+
+data: {"id":"cmpl-abc123","object":"text_completion.chunk","created":1735689600,"model":"gpt-3.5-turbo-instruct","choices":[{"text":"","index":0,"logprobs":null,"finish_reason":"stop"}]}
+
+data: [DONE]
+```
+
+<ResponseField name="text" type="string">
+  增量补全文本。每个 chunk 通过 `choices[].text` 增量返回一段内容，最后一个 chunk 携带 `finish_reason`。
+</ResponseField>
+
+<Note>
+  请求中设置 `stream_options.include_usage: true` 时，最后一个 chunk（`finish_reason` 之后）会额外携带 `usage` 字段，且 `choices` 为空数组。
+</Note>
+
+## 错误码
+
+| HTTP 状态码 | 说明 |
+| --- | --- |
+| 400 | 请求参数错误或模型不支持所请求的能力 |
+| 401 | 令牌无效、已禁用或已过期 |
+| 403 | 令牌无权访问该模型，或额度不足 |
+| 429 | 触发速率限制 |
+| 500 | 上游渠道返回错误，`error.message` 中包含上游错误详情 |

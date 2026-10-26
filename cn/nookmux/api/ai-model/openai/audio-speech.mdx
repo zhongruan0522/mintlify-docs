@@ -1,0 +1,146 @@
+---
+title: 文本转语音
+description: 将文本合成为语音音频，兼容 OpenAI Audio Speech API。
+api: "POST /v1/audio/speech"
+---
+
+将文本合成为语音音频。请求与响应格式兼容 OpenAI Audio Speech 接口。
+
+NookMux 根据请求中的 `model` 将请求分发到对应渠道并计费：按输入文本 token 与输出音频时长统计用量（输出音频每分钟折算 1000 token）。可用模型由控制台「渠道 → 模型」配置决定，常见如 `tts-1`、`tts-1-hd`、`gpt-4o-mini-tts`。
+
+## 请求
+
+<RequestExample>
+
+```bash cURL
+curl --request POST \
+  --url https://your-nookmux-domain/v1/audio/speech \
+  --header 'Authorization: Bearer $NOOKMUX_API_KEY' \
+  --header 'Content-Type: application/json' \
+  --output speech.mp3 \
+  --data '{
+  "model": "gpt-4o-mini-tts",
+  "input": "欢迎使用 NookMux 语音合成服务。",
+  "voice": "coral",
+  "instructions": "语气亲切自然，语速适中",
+  "response_format": "mp3"
+}'
+```
+
+```python Python
+from openai import OpenAI
+
+client = OpenAI(
+    base_url="https://your-nookmux-domain/v1",
+    api_key="$NOOKMUX_API_KEY",
+)
+
+response = client.audio.speech.create(
+    model="gpt-4o-mini-tts",
+    voice="coral",
+    input="欢迎使用 NookMux 语音合成服务。",
+    instructions="语气亲切自然，语速适中",
+)
+response.stream_to_file("speech.mp3")
+```
+
+</RequestExample>
+
+### 认证
+
+<ParamField path="header.Authorization" type="string" required>
+  以 `Bearer` 开头的 NookMux API 令牌，格式为 `Authorization: Bearer <token>`。令牌在控制台「令牌」页创建。
+</ParamField>
+
+### 请求体
+
+<ParamField path="body.model" type="string" required>
+  要使用的 TTS 模型名称。未指定时按 `tts-1` 处理。常用 `tts-1`、`tts-1-hd`、`gpt-4o-mini-tts`，也可使用渠道中配置的其他语音模型。
+</ParamField>
+
+<ParamField path="body.input" type="string" required>
+  要合成的文本，最长 4096 字符。
+</ParamField>
+
+<ParamField path="body.voice" type="string" required>
+  朗读音色。OpenAI 渠道支持 `alloy`、`ash`、`ballad`、`coral`、`echo`、`fable`、`onyx`、`nova`、`sage`、`shimmer`；其他渠道（如 MiniMax）的可用音色以渠道与系统音色配置为准。
+</ParamField>
+
+<ParamField path="body.instructions" type="string">
+  语音风格指令（语气、情感、语速等），仅 `gpt-4o-mini-tts` 等支持的模型生效。
+</ParamField>
+
+<ParamField path="body.response_format" type="string" default="mp3">
+  音频输出格式：`mp3`、`opus`、`aac`、`flac`、`wav`、`pcm`。`pcm` 为 24kHz 16-bit 单声道的裸 PCM 数据（无文件头）。
+</ParamField>
+
+<ParamField path="body.speed" type="number" default="1.0">
+  合成语速，`0.25 ~ 4.0`。`1.0` 为正常语速。
+</ParamField>
+
+<ParamField path="body.stream_format" type="string">
+  设为 `sse` 时以 Server-Sent Events 流式返回音频分块，见下方「流式响应」。
+</ParamField>
+
+<ParamField path="body.metadata" type="object">
+  附加的键值对元数据，透传给渠道（如 MiniMax 渠道可借此传递厂商自定义字段）。
+</ParamField>
+
+<Note>
+  OpenAI 兼容渠道对 `voice`、`response_format` 等字段原样透传，不做白名单校验；MiniMax 渠道仅支持 `mp3` / `opus` / `flac` / `wav` / `pcm`（传 `aac` 会返回错误），且音色需在控制台「音色管理」中配置或经音色重定向解析。
+</Note>
+
+## 响应
+
+默认返回音频二进制流，`Content-Type` 与请求的 `response_format` 对应：
+
+| response_format | Content-Type |
+| --- | --- |
+| `mp3` | `audio/mpeg` |
+| `opus` | `audio/ogg` |
+| `aac` | `audio/aac` |
+| `flac` | `audio/flac` |
+| `wav` | `audio/wav` |
+| `pcm` | `audio/pcm` |
+
+<ResponseExample>
+
+```text 200
+HTTP/1.1 200 OK
+Content-Type: audio/mpeg
+Content-Length: 18240
+
+音频二进制数据（mp3 编码）
+```
+
+</ResponseExample>
+
+## 流式响应
+
+请求中设置 `"stream_format": "sse"` 后，响应以 `text/event-stream` 返回，每行 `data:` 为一帧 JSON：
+
+```json
+data: {"delta":"SUQzBAAAAAAAI1RTU0AAAAAAAAPMYAAADAQMDAwMDAwMDAwMDAwMDAwMDAw"}
+
+data: {"delta":"SUQzBAAAAAAAI1RTU0AAAAAAAAPMYAAADAwMDAwMDAwMDAwMDAwMDAwMDA"}
+
+data: {"usage":{"input_tokens":18,"output_tokens":120,"total_tokens":138}}
+```
+
+<ResponseField name="delta" type="string">
+  一帧音频数据，内容与编码由上游渠道决定，NookMux 原样转发。
+</ResponseField>
+
+<Note>
+  具体帧结构与字段由上游渠道决定；携带 `usage` 的帧用于 NookMux 计费统计，同样会转发给客户端。
+</Note>
+
+## 错误码
+
+| HTTP 状态码 | 说明 |
+| --- | --- |
+| 400 | 请求参数错误（如渠道不支持的 `response_format`） |
+| 401 | 令牌无效、已禁用或已过期 |
+| 403 | 令牌无权访问该模型，或额度不足 |
+| 429 | 触发速率限制 |
+| 500 | 上游渠道返回错误，`error.message` 中包含上游错误详情 |

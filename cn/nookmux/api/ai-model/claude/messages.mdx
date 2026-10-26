@@ -1,0 +1,460 @@
+---
+title: 对话消息
+description: 发送结构化消息并生成下一轮回复，兼容 Anthropic Messages API，支持流式输出、工具调用、扩展思考与多模态输入。
+api: "POST /v1/messages"
+---
+
+发送结构化的输入消息，由模型生成对话中的下一条回复。请求与响应格式兼容 Anthropic Messages API，可直接使用 Anthropic 官方 SDK 访问。
+
+NookMux 根据请求中的 `model` 名称将请求分发到对应渠道：Claude 格式请求会被转换并转发到 Anthropic 官方、AWS Bedrock、Vertex AI、OpenAI 兼容渠道、Gemini 渠道等多种上游；无论上游是哪一家，对外响应始终保持 Claude 格式。`model` 可以是 NookMux 中已配置的任意模型（不限于 `claude-*` 系列，例如通过 OpenAI 兼容渠道调用 `gpt-4o`），可通过[模型列表](/cn/nookmux/api/ai-model/claude/list-models)接口获取可用模型。
+
+官方的 `POST /v1/messages/count_tokens` 子接口在 NookMux 中未实现，请求该路径会返回 `404`。
+
+## 请求
+
+<RequestExample>
+
+```bash cURL
+curl --request POST \
+  --url https://your-nookmux-domain/v1/messages \
+  --header "x-api-key: $NOOKMUX_API_KEY" \
+  --header "anthropic-version: 2023-06-01" \
+  --header "content-type: application/json" \
+  --data '{
+  "model": "claude-sonnet-4.5",
+  "max_tokens": 1024,
+  "messages": [
+    { "role": "user", "content": "写一个 Python 函数，计算斐波那契数列第 n 项。" }
+  ]
+}'
+```
+
+```python Python
+from anthropic import Anthropic
+
+client = Anthropic(
+    base_url="https://your-nookmux-domain",
+    api_key="$NOOKMUX_API_KEY",
+)
+
+message = client.messages.create(
+    model="claude-sonnet-4.5",
+    max_tokens=1024,
+    messages=[
+        {"role": "user", "content": "写一个 Python 函数，计算斐波那契数列第 n 项。"}
+    ],
+)
+print(message.content[0].text)
+```
+
+</RequestExample>
+
+### 认证
+
+<ParamField path="header.x-api-key" type="string" required>
+  NookMux API 令牌，格式为 `x-api-key: <token>`。令牌在控制台「令牌」页创建。NookMux 同时接受 `Authorization: Bearer <token>` 形式。
+</ParamField>
+
+<ParamField path="header.anthropic-version" type="string" default="2023-06-01">
+  Claude API 版本号，官方 SDK 会自动携带。缺省时 NookMux 自动补 `2023-06-01` 再转发给上游。
+</ParamField>
+
+<Note>
+`anthropic-beta` 请求头会原样透传给上游，用于启用上游支持的 beta 能力（如 fine-grained tool streaming）。
+</Note>
+
+### 请求体
+
+<ParamField path="body.model" type="string" required>
+  要调用的模型名称。取值为 NookMux 中已配置的模型，不限于 `claude-*` 系列（如通过 OpenAI 渠道调用 `gpt-4o`）；模型名决定请求被分发到的上游渠道。
+</ParamField>
+
+<ParamField path="body.messages" type="object[]" required>
+  输入消息列表。模型按 `user` 与 `assistant` 交替轮次工作；最后一条 `assistant` 消息可作为模型续写的前缀（prefill）。每条消息包含 `role` 与 `content`。
+
+  <Expandable title="messages 结构">
+    <ParamField path="role" type="string" required>
+      消息角色：`user`（用户输入）或 `assistant`（助手回复）。
+    </ParamField>
+    <ParamField path="content" type="string | object[]" required>
+      消息内容。纯文本时为字符串（等价于单个 `text` 块）；也可以是内容块数组，`type` 可取 `text`、`image`、`tool_use`、`tool_result`、`thinking`、`redacted_thinking`。
+    </ParamField>
+    <ParamField path="content[].text" type="string">
+      `type` 为 `text` 时的文本内容。
+    </ParamField>
+    <ParamField path="content[].source" type="object">
+      `type` 为 `image` 时的图像来源：`{"type": "base64", "media_type": "image/jpeg", "data": "..."}`（Base64 数据）或 `{"type": "url", "url": "https://..."}`。
+    </ParamField>
+    <ParamField path="content[].source.media_type" type="string">
+      Base64 图像的媒体类型：`image/jpeg`、`image/png`、`image/gif` 或 `image/webp`。
+    </ParamField>
+    <ParamField path="content[].source.data" type="string">
+      Base64 编码的图像数据（`type` 为 `base64` 时）。
+    </ParamField>
+    <ParamField path="content[].source.url" type="string">
+      图像 URL（`type` 为 `url` 时）。
+    </ParamField>
+    <ParamField path="content[].id" type="string">
+      `type` 为 `tool_use` 时对应的工具调用 ID，用于与 `tool_result` 配对。
+    </ParamField>
+    <ParamField path="content[].name" type="string">
+      `type` 为 `tool_use` 时调用的工具名称。
+    </ParamField>
+    <ParamField path="content[].input" type="object">
+      `type` 为 `tool_use` 时模型生成的工具入参对象。
+    </ParamField>
+    <ParamField path="content[].tool_use_id" type="string">
+      `type` 为 `tool_result` 时对应的 `tool_use` 块 ID。
+    </ParamField>
+    <ParamField path="content[].content" type="string | object[]">
+      `type` 为 `tool_result` 时的工具执行结果，为字符串或内容块数组（可包含 `text`、`image` 块）。
+    </ParamField>
+    <ParamField path="content[].is_error" type="boolean">
+      `type` 为 `tool_result` 时标记工具执行是否失败。
+    </ParamField>
+    <ParamField path="content[].thinking" type="string">
+      `type` 为 `thinking` 时的思维链文本，须原样回传上一轮响应中的 thinking 块。
+    </ParamField>
+    <ParamField path="content[].signature" type="string">
+      thinking 块的签名，与 `thinking` 一起原样回传。
+    </ParamField>
+    <ParamField path="content[].data" type="string">
+      `type` 为 `redacted_thinking` 时的不透明加密数据，原样回传。
+    </ParamField>
+    <ParamField path="content[].cache_control" type="object">
+      任意内容块上可携带的提示词缓存断点，如 `{"type": "ephemeral"}`（TTL 默认 `5m`，可选 `1h`）。
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+<ParamField path="body.max_tokens" type="integer" required>
+  停止生成前允许生成的最大 token 数。模型可能在达到上限前提前停止；不同模型的上限不同。未显式传入时，NookMux 按渠道的「默认 max_tokens」配置补齐。
+</ParamField>
+
+<ParamField path="body.max_tokens_to_sample" type="integer">
+  `max_tokens` 的兼容别名，供旧版客户端使用。
+</ParamField>
+
+<ParamField path="body.system" type="string | object[]">
+  系统提示词，用于设定模型的角色与行为约束。可以是字符串，也可以是带 `cache_control` 的 `text` 块数组。
+
+  <Expandable title="system 块结构">
+    <ParamField path="type" type="string" required>
+      固定为 `text`。
+    </ParamField>
+    <ParamField path="text" type="string" required>
+      系统提示词文本。
+    </ParamField>
+    <ParamField path="cache_control" type="object">
+      提示词缓存断点，如 `{"type": "ephemeral"}`。
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+<ParamField path="body.stop_sequences" type="string[]">
+  自定义停止序列。模型生成到任一序列时停止，响应的 `stop_reason` 为 `stop_sequence`，`stop_sequence` 字段返回命中的序列。
+</ParamField>
+
+<ParamField path="body.temperature" type="number">
+  采样温度，取值 `0.0 ~ 1.0`。较高的值使输出更随机、更具创造性；较低的值使输出更稳定。建议调整 `temperature` 或 `top_p` 其中之一。
+</ParamField>
+
+<ParamField path="body.top_p" type="number">
+  核采样参数。模型仅考虑累积概率达到 `top_p` 的候选词。
+</ParamField>
+
+<ParamField path="body.top_k" type="integer">
+  每步仅从概率最高的 k 个候选词中采样。
+</ParamField>
+
+<ParamField path="body.stream" type="boolean" default="false">
+  是否通过 Server-Sent Events 增量返回响应。事件序列见下方「流式响应」一节。
+</ParamField>
+
+<ParamField path="body.tools" type="object[]">
+  模型可调用的工具定义列表，包含自定义工具与服务器端工具。
+
+  <Expandable title="tools 结构">
+    <ParamField path="name" type="string" required>
+      工具名称，模型在 `tool_use` 块中以此调用。
+    </ParamField>
+    <ParamField path="description" type="string">
+      工具功能描述，模型据此决定何时调用。建议尽量详细。
+    </ParamField>
+    <ParamField path="input_schema" type="object" required>
+      工具入参的 JSON Schema 对象，`type` 固定为 `object`。
+    </ParamField>
+    <ParamField path="type" type="string">
+      服务器端工具类型。目前支持 `web_search_20250305`（网页搜索），此时 `name` 为 `web_search`。
+    </ParamField>
+    <ParamField path="max_uses" type="integer">
+      服务器端工具的最大调用次数。
+    </ParamField>
+    <ParamField path="user_location" type="object">
+      网页搜索的地理位置提示：`type`（`approximate`）、`timezone`、`country`、`region`、`city`。
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+<ParamField path="body.tool_choice" type="string | object">
+  控制模型如何使用工具。取值 `auto`（由模型决定，默认）、`any`（强制调用任一工具）、`tool`（强制调用 `name` 指定的工具）、`none`（禁用工具）；对象形式还可携带 `disable_parallel_tool_use`（禁止并行工具调用）。
+
+  <Expandable title="tool_choice 结构">
+    <ParamField path="type" type="string" required>
+      `auto`、`any`、`tool` 或 `none`。
+    </ParamField>
+    <ParamField path="name" type="string">
+      `type` 为 `tool` 时必填，指定要调用的工具名称。
+    </ParamField>
+    <ParamField path="disable_parallel_tool_use" type="boolean">
+      是否禁止并行工具调用，默认 `false`。
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+<ParamField path="body.thinking" type="object">
+  扩展思考配置。开启后模型先思考再回答，思维链以 `thinking` 块返回；思考 token 计入 `max_tokens`。
+
+  <Expandable title="thinking 结构">
+    <ParamField path="type" type="string" required>
+      `enabled`（开启扩展思考）或 `disabled`（关闭）。
+    </ParamField>
+    <ParamField path="budget_tokens" type="integer">
+      思考预算 token 数，须不小于 `1024` 且小于 `max_tokens`。`type` 为 `enabled` 时必填。
+    </ParamField>
+    <ParamField path="display" type="string">
+      思维链的返回方式：`summarized`（正常返回）或 `omitted`（省略内容但保留签名以维持多轮连续性）。
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+<ParamField path="body.context_management" type="object">
+  上下文管理配置（context editing），如 `{"edits": [{"type": "clear_tool_uses_20250919", ...}]}`。原样透传给支持的上游。
+</ParamField>
+
+<ParamField path="body.output_config" type="object">
+  输出配置：`effort`（`low` / `medium` / `high` / `xhigh` / `max`，思考投入档位）与 `format`（结构化输出，含 `type: "json_schema"` 与 `schema`）。原样透传给支持的上游。
+</ParamField>
+
+<ParamField path="body.output_format" type="object">
+  输出格式配置对象。非 Anthropic Messages 官方字段，NookMux 接受后按渠道透传，视上游支持情况生效。
+</ParamField>
+
+<ParamField path="body.speed" type="string">
+  推理速度档位：`standard` 或 `fast`（高输出速率模式）。默认被网关过滤，仅在渠道设置中开启允许后才透传。
+</ParamField>
+
+<ParamField path="body.container" type="string | object">
+  代码执行容器配置。传入容器 `id` 可跨请求复用容器，对象形式还可通过 `skills` 声明要加载的技能。原样透传给支持的上游。
+</ParamField>
+
+<ParamField path="body.mcp_servers" type="object[]">
+  MCP 服务器连接器定义列表（URL 或 stdio 类型）。原样透传给支持的上游。
+</ParamField>
+
+<ParamField path="body.metadata" type="object">
+  请求元数据。
+
+  <Expandable title="metadata 结构">
+    <ParamField path="user_id" type="string">
+      与请求关联的外部用户标识（UUID、哈希等不透明值），用于滥用检测，不要包含姓名、邮箱等可识别信息。
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+<ParamField path="body.provider" type="object">
+  OpenRouter 渠道的 provider 路由偏好（`order`、`allow_fallbacks` 等）。仅在 OpenRouter 渠道生效，其他渠道会在中继时剥离该字段。
+</ParamField>
+
+<ParamField path="body.service_tier" type="string">
+  服务层级：`auto` 或 `standard_only`。默认被网关过滤（避免优先容量的额外计费），仅在渠道设置中开启允许后才透传；透传后实际计费可能高于标准层级。
+</ParamField>
+
+<Note>
+透传类字段（`context_management`、`output_config`、`output_format`、`speed`、`container`、`mcp_servers`、`provider`、`service_tier` 与各内容块的 `cache_control`）仅在对应渠道生效，其余渠道会按参数过滤规则丢弃；字段能否透传还取决于控制台「模型 → 参数覆盖」与渠道的其他设置。
+</Note>
+
+## 响应
+
+<ResponseExample>
+
+```json 200
+{
+  "id": "msg_01FDUDYJgAACzvnptvVoYELx",
+  "type": "message",
+  "role": "assistant",
+  "model": "claude-sonnet-4.5",
+  "content": [
+    {
+      "type": "text",
+      "text": "def fibonacci(n):\n    if n <= 1:\n        return n\n    a, b = 0, 1\n    for _ in range(n - 1):\n        a, b = b, a + b\n    return a"
+    }
+  ],
+  "stop_reason": "end_turn",
+  "stop_sequence": null,
+  "usage": {
+    "input_tokens": 25,
+    "output_tokens": 68
+  }
+}
+```
+
+</ResponseExample>
+
+<Note>
+无论请求被分发到哪类上游，NookMux 对外始终保持 Claude 格式响应；响应体中的 `model` 统一为请求中的模型名，不暴露上游真实模型名。
+</Note>
+
+### 响应字段
+
+<ResponseField name="id" type="string" required>
+  消息的唯一标识，以 `msg_` 为前缀。
+</ResponseField>
+
+<ResponseField name="type" type="string" required>
+  对象类型，固定为 `message`。
+</ResponseField>
+
+<ResponseField name="role" type="string" required>
+  固定为 `assistant`。
+</ResponseField>
+
+<ResponseField name="content" type="object[]" required>
+  回复内容块数组。
+
+  <Expandable title="content 结构">
+    <ResponseField name="type" type="string">
+      内容块类型：`text`（文本）、`tool_use`（工具调用）、`thinking`（思维链）、`redacted_thinking`（加密思维链）。
+    </ResponseField>
+    <ResponseField name="text" type="string">
+      `type` 为 `text` 时的回复文本。
+    </ResponseField>
+    <ResponseField name="id" type="string">
+      `type` 为 `tool_use` 时的工具调用 ID，下一轮以 `tool_result` 块回传。
+    </ResponseField>
+    <ResponseField name="name" type="string">
+      `type` 为 `tool_use` 时调用的工具名称。
+    </ResponseField>
+    <ResponseField name="input" type="object">
+      `type` 为 `tool_use` 时模型生成的工具入参对象。
+    </ResponseField>
+    <ResponseField name="thinking" type="string">
+      `type` 为 `thinking` 时的思维链文本。
+    </ResponseField>
+    <ResponseField name="signature" type="string">
+      thinking 块的签名，多轮对话时须与思维链一起原样回传。
+    </ResponseField>
+    <ResponseField name="data" type="string">
+      `type` 为 `redacted_thinking` 时的不透明加密数据，原样回传。
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="model" type="string" required>
+  生成本次响应的模型名称（统一为请求中的模型名）。
+</ResponseField>
+
+<ResponseField name="stop_reason" type="string" required>
+  生成停止原因：`end_turn`（自然结束）、`max_tokens`（达到 token 上限）、`stop_sequence`（命中停止序列）、`tool_use`（模型请求调用工具）。
+</ResponseField>
+
+<ResponseField name="stop_sequence" type="string">
+  命中的停止序列文本，未命中时为 `null`。
+</ResponseField>
+
+<ResponseField name="usage" type="object" required>
+  Token 使用统计。
+
+  <Expandable title="usage 结构">
+    <ResponseField name="input_tokens" type="integer">
+      输入消耗的 token 数。
+    </ResponseField>
+    <ResponseField name="output_tokens" type="integer">
+      输出消耗的 token 数。
+    </ResponseField>
+    <ResponseField name="cache_creation_input_tokens" type="integer">
+      写入提示词缓存的 token 数（产生缓存写入费用）。
+    </ResponseField>
+    <ResponseField name="cache_read_input_tokens" type="integer">
+      命中提示词缓存的 token 数。
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+## 流式响应
+
+设置 `"stream": true` 后，响应以 `text/event-stream` 返回。每个事件由 `event:` 与 `data:` 两行组成，完整事件序列如下：
+
+```json
+event: message_start
+data: {"type":"message_start","message":{"id":"msg_01FDUDYJgAACzvnptvVoYELx","type":"message","role":"assistant","model":"claude-sonnet-4.5","content":[],"stop_reason":null,"stop_sequence":null,"usage":{"input_tokens":25,"output_tokens":1}}}
+
+event: content_block_start
+data: {"type":"content_block_start","index":0,"content_block":{"type":"text","text":""}}
+
+event: ping
+data: {"type":"ping"}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"def fibonacci(n):"}}
+
+event: content_block_stop
+data: {"type":"content_block_stop","index":0}
+
+event: message_delta
+data: {"type":"message_delta","delta":{"stop_reason":"end_turn","stop_sequence":null},"usage":{"output_tokens":68}}
+
+event: message_stop
+data: {"type":"message_stop"}
+```
+
+| 事件 | 说明 |
+| --- | --- |
+| `message_start` | 流开始，携带完整的初始 `message` 对象与 `usage`（含 `input_tokens`） |
+| `ping` | 周期性心跳事件，可忽略 |
+| `content_block_start` | 内容块开始，携带 `index` 与 `content_block`（`text` / `tool_use` / `thinking` 块） |
+| `content_block_delta` | 内容块增量，`delta` 结构见下 |
+| `content_block_stop` | 内容块结束，携带 `index` |
+| `message_delta` | 携带 `delta.stop_reason` 与最终 `usage`（含 `output_tokens`） |
+| `message_stop` | 流结束标记 |
+| `error` | 流中途发生错误时，连接会以上游错误终止 |
+
+<ResponseField name="delta" type="object">
+  `content_block_delta` 事件中的增量内容，按 `type` 区分。
+
+  <Expandable title="delta 结构">
+    <ResponseField name="type" type="string">
+      增量类型：`text_delta`、`input_json_delta`、`thinking_delta`、`signature_delta`。
+    </ResponseField>
+    <ResponseField name="text" type="string">
+      `text_delta` 时的文本增量。
+    </ResponseField>
+    <ResponseField name="partial_json" type="string">
+      `input_json_delta` 时工具入参 JSON 的增量片段，按序拼接得到完整 `input`。
+    </ResponseField>
+    <ResponseField name="thinking" type="string">
+      `thinking_delta` 时的思维链增量。
+    </ResponseField>
+    <ResponseField name="signature" type="string">
+      `signature_delta` 时的思维链签名增量。
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<Note>
+Claude 格式的流以 `message_stop` 事件结束，没有 OpenAI 格式的 `data: [DONE]` 标记。NookMux 会保证 `message_delta` 事件的 `usage` 包含完整的 `input_tokens` 与缓存字段（AWS Bedrock 等上游缺失时由网关补全），事件中的 `model` 也统一为请求中的模型名。
+</Note>
+
+## 错误码
+
+| HTTP 状态码 | 说明 |
+| --- | --- |
+| 400 | 请求参数错误（`invalid_request_error`），如缺少 `model` / `messages` 或 `max_tokens` 超出上限 |
+| 401 | 令牌无效、已禁用或已过期（`authentication_error`） |
+| 403 | 令牌无权访问该模型，或额度不足（`permission_error`） |
+| 404 | 请求路径不存在，如 `/v1/messages/count_tokens` |
+| 429 | 触发速率限制（`rate_limit_error`） |
+| 500 | 上游渠道返回错误（`api_error`），`error.message` 中包含上游错误详情 |
+| 529 | 上游 API 暂时过载（`overloaded_error`），可稍后重试 |
+
+错误响应体为 Claude 格式：`{"error": {"type": "invalid_request_error", "message": "..."}}`。

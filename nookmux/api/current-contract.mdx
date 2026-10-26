@@ -250,7 +250,7 @@ GET    /mcp/video/:id
 
 - `GET /v1/models/:model` fetches a single model; `/v1beta/openai/models` is the Gemini OpenAI-compatible model list.
 - Responses compact body: `model`, `input`, `instructions`, `previous_response_id`.
-- `/v1/edits` is the image-editing compatibility entry.
+- The `/v1/edits` route is kept but currently unusable: the request is parsed as an image request and then falls into the text handler, returning 400. Use `/v1/images/edits` for image editing.
 - `/v1/images/variations` and `DELETE /v1/models/:model` currently return "not implemented" explicitly.
 - The two `*path` routes are Gemini dynamic action routes, with actual URLs such as `/v1beta/models/{model}:generateContent`.
 - `/pg/chat/completions` uses the user session and serves the built-in Playground; it does not use API tokens.

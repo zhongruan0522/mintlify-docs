@@ -1,0 +1,34 @@
+---
+title: Files (not implemented)
+description: The OpenAI Files endpoints keep their routes in NookMux but are not implemented; calls return 501.
+api: "POST /v1/files"
+---
+
+<Warning>
+  The Files endpoints are not implemented. The routes are kept for forward compatibility, but every call returns `501 Not Implemented` and nothing is forwarded to any upstream channel.
+</Warning>
+
+Affected endpoints:
+
+| Method | Path | Description |
+| --- | --- | --- |
+| `GET` | `/v1/files` | List files |
+| `POST` | `/v1/files` | Upload a file |
+| `GET` | `/v1/files/{file_id}` | Retrieve file metadata |
+| `DELETE` | `/v1/files/{file_id}` | Delete a file |
+| `GET` | `/v1/files/{file_id}/content` | Download file content |
+
+## Response
+
+```json 501
+{
+  "error": {
+    "message": "API not implemented",
+    "type": "nookmux_error",
+    "param": "",
+    "code": "api_not_implemented"
+  }
+}
+```
+
+For multimodal requests that need file content, use inline delivery instead: pass files as Base64 (`file_data`) or by URL (`file_url`) in message content blocks, as described for `messages[].content` in [Chat completions](/nookmux/api/ai-model/openai/chat-completions).

@@ -1,0 +1,106 @@
+---
+title: 音频翻译
+description: 将音频文件翻译为英文文本，兼容 OpenAI Audio Translations API。
+api: "POST /v1/audio/translations"
+---
+
+将音频文件翻译为英文文本。请求与响应格式兼容 OpenAI Audio Translations 接口，以 `multipart/form-data` 提交，输出始终为英文。
+
+NookMux 校验并解析 `model` 与 `file` 用于分发与计费，将除 `model` 外的所有表单字段原样转发到上游渠道；响应体由上游原样透传。可用的模型由控制台「渠道 → 模型」配置决定，常见如 `whisper-1`。
+
+## 请求
+
+<RequestExample>
+
+```bash cURL
+curl --request POST \
+  --url https://your-nookmux-domain/v1/audio/translations \
+  --header 'Authorization: Bearer $NOOKMUX_API_KEY' \
+  --form 'model=whisper-1' \
+  --form 'file=@/path/to/speech.mp3'
+```
+
+```python Python
+from openai import OpenAI
+
+client = OpenAI(
+    base_url="https://your-nookmux-domain/v1",
+    api_key="$NOOKMUX_API_KEY",
+)
+
+translation = client.audio.translations.create(
+    model="whisper-1",
+    file=open("/path/to/speech.mp3", "rb"),
+)
+print(translation.text)
+```
+
+</RequestExample>
+
+### 认证
+
+<ParamField path="header.Authorization" type="string" required>
+  以 `Bearer` 开头的 NookMux API 令牌，格式为 `Authorization: Bearer <token>`。令牌在控制台「令牌」页创建。
+</ParamField>
+
+### 请求体
+
+以 `multipart/form-data` 表单提交，各字段为表单项：
+
+<ParamField path="body.file" type="string" required>
+  要翻译的音频文件（`flac`、`mp3`、`mp4`、`m4a`、`ogg`、`wav`、`webm` 等常见格式）。仅第一个 `file` 字段会被使用；具体支持的格式与大小限制以上游渠道为准，缺失时返回 400。
+</ParamField>
+
+<ParamField path="body.model" type="string" required>
+  要使用的翻译模型名称。未指定时按 `whisper-1` 处理。
+</ParamField>
+
+<ParamField path="body.prompt" type="string">
+  引导词或风格提示，可包含专有名词的英文写法，帮助模型保持一致的输出风格。
+</ParamField>
+
+<ParamField path="body.response_format" type="string" default="json">
+  翻译结果的输出格式：`json`、`text`、`srt`、`verbose_json`、`vtt`。未指定时 NookMux 按 `json` 补全后转发。
+</ParamField>
+
+<ParamField path="body.temperature" type="number">
+  采样温度，`0 ~ 1`。较高的值使输出更随机，通常建议保持 `0`。
+</ParamField>
+
+<Note>
+  除 `model` 与 `file` 外，其余表单字段由 NookMux 原样转发到上游渠道；字段能否生效取决于渠道本身与控制台「模型 → 参数覆盖」的配置。翻译接口不支持 `language` 参数，输出始终为英文。
+</Note>
+
+## 响应
+
+`response_format` 为 `json`（默认）时返回：
+
+<ResponseExample>
+
+```json 200
+{
+  "text": "The weather is really nice today. Let's take a walk in the park together."
+}
+```
+
+</ResponseExample>
+
+### 响应字段
+
+<ResponseField name="text" type="string" required>
+  翻译出的英文文本内容。
+</ResponseField>
+
+<Note>
+  `response_format` 为 `verbose_json` 时额外返回 `task`、`language`、`duration` 与 `segments`（每段含 `id`、`start`、`end`、`text` 等字段）；为 `text` / `srt` / `vtt` 时直接返回对应格式的纯文本。响应体由上游渠道原样透传。
+</Note>
+
+## 错误码
+
+| HTTP 状态码 | 说明 |
+| --- | --- |
+| 400 | 请求参数错误（如缺少 `file` 文件字段） |
+| 401 | 令牌无效、已禁用或已过期 |
+| 403 | 令牌无权访问该模型，或额度不足 |
+| 429 | 触发速率限制 |
+| 500 | 上游渠道返回错误，`error.message` 中包含上游错误详情 |

@@ -1,0 +1,170 @@
+---
+title: 上下文压缩
+description: 将超长对话上下文压缩为摘要响应，供 Responses API 的 previous_response_id 链继续使用。
+api: "POST /v1/responses/compact"
+---
+
+对超长对话上下文执行压缩（compaction）：将此前多轮对话浓缩为一个摘要响应，后续请求通过 `previous_response_id` 引用该压缩结果，即可在不重放全部历史消息的情况下继续对话。请求与响应格式兼容 OpenAI 的 `/v1/responses/compact` 接口。
+
+NookMux 根据请求中的 `model` 名称将请求分发到对应渠道。该端点要求目标渠道以 Responses 协议对接（即渠道配置的 `openai_wire_api` 不为 `chat`），否则返回 `400`；NookMux 不会为该端点做 Chat 协议自动转换。
+
+<Note>
+  该端点按「模型名 + `-openai-compact` 后缀」的虚拟模型独立计价（如 `gpt-5.1` 压缩请求按 `gpt-5.1-openai-compact` 计价倍率结算），请在控制台「模型倍率」中单独配置。
+</Note>
+
+## 请求
+
+<RequestExample>
+
+```bash cURL
+curl --request POST \
+  --url https://your-nookmux-domain/v1/responses/compact \
+  --header 'Authorization: Bearer $NOOKMUX_API_KEY' \
+  --header 'Content-Type: application/json' \
+  --data '{
+  "model": "gpt-5.1",
+  "instructions": "保留与 API 网关配置和计费相关的结论，忽略寒暄。",
+  "input": [
+    { "role": "user", "content": "NookMux 怎么配置渠道的 openai_wire_api 参数？" },
+    { "role": "assistant", "content": "在控制台「渠道 → 设置」中选择 Chat 或 Responses。" },
+    { "role": "user", "content": "按量计费和按次计费可以混用吗？" },
+    { "role": "assistant", "content": "可以在令牌维度指定计费方式，渠道倍率仍然生效。" }
+  ]
+}'
+```
+
+```python Python
+from openai import OpenAI
+
+client = OpenAI(
+    base_url="https://your-nookmux-domain/v1",
+    api_key="$NOOKMUX_API_KEY",
+)
+
+response = client.responses.compact(
+    model="gpt-5.1",
+    instructions="保留与 API 网关配置和计费相关的结论，忽略寒暄。",
+    input=[
+        {"role": "user", "content": "NookMux 怎么配置渠道的 openai_wire_api 参数？"},
+        {"role": "assistant", "content": "在控制台「渠道 → 设置」中选择 Chat 或 Responses。"},
+        {"role": "user", "content": "按量计费和按次计费可以混用吗？"},
+        {"role": "assistant", "content": "可以在令牌维度指定计费方式，渠道倍率仍然生效。"},
+    ],
+)
+print(response.id)
+```
+
+</RequestExample>
+
+### 认证
+
+<ParamField path="header.Authorization" type="string" required>
+  以 `Bearer` 开头的 NookMux API 令牌，格式为 `Authorization: Bearer <token>`。令牌在控制台「令牌」页创建。
+</ParamField>
+
+### 请求体
+
+<ParamField path="body.model" type="string" required>
+  用于生成压缩摘要的模型名称。取值为 NookMux 中已配置的模型，可通过「模型列表」接口获取可用模型。
+</ParamField>
+
+<ParamField path="body.input" type="string | object[]" required>
+  待压缩的对话内容。字符串为纯文本输入；数组为消息项列表，每项含 `role` 与 `content`，结构与 Responses 接口的 `input` 一致。
+</ParamField>
+
+<ParamField path="body.instructions" type="string">
+  压缩指令。指示模型保留哪些信息、忽略哪些内容，作为生成摘要时的系统指令。
+</ParamField>
+
+<ParamField path="body.previous_response_id" type="string">
+  上一轮响应的唯一 ID。携带后，被引用响应及其之前的上下文一并纳入压缩（仅 OpenAI 渠道生效）。
+</ParamField>
+
+## 响应
+
+<ResponseExample>
+
+```json 200
+{
+  "id": "resp_compact123",
+  "object": "response.compaction",
+  "created_at": 1735689600,
+  "output": [
+    {
+      "type": "message",
+      "id": "msg_compact123",
+      "status": "completed",
+      "role": "assistant",
+      "content": [
+        {
+          "type": "output_text",
+          "text": "用户咨询了 NookMux 渠道配置与计费问题：openai_wire_api 在「渠道 → 设置」中选择；计费方式可在令牌维度指定，渠道倍率仍然生效。",
+          "annotations": []
+        }
+      ]
+    },
+    {
+      "type": "compaction",
+      "encrypted_content": "gAAAAABlX3dE..."
+    }
+  ],
+  "usage": {
+    "input_tokens": 10240,
+    "output_tokens": 512,
+    "total_tokens": 10752
+  }
+}
+```
+
+</ResponseExample>
+
+### 响应字段
+
+<ResponseField name="id" type="string" required>
+  压缩响应的唯一标识。将其作为后续 Responses 请求的 `previous_response_id`，模型即可基于压缩后的上下文继续对话。
+</ResponseField>
+
+<ResponseField name="object" type="string" required>
+  对象类型，固定为 `response.compaction`。
+</ResponseField>
+
+<ResponseField name="created_at" type="integer" required>
+  响应创建时间的 Unix 时间戳（秒）。
+</ResponseField>
+
+<ResponseField name="output" type="object[]" required>
+  输出项列表，通常包含一个 `message` 项（摘要文本，内容块 `type` 为 `output_text`）与一个 `compaction` 项（含 `encrypted_content` 加密上下文，由上游生成、无需解构）。
+
+  <Expandable title="output 结构">
+    <ResponseField name="type" type="string">
+      输出项类型：`message`（摘要消息）或 `compaction`（加密的压缩上下文）。
+    </ResponseField>
+    <ResponseField name="role" type="string">
+      `message` 项的角色，固定为 `assistant`。
+    </ResponseField>
+    <ResponseField name="content" type="object[]">
+      `message` 项的内容块数组，`output_text` 块含摘要 `text` 与 `annotations`。
+    </ResponseField>
+    <ResponseField name="encrypted_content" type="string">
+      `compaction` 项携带的加密上下文，由上游生成，整体透传给后续请求。
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="usage" type="object" required>
+  Token 使用统计，含 `input_tokens`（被压缩的上下文输入）、`output_tokens`（生成的摘要）、`total_tokens`（总和）。
+</ResponseField>
+
+<ResponseField name="error" type="object">
+  上游返回错误时的错误对象，含 `message`、`type`、`code`；正常响应中省略。
+</ResponseField>
+
+## 错误码
+
+| HTTP 状态码 | 说明 |
+| --- | --- |
+| 400 | 请求参数错误，或目标渠道配置的 `openai_wire_api` 为 `chat`（该端点不支持 Chat 协议转换） |
+| 401 | 令牌无效、已禁用或已过期 |
+| 403 | 令牌无权访问该模型，或额度不足 |
+| 429 | 触发速率限制 |
+| 500 | 上游渠道返回错误，`error.message` 中包含上游错误详情 |

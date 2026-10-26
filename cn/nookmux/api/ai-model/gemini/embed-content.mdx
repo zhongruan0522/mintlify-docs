@@ -1,0 +1,146 @@
+---
+title: 文本嵌入
+description: 以 Gemini 原生格式生成单条内容的文本嵌入向量。
+api: "POST /v1beta/models/{model}:embedContent"
+---
+
+为单条内容生成文本嵌入向量，兼容 Google Gemini API 的 `embedContent` 方法。模型由 URL 路径指定，需为嵌入模型（如 `gemini-embedding-001`、`text-embedding-004`）。
+
+NookMux 将请求转发到 `{model}` 对应的渠道并原样回传上游响应；嵌入请求按输入 token 计费。
+
+## 请求
+
+<RequestExample>
+
+```bash cURL
+curl --request POST \
+  --url https://your-nookmux-domain/v1beta/models/gemini-embedding-001:embedContent \
+  --header 'x-goog-api-key: $NOOKMUX_API_KEY' \
+  --header 'Content-Type: application/json' \
+  --data '{
+  "content": {
+    "parts": [
+      { "text": "NookMux 是一个 AI API 聚合网关。" }
+    ]
+  },
+  "taskType": "RETRIEVAL_DOCUMENT",
+  "outputDimensionality": 768
+}'
+```
+
+```python Python
+from google import genai
+
+client = genai.Client(
+    api_key="$NOOKMUX_API_KEY",
+    http_options={"base_url": "https://your-nookmux-domain"},
+)
+
+response = client.models.embed_content(
+    model="gemini-embedding-001",
+    contents="NookMux 是一个 AI API 聚合网关。",
+    config={
+        "task_type": "RETRIEVAL_DOCUMENT",
+        "output_dimensionality": 768,
+    },
+)
+print(response.embeddings[0].values[:5])
+```
+
+</RequestExample>
+
+### 认证
+
+推荐使用 `x-goog-api-key` 请求头传递 NookMux API 令牌（令牌在控制台「令牌」页创建）；网关同时接受 `Authorization: Bearer <token>` 与 `?key=<token>` 查询参数两种兼容写法。
+
+<ParamField path="header.x-goog-api-key" type="string" required>
+  NookMux API 令牌，格式为 `x-goog-api-key: <token>`。
+</ParamField>
+
+### 路径参数
+
+action 固定为 `embedContent`。
+
+<ParamField path="path.model" type="string" required>
+  嵌入模型名称，如 `gemini-embedding-001`、`text-embedding-004`。取值为 NookMux 中已配置的模型，可通过「模型列表」接口获取可用模型。
+</ParamField>
+
+### 请求体
+
+<ParamField path="body.content" type="object" required>
+  待嵌入的内容，结构与「生成内容」的 `contents` 条目一致。
+
+  <Expandable title="content 结构">
+    <ParamField path="parts[].text" type="string" required>
+      文本片段。多条 `text` 片段会合并为一条输入。
+    </ParamField>
+    <ParamField path="role" type="string">
+      内容作者角色，嵌入场景下通常省略。
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+<ParamField path="body.model" type="string">
+  可选。模型名将以 URL 路径中的 `{model}` 为准，网关转发时统一改写为 `models/{model}` 形式，无需在请求体中指定。
+</ParamField>
+
+<ParamField path="body.taskType" type="string">
+  嵌入任务类型，用于按场景优化向量：`RETRIEVAL_DOCUMENT`（入库文档）、`RETRIEVAL_QUERY`（检索查询）、`SEMANTIC_SIMILARITY`（语义相似度）、`CLASSIFICATION`（分类）、`CLUSTERING`（聚类）、`QUESTION_ANSWERING`（问答）、`FACT_VERIFICATION`（事实核查）、`CODE_RETRIEVAL_QUERY`（代码检索查询）。
+</ParamField>
+
+<ParamField path="body.title" type="string">
+  文档标题。仅在 `taskType` 为 `RETRIEVAL_DOCUMENT` 时生效，可提升检索质量。
+</ParamField>
+
+<ParamField path="body.outputDimensionality" type="integer">
+  输出向量维度，如 `768`、`256`。省略时返回模型默认维度；仅较新的嵌入模型支持降维。
+</ParamField>
+
+<Note>
+  请求体由网关按 Gemini 原生 DTO 解析重建后转发，仅上述字段会被透传至上游；字段能否透传还取决于控制台「模型 → 参数覆盖」的配置。
+</Note>
+
+## 响应
+
+<ResponseExample>
+
+```json 200
+{
+  "embedding": {
+    "values": [
+      0.011027313,
+      -0.018682647,
+      0.029431311,
+      -0.0076551883,
+      0.020473024,
+      -0.014091599
+    ]
+  }
+}
+```
+
+</ResponseExample>
+
+### 响应字段
+
+<ResponseField name="embedding" type="object" required>
+  嵌入向量对象。
+
+  <Expandable title="embedding 结构">
+    <ResponseField name="values" type="number[]" required>
+      嵌入向量的浮点数数组，维度由模型默认值或请求中的 `outputDimensionality` 决定（示例仅展示前几个分量）。
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+## 错误码
+
+| HTTP 状态码 | 说明 |
+| --- | --- |
+| 400 | 请求参数错误，或所选模型不是嵌入模型 |
+| 401 | 令牌无效、已禁用或已过期 |
+| 403 | 令牌无权访问该模型，或额度不足 |
+| 429 | 触发速率限制 |
+| 500 | 上游渠道返回错误，`error.message` 中包含上游错误详情 |
+
+错误响应统一为 `{"error": {"message": ..., "type": ...}}` 的 JSON 结构。

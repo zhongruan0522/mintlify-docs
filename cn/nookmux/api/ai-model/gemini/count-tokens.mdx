@@ -1,0 +1,140 @@
+---
+title: 统计 Token
+description: 以 Gemini 原生格式预估给定内容将消耗的 token 数量。
+api: "POST /v1beta/models/{model}:countTokens"
+---
+
+统计给定输入内容在该模型下将消耗的 token 数量，兼容 Google Gemini API 的 `countTokens` 方法。适合在正式生成前估算成本、控制上下文长度。
+
+NookMux 将请求转发到 `{model}` 对应的渠道并原样回传上游统计结果。注意：NookMux 按返回的 `totalTokens` 对本接口计费（按输入 token 口径结算），统计接口本身也会产生少量费用。
+
+## 请求
+
+<RequestExample>
+
+```bash cURL
+curl --request POST \
+  --url https://your-nookmux-domain/v1beta/models/gemini-2.5-flash:countTokens \
+  --header 'x-goog-api-key: $NOOKMUX_API_KEY' \
+  --header 'Content-Type: application/json' \
+  --data '{
+  "contents": [
+    {
+      "role": "user",
+      "parts": [
+        { "text": "NookMux 是一个 AI API 聚合网关。" }
+      ]
+    }
+  ]
+}'
+```
+
+```python Python
+from google import genai
+
+client = genai.Client(
+    api_key="$NOOKMUX_API_KEY",
+    http_options={"base_url": "https://your-nookmux-domain"},
+)
+
+response = client.models.count_tokens(
+    model="gemini-2.5-flash",
+    contents="NookMux 是一个 AI API 聚合网关。",
+)
+print(response.total_tokens)
+```
+
+</RequestExample>
+
+### 认证
+
+推荐使用 `x-goog-api-key` 请求头传递 NookMux API 令牌（令牌在控制台「令牌」页创建）；网关同时接受 `Authorization: Bearer <token>` 与 `?key=<token>` 查询参数两种兼容写法。
+
+<ParamField path="header.x-goog-api-key" type="string" required>
+  NookMux API 令牌，格式为 `x-goog-api-key: <token>`。
+</ParamField>
+
+### 路径参数
+
+action 固定为 `countTokens`。
+
+<ParamField path="path.model" type="string" required>
+  用于统计 token 的模型名称，如 `gemini-2.5-flash`。不同模型的分词结果可能不同。
+</ParamField>
+
+### 请求体
+
+支持两种形态：顶层 `contents`，或用 `generateContentRequest` 包装完整的生成请求。两者必须提供其一，`contents` 与 `generateContentRequest` 二选一。
+
+<ParamField path="body.contents" type="object[]">
+  待统计的内容列表，结构与「生成内容」的 `contents` 完全一致（`role`、`parts[]`：`text`、`inlineData` 等）。
+
+  <Expandable title="contents 结构">
+    <ParamField path="role" type="string">
+      内容的作者角色：`user` 或 `model`。
+    </ParamField>
+    <ParamField path="parts[].text" type="string">
+      文本片段。
+    </ParamField>
+    <ParamField path="parts[].inlineData" type="object">
+      内联多模态数据（Base64 编码），含 `mimeType` 与 `data`。图像、音频、视频等会按对应模态折算 token。
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+<ParamField path="body.generateContentRequest" type="object">
+  完整的 `generateContent` 请求包装，适合直接复用生成请求进行预估。结构与「生成内容」的请求体一致。
+
+  <Expandable title="generateContentRequest 结构">
+    <ParamField path="contents" type="object[]" required>
+      对话内容列表，结构同上方 `contents`。
+    </ParamField>
+    <ParamField path="systemInstruction" type="object">
+      系统指令，同样计入 token 统计。
+    </ParamField>
+    <ParamField path="tools" type="object[]">
+      工具列表（如 `functionDeclarations`、`googleSearch`），工具声明计入统计。
+    </ParamField>
+    <ParamField path="generationConfig" type="object">
+      生成配置。`maxOutputTokens` 会参与输出上限预估。
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+<Note>
+  与「生成内容」一致，请求体由网关按 Gemini 原生 DTO 解析重建后转发，仅文档列出的字段会被透传；大部分字段同时接受 camelCase 与 snake_case 两种写法。
+</Note>
+
+## 响应
+
+<ResponseExample>
+
+```json 200
+{
+  "totalTokens": 315
+}
+```
+
+</ResponseExample>
+
+### 响应字段
+
+<ResponseField name="totalTokens" type="integer" required>
+  输入内容消耗的 token 总数。NookMux 以该值对本接口计费。
+</ResponseField>
+
+<ResponseField name="totalBillableCharacters" type="integer">
+  计费字符总数。仅部分上游返回该字段。
+</ResponseField>
+
+## 错误码
+
+| HTTP 状态码 | 说明 |
+| --- | --- |
+| 400 | 请求参数错误（`contents` 与 `generateContentRequest` 均未提供等） |
+| 401 | 令牌无效、已禁用或已过期 |
+| 403 | 令牌无权访问该模型，或额度不足 |
+| 429 | 触发速率限制 |
+| 500 | 上游渠道返回错误，`error.message` 中包含上游错误详情 |
+
+错误响应统一为 `{"error": {"message": ..., "type": ...}}` 的 JSON 结构。

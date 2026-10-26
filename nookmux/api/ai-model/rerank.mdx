@@ -1,0 +1,147 @@
+---
+title: Rerank
+description: Reorder a list of documents by relevance to a query and return ranked results with relevance scores.
+api: "POST /v1/rerank"
+---
+
+Reorders a list of candidate documents by relevance to a query. The request and response formats follow the Jina/Cohere-style Rerank API and pair with reranking models (such as the `qwen-rerank` and `bge-reranker` families); a common use case is post-processing in RAG pipelines.
+
+NookMux routes the request to the channel configured for the requested reranking model. This endpoint does not support streaming.
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request POST \
+  --url https://your-nookmux-domain/v1/rerank \
+  --header 'Authorization: Bearer $NOOKMUX_API_KEY' \
+  --header 'Content-Type: application/json' \
+  --data '{
+  "model": "qwen-rerank-plus",
+  "query": "What is an AI API gateway?",
+  "documents": [
+    "An AI gateway aggregates APIs from multiple model providers.",
+    "Today's lunch menu is braised pork and stir-fried greens.",
+    "Reranking models score documents by relevance."
+  ],
+  "top_n": 2,
+  "return_documents": false
+}'
+```
+
+```python Python
+import requests
+
+response = requests.post(
+    "https://your-nookmux-domain/v1/rerank",
+    headers={"Authorization": "Bearer $NOOKMUX_API_KEY"},
+    json={
+        "model": "qwen-rerank-plus",
+        "query": "What is an AI API gateway?",
+        "documents": [
+            "An AI gateway aggregates APIs from multiple model providers.",
+            "Today's lunch menu is braised pork and stir-fried greens.",
+            "Reranking models score documents by relevance.",
+        ],
+        "top_n": 2,
+    },
+)
+print(response.json())
+```
+
+</RequestExample>
+
+### Authentication
+
+<ParamField path="header.Authorization" type="string" required>
+  A NookMux API token prefixed with `Bearer`, in the form `Authorization: Bearer <token>`. Create tokens on the Console → Tokens page.
+</ParamField>
+
+### Body
+
+<ParamField path="body.model" type="string" required>
+  Reranking model name, such as `qwen-rerank-plus` or `bge-reranker-v2-m3`. Use any model configured in NookMux.
+</ParamField>
+
+<ParamField path="body.query" type="string" required>
+  The query text. Documents are scored by their relevance to this query.
+</ParamField>
+
+<ParamField path="body.documents" type="string[] | object[]" required>
+  List of candidate documents. Each item is either a string or an object of the form `{"text": "..."}`. At least one item is required.
+</ParamField>
+
+<ParamField path="body.top_n" type="integer">
+  Return only the top n results by relevance. Defaults to ranked results for all documents.
+</ParamField>
+
+<ParamField path="body.return_documents" type="boolean" default="false">
+  Whether to echo the original document content in the results. When `false`, only `index` and `relevance_score` are returned.
+</ParamField>
+
+<ParamField path="body.max_chunk_per_doc" type="integer">
+  Chunking cap for long documents: the maximum number of chunks each document is split into for reranking (supported by some channels).
+</ParamField>
+
+<ParamField path="body.overlap_tokens" type="integer">
+  Number of overlapping tokens between adjacent chunks when splitting long documents (supported by some channels).
+</ParamField>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "results": [
+    {
+      "index": 0,
+      "relevance_score": 0.98
+    },
+    {
+      "index": 2,
+      "relevance_score": 0.71
+    }
+  ],
+  "usage": {
+    "prompt_tokens": 86,
+    "completion_tokens": 0,
+    "total_tokens": 86
+  }
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="results" type="object[]" required>
+  Results ordered from most to least relevant.
+
+  <Expandable title="results structure">
+    <ResponseField name="index" type="integer">
+      Position of the document in the request `documents` array.
+    </ResponseField>
+    <ResponseField name="relevance_score" type="number">
+      Relevance score between `0.0` and `1.0`; higher is more relevant.
+    </ResponseField>
+    <ResponseField name="document" type="string | object">
+      The original document content; returned only when the request sets `return_documents` to `true`.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="usage" type="object" required>
+  Token usage statistics, with the same fields as the `usage` of [Chat completions](/nookmux/api/ai-model/openai/chat-completions). Reranking is billed on input tokens.
+</ResponseField>
+
+## Error codes
+
+| HTTP status | Description |
+| --- | --- |
+| 400 | `query` or `documents` is empty, or the request is malformed |
+| 401 | Token is invalid, disabled, or expired |
+| 403 | Token cannot access the model, or quota is insufficient |
+| 429 | Rate limit triggered |
+| 500 | Upstream channel error; `error.message` contains the upstream details |

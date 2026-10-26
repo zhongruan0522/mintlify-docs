@@ -1,0 +1,179 @@
+---
+title: Embeddings
+description: Create embedding vectors for input text, compatible with the OpenAI Embeddings API, for use in semantic search, clustering, and similarity.
+api: "POST /v1/embeddings"
+---
+
+Create embedding vectors for input text. The request and response formats are compatible with the OpenAI Embeddings API, and the vectors can be used for semantic search, clustering, and relevance ranking.
+
+NookMux routes the request to the appropriate upstream channel (OpenAI, Gemini, Ollama, and more) based on the `model` name and returns the vectors and usage statistics in a unified OpenAI format. `input` accepts a single text string or an array of strings; with batch input, each item maps to one element in the response `data` in the same order as the input.
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request POST \
+  --url https://your-nookmux-domain/v1/embeddings \
+  --header 'Authorization: Bearer $NOOKMUX_API_KEY' \
+  --header 'Content-Type: application/json' \
+  --data '{
+  "model": "text-embedding-3-small",
+  "input": "NookMux is an AI API aggregation gateway"
+}'
+```
+
+```python Python
+from openai import OpenAI
+
+client = OpenAI(
+    base_url="https://your-nookmux-domain/v1",
+    api_key="$NOOKMUX_API_KEY",
+)
+
+response = client.embeddings.create(
+    model="text-embedding-3-small",
+    input="NookMux is an AI API aggregation gateway",
+)
+print(response.data[0].embedding[:8])
+```
+
+</RequestExample>
+
+### Authentication
+
+<ParamField path="header.Authorization" type="string" required>
+  A NookMux API token prefixed with `Bearer`, in the form `Authorization: Bearer <token>`. Create tokens on the Console → Tokens page.
+</ParamField>
+
+### Body
+
+<ParamField path="body.model" type="string" required>
+  Name of the embedding model to call. Use any model configured in NookMux; see the List models endpoint for available values.
+</ParamField>
+
+<ParamField path="body.input" type="string | string[] | integer[]" required>
+  Input text to embed. Accepts a single string or an array of strings (batch embedding; each item maps to one element in the response `data`); OpenAI's token-ID array form is also accepted and forwarded to the upstream channel. Must not be empty.
+</ParamField>
+
+<ParamField path="body.encoding_format" type="string" default="float">
+  Format of the returned embeddings: `float` (default, an array of numbers) or `base64` (a Base64-encoded byte array). Support depends on the upstream channel.
+</ParamField>
+
+<ParamField path="body.dimensions" type="integer">
+  Number of dimensions of the output vectors. Only effective on models that support custom dimensions (such as the `text-embedding-3` series).
+</ParamField>
+
+<ParamField path="body.user" type="string">
+  End-user identifier used by NookMux for identification and abuse monitoring.
+</ParamField>
+
+<ParamField path="body.seed" type="integer">
+  Random seed for sampling. A NookMux extension parameter, not part of the OpenAI standard.
+</ParamField>
+
+<ParamField path="body.temperature" type="number">
+  Sampling temperature. A NookMux extension parameter.
+</ParamField>
+
+<ParamField path="body.top_p" type="number">
+  Nucleus sampling parameter. A NookMux extension parameter.
+</ParamField>
+
+<ParamField path="body.frequency_penalty" type="number">
+  Frequency penalty. A NookMux extension parameter.
+</ParamField>
+
+<ParamField path="body.presence_penalty" type="number">
+  Presence penalty. A NookMux extension parameter.
+</ParamField>
+
+<Note>
+  `seed`, `temperature`, `top_p`, `frequency_penalty`, and `presence_penalty` are NookMux extension parameters. They only take effect when passed through to OpenAI-compatible channels (channels such as Gemini drop them); whether they are forwarded also depends on the Console → Models → parameter override configuration.
+</Note>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "object": "list",
+  "data": [
+    {
+      "object": "embedding",
+      "index": 0,
+      "embedding": [
+        0.0023064255,
+        -0.009327292,
+        0.015542567,
+        -0.038050222,
+        0.026968576,
+        -0.0077484914,
+        0.012851204,
+        -0.021577374,
+        0.011302758,
+        -0.015198547,
+        0.020153816,
+        -0.014093169
+      ]
+    }
+  ],
+  "model": "text-embedding-3-small",
+  "usage": {
+    "prompt_tokens": 9,
+    "total_tokens": 9
+  }
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="object" type="string" required>
+  Object type, always `list`.
+</ResponseField>
+
+<ResponseField name="data" type="object[]" required>
+  List of embedding results, in the same order as the request `input`.
+
+  <Expandable title="data structure">
+    <ResponseField name="object" type="string" required>
+      Object type, always `embedding`.
+    </ResponseField>
+    <ResponseField name="index" type="integer" required>
+      Index of this result in `data`, matching the position of the input.
+    </ResponseField>
+    <ResponseField name="embedding" type="number[]" required>
+      The embedding vector. An array of numbers when `encoding_format` is `float`, or a Base64 string when it is `base64`. The dimension is determined by the model, or by the `dimensions` request parameter.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="model" type="string" required>
+  Model that generated the vectors.
+</ResponseField>
+
+<ResponseField name="usage" type="object" required>
+  Token usage statistics.
+
+  <Expandable title="usage structure">
+    <ResponseField name="prompt_tokens" type="integer" required>
+      Tokens consumed by the input.
+    </ResponseField>
+    <ResponseField name="total_tokens" type="integer" required>
+      Total tokens consumed.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+## Error codes
+
+| HTTP status | Description |
+| --- | --- |
+| 400 | Invalid request parameters (for example, an empty `input`), or the model does not support the requested capability |
+| 401 | Token is invalid, disabled, or expired |
+| 403 | Token cannot access the model, or quota is insufficient |
+| 429 | Rate limit triggered |
+| 500 | Upstream channel error; `error.message` contains the upstream details |

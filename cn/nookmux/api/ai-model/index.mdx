@@ -1,0 +1,45 @@
+---
+title: AI 模型接口总览
+description: NookMux AI 模型接口的认证方式、基础地址与通用约定。
+---
+
+NookMux 的 AI 模型接口是面向终端调用方的统一入口：你以 OpenAI、Claude 或 Gemini 任一厂商的原生格式发起请求，NookMux 按模型名将请求分发到对应上游渠道，并以同一格式返回响应。
+
+接口按请求协议划分为三组：
+
+<Columns cols={3}>
+  <Card icon="square-terminal" title="OpenAI 接口" href="/cn/nookmux/api/ai-model/openai/chat-completions">
+    对话补全、补全、Responses、嵌入、图像、音频、审查、Realtime 等，路径以 /v1 开头。
+  </Card>
+  <Card icon="message-square" title="Claude 接口" href="/cn/nookmux/api/ai-model/claude/messages">
+    Messages 对话接口与模型列表，路径为 /v1/messages。
+  </Card>
+  <Card icon="gem" title="Gemini 接口" href="/cn/nookmux/api/ai-model/gemini/generate-content">
+    generateContent、streamGenerateContent、countTokens 等，路径以 /v1beta 开头。
+  </Card>
+</Columns>
+
+## 基础地址
+
+所有请求发送到你部署的 NookMux 实例地址，本文档中以 `https://your-nookmux-domain` 表示。示例中的 `/v1/chat/completions` 实际请求 `https://your-nookmux-domain/v1/chat/completions`。
+
+## 认证
+
+所有 AI 模型接口使用控制台「令牌」页创建的 API 令牌（`sk-` 开头）。不同协议格式的端点按各自厂商惯例传递令牌，NookMux 对每种端点均同时接受以下三种方式：
+
+| 协议格式 | 推荐方式 | 兼容方式 |
+| --- | --- | --- |
+| OpenAI（`/v1/*`） | `Authorization: Bearer sk-xxx` | `x-api-key`、`x-goog-api-key` |
+| Claude（`/v1/messages`） | `x-api-key: sk-xxx` | `Authorization: Bearer sk-xxx` |
+| Gemini（`/v1beta/*`） | `x-goog-api-key: sk-xxx` | `Authorization: Bearer sk-xxx`、查询参数 `?key=sk-xxx` |
+
+## 通用行为
+
+- **流式输出**：文本类接口支持 `stream` 参数，响应为 `text/event-stream`（SSE），以 `data: [DONE]` 结束（Claude 与 Gemini 原生格式遵循各自的事件规范）。
+- **模型路由**：请求中的 `model` 必须是 NookMux 中已配置的模型名；可用模型以 [模型列表](/cn/nookmux/api/ai-model/openai/list-models) 接口或控制台「模型」页为准。
+- **计费与限额**：每次调用按模型倍率计费并消耗令牌额度；超出速率限制时返回 `429`。
+- **错误响应**：错误统一以 JSON 格式返回，结构为 `{"error": {"message": "...", "type": "..."}}`；上游渠道错误原样透传其中。
+
+## 能力边界
+
+NookMux 中继以下能力的全部接口均在本目录列出。未列出的接口（如 OpenAI Files、Fine-tuning，Gemini 独立 TTS/视频生成等）当前未实现或不支持，调用会返回明确的错误信息，不会静默忽略。
