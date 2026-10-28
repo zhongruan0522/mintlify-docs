@@ -102,6 +102,10 @@ Uptime Kuma 刷新间隔（秒），30-3600。
 排行榜保留的模型数量，1-100。
 </ParamField>
 
+<ParamField path="body.rankings_platform_limit" type="integer">
+排行榜保留的客户端平台（Agent）数量，1-50。
+</ParamField>
+
 <ParamField path="body.rankings_vendor_limit" type="integer">
 排行榜保留的供应商数量，1-50。
 </ParamField>
@@ -157,5 +161,5 @@ JSON 数字按浮点读取并以整数存储，请发送整数值。未在上方
 | --- | --- |
 | 请求体非法 | 请求体不是合法的 JSON 对象，`message` 为 `请求参数格式错误: {错误详情}` |
 | 无更新项 | 请求体中没有任何键，`message` 为 `没有需要更新的配置项` |
-| 字段校验失败 | 取值超出允许范围，`message` 为本地化的约束文案，例如 `排行榜模型数量必须在 1-100 之间` |
+| 字段校验失败 | 取值超出允许范围，`message` 为本地化的约束文案，例如 `排行榜模型数量必须在 1-100 之间`、`排行榜客户端平台数量必须在 1-50 之间` |
 | 数据库错误 | 配置项落库失败，`message` 为 `更新配置失败: {错误详情}`，详见服务端日志 |

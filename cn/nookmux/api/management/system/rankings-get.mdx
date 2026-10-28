@@ -1,10 +1,10 @@
 ---
 title: 获取用量排行榜
-description: 获取指定周期的模型与供应商 token 用量排行榜快照及历史序列。
+description: 获取指定周期的模型、供应商与客户端平台 token 用量排行榜快照及历史序列。
 api: "GET /api/rankings"
 ---
 
-返回指定周期的用量排行榜快照，数据由预聚合的 `quota_data` token 用量计算：按消耗 token 排名的模型与供应商、相对上一周期升降幅最大的模型，以及供图表使用的分桶历史序列。
+返回指定周期的用量排行榜快照，数据由预聚合的 `quota_data` token 用量计算：按消耗 token 排名的模型、供应商与客户端平台、相对上一周期升降幅最大的模型，以及供图表使用的分桶历史序列。
 
 该接口受顶部导航模块配置中 `rankings` 模块的开关控制。默认模块启用且公开：无需鉴权，若调用者携带登录会话则自动识别其身份；若模块配置为需要登录，则强制校验登录（User 权限）。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
 
@@ -57,6 +57,16 @@ curl --request GET \
         "top_model": "gpt-4o"
       }
     ],
+    "platforms": [
+      {
+        "rank": 1,
+        "previous_rank": 2,
+        "platform": "claude-code",
+        "total_tokens": 9876543,
+        "share": 0.2827,
+        "growth_pct": 9.87
+      }
+    ],
     "top_movers": [
       {
         "model_name": "claude-sonnet-4",
@@ -96,6 +106,21 @@ curl --request GET \
       "vendors": [
         { "name": "OpenAI", "total": 12345678, "share": 0.3532 },
         { "name": "Others", "total": 1000, "share": 0.0001 }
+      ],
+      "buckets": 7
+    },
+    "platforms_history": {
+      "points": [
+        {
+          "ts": "2026-10-19T16:00:00Z",
+          "label": "Oct 20",
+          "platform": "claude-code",
+          "tokens": 89000
+        }
+      ],
+      "platforms": [
+        { "name": "claude-code", "total": 9876543 },
+        { "name": "Others", "total": 1000 }
       ],
       "buckets": 7
     }
@@ -185,6 +210,30 @@ curl --request GET \
         </ResponseField>
       </Expandable>
     </ResponseField>
+    <ResponseField name="platforms" type="array" required>
+      按总 token 数排名的客户端平台（Agent），数量受配置的平台数上限（`rankings_platform_limit`，默认 10）限制。
+
+      <Expandable title="排名平台结构">
+        <ResponseField name="rank" type="integer" required>
+          周期内当前排名，用量最多的平台为 `1`。
+        </ResponseField>
+        <ResponseField name="previous_rank" type="integer">
+          上一自然周期中的排名；该平台上一周期无排名或周期为 `all` 时省略。
+        </ResponseField>
+        <ResponseField name="platform" type="string" required>
+          kebab-case 受控平台 ID（如 `claude-code`、`codex`）；显示名与图标由前端映射。
+        </ResponseField>
+        <ResponseField name="total_tokens" type="integer" required>
+          该平台周期内消耗的总 token 数。
+        </ResponseField>
+        <ResponseField name="share" type="number" required>
+          占周期内全部 token 的份额，取值 `0` 到 `1` 之间，保留 4 位小数。
+        </ResponseField>
+        <ResponseField name="growth_pct" type="number" required>
+          相对上一周期的 token 增长百分比，保留 4 位小数；上一周期无用量时为 `100`。周期为 `all` 时恒为 `0`。
+        </ResponseField>
+      </Expandable>
+    </ResponseField>
     <ResponseField name="top_movers" type="array" required>
       相对上一周期排名上升最多的模型，最多 6 条。字段与 `models` 条目相同，另含 `rank_delta`（正整数）与 `current_rank`、`growth_pct`，不含聚合计数字段。
     </ResponseField>
@@ -215,6 +264,21 @@ curl --request GET \
         </ResponseField>
         <ResponseField name="vendors" type="array" required>
           序列成员：token 用量最多的头部供应商（`name`、`total`、`share`），其余供应商有用量时追加一条聚合它们的 `Others` 条目。
+        </ResponseField>
+        <ResponseField name="buckets" type="integer" required>
+          序列中的时间桶数量。
+        </ResponseField>
+      </Expandable>
+    </ResponseField>
+    <ResponseField name="platforms_history" type="object" required>
+      头部客户端平台的分桶 token 序列，供堆叠历史图表使用。
+
+      <Expandable title="platforms_history 结构">
+        <ResponseField name="points" type="array" required>
+          每个时间桶与该桶内有用量的平台一条记录：`ts`（桶起始的 RFC 3339 UTC 时间戳）、`label`（按周期格式化的桶标签）、`platform` 与 `tokens`。
+        </ResponseField>
+        <ResponseField name="platforms" type="array" required>
+          序列成员：按 token 数排名的头部平台（`name`、`total`），其余平台有用量的场合归并为 `Others` 条目。
         </ResponseField>
         <ResponseField name="buckets" type="integer" required>
           序列中的时间桶数量。

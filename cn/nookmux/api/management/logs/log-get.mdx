@@ -122,6 +122,7 @@ curl --request GET \
         "ua": "OpenAI/NodeJS",
         "x_title": "-",
         "http_referer": "-",
+        "platform": "",
         "request_id": "chatcmpl-xxxxxxxxxxxxxxxxxxxx",
         "upstream_request_id": "req-8f3a2b",
         "other": "{\"billing_source\":\"local\"}"
@@ -221,6 +222,9 @@ curl --request GET \
     </ResponseField>
     <ResponseField name="http_referer" type="string" required>
       请求的 Referer 请求头；客户端未携带时为 `-`。
+    </ResponseField>
+    <ResponseField name="platform" type="string" required>
+      根据请求的 `ua`、`x_title` 与 `http_referer` 请求头识别的客户端平台，为受控 kebab-case ID（如 `claude-code`、`codex`、`opencode`、`cherry-studio`）；无法识别时为空串。恒返回。
     </ResponseField>
     <ResponseField name="request_id" type="string">
       NookMux 请求 id。为空时省略。

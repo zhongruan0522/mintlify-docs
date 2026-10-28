@@ -118,6 +118,7 @@ curl --request GET \
         "ua": "OpenAI/NodeJS",
         "x_title": "-",
         "http_referer": "-",
+        "platform": "",
         "request_id": "chatcmpl-xxxxxxxxxxxxxxxxxxxx",
         "other": "{}"
       }
@@ -216,6 +217,9 @@ curl --request GET \
     </ResponseField>
     <ResponseField name="http_referer" type="string" required>
       Referer 请求头；客户端请求头字段对普通用户隐藏时被清空。
+    </ResponseField>
+    <ResponseField name="platform" type="string" required>
+      根据请求的 `ua`、`x_title` 与 `http_referer` 请求头识别的客户端平台，为受控 kebab-case ID（如 `claude-code`、`codex`）；无法识别时为空串。不受使用日志字段可见性配置影响，恒返回。
     </ResponseField>
     <ResponseField name="request_id" type="string">
       NookMux 请求 id；`request_id` 字段对普通用户隐藏时被清空。为空时省略。

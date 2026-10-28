@@ -43,6 +43,7 @@ curl --request GET \
     "quota_data_track_tokens": "true",
     "rankings_enabled": "true",
     "rankings_model_limit": "20",
+    "rankings_platform_limit": "10",
     "rankings_refresh_interval": "300",
     "rankings_vendor_limit": "5",
     "uptime_kuma_enabled": "true",
@@ -108,6 +109,9 @@ Error description when `success` is `false`; empty otherwise.
     </ResponseField>
     <ResponseField name="rankings_model_limit" type="string" required>
       Number of models kept in the rankings, 1-100. Default `20`.
+    </ResponseField>
+    <ResponseField name="rankings_platform_limit" type="string" required>
+      Number of client platforms (agents) kept in the rankings, 1-50. Default `10`.
     </ResponseField>
     <ResponseField name="rankings_refresh_interval" type="string" required>
       Rankings refresh interval in seconds, 60-86400. Default `300`.

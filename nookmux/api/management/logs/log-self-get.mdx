@@ -118,6 +118,7 @@ There is no `channel` or `username` filter on this endpoint: `username` is alway
         "ua": "OpenAI/NodeJS",
         "x_title": "-",
         "http_referer": "-",
+        "platform": "",
         "request_id": "chatcmpl-xxxxxxxxxxxxxxxxxxxx",
         "other": "{}"
       }
@@ -216,6 +217,9 @@ There is no `channel` or `username` filter on this endpoint: `username` is alway
     </ResponseField>
     <ResponseField name="http_referer" type="string" required>
       Referer header; blanked when the client headers field is hidden from regular users.
+    </ResponseField>
+    <ResponseField name="platform" type="string" required>
+      Client platform identified from the request's `ua`, `x_title` and `http_referer` headers, as a controlled kebab-case ID (for example `claude-code`, `codex`); empty string when the client could not be identified. Not affected by the usage-log field visibility configuration; always present.
     </ResponseField>
     <ResponseField name="request_id" type="string">
       NookMux request id; blanked when the `request_id` field is hidden from regular users. Omitted when empty.

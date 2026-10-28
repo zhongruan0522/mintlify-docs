@@ -43,6 +43,7 @@ curl --request GET \
     "quota_data_track_tokens": "true",
     "rankings_enabled": "true",
     "rankings_model_limit": "20",
+    "rankings_platform_limit": "10",
     "rankings_refresh_interval": "300",
     "rankings_vendor_limit": "5",
     "uptime_kuma_enabled": "true",
@@ -108,6 +109,9 @@ curl --request GET \
     </ResponseField>
     <ResponseField name="rankings_model_limit" type="string" required>
       排行榜保留的模型数量，1-100。默认 `20`。
+    </ResponseField>
+    <ResponseField name="rankings_platform_limit" type="string" required>
+      排行榜保留的客户端平台（Agent）数量，1-50。默认 `10`。
     </ResponseField>
     <ResponseField name="rankings_refresh_interval" type="string" required>
       排行榜刷新间隔（秒），60-86400。默认 `300`。

@@ -1,10 +1,10 @@
 ---
 title: Get Usage Rankings
-description: Fetch the model and vendor token-usage leaderboard snapshot with history series for a period.
+description: Fetch the model, vendor and client platform token-usage leaderboard snapshot with history series for a period.
 api: "GET /api/rankings"
 ---
 
-Returns the usage leaderboard snapshot for a period, computed from the pre-aggregated `quota_data` token usage: models and vendors ranked by tokens consumed, the biggest rank movers and droppers versus the previous period, and per-bucket history series for charts.
+Returns the usage leaderboard snapshot for a period, computed from the pre-aggregated `quota_data` token usage: models, vendors and client platforms ranked by tokens consumed, the biggest rank movers and droppers versus the previous period, and per-bucket history series for charts.
 
 The endpoint is gated by the header navigation module configuration of the `rankings` module. By default the module is enabled and public: no authentication is required, and the caller's identity is resolved from the login session when one is present. If the module is configured to require login, a valid login is enforced (User permission). See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
 
@@ -57,6 +57,16 @@ curl --request GET \
         "top_model": "gpt-4o"
       }
     ],
+    "platforms": [
+      {
+        "rank": 1,
+        "previous_rank": 2,
+        "platform": "claude-code",
+        "total_tokens": 9876543,
+        "share": 0.2827,
+        "growth_pct": 9.87
+      }
+    ],
     "top_movers": [
       {
         "model_name": "claude-sonnet-4",
@@ -96,6 +106,21 @@ curl --request GET \
       "vendors": [
         { "name": "OpenAI", "total": 12345678, "share": 0.3532 },
         { "name": "Others", "total": 1000, "share": 0.0001 }
+      ],
+      "buckets": 7
+    },
+    "platforms_history": {
+      "points": [
+        {
+          "ts": "2026-10-19T16:00:00Z",
+          "label": "Oct 20",
+          "platform": "claude-code",
+          "tokens": 89000
+        }
+      ],
+      "platforms": [
+        { "name": "claude-code", "total": 9876543 },
+        { "name": "Others", "total": 1000 }
       ],
       "buckets": 7
     }
@@ -185,6 +210,30 @@ curl --request GET \
         </ResponseField>
       </Expandable>
     </ResponseField>
+    <ResponseField name="platforms" type="array" required>
+      Client platforms (agents) ranked by total tokens, limited to the configured platform count (`rankings_platform_limit`, 10 by default).
+
+      <Expandable title="ranked platform structure">
+        <ResponseField name="rank" type="integer" required>
+          Current rank within the period, `1` for the most used platform.
+        </ResponseField>
+        <ResponseField name="previous_rank" type="integer">
+          Rank in the previous natural period; omitted when the platform had no rank there or the period is `all`.
+        </ResponseField>
+        <ResponseField name="platform" type="string" required>
+          Controlled platform ID in kebab-case (for example `claude-code`, `codex`); display names and icons are resolved by the frontend.
+        </ResponseField>
+        <ResponseField name="total_tokens" type="integer" required>
+          Total tokens consumed under this platform in the period.
+        </ResponseField>
+        <ResponseField name="share" type="number" required>
+          Share of all tokens in the period, a fraction between `0` and `1` rounded to 4 decimals.
+        </ResponseField>
+        <ResponseField name="growth_pct" type="number" required>
+          Token growth versus the previous period in percent, rounded to 4 decimals; `100` when the previous period had no usage. Always `0` for `all`.
+        </ResponseField>
+      </Expandable>
+    </ResponseField>
     <ResponseField name="top_movers" type="array" required>
       Models that climbed the most ranks versus the previous period, up to 6 entries. Same member fields as `models` plus `rank_delta` (positive integer), `current_rank` and `growth_pct`, minus the aggregate fields.
     </ResponseField>
@@ -215,6 +264,21 @@ curl --request GET \
         </ResponseField>
         <ResponseField name="vendors" type="array" required>
           The series members: the top vendors by tokens (`name`, `total`, `share`), plus an `Others` entry aggregating the remaining vendors when they have usage.
+        </ResponseField>
+        <ResponseField name="buckets" type="integer" required>
+          Number of time buckets in the series.
+        </ResponseField>
+      </Expandable>
+    </ResponseField>
+    <ResponseField name="platforms_history" type="object" required>
+      Per-bucket token series for the top client platforms, used by the stacked history chart.
+
+      <Expandable title="platforms_history structure">
+        <ResponseField name="points" type="array" required>
+          One entry per bucket and platform with tokens in that bucket: `ts` (RFC 3339 UTC timestamp of the bucket start), `label` (human-readable bucket label formatted per period), `platform` and `tokens`.
+        </ResponseField>
+        <ResponseField name="platforms" type="array" required>
+          The series members: the top platforms by tokens (`name`, `total`), plus an `Others` entry aggregating the remaining platforms when they have usage.
         </ResponseField>
         <ResponseField name="buckets" type="integer" required>
           Number of time buckets in the series.
