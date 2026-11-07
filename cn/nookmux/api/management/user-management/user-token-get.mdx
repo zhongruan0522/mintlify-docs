@@ -8,6 +8,8 @@ api: "GET /api/user/token"
 
 需要**用户（User）**权限（任意登录用户）。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
 
+调用本接口前，需先以 `scope=access_token` 通过 `POST /api/verify` 完成安全验证（参见[通用安全验证](/cn/nookmux/api/management/security-verification/verify-post)）；未通过验证的请求返回 HTTP `403`，`code` 为 `VERIFICATION_REQUIRED`。
+
 ## 请求
 
 <RequestExample>
@@ -57,6 +59,7 @@ curl --request GET \
 
 | 条件 | 说明 |
 | --- | --- |
+| 需要安全验证 | HTTP `403` 且 `code` 为 `VERIFICATION_REQUIRED`：会话中没有绑定作用域 `access_token` 的有效验证 |
 | 生成失败 | 生成随机密钥失败 |
 | 数据库错误 | 加载用户或保存令牌失败，详见服务端日志 |
 | 令牌重复 | 随机生成的令牌已存在于其他账号（概率极低），请重试 |

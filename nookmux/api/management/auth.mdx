@@ -41,3 +41,15 @@ Where `{user_id}` must match the currently logged-in user.
 - **User**: Requires login or Access Token
 - **Admin**: Requires administrator privileges
 - **Root**: Highest privilege
+
+## Access Token Scope
+
+Access tokens grant **User-level API access only**. Even an administrator account cannot call Admin or Root endpoints with an access token; the server rejects such requests regardless of the account's role. Use a session cookie for console operations that require admin privileges.
+
+## Session Invalidation on Credential Changes
+
+Sessions are re-validated against the database on every request, so credential changes invalidate existing sessions immediately:
+
+- A password change, disabling 2FA, or other credential changes bump the account's `auth_version`; older sessions are rejected with HTTP `401` and the message `Session expired, please log in again`.
+- Banning or role changes take effect on the affected session's next request as well, forcing a re-login.
+- After upgrading NookMux, sessions issued by an older version fail the same `auth_version` check once; a single re-login is expected.

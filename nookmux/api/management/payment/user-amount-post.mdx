@@ -28,7 +28,7 @@ curl --request POST \
 ### Body
 
 <ParamField path="body.amount" type="integer" required>
-Top-up quantity to price. Must not be lower than the configured minimum top-up amount.
+Top-up quantity to price. Must not be lower than the configured minimum top-up amount. Single top-ups are capped at `floor((MaxInt-1)/quota_per_unit)` (about 18.4 trillion with the default `quota_per_unit` of `500000`); amounts whose converted quota cannot be represented are rejected as well.
 </ParamField>
 
 ## Response
@@ -63,6 +63,8 @@ Payable amount for the requested quantity, formatted as a string with two decima
 
 | Condition | Description |
 | --- | --- |
+| Top-up amount cannot exceed {Max} | `amount` exceeds the per-top-up upper bound `floor((MaxInt-1)/quota_per_unit)`; rejected before a quote is computed or an order is created, and the message contains the actual bound |
+| The converted quota of this top-up amount is invalid and cannot be credited | The quota converted from `amount` is not representable as a platform integer; rejected before a quote is computed or an order is created |
 | Invalid parameters | The JSON body is missing or malformed |
 | Top-up amount cannot be less than the minimum | `amount` is lower than the configured minimum top-up amount |
 | Failed to get user group | The caller's top-up group could not be loaded |

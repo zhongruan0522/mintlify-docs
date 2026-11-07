@@ -8,6 +8,8 @@ api: "POST /api/user/2fa/setup"
 
 需要**用户（User）**权限（任意登录用户）。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
 
+设置 2FA 前需先完成一次 `scope=2fa_setup` 的单步安全验证（参见[通用安全验证](/cn/nookmux/api/management/security-verification/verify-post)）：先调用 `POST /api/verify`，验证方式按账户已有因子限定——已开启 2FA 用 `2fa`、仅绑定 Passkey 用 `passkey`、仅有密码用 `password`。未通过验证的请求返回 HTTP `403`，`code` 为 `VERIFICATION_REQUIRED`。
+
 ## 请求
 
 <RequestExample>
@@ -69,6 +71,7 @@ Base32 编码的 TOTP 共享密钥，可手动输入验证器应用；同时作�
 
 | 条件 | 说明 |
 | --- | --- |
+| 需要安全验证 | HTTP `403` 且 `code` 为 `VERIFICATION_REQUIRED`：会话中没有绑定作用域 `2fa_setup` 的有效验证，或验证方式与账户已有因子不符 |
 | 2FA 已启用 | 需先禁用 2FA 才能重新设置 |
 | 数据库错误 | 读取账号或写入 2FA 记录失败，详见服务端日志 |
 | 密钥生成失败 | 服务端生成 TOTP 密钥失败，详见服务端日志 |

@@ -48,7 +48,7 @@ Cloudflare Turnstile 令牌。仅当服务端开启 Turnstile 人机验证且当
 </ParamField>
 
 <ParamField path="body.email" type="string">
-邮箱地址，最长 50 字符。开启邮箱验证时必填。
+邮箱地址，最长 50 字符。开启邮箱验证时必填。使用前会先去除首尾空白并转为小写。
 </ParamField>
 
 <ParamField path="body.verification_code" type="string">

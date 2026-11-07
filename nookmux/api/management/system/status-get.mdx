@@ -65,6 +65,7 @@ curl --request GET \
     "user_agreement_enabled": true,
     "privacy_policy_enabled": false,
     "checkin_enabled": false,
+    "password_login_encryption_enabled": false,
     "_qn": "nookmux",
     "api_info": [
       {
@@ -217,6 +218,9 @@ curl --request GET \
     </ParamField>
     <ParamField path="checkin_enabled" type="boolean" required>
       Whether the daily check-in feature is enabled.
+    </ParamField>
+    <ParamField path="password_login_encryption_enabled" type="boolean" required>
+      Whether encrypted password login transport is enforced. When `true`, the client must fetch the RSA public key from `GET /api/user/login/encryption-key` and submit the login password encrypted; see [User Login](/nookmux/api/management/user-auth/user-login-post).
     </ParamField>
     <ParamField path="_qn" type="string" required>
       Constant marker, always `nookmux`.

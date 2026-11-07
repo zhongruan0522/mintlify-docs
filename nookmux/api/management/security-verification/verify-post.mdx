@@ -1,17 +1,34 @@
 ---
 title: General Security Verification
-description: Complete a step-up verification with 2FA or passkey to unlock security-sensitive console endpoints for five minutes.
+description: Complete a scope-bound step-up verification with 2FA, passkey, or the account password to unlock one security-sensitive operation.
 api: "POST /api/verify"
 ---
 
-Universal step-up (secure) verification endpoint. After passing verification, the caller's session is marked as securely verified for 5 minutes, which unlocks security-sensitive console endpoints that are mounted with the secure-verification guard (for example viewing a channel's full API key).
+Universal step-up (secure) verification endpoint. Security-sensitive operations require a fresh proof that the caller controls the account's credentials. Each call verifies one factor and records a verification bound to the current user **and** to a single `scope`; guarded endpoints then accept requests from that user within the verification window for exactly that scope. A verification obtained for one action cannot be replayed against another.
 
-Two methods are supported:
+Three methods are supported:
 
 - `2fa`: submit a time-based one-time code or a backup code from the account's two-factor authentication.
-- `passkey`: first complete the WebAuthn assertion flow `POST /api/user/passkey/verify/begin` and `POST /api/user/passkey/verify/finish` (standard WebAuthn structures), which marks a short-lived ready state in the session (valid for 60 seconds); then call this endpoint with `method: "passkey"` to finalize the verification.
+- `passkey`: first complete the WebAuthn assertion flow `POST /api/user/passkey/verify/begin` and `POST /api/user/passkey/verify/finish` (standard WebAuthn structures), which marks a short-lived ready state in the session (valid for 60 seconds, single use); then call this endpoint with `method: "passkey"` to finalize the verification.
+- `password`: re-authenticate with the current account password. This is the fallback for accounts that have neither 2FA nor a passkey configured.
 
-Requires **User** permissions and the account must have 2FA or a passkey configured. This endpoint is protected by a stricter rate limit (CriticalRateLimit). See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
+Requires **User** permissions. This endpoint is protected by a stricter rate limit (CriticalRateLimit). See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
+
+## Scopes
+
+Pass the `scope` matching the operation you are about to perform:
+
+| `scope` value | Required by |
+| --- | --- |
+| `access_token` | Generate access token (`GET /api/user/token`) |
+| `email_bind` | Bind email (`POST /api/oauth/email/bind`) |
+| `account_delete` | Delete the current account (`DELETE /api/user/self`) |
+| `admin_user_manage` | Admin user management: create/update/delete a user, reset passkey, disable 2FA, and the `disable`/`enable`/`promote`/`demote`/`delete` actions of `POST /api/user/manage` (quota adjustment via `add_quota` does not require it) |
+| `2fa_setup` | Set up 2FA (`POST /api/user/2fa/setup`) |
+| `oauth_bind` | Bind a GitHub/LinuxDO identity in the OAuth callback (`GET /api/oauth/github`, `GET /api/oauth/linuxdo`) |
+| *(omitted)* | Guards that are not scope-bound, such as revealing a channel key (`POST /api/channel/{id}/key`); call this endpoint without `scope` |
+
+For `scope=2fa_setup` the accepted method is restricted by the factors the account already has: an account with 2FA enabled must verify with `2fa`, an account with only a passkey must verify with `passkey`, and an account with only a password must verify with `password`.
 
 ## Request
 
@@ -25,7 +42,8 @@ curl --request POST \
   --header 'Content-Type: application/json' \
   --data '{
   "method": "2fa",
-  "code": "123456"
+  "code": "123456",
+  "scope": "access_token"
 }'
 ```
 
@@ -34,11 +52,19 @@ curl --request POST \
 ### Body
 
 <ParamField path="body.method" type="string" required>
-  Verification method: `2fa` or `passkey`.
+Verification method: `2fa`, `passkey`, or `password`.
 </ParamField>
 
 <ParamField path="body.code" type="string">
-  Verification code, required when `method` is `2fa`. Accepts the 6-digit TOTP code or a backup code. Ignored for `passkey`, whose proof is the WebAuthn ready state in the session.
+Verification code, required when `method` is `2fa`. Accepts the 6-digit TOTP code or a backup code. Ignored for `passkey` and `password`.
+</ParamField>
+
+<ParamField path="body.password" type="string">
+Current account password, required when `method` is `password`.
+</ParamField>
+
+<ParamField path="body.scope" type="string">
+Scope binding the verification to one operation. Omit it for guards that are not scope-bound. Each successful verification stores exactly one scope; verifying for another scope later replaces it.
 </ParamField>
 
 ## Response
@@ -61,28 +87,32 @@ curl --request POST \
 ### Response fields
 
 <ResponseField name="success" type="boolean" required>
-  Whether the verification passed.
+Whether the verification passed.
 </ResponseField>
 
 <ResponseField name="message" type="string" required>
-  `Verification successful` on success; error description when `success` is `false`.
+`Verification successful` on success; error description when `success` is `false`.
 </ResponseField>
 
 <ResponseField name="data" type="object" required>
-  Verification result.
+Verification result.
 
   <Expandable title="data structure">
     <ResponseField name="verified" type="boolean" required>
       Always `true` in a successful response.
     </ResponseField>
     <ResponseField name="expires_at" type="integer" required>
-      Unix timestamp when the secure-verification state expires (verification time plus 300 seconds).
+      Unix timestamp when the verification expires (verification time plus 300 seconds).
     </ResponseField>
   </Expandable>
 </ResponseField>
 
 <Note>
-  This endpoint is protected by a stricter rate limit (CriticalRateLimit). The verified state is bound to the current user id in the session and is not transferable to another identity. The passkey ready state set by the WebAuthn finish endpoint is single-use and expires after 60 seconds.
+  This endpoint is protected by a stricter rate limit (CriticalRateLimit). The verification is bound to the current user id, the verification method, and the requested scope. It is stored in the session cookie, so the server cannot enforce single use: within the 300-second window it stays valid for the same user and the same scope (matching upstream semantics), and it fails on expiry, identity change, or scope change.
+</Note>
+
+<Note>
+  Guarded endpoints reject unverified sessions with HTTP `403` and a machine-readable `code` field: `VERIFICATION_REQUIRED` (no verification in the session, or it was obtained for a different scope), `VERIFICATION_INVALID` (the verification belongs to another user or a disallowed method), `VERIFICATION_EXPIRED` (older than 300 seconds). The passkey ready state set by the WebAuthn finish endpoint is single-use and expires after 60 seconds.
 </Note>
 
 ## Error messages
@@ -93,12 +123,12 @@ curl --request POST \
 | Invalid request body | The JSON body is missing or malformed |
 | Failed to get user information | Loading the user record failed |
 | This user has been disabled | The account status is not enabled |
-| 2FA or Passkey is not enabled for this user | The account has neither verification method configured |
 | 2FA is not enabled for this user | `method` is `2fa` but the account has no 2FA |
-| Verification code cannot be empty | `method` is `2fa` but `code` is empty |
+| Verification code cannot be empty | `method` is `2fa` but `code` is empty, or `method` is `password` but `password` is empty |
 | Passkey is not enabled for this user | `method` is `passkey` but the account has no passkey |
 | Please complete Passkey verification first | No (or already consumed/expired) passkey ready state in the session |
 | Invalid Passkey verification state | The passkey ready state exists but cannot be used for this user |
-| Unsupported verification method: {method} | `method` is neither `2fa` nor `passkey` |
-| Verification failed, please check the code | The 2FA code is neither a valid TOTP nor a valid backup code |
+| This account has no password set; password verification is unavailable | `method` is `password` but the account has no password |
+| Unsupported verification method: {method} | `method` is none of `2fa`, `passkey`, `password` |
+| Verification failed, please check the code | The 2FA code is neither a valid TOTP nor a valid backup code, or the password is wrong |
 | Failed to save verification state | Saving the session failed; see server logs |

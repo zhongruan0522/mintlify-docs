@@ -8,6 +8,8 @@ Permanently deletes a user. Unlike the self-service endpoint, this is a hard del
 
 Requires **Admin** permissions. See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
 
+Before calling this endpoint, complete `POST /api/verify` with `scope=admin_user_manage` (see [General Security Verification](/nookmux/api/management/security-verification/verify-post)); requests without that verification are rejected with HTTP `403` and `code: VERIFICATION_REQUIRED`.
+
 ## Request
 
 <RequestExample>
@@ -58,6 +60,7 @@ This endpoint returns no `data` field. For a recoverable soft delete, use the se
 
 | Condition | Description |
 | --- | --- |
+| Secure verification required | HTTP `403` with `code: VERIFICATION_REQUIRED`: the session has no valid verification bound to scope `admin_user_manage` |
 | Invalid parameters | `id` in the path is not an integer |
 | Database error | The target user cannot be loaded (including an unknown `id`) or the delete failed |
 | No permission | The target user has the same or a higher role than the caller |

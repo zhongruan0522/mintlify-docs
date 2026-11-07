@@ -1,17 +1,34 @@
 ---
 title: 通用安全验证
-description: 通过 2FA 或 Passkey 完成二次验证，在五分钟内解锁安全敏感的控制台端点。
+description: 以 2FA、Passkey 或账号密码完成绑定作用域的二次验证，解锁单项安全敏感操作。
 api: "POST /api/verify"
 ---
 
-通用二次（安全）验证端点。验证通过后，调用方会话将被标记为已通过安全验证，有效期 5 分钟，可解锁挂载了安全验证门禁的安全敏感控制台端点（例如查看渠道完整 API Key）。
+通用二次（安全）验证端点。安全敏感操作要求调用方证明当前掌握账号凭据。每次调用验证一个因子，并把验证态绑定到当前用户**与**单个 `scope`；受保护端点在该验证窗口期内、且仅在该作用域内放行该用户的请求。为某个操作获取的验证不能挪用到其他操作。
 
-支持两种验证方式：
+支持三种验证方式：
 
 - `2fa`：提交账户双因素认证的动态口令或备用码。
-- `passkey`：先完成 WebAuthn 断言流程 `POST /api/user/passkey/verify/begin` 与 `POST /api/user/passkey/verify/finish`（标准 WebAuthn 结构），该流程会在会话中写入短期有效的就绪标记（60 秒内有效）；随后以 `method: "passkey"` 调用本端点完成最终确认。
+- `passkey`：先完成 WebAuthn 断言流程 `POST /api/user/passkey/verify/begin` 与 `POST /api/user/passkey/verify/finish`（标准 WebAuthn 结构），该流程会在会话中写入短期有效的就绪标记（60 秒内有效、一次性）；随后以 `method: "passkey"` 调用本端点完成最终确认。
+- `password`：以当前账号密码再认证。这是未配置 2FA 与 Passkey 账户的退路。
 
-需要**用户（User）**权限，且账户必须已配置 2FA 或 Passkey。该接口挂载了更严格的限流（CriticalRateLimit）。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
+需要**用户（User）**权限。该接口挂载了更严格的限流（CriticalRateLimit）。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
+
+## 作用域
+
+请传入与接下来要执行的操作对应的 `scope`：
+
+| `scope` 取值 | 需要该作用域的操作 |
+| --- | --- |
+| `access_token` | 生成访问令牌（`GET /api/user/token`） |
+| `email_bind` | 绑定邮箱（`POST /api/oauth/email/bind`） |
+| `account_delete` | 注销当前账号（`DELETE /api/user/self`） |
+| `admin_user_manage` | 管理员用户管理：新建/更新/删除用户、重置 Passkey、关闭 2FA，以及 `POST /api/user/manage` 的 `disable`/`enable`/`promote`/`demote`/`delete` 动作（`add_quota` 额度调整不需要） |
+| `2fa_setup` | 设置 2FA（`POST /api/user/2fa/setup`） |
+| `oauth_bind` | 在 OAuth 回调中绑定 GitHub/LinuxDO 身份（`GET /api/oauth/github`、`GET /api/oauth/linuxdo`） |
+| *（省略）* | 不绑定作用域的门禁，如查看渠道密钥（`POST /api/channel/{id}/key`）；调用本端点时不传 `scope` 即可 |
+
+`scope=2fa_setup` 时可用的验证方式按账户已有因子限定：已开启 2FA 的账户必须用 `2fa`，仅有 Passkey 的账户必须用 `passkey`，仅有密码的账户必须用 `password`。
 
 ## 请求
 
@@ -25,7 +42,8 @@ curl --request POST \
   --header 'Content-Type: application/json' \
   --data '{
   "method": "2fa",
-  "code": "123456"
+  "code": "123456",
+  "scope": "access_token"
 }'
 ```
 
@@ -34,11 +52,19 @@ curl --request POST \
 ### 请求体
 
 <ParamField path="body.method" type="string" required>
-  验证方式：`2fa` 或 `passkey`。
+验证方式：`2fa`、`passkey` 或 `password`。
 </ParamField>
 
 <ParamField path="body.code" type="string">
-  验证码，`method` 为 `2fa` 时必填。接受 6 位 TOTP 动态口令或备用码。`passkey` 方式忽略该字段，其凭证是会话中的 WebAuthn 就绪标记。
+验证码，`method` 为 `2fa` 时必填。接受 6 位 TOTP 动态口令或备用码。`passkey` 与 `password` 方式忽略该字段。
+</ParamField>
+
+<ParamField path="body.password" type="string">
+当前账号密码，`method` 为 `password` 时必填。
+</ParamField>
+
+<ParamField path="body.scope" type="string">
+把验证绑定到单个操作的作用域。不绑定作用域的门禁可省略。每次成功验证只保存一个作用域；之后再为其他作用域验证会覆盖它。
 </ParamField>
 
 ## 响应
@@ -61,28 +87,32 @@ curl --request POST \
 ### 响应字段
 
 <ResponseField name="success" type="boolean" required>
-  验证是否通过。
+验证是否通过。
 </ResponseField>
 
 <ResponseField name="message" type="string" required>
-  成功时为 `验证成功`；`success` 为 `false` 时为错误描述。
+成功时为 `验证成功`；`success` 为 `false` 时为错误描述。
 </ResponseField>
 
 <ResponseField name="data" type="object" required>
-  验证结果。
+验证结果。
 
   <Expandable title="data 结构">
     <ResponseField name="verified" type="boolean" required>
       成功响应中恒为 `true`。
     </ResponseField>
     <ResponseField name="expires_at" type="integer" required>
-      安全验证状态过期的 Unix 时间戳（验证时间加 300 秒）。
+      验证过期的 Unix 时间戳（验证时间加 300 秒）。
     </ResponseField>
   </Expandable>
 </ResponseField>
 
 <Note>
-  该接口挂载了更严格的限流（CriticalRateLimit）。验证态与会话中的当前用户 ID 绑定，不能被其他身份复用。WebAuthn finish 端点写入的 passkey 就绪标记为一次性，60 秒后过期。
+  该接口挂载了更严格的限流（CriticalRateLimit）。验证态绑定当前用户 ID、验证方式与所请求的作用域。验证态存于会话 Cookie，服务端无法强制单次消费：300 秒窗口内对同一用户、同一作用域持续有效（与上游语义一致）；过期、换用户或换作用域即失效。
+</Note>
+
+<Note>
+  受保护端点在验证不满足时返回 HTTP `403`，并附带机器可读的 `code` 字段：`VERIFICATION_REQUIRED`（会话中没有验证态，或验证态是其他作用域获取的）、`VERIFICATION_INVALID`（验证态属于其他用户或验证方式不被允许）、`VERIFICATION_EXPIRED`（超过 300 秒）。WebAuthn finish 端点写入的 passkey 就绪标记为一次性，60 秒后过期。
 </Note>
 
 ## 错误说明
@@ -93,12 +123,12 @@ curl --request POST \
 | 请求体格式不正确 | JSON 请求体缺失或格式错误 |
 | 用户信息获取失败 | 加载用户记录失败 |
 | 该用户已被禁用 | 账户状态不是启用 |
-| 用户未启用2FA或Passkey | 账户未配置任何验证方式 |
 | 用户未启用2FA | `method` 为 `2fa` 但账户未开启 2FA |
-| 验证码不能为空 | `method` 为 `2fa` 但 `code` 为空 |
+| 验证码不能为空 | `method` 为 `2fa` 但 `code` 为空，或 `method` 为 `password` 但 `password` 为空 |
 | 用户未启用Passkey | `method` 为 `passkey` 但账户未绑定 Passkey |
 | 请先完成 Passkey 验证 | 会话中没有（或已消费/过期）passkey 就绪标记 |
 | 无效的 Passkey 验证状态 | passkey 就绪标记存在但无法用于该用户 |
-| 不支持的验证方式: {method} | `method` 不是 `2fa` 或 `passkey` |
-| 验证失败，请检查验证码 | 2FA 验证码既不是有效 TOTP 也不是有效备用码 |
+| 账户未设置密码，无法通过密码验证 | `method` 为 `password` 但账户未设置密码 |
+| 不支持的验证方式: {method} | `method` 不是 `2fa`、`passkey`、`password` |
+| 验证失败，请检查验证码 | 2FA 验证码既不是有效 TOTP 也不是有效备用码，或密码错误 |
 | 保存验证状态失败 | 会话保存失败，详见服务端日志 |

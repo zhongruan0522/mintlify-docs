@@ -8,6 +8,8 @@ api: "POST /api/oauth/email/bind"
 
 需要**用户（User）**权限。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
 
+调用本接口前，需先以 `scope=email_bind` 通过 `POST /api/verify` 完成安全验证（参见[通用安全验证](/cn/nookmux/api/management/security-verification/verify-post)）；未通过验证的请求返回 HTTP `403`，`code` 为 `VERIFICATION_REQUIRED`。
+
 ## 请求
 
 <RequestExample>
@@ -29,7 +31,7 @@ curl --request POST \
 ### 请求体
 
 <ParamField path="body.email" type="string" required>
-  要绑定的邮箱地址。前后空白会被裁剪，裁剪后不得为空。
+  要绑定的邮箱地址。前后空白会被裁剪，裁剪后不得为空，使用前会转为小写。
 </ParamField>
 
 <ParamField path="body.code" type="string" required>
@@ -67,6 +69,7 @@ curl --request POST \
 
 | 条件 | 说明 |
 | --- | --- |
+| 需要安全验证 | HTTP `403` 且 `code` 为 `VERIFICATION_REQUIRED`：会话中没有绑定作用域 `email_bind` 的有效验证 |
 | 请求体非法 | JSON 缺失、格式错误，或 `email`/`code` 裁剪后为空 |
 | 验证码错误或已过期 | 没有与该邮箱匹配的有效验证码 |
 | 未登录 | 登录会话中找不到用户 ID（HTTP 401） |

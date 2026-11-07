@@ -4,7 +4,7 @@ description: Set a new password using the one-time token from the password reset
 api: "POST /api/user/reset"
 ---
 
-Completes the password reset flow started by `GET /api/reset_password`. Verifies the one-time token that was emailed to the user, stores the new password as a bcrypt hash, and invalidates the token. The token is valid for 10 minutes and can be used only once.
+Completes the password reset flow started by `GET /api/reset_password`. Verifies the one-time token that was emailed to the user, stores the new password as a bcrypt hash, and invalidates the token. The token is valid for 10 minutes and can be used only once. The reset applies only when the normalized email matches exactly one account; unknown or ambiguous addresses are rejected with the same error as an invalid token.
 
 This endpoint is **Public** — no authentication is required. See [Authentication](/nookmux/api/management/auth) for how management API requests are authenticated.
 
@@ -76,6 +76,6 @@ Always `null` for this endpoint.
 | Condition | Description |
 | --- | --- |
 | Invalid parameters | The body is not valid JSON, or one of the fields is empty |
-| Reset link invalid or expired | The token does not match, is older than 10 minutes, or was already used |
+| Reset link invalid or expired | The token does not match, is older than 10 minutes, was already used, or the normalized `email` matches no account or more than one account; the reset applies only to a uniquely matching account |
 | Password invalid | `new_password` is not between 8 and 20 characters |
 | Database error | Persisting the new password failed; see server logs |

@@ -6,6 +6,8 @@ api: "POST /api/user/login"
 
 Authenticates a user with a username (or the email bound to the account) and a password. On success the server creates a login session, returns basic account information, and sets the `session` cookie used by authenticated endpoints. If the account has two-factor authentication (2FA) enabled, no login session is created; the server stores a short-lived pending login in the session instead and the client must complete `POST /api/user/login/2fa`.
 
+When the server has enabled password login encryption (`PASSWORD_LOGIN_ENCRYPTION_ENABLED`), the password must not be sent in plaintext: fetch the RSA public key from [Get Login Encryption Key](/nookmux/api/management/user-auth/user-login-encryption-key-get), encrypt the password with RSA-OAEP/SHA-256, and submit `password_encrypted` with `encryption_key_id` instead. In that mode a plaintext `password` is rejected, and malformed ciphertext is rejected with the same generic `Username or password incorrect` error as wrong credentials.
+
 This endpoint is **Public** — no authentication is required. See [Authentication](/nookmux/api/management/auth) for how management API requests are authenticated.
 
 <Note>
@@ -40,8 +42,16 @@ Cloudflare Turnstile token. Required only when Turnstile verification is enabled
 Username or the email address bound to the account. The lookup matches both.
 </ParamField>
 
-<ParamField path="body.password" type="string" required>
-Account password.
+<ParamField path="body.password" type="string">
+Account password, in plaintext. Required (and accepted) only when password login encryption is disabled on the server.
+</ParamField>
+
+<ParamField path="body.password_encrypted" type="string">
+Base64 ciphertext of the login password, encrypted with RSA-OAEP/SHA-256 under the public key from `GET /api/user/login/encryption-key`. Required when password login encryption is enabled.
+</ParamField>
+
+<ParamField path="body.encryption_key_id" type="string">
+Key id (`kid`) of the public key used to produce `password_encrypted`. Required together with `password_encrypted`.
 </ParamField>
 
 ## Response
@@ -121,6 +131,6 @@ Complete the login with `POST /api/user/login/2fa` using the same session cookie
 | Condition | Description |
 | --- | --- |
 | Password login disabled | Password login has been turned off by the administrator |
-| Invalid parameters | The body is not valid JSON, or `username`/`password` is empty |
+| Invalid parameters | The body is not valid JSON, `username`/`password` is empty, or password login encryption is enabled but `password_encrypted`/`encryption_key_id` is missing |
 | Login service unavailable | A database error occurred while checking the credentials |
-| Username or password incorrect | The credentials are wrong, the account does not exist, or the account is disabled/banned |
+| Username or password incorrect | The credentials are wrong, the account does not exist, the account is disabled/banned, or the password ciphertext is malformed or was encrypted under a non-current key |

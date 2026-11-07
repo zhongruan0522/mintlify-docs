@@ -8,6 +8,8 @@ Performs a management action on a single user. Supported actions are `disable`, 
 
 Requires **Admin** permissions. See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
 
+The `disable`, `enable`, `promote`, `demote`, and `delete` actions additionally require a prior single-step verification: complete `POST /api/verify` with `scope=admin_user_manage` (see [General Security Verification](/nookmux/api/management/security-verification/verify-post)) before calling, otherwise the request is rejected with HTTP `403` and `code: VERIFICATION_REQUIRED`. The `add_quota` action does not require this verification.
+
 ## Request
 
 <RequestExample>
@@ -141,6 +143,7 @@ The `data` object uses the user structure; the fields not listed above are alway
 
 | Condition | Description |
 | --- | --- |
+| Secure verification required | HTTP `403` with `code: VERIFICATION_REQUIRED`: one of `disable`/`enable`/`promote`/`demote`/`delete` was requested without a valid verification bound to scope `admin_user_manage` (`add_quota` is exempt) |
 | Invalid parameters | The JSON body is malformed, `action` or `mode` is unknown, or `value` is negative |
 | Remark too long | `remark` exceeds 255 characters |
 | User does not exist | No user matches `id` |

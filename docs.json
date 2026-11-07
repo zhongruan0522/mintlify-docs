@@ -376,6 +376,7 @@
                     "pages": [
                       "cn/nookmux/api/management/user-auth/reset_password-get",
                       "cn/nookmux/api/management/user-auth/user-login-2fa-post",
+                      "cn/nookmux/api/management/user-auth/user-login-encryption-key-get",
                       "cn/nookmux/api/management/user-auth/user-login-post",
                       "cn/nookmux/api/management/user-auth/user-logout-get",
                       "cn/nookmux/api/management/user-auth/user-passkey-login-begin-post",
@@ -915,6 +916,7 @@
                     "pages": [
                       "nookmux/api/management/user-auth/reset_password-get",
                       "nookmux/api/management/user-auth/user-login-2fa-post",
+                      "nookmux/api/management/user-auth/user-login-encryption-key-get",
                       "nookmux/api/management/user-auth/user-login-post",
                       "nookmux/api/management/user-auth/user-logout-get",
                       "nookmux/api/management/user-auth/user-passkey-login-begin-post",

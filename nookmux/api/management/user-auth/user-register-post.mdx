@@ -48,7 +48,7 @@ Password, 8 to 20 characters. Stored as a bcrypt hash.
 </ParamField>
 
 <ParamField path="body.email" type="string">
-Email address, at most 50 characters. Required when email verification is enabled.
+Email address, at most 50 characters. Required when email verification is enabled. Leading and trailing whitespace is trimmed and the address is lowercased before use.
 </ParamField>
 
 <ParamField path="body.verification_code" type="string">

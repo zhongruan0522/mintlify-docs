@@ -7,7 +7,7 @@ api: "GET /api/oauth/linuxdo"
 Linux DO OAuth callback. NookMux registers Linux DO through the unified `GET /api/oauth/{provider}` route with `provider=linuxdo`; the browser is redirected here by Linux DO after authorization. The endpoint completes two different flows depending on the caller's session:
 
 - Not logged in: finds or creates the NookMux account linked to the Linux DO identity and signs the user in (the login session cookie is set on the response). The Linux DO account's trust level must be at least the configured minimum for the login to proceed.
-- Already logged in in the same browser session: binds the Linux DO identity to the current account and returns `action: "bind"`.
+- Already logged in in the same browser session: binds the Linux DO identity to the current account and returns `action: "bind"`. This bind flow requires a prior single-step verification: complete `POST /api/verify` with `scope=oauth_bind` in the same session before redirecting to the provider; the verification lives in the session cookie and stays valid across the OAuth redirect round trip. Unverified bind attempts are rejected with HTTP `403` and `code: VERIFICATION_REQUIRED`.
 
 Before redirecting the user to Linux DO, the frontend must call [Generate OAuth State](/nookmux/api/management/oauth/oauth-state-get) in the same session; the `state` returned by that call must round-trip through Linux DO back to this endpoint.
 
@@ -118,6 +118,7 @@ curl --request GET \
 
 | Condition | Description |
 | --- | --- |
+| Secure verification required | HTTP `403` with `code: VERIFICATION_REQUIRED`: the session has no valid verification bound to scope `oauth_bind` |
 | Unknown OAuth provider | `provider` is not registered; HTTP `400` |
 | State parameter is empty or mismatched | `state` missing or not matching the session; HTTP `403` |
 | Linux DO login and registration has not been enabled by administrator | Linux DO OAuth is not configured/enabled |

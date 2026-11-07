@@ -1,0 +1,76 @@
+---
+title: Get Login Encryption Key
+description: Fetch the RSA public key used to encrypt the login password before submitting it to the login endpoint.
+api: "GET /api/user/login/encryption-key"
+---
+
+Returns the RSA public key that the client uses to encrypt the login password. The client encrypts the password with RSA-OAEP/SHA-256 and submits the base64 ciphertext to [User Login](/nookmux/api/management/user-auth/user-login-post) in the `password_encrypted` field, together with the key id in `encryption_key_id`.
+
+The mechanism is controlled by the `PASSWORD_LOGIN_ENCRYPTION_ENABLED` environment variable (default `false`) and is an opt-in defense-in-depth measure for the client-to-server leg; it does not replace HTTPS. When the switch is off, the endpoint reports `enabled: false` and the login endpoint accepts the plaintext `password` field instead.
+
+This endpoint is **Public** — no authentication is required. Responses are sent with no-store cache directives. See [Authentication](/nookmux/api/management/auth) for how management API requests are authenticated.
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url 'https://your-nookmux-domain/api/user/login/encryption-key'
+```
+
+</RequestExample>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": {
+    "enabled": true,
+    "kid": "0f1e2d3c4b5a6978",
+    "public_key": "-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA...\n-----END PUBLIC KEY-----\n"
+  }
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+Whether the key information was returned.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+Error description when `success` is `false`; empty otherwise.
+</ResponseField>
+
+<ResponseField name="data" type="object" required>
+Key availability and key material.
+
+  <Expandable title="data structure">
+    <ResponseField name="enabled" type="boolean" required>
+      Whether password login encryption is enabled (`PASSWORD_LOGIN_ENCRYPTION_ENABLED`). When `false`, the object contains only this field and the client submits the plaintext `password` field to the login endpoint.
+    </ResponseField>
+    <ResponseField name="kid" type="string">
+      Key identifier: the first 16 bytes of the SHA-256 digest over the public key DER, hex-encoded. The client echoes it back in `encryption_key_id` so the server picks the matching private key.
+    </ResponseField>
+    <ResponseField name="public_key" type="string">
+      RSA-2048 public key in SPKI PEM form. Encrypt the password with RSA-OAEP/SHA-256 under this key; a ciphertext produced with any other `kid` is rejected by the login endpoint.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<Note>
+  Management endpoints return HTTP `200` even on business failures; always check the `success` field. The private key is persisted in a unique database slot: it is generated once when the feature is first enabled, stays stable across restarts, and is shared by all nodes of a multi-node deployment. Malformed ciphertexts submitted to the login endpoint are rejected with the generic `Username or password incorrect` error, so the response never leaks cryptographic details.
+</Note>
+
+## Error messages
+
+| Condition | Description |
+| --- | --- |
+| Database error | Encryption is enabled but the key could not be loaded or generated; see server logs (startup fails fast on key errors, so this indicates a storage problem) |

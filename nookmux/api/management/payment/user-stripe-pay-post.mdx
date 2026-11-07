@@ -33,7 +33,7 @@ curl --request POST \
 ### Body
 
 <ParamField path="body.amount" type="integer" required>
-Top-up quantity. Must be at least the configured Stripe minimum top-up amount and at most `10000`.
+Top-up quantity. Must be at least the configured Stripe minimum top-up amount and at most `10000`. Single top-ups are capped at `floor((MaxInt-1)/quota_per_unit)` (about 18.4 trillion with the default `quota_per_unit` of `500000`); amounts whose converted quota cannot be represented are rejected as well.
 </ParamField>
 
 <ParamField path="body.payment_method" type="string" required>
@@ -87,6 +87,8 @@ Localized status message; error description when `success` is `false`. The exact
 
 | Condition | Description |
 | --- | --- |
+| Top-up amount cannot exceed {Max} | `amount` exceeds the per-top-up upper bound `floor((MaxInt-1)/quota_per_unit)`; rejected before a quote is computed or an order is created, and the message contains the actual bound |
+| The converted quota of this top-up amount is invalid and cannot be credited | The quota converted from `amount` is not representable as a platform integer; rejected before a quote is computed or an order is created |
 | Invalid parameters | The JSON body is missing or malformed |
 | Unsupported payment channel | `payment_method` is not `stripe` |
 | Top-up amount cannot be less than the minimum | `amount` is lower than the configured Stripe minimum top-up amount |

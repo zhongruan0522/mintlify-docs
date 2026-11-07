@@ -8,6 +8,8 @@ Soft-deletes the account of the currently logged-in user. The user row is marked
 
 Requires **User** permission (any logged-in user). See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
 
+Before calling this endpoint, complete `POST /api/verify` with `scope=account_delete` (see [General Security Verification](/nookmux/api/management/security-verification/verify-post)); requests without that verification are rejected with HTTP `403` and `code: VERIFICATION_REQUIRED`.
+
 ## Request
 
 <RequestExample>
@@ -52,5 +54,6 @@ This endpoint returns no `data` field. Unlike the admin endpoint `DELETE /api/us
 
 | Condition | Description |
 | --- | --- |
+| Secure verification required | HTTP `403` with `code: VERIFICATION_REQUIRED`: the session has no valid verification bound to scope `account_delete` |
 | Cannot delete super administrator | The current account is the root user |
 | Database error | The deletion failed; see server logs |

@@ -8,6 +8,8 @@ Binds an email address to the currently logged-in account. The verification code
 
 Requires **User** permissions. See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
 
+Before calling this endpoint, complete `POST /api/verify` with `scope=email_bind` (see [General Security Verification](/nookmux/api/management/security-verification/verify-post)); requests without that verification are rejected with HTTP `403` and `code: VERIFICATION_REQUIRED`.
+
 ## Request
 
 <RequestExample>
@@ -29,7 +31,7 @@ curl --request POST \
 ### Body
 
 <ParamField path="body.email" type="string" required>
-  Email address to bind. Surrounding whitespace is trimmed and the value must not be empty.
+  Email address to bind. Surrounding whitespace is trimmed, the value must not be empty, and the address is lowercased before use.
 </ParamField>
 
 <ParamField path="body.code" type="string" required>
@@ -67,6 +69,7 @@ curl --request POST \
 
 | Condition | Description |
 | --- | --- |
+| Secure verification required | HTTP `403` with `code: VERIFICATION_REQUIRED`: the session has no valid verification bound to scope `email_bind` |
 | Invalid request body | The JSON body is missing or malformed, or `email`/`code` is empty after trimming |
 | Verification code is incorrect or has expired | No valid verification code matches this email address |
 | Not logged in | No user id found in the login session (HTTP 401) |

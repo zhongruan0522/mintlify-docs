@@ -64,6 +64,7 @@ title: 环境变量配置指南
 | `COOKIE_SECURE` | 会话 cookie 是否附加 `Secure` 标记（仅经 HTTPS 传输）。HTTPS 部署（或反向代理终止 TLS）必须开启，否则长期会话 cookie 可能经明文 HTTP 信道泄露 | `false` | `COOKIE_SECURE=true` |
 | `CRYPTO_SECRET` | 加密密钥（加密数据库敏感内容）；不设置时复用 `SESSION_SECRET` | `SESSION_SECRET` | `CRYPTO_SECRET=<random>` |
 | `NODE_TYPE` | 节点类型；设为 `slave` 的节点跳过数据库迁移、根账号创建和定时渠道测试 | `master` | `NODE_TYPE=slave` |
+| `PASSWORD_LOGIN_ENCRYPTION_ENABLED` | 登录密码传输加密开关；开启后 `POST /api/user/login` 仅接受 RSA 加密的密码字段，公钥经 `GET /api/user/login/encryption-key` 下发。属可选的纵深防御措施，不能替代 HTTPS | `false` | `PASSWORD_LOGIN_ENCRYPTION_ENABLED=true` |
 
 <Card type="info" title="集群部署">
   关于如何使用这些环境变量构建完整的集群部署，请参考[集群部署指南](/cn/nookmux/installation/deployment-methods/cluster-deployment)。

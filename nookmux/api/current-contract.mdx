@@ -44,6 +44,7 @@ DELETE /api/user/passkey/:id
 POST   /api/user/epay/notify
 GET    /api/oauth/:provider
 POST   /api/oauth/email/bind
+GET    /api/user/login/encryption-key
 ```
 
 - `GET /api/rankings`: optional `period` query, defaulting to `week`.
@@ -51,6 +52,7 @@ POST   /api/oauth/email/bind
 - `PUT /api/user/passkey/:id`: JSON body `{ "device_name": "..." }`.
 - `POST /api/oauth/email/bind`: JSON body must include `email` and `code`.
 - OAuth callbacks must include both the `state` issued in the session and the `code` returned by the provider.
+- `GET /api/user/login/encryption-key`: returns `{enabled:false}` unless `PASSWORD_LOGIN_ENCRYPTION_ENABLED` is on; when on, returns `{kid, public_key}` and `POST /api/user/login` must submit `password_encrypted`/`encryption_key_id` instead of the plaintext `password`.
 
 ### Root System Settings
 
@@ -260,6 +262,7 @@ GET    /mcp/video/:id
 
 | Interface | Current contract change |
 | --- | --- |
+| `POST /api/user/login` | When `PASSWORD_LOGIN_ENCRYPTION_ENABLED` is on, the body must carry `password_encrypted` (base64 RSA-OAEP/SHA-256 ciphertext) and `encryption_key_id`; the plaintext `password` field is rejected. |
 | `GET /api/user/search` | In addition to the compatible `keyword` and `group` fields, it now accepts `username`, `display_name`, `email`, `linux_do_id`, `github_id`, `status`, `role`, `p`, and `page_size`. |
 | `PUT /api/user/setting` | The current fields are `notify_type`, `quota_warning_threshold`, `webhook_url`, `webhook_secret`, `notification_email`, `bark_url`, `gotify_url`, `gotify_token`, and `gotify_priority`. |
 | `GET /api/channel/` | Adds `group` filtering; `p`, `page_size`, `id_sort`, `tag_mode`, `status`, and `type` remain supported. |
@@ -286,3 +289,5 @@ Whether AI extension fields are forwarded still depends on the target channel an
 - `/api/option/*`, `/api/db/*`, and `/api/performance/*` all require Root authentication.
 - Token list and detail endpoints no longer return plaintext keys; reading and resetting keys must use dedicated endpoints.
 - `GET /api/pricing` and `GET /api/rankings` are controlled by the corresponding Header Nav module switches.
+- `POST /api/verify` binds each verification to the requesting user and one `scope` (or no scope); guarded endpoints reject unverified sessions with HTTP `403` and a `code` of `VERIFICATION_REQUIRED`/`VERIFICATION_INVALID`/`VERIFICATION_EXPIRED`.
+- Access tokens grant User-level API only; Admin and Root endpoints reject access-token authentication regardless of the account role.

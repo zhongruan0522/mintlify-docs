@@ -7,7 +7,7 @@ api: "GET /api/oauth/github"
 GitHub OAuth callback. NookMux registers GitHub through the unified `GET /api/oauth/{provider}` route with `provider=github`; the browser is redirected here by GitHub after authorization. The endpoint completes two different flows depending on the caller's session:
 
 - Not logged in: finds or creates the NookMux account linked to the GitHub identity and signs the user in (the login session cookie is set on the response).
-- Already logged in in the same browser session: binds the GitHub identity to the current account and returns `action: "bind"`.
+- Already logged in in the same browser session: binds the GitHub identity to the current account and returns `action: "bind"`. This bind flow requires a prior single-step verification: complete `POST /api/verify` with `scope=oauth_bind` in the same session before redirecting to the provider; the verification lives in the session cookie and stays valid across the OAuth redirect round trip. Unverified bind attempts are rejected with HTTP `403` and `code: VERIFICATION_REQUIRED`.
 
 Before redirecting the user to GitHub, the frontend must call [Generate OAuth State](/nookmux/api/management/oauth/oauth-state-get) in the same session; the `state` returned by that call must round-trip through GitHub back to this endpoint.
 
@@ -118,6 +118,7 @@ curl --request GET \
 
 | Condition | Description |
 | --- | --- |
+| Secure verification required | HTTP `403` with `code: VERIFICATION_REQUIRED`: the session has no valid verification bound to scope `oauth_bind` |
 | Unknown OAuth provider | `provider` is not registered; HTTP `400` |
 | State parameter is empty or mismatched | `state` missing or not matching the session; HTTP `403` |
 | GitHub login and registration has not been enabled by administrator | GitHub OAuth is not configured/enabled |

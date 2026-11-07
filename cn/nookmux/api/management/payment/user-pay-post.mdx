@@ -33,7 +33,7 @@ curl --request POST \
 ### 请求体
 
 <ParamField path="body.amount" type="integer" required>
-充值数量。不得低于配置的最低充值数量。
+充值数量。不得低于配置的最低充值数量。 单笔充值上限为 `floor((MaxInt-1)/quota_per_unit)`（默认 `quota_per_unit` 为 `500000` 时约 18.4 万亿）；换算额度无法表示的数量同样会被拒绝。
 </ParamField>
 
 <ParamField path="body.payment_method" type="string" required>
@@ -121,6 +121,8 @@ curl --request POST \
 
 | 条件 | 说明 |
 | --- | --- |
+| 充值数量不能大于 {Max} | `amount` 超过单笔充值上限 `floor((MaxInt-1)/quota_per_unit)`（向下取整）；在询价/下单前即拒绝，错误消息含实际上限值 |
+| 充值数量换算后额度无效，无法入账 | `amount` 换算出的额度无法表示为平台整数；在询价/下单前即拒绝 |
 | 无效的参数 | JSON 请求体缺失或格式错误 |
 | 充值数量不能小于最低值 | `amount` 低于配置的最低充值数量 |
 | 获取用户分组失败 | 调用者的充值分组加载失败 |

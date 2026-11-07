@@ -8,6 +8,8 @@ api: "POST /api/user/"
 
 需要**管理员（Admin）**权限。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
 
+调用本接口前，需先以 `scope=admin_user_manage` 通过 `POST /api/verify` 完成安全验证（参见[通用安全验证](/cn/nookmux/api/management/security-verification/verify-post)）；未通过验证的请求返回 HTTP `403`，`code` 为 `VERIFICATION_REQUIRED`。
+
 ## 请求
 
 <RequestExample>
@@ -77,6 +79,7 @@ curl --request POST \
 
 | 条件 | 说明 |
 | --- | --- |
+| 需要安全验证 | HTTP `403` 且 `code` 为 `VERIFICATION_REQUIRED`：会话中没有绑定作用域 `admin_user_manage` 的有效验证 |
 | 参数非法 | JSON 格式错误，或 `username`、`password` 为空 |
 | 输入非法 | 字段约束不满足（`username` 最长 20 字符、`password` 8 到 20 字符、`display_name` 最长 20 字符） |
 | 无法创建同级或更高级用户 | `role` 等于或高于调用者角色 |

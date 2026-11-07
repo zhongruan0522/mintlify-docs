@@ -50,6 +50,7 @@ DELETE /api/user/passkey/:id
 POST   /api/user/epay/notify
 GET    /api/oauth/:provider
 POST   /api/oauth/email/bind
+GET    /api/user/login/encryption-key
 ```
 
 - `GET /api/rankings`：可选 query `period`，默认 `week`。
@@ -57,6 +58,7 @@ POST   /api/oauth/email/bind
 - `PUT /api/user/passkey/:id`：JSON body `{ "device_name": "..." }`。
 - `POST /api/oauth/email/bind`：JSON body 必须含 `email`、`code`。
 - OAuth 回调必须同时携带会话中签发的 `state` 和 provider 返回的 `code`。
+- `GET /api/user/login/encryption-key`：`PASSWORD_LOGIN_ENCRYPTION_ENABLED` 未开启时返回 `{enabled:false}`；开启时返回 `{kid, public_key}`，`POST /api/user/login` 须改交 `password_encrypted`/`encryption_key_id`，不再接受明文 `password`。
 
 ### Root 系统设置
 
@@ -287,6 +289,7 @@ GET    /mcp/video/:id
 
 | 接口 | 当前契约变化 |
 | --- | --- |
+| `POST /api/user/login` | 开启 `PASSWORD_LOGIN_ENCRYPTION_ENABLED` 后，请求体必须携带 `password_encrypted`（base64 RSA-OAEP/SHA-256 密文）与 `encryption_key_id`，明文 `password` 被拒绝。 |
 | `GET /api/user/search` | 除兼容的 `keyword`、`group` 外，新增 `username`、`display_name`、`email`、`linux_do_id`、`github_id`、`status`、`role`、`p`、`page_size`。 |
 | `PUT /api/user/setting` | 当前字段为 `notify_type`、`quota_warning_threshold`、`webhook_url`、`webhook_secret`、`notification_email`、`bark_url`、`gotify_url`、`gotify_token`、`gotify_priority`。 |
 | `GET /api/channel/` | 新增 `group` 过滤；保留 `p`、`page_size`、`id_sort`、`tag_mode`、`status`、`type`。 |
@@ -313,3 +316,5 @@ AI 扩展字段是否会被转发还取决于目标渠道及参数过滤配置�
 - `/api/option/*`、`/api/db/*`、`/api/performance/*` 均需要 Root 鉴权。
 - Token 列表/详情不再返回明文 key；读取和重置 key 必须走专用接口。
 - `GET /api/pricing`、`GET /api/rankings` 受对应 Header Nav 模块开关控制。
+- `POST /api/verify` 的验证态绑定请求用户与单个 `scope`（或无作用域）；受保护端点对未验证会话返回 HTTP `403`，`code` 为 `VERIFICATION_REQUIRED`/`VERIFICATION_INVALID`/`VERIFICATION_EXPIRED`。
+- 访问令牌仅授予 User 级 API；Admin / Root 端点对访问令牌鉴权一律拒绝，与账号角色无关。

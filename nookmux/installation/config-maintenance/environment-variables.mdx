@@ -64,6 +64,7 @@ This document lists common NookMux environment variables and their defaults. The
 | `COOKIE_SECURE` | Whether the session cookie carries the `Secure` flag (sent only over HTTPS). Must be enabled for HTTPS deployments (or when a reverse proxy terminates TLS), otherwise the long-lived session cookie may leak over plaintext HTTP channels | `false` | `COOKIE_SECURE=true` |
 | `CRYPTO_SECRET` | Encryption secret used to encrypt sensitive database content. If unset, it reuses `SESSION_SECRET` | `SESSION_SECRET` | `CRYPTO_SECRET=<random>` |
 | `NODE_TYPE` | Node type. Nodes set to `slave` skip database migrations, root account creation, and scheduled channel checks | `master` | `NODE_TYPE=slave` |
+| `PASSWORD_LOGIN_ENCRYPTION_ENABLED` | Encrypt login passwords in transit. When enabled, `POST /api/user/login` accepts only the RSA-encrypted password fields; fetch the public key from `GET /api/user/login/encryption-key` first. Opt-in defense in depth; it does not replace HTTPS | `false` | `PASSWORD_LOGIN_ENCRYPTION_ENABLED=true` |
 
 <Card type="info" title="Cluster Deployment">
   For a full cluster deployment using these variables, see the [Cluster Deployment Guide](/nookmux/installation/deployment-methods/cluster-deployment).

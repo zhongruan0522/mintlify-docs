@@ -1,0 +1,76 @@
+---
+title: 获取登录加密公钥
+description: 获取登录前用于加密登录密码的 RSA 公钥。
+api: "GET /api/user/login/encryption-key"
+---
+
+返回客户端用于加密登录密码的 RSA 公钥。客户端以 RSA-OAEP/SHA-256 加密密码后，将 base64 密文放入 `password_encrypted` 字段、密钥标识放入 `encryption_key_id` 字段，提交到[用户登录](/cn/nookmux/api/management/user-auth/user-login-post)。
+
+该机制由环境变量 `PASSWORD_LOGIN_ENCRYPTION_ENABLED` 控制（默认 `false`），属可选的纵深防御措施，仅保护客户端到服务端这一段传输，不能替代 HTTPS。开关关闭时本端点返回 `enabled: false`，登录端点改为接受明文 `password` 字段。
+
+本接口为 **Public（公开）**——无需鉴权。响应带有 no-store 缓存指令。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
+
+## 请求
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url 'https://your-nookmux-domain/api/user/login/encryption-key'
+```
+
+</RequestExample>
+
+## 响应
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": {
+    "enabled": true,
+    "kid": "0f1e2d3c4b5a6978",
+    "public_key": "-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA...\n-----END PUBLIC KEY-----\n"
+  }
+}
+```
+
+</ResponseExample>
+
+### 响应字段
+
+<ResponseField name="success" type="boolean" required>
+是否成功返回密钥信息。
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+`success` 为 `false` 时的错误描述；成功时为空字符串。
+</ResponseField>
+
+<ResponseField name="data" type="object" required>
+密钥可用性与密钥材料。
+
+  <Expandable title="data 结构">
+    <ResponseField name="enabled" type="boolean" required>
+      是否启用登录密码传输加密（`PASSWORD_LOGIN_ENCRYPTION_ENABLED`）。为 `false` 时对象仅含该字段，客户端向登录端点提交明文 `password` 字段。
+    </ResponseField>
+    <ResponseField name="kid" type="string">
+      密钥标识：公钥 DER 的 SHA-256 摘要前 16 字节的 hex 编码。客户端在 `encryption_key_id` 字段原样回传，服务端据此选取对应私钥。
+    </ResponseField>
+    <ResponseField name="public_key" type="string">
+      SPKI PEM 形式的 RSA-2048 公钥。客户端须以该密钥做 RSA-OAEP/SHA-256 加密；使用其他 `kid` 产生的密文会被登录端点拒绝。
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<Note>
+  管理接口在业务失败时同样返回 HTTP `200`，必须以 `success` 字段判断结果。私钥持久化在数据库唯一槽位中：功能首次启用时生成一次，跨重启保持稳定，多节点部署所有节点共享同一密钥。登录端点对畸形密文统一按「用户名或密码错误」拒绝，不向客户端泄露密码学细节。
+</Note>
+
+## 错误说明
+
+| 条件 | 说明 |
+| --- | --- |
+| 数据库错误 | 已启用加密但密钥加载或生成失败，详见服务端日志（启动阶段密钥错误会直接失败，此错误意味着存储层异常） |

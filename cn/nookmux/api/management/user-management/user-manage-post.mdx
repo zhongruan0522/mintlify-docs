@@ -8,6 +8,8 @@ api: "POST /api/user/manage"
 
 需要**管理员（Admin）**权限。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
 
+其中 `disable`、`enable`、`promote`、`demote`、`delete` 动作还要求先完成单步安全验证：调用前先以 `scope=admin_user_manage` 通过 `POST /api/verify`（参见[通用安全验证](/cn/nookmux/api/management/security-verification/verify-post)），否则返回 HTTP `403`，`code` 为 `VERIFICATION_REQUIRED`。`add_quota` 额度调整不需要该验证。
+
 ## 请求
 
 <RequestExample>
@@ -141,6 +143,7 @@ curl --request POST \
 
 | 条件 | 说明 |
 | --- | --- |
+| 需要安全验证 | HTTP `403` 且 `code` 为 `VERIFICATION_REQUIRED`：请求 `disable`/`enable`/`promote`/`demote`/`delete` 动作时会话中没有绑定作用域 `admin_user_manage` 的有效验证（`add_quota` 豁免） |
 | 参数非法 | JSON 格式错误、`action` 或 `mode` 取值未知、`value` 为负数 |
 | 备注过长 | `remark` 超过 255 字符 |
 | 用户不存在 | `id` 未匹配到任何用户 |

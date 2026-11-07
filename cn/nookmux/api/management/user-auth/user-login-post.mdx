@@ -6,6 +6,8 @@ api: "POST /api/user/login"
 
 使用用户名（或账号绑定的邮箱）与密码进行登录。成功后服务端创建登录会话、返回账号基本信息，并设置用于鉴权接口的 `session` Cookie。若账号开启了两步验证（2FA），本步骤不会创建登录会话，而是在会话中写入短时效的待验证登录态，客户端需继续调用 `POST /api/user/login/2fa` 完成登录。
 
+当服务端开启登录密码传输加密（`PASSWORD_LOGIN_ENCRYPTION_ENABLED`）时，不得以明文提交密码：需先经[获取登录加密公钥](/cn/nookmux/api/management/user-auth/user-login-encryption-key-get)取得 RSA 公钥，以 RSA-OAEP/SHA-256 加密后，改以 `password_encrypted` 携带密文、`encryption_key_id` 携带密钥标识提交。该模式下明文 `password` 会被拒绝，畸形密文与凭据错误统一按「用户名或密码错误」返回。
+
 本接口为 **Public（公开）**——无需鉴权。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
 
 <Note>
@@ -40,8 +42,16 @@ Cloudflare Turnstile 令牌。仅当服务端开启 Turnstile 人机验证且当
 用户名或账号绑定的邮箱，两者均可匹配登录。
 </ParamField>
 
-<ParamField path="body.password" type="string" required>
-账号密码。
+<ParamField path="body.password" type="string">
+账号密码（明文）。仅当服务端未开启登录密码传输加密时必填且被接受。
+</ParamField>
+
+<ParamField path="body.password_encrypted" type="string">
+登录密码以 `GET /api/user/login/encryption-key` 下发的公钥做 RSA-OAEP/SHA-256 加密后的 base64 密文。开启登录密码传输加密时必填。
+</ParamField>
+
+<ParamField path="body.encryption_key_id" type="string">
+生成 `password_encrypted` 所用公钥的密钥标识（`kid`），与 `password_encrypted` 成对必填。
 </ParamField>
 
 ## 响应
@@ -121,6 +131,6 @@ Cloudflare Turnstile 令牌。仅当服务端开启 Turnstile 人机验证且当
 | 条件 | 说明 |
 | --- | --- |
 | 密码登录已关闭 | 管理员关闭了密码登录 |
-| 参数无效 | 请求体不是合法 JSON，或 `username` / `password` 为空 |
+| 参数无效 | 请求体不是合法 JSON，或 `username` / `password` 为空，或已开启登录密码传输加密但缺少 `password_encrypted` / `encryption_key_id` |
 | 登录服务暂不可用 | 校验凭据时发生数据库错误 |
-| 用户名或密码错误 | 凭据错误、账号不存在，或账号已被封禁禁用 |
+| 用户名或密码错误 | 凭据错误、账号不存在、账号已被封禁禁用，或所提交密码密文畸形 / 非当前密钥加密 |

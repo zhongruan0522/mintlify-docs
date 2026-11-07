@@ -8,6 +8,8 @@ api: "DELETE /api/user/self"
 
 需要**用户（User）**权限（任意登录用户）。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
 
+调用本接口前，需先以 `scope=account_delete` 通过 `POST /api/verify` 完成安全验证（参见[通用安全验证](/cn/nookmux/api/management/security-verification/verify-post)）；未通过验证的请求返回 HTTP `403`，`code` 为 `VERIFICATION_REQUIRED`。
+
 ## 请求
 
 <RequestExample>
@@ -52,5 +54,6 @@ curl --request DELETE \
 
 | 条件 | 说明 |
 | --- | --- |
+| 需要安全验证 | HTTP `403` 且 `code` 为 `VERIFICATION_REQUIRED`：会话中没有绑定作用域 `account_delete` 的有效验证 |
 | 无法删除超级管理员 | 当前账号是超级管理员 |
 | 数据库错误 | 删除失败，详见服务端日志 |

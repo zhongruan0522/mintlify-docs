@@ -4,12 +4,12 @@ description: 通过安全验证后查看渠道的完整上游密钥。
 api: "POST /api/channel/{id}/key"
 ---
 
-返回渠道的完整上游密钥。这是唯一会返回渠道密钥的渠道接口，因此受到多重保护：需要 Root 权限、受严格限流、禁止缓存，且调用方必须事先通过[安全验证](/cn/nookmux/api/management/security-verification/verify-post)。每次调用都会记入系统日志。
+返回渠道的完整上游密钥。这是唯一会返回渠道密钥的渠道接口，因此受到多重保护：需要 Root 权限、受严格限流、禁止缓存，且调用方必须事先通过[安全验证](/cn/nookmux/api/management/security-verification/verify-post)——验证须来自一次不带 `scope` 的 `POST /api/verify` 调用。每次调用都会记入系统日志。
 
 需要**超级管理员（Root）**权限。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
 
 <Note>
-  本接口受严格限流和安全验证中间件保护：未通过安全验证的请求会在进入处理函数前被拒绝。响应带有 no-store 缓存指令。
+  本接口受严格限流和安全验证中间件保护：会话中没有有效的不带作用域验证的请求会在进入处理函数前被拒绝，返回 HTTP `403` 与机器可读的 `code`（`VERIFICATION_REQUIRED`、`VERIFICATION_INVALID` 或 `VERIFICATION_EXPIRED`）；带 `scope` 获取的验证态不能满足本门禁。验证态绑定当前用户，300 秒内有效。响应带有 no-store 缓存指令。
 </Note>
 
 ## 请求
@@ -69,6 +69,7 @@ curl --request POST \
 
 | 条件 | 说明 |
 | --- | --- |
+| 需要安全验证 | HTTP `403` 且 `code` 为 `VERIFICATION_REQUIRED` / `VERIFICATION_INVALID` / `VERIFICATION_EXPIRED`：会话中没有有效的不带作用域验证，请先不带 `scope` 调用 `POST /api/verify` |
 | 渠道 ID 格式错误 | 路径中的 `id` 不是整数 |
 | 渠道不存在 | 给定 ID 的渠道不存在 |
 | 获取渠道信息失败 | 渠道加载失败，详见服务端日志 |

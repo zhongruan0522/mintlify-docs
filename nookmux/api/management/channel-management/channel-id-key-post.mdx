@@ -4,12 +4,12 @@ description: Reveal the full upstream key of a channel after passing security ve
 api: "POST /api/channel/{id}/key"
 ---
 
-Return the full upstream key of a channel. This is the only channel endpoint that reveals the key, so it is locked down: it requires Root permissions, is subject to strict rate limiting, must not be cached, and the caller must have passed [security verification](/nookmux/api/management/security-verification/verify-post) beforehand. Every call is recorded in the system log.
+Return the full upstream key of a channel. This is the only channel endpoint that reveals the key, so it is locked down: it requires Root permissions, is subject to strict rate limiting, must not be cached, and the caller must have passed [security verification](/nookmux/api/management/security-verification/verify-post) beforehand — obtained from a `POST /api/verify` call made without a `scope`. Every call is recorded in the system log.
 
 Requires **Root** permissions. See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
 
 <Note>
-  This endpoint is protected by strict rate limiting and by the security verification middleware: requests that have not passed security verification are rejected before the handler runs. Responses are sent with no-store cache directives.
+  This endpoint is protected by strict rate limiting and by the security verification middleware: requests whose session holds no valid scopeless verification are rejected before the handler runs with HTTP `403` and a machine-readable `code` (`VERIFICATION_REQUIRED`, `VERIFICATION_INVALID`, or `VERIFICATION_EXPIRED`); a verification obtained with a `scope` set does not satisfy this guard. The verification is bound to the current user and stays valid for 300 seconds. Responses are sent with no-store cache directives.
 </Note>
 
 ## Request
@@ -69,6 +69,7 @@ curl --request POST \
 
 | Condition | Description |
 | --- | --- |
+| Secure verification required | HTTP `403` with `code: VERIFICATION_REQUIRED` / `VERIFICATION_INVALID` / `VERIFICATION_EXPIRED`: the session holds no valid scopeless verification; complete `POST /api/verify` without a `scope` first |
 | Channel id format error | `id` in the path is not an integer |
 | Channel not found | No channel exists with the given id |
 | Channel info failed | The channel could not be loaded; see server logs |

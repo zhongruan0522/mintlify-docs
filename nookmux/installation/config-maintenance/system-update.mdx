@@ -95,6 +95,7 @@ make build-backend
 - Request `/api/status` to verify service health.
 - Make one `/v1` API call with an existing token to confirm the relay path is working.
 - Verify database migrations completed, especially after a major version jump.
+- Expect existing browser sessions to be invalidated once after the update: the credential re-validation column (`auth_version`) is added automatically by AutoMigrate (no manual migration step), and sessions issued by the older version receive HTTP `401` on their first request until the user logs in again.
 
 ## Rollback
 
