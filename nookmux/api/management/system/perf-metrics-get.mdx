@@ -1,0 +1,214 @@
+---
+title: Get Model Performance Metrics
+description: Fetch one model's sampled relay performance over a time window, including the window summary, per-bucket series and per-group aggregates.
+api: "GET /api/perf-metrics"
+---
+
+Returns the sampled relay performance of a single model over a query window: a model-level summary, a per-bucket time series for trend charts, and one aggregate per user group with its own per-bucket series. Data comes from the aggregation buckets written by the relay request sampler (System Settings -> Operations -> Model Performance Metrics); query results merge the persisted buckets with the in-memory hot buckets, so samples recorded after the last flush are included too.
+
+The endpoint is gated by the header navigation module configuration of the `perf_metrics` module. By default the module is enabled and public: no authentication is required, and the caller's identity is resolved from the login session when one is present. If the module is configured to require login, a valid login is enforced (User permission). See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url 'https://your-nookmux-domain/api/perf-metrics?model=gpt-4o&hours=24'
+```
+
+</RequestExample>
+
+### Query parameters
+
+<ParamField path="model" type="string" required>
+  Model name to query. Surrounding whitespace is trimmed; the request fails when the trimmed value is empty.
+</ParamField>
+
+<ParamField path="hours" type="integer" default="24">
+  Query window length in hours, `1` to `720` (30 days). The window ends at the time of the request.
+</ParamField>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": {
+    "model_name": "gpt-4o",
+    "series_schema": "v1",
+    "summary": {
+      "avg_latency_ms": 2850,
+      "success_rate": 99.25,
+      "avg_tps": 42.5
+    },
+    "series": [
+      {
+        "ts": 1760745600,
+        "avg_ttft_ms": 640,
+        "avg_latency_ms": 2760,
+        "success_rate": 99.5,
+        "avg_tps": 43.1
+      },
+      {
+        "ts": 1760749200,
+        "avg_ttft_ms": 0,
+        "avg_latency_ms": 2980,
+        "success_rate": 98.75,
+        "avg_tps": 41.8
+      }
+    ],
+    "window_start": 1760745600,
+    "window_end": 1760832000,
+    "groups": [
+      {
+        "group": "default",
+        "avg_ttft_ms": 620,
+        "avg_latency_ms": 2850,
+        "success_rate": 99.25,
+        "avg_tps": 42.5,
+        "series": [
+          {
+            "ts": 1760745600,
+            "avg_ttft_ms": 640,
+            "avg_latency_ms": 2760,
+            "success_rate": 99.5,
+            "avg_tps": 43.1
+          }
+        ]
+      },
+      {
+        "group": "vip",
+        "avg_ttft_ms": 700,
+        "avg_latency_ms": 3100,
+        "success_rate": 98.8,
+        "avg_tps": 40.2,
+        "series": [
+          {
+            "ts": 1760745600,
+            "avg_ttft_ms": 680,
+            "avg_latency_ms": 3050,
+            "success_rate": 98.8,
+            "avg_tps": 40.5
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+  Whether the request succeeded.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  Error description when `success` is `false`; empty otherwise.
+</ResponseField>
+
+<ResponseField name="data" type="object" required>
+  Performance detail of the requested model over the query window.
+
+  <Expandable title="perf metrics structure">
+    <ResponseField name="model_name" type="string" required>
+      The requested model name, after trimming surrounding whitespace.
+    </ResponseField>
+    <ResponseField name="series_schema" type="string" required>
+      Structure fingerprint of the `series` and `groups` payloads, currently `v1`. It changes whenever the series structure changes, so clients can detect stale caches.
+    </ResponseField>
+    <ResponseField name="summary" type="object">
+      Model-level aggregate over the whole window and all groups; `null` when the model has no request samples in the window.
+
+      <Expandable title="summary structure">
+        <ResponseField name="avg_latency_ms" type="integer" required>
+          Mean end-to-end request latency in milliseconds.
+        </ResponseField>
+        <ResponseField name="success_rate" type="number" required>
+          Successful requests in percent, `0` to `100` rounded to 2 decimals. Gateway-side business rejections (quota, sensitive words, violation fees) and local validation failures are excluded from the sample base.
+        </ResponseField>
+        <ResponseField name="avg_tps" type="number" required>
+          Mean throughput in output tokens per second over the generation phase; `0` when the window has no generation time.
+        </ResponseField>
+      </Expandable>
+    </ResponseField>
+    <ResponseField name="series" type="array" required>
+      Per-bucket points of the whole model sorted by `ts` ascending; empty when the window has no samples. One point per bucket with samples, aligned to the configured bucket granularity.
+
+      <Expandable title="series point structure">
+        <ResponseField name="ts" type="integer" required>
+          Unix timestamp (seconds) of the bucket start.
+        </ResponseField>
+        <ResponseField name="avg_ttft_ms" type="integer" required>
+          Mean time to first token in milliseconds, counted only from streaming requests that emitted a first frame; `0` when the bucket has no such sample.
+        </ResponseField>
+        <ResponseField name="avg_latency_ms" type="integer" required>
+          Mean end-to-end request latency of the bucket in milliseconds.
+        </ResponseField>
+        <ResponseField name="success_rate" type="number" required>
+          Bucket success rate in percent, rounded to 2 decimals.
+        </ResponseField>
+        <ResponseField name="avg_tps" type="number" required>
+          Bucket mean throughput in output tokens per second; `0` when the bucket has no generation time.
+        </ResponseField>
+      </Expandable>
+    </ResponseField>
+    <ResponseField name="window_start" type="integer" required>
+      Unix timestamp (seconds) of the window start, `window_end - hours*3600`.
+    </ResponseField>
+    <ResponseField name="window_end" type="integer" required>
+      Unix timestamp (seconds) of the window end, taken at request time.
+    </ResponseField>
+    <ResponseField name="groups" type="array" required>
+      Aggregates per user group over the window, sorted by group name ascending. Only groups configured in the group ratio configuration are exposed; groups without samples in the window are absent.
+
+      <Expandable title="group structure">
+        <ResponseField name="group" type="string" required>
+          Group name.
+        </ResponseField>
+        <ResponseField name="avg_ttft_ms" type="integer" required>
+          Window mean time to first token of the group; `0` when there is no first-frame sample.
+        </ResponseField>
+        <ResponseField name="avg_latency_ms" type="integer" required>
+          Window mean end-to-end latency of the group in milliseconds.
+        </ResponseField>
+        <ResponseField name="success_rate" type="number" required>
+          Window success rate of the group in percent, rounded to 2 decimals.
+        </ResponseField>
+        <ResponseField name="avg_tps" type="number" required>
+          Window mean throughput of the group in output tokens per second.
+        </ResponseField>
+        <ResponseField name="series" type="array" required>
+          Per-bucket points of the group with the same member structure as the top-level `series`.
+        </ResponseField>
+      </Expandable>
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<Note>
+Metric definitions:
+
+- `avg_latency_ms` — mean end-to-end latency of the relay request.
+- `avg_ttft_ms` — mean time to first token; only streaming requests that emitted a first frame are counted.
+- `success_rate` — successful requests in percent; gateway-side business rejections (quota, sensitive words, violation fees) and local validation failures count neither into requests nor into failures.
+- `avg_tps` — output tokens per second of the generation phase; for streaming requests the generation phase is the end-to-end latency minus the first-token latency, for non-streaming requests the whole latency.
+
+Buckets align to the granularity configured as `perf_metrics_setting.bucket_time` (`minute` / `5min` / `hour`, `hour` by default). Sampling can be switched off with `perf_metrics_setting.enabled`; while off, new samples are dropped and the endpoint keeps serving the historical buckets inside the window.
+</Note>
+
+## Error messages
+
+| Condition | Description |
+| --- | --- |
+| perf_metrics is disabled | HTTP `403` with this message when the perf_metrics module is switched off in header navigation module settings |
+| Login required | Standard authentication errors (HTTP `401`) when the perf_metrics module is configured to require login and the caller is not authenticated |
+| Model name is required | `model` is missing or blank; returned as HTTP `200` with `success: false` |
+| Invalid query window (1-720 hours) | `hours` is not an integer between `1` and `720`; returned as HTTP `200` with `success: false` |
+| Database error | Loading the aggregation buckets failed; see server logs |

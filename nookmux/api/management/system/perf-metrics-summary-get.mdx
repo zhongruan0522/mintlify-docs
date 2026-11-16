@@ -1,0 +1,131 @@
+---
+title: Get Model Performance Summary
+description: Fetch the site-wide relay performance summary and per-model performance aggregates over a time window.
+api: "GET /api/perf-metrics/summary"
+---
+
+Returns the relay performance of the whole instance over a query window: a site-wide summary across all models plus one aggregate per model sorted by request volume. It is computed from the same performance-metrics buckets as the per-model detail endpoint and backs the model plaza performance badges.
+
+The endpoint is gated by the header navigation module configuration of the `perf_metrics` module. By default the module is enabled and public: no authentication is required, and the caller's identity is resolved from the login session when one is present. If the module is configured to require login, a valid login is enforced (User permission). See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url 'https://your-nookmux-domain/api/perf-metrics/summary?hours=24'
+```
+
+</RequestExample>
+
+### Query parameters
+
+<ParamField path="hours" type="integer" default="24">
+  Query window length in hours, `1` to `720` (30 days). The window ends at the time of the request.
+</ParamField>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": {
+    "summary": {
+      "avg_latency_ms": 3120,
+      "success_rate": 98.9,
+      "avg_tps": 38.4
+    },
+    "window_start": 1760745600,
+    "window_end": 1760832000,
+    "models": [
+      {
+        "model_name": "gpt-4o",
+        "avg_latency_ms": 2850,
+        "success_rate": 99.25,
+        "avg_tps": 42.5
+      },
+      {
+        "model_name": "claude-sonnet-4",
+        "avg_latency_ms": 3420,
+        "success_rate": 98.4,
+        "avg_tps": 35.2
+      }
+    ]
+  }
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+  Whether the request succeeded.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  Error description when `success` is `false`; empty otherwise.
+</ResponseField>
+
+<ResponseField name="data" type="object" required>
+  Site-wide summary and per-model aggregates over the query window.
+
+  <Expandable title="perf summary structure">
+    <ResponseField name="summary" type="object">
+      Site-wide aggregate over the window; `null` when there are no request samples.
+
+      <Expandable title="summary structure">
+        <ResponseField name="avg_latency_ms" type="integer" required>
+          Mean end-to-end request latency in milliseconds.
+        </ResponseField>
+        <ResponseField name="success_rate" type="number" required>
+          Successful requests in percent, `0` to `100` rounded to 2 decimals. Gateway-side business rejections (quota, sensitive words, violation fees) and local validation failures are excluded from the sample base.
+        </ResponseField>
+        <ResponseField name="avg_tps" type="number" required>
+          Mean throughput in output tokens per second over the generation phase; `0` when the window has no generation time.
+        </ResponseField>
+      </Expandable>
+    </ResponseField>
+    <ResponseField name="window_start" type="integer" required>
+      Unix timestamp (seconds) of the window start, `window_end - hours*3600`.
+    </ResponseField>
+    <ResponseField name="window_end" type="integer" required>
+      Unix timestamp (seconds) of the window end, taken at request time.
+    </ResponseField>
+    <ResponseField name="models" type="array" required>
+      Per-model aggregates over the window sorted by request volume descending; models without samples in the window are omitted.
+
+      <Expandable title="model summary structure">
+        <ResponseField name="model_name" type="string" required>
+          Model name.
+        </ResponseField>
+        <ResponseField name="avg_latency_ms" type="integer" required>
+          Mean end-to-end request latency of the model in milliseconds.
+        </ResponseField>
+        <ResponseField name="success_rate" type="number" required>
+          Success rate of the model in percent, rounded to 2 decimals.
+        </ResponseField>
+        <ResponseField name="avg_tps" type="number" required>
+          Mean throughput of the model in output tokens per second.
+        </ResponseField>
+      </Expandable>
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<Note>
+Metric definitions match [Get Model Performance Metrics](/nookmux/api/management/system/perf-metrics-get); first-token latency is only reported by that endpoint. Buckets align to `perf_metrics_setting.bucket_time`, and only groups configured in the group ratio configuration contribute to the aggregates.
+</Note>
+
+## Error messages
+
+| Condition | Description |
+| --- | --- |
+| perf_metrics is disabled | HTTP `403` with this message when the perf_metrics module is switched off in header navigation module settings |
+| Login required | Standard authentication errors (HTTP `401`) when the perf_metrics module is configured to require login and the caller is not authenticated |
+| Invalid query window (1-720 hours) | `hours` is not an integer between `1` and `720`; returned as HTTP `200` with `success: false` |
+| Database error | Loading the aggregation buckets failed; see server logs |

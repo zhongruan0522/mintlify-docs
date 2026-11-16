@@ -13,6 +13,7 @@ The Operations group includes:
 - **Log Maintenance**: cleanup for consumption, error, top-up, admin, and system logs plus dashboard usage stats; supports an auto cleanup schedule (maximum data retention, cleanup interval, and cleanup targets; cleanup runs at natural 00:00 boundaries in the server's local timezone).
 - **Database Maintenance**: migration and sync tools.
 - **Performance**: disk cache and performance monitoring thresholds.
+- **Model Performance Metrics**: sampling of relay request performance (first-token latency, end-to-end latency, success rate, throughput) with flush interval, aggregation bucket granularity (`minute` / `5min` / `hour`) and bucket retention days (`0` keeps data forever).
 - **Maintenance**: version and update checks.
 
 Top-up, payment, check-in, quota, and ratio settings belong under **Billing & Payments**.

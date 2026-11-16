@@ -1,0 +1,214 @@
+---
+title: 获取模型性能指标
+description: 获取指定查询窗口内单模型的中继性能明细：窗口汇总、分桶序列与各分组聚合及其分桶序列。
+api: "GET /api/perf-metrics"
+---
+
+返回单个模型在查询窗口内的中继请求采样性能：模型级汇总、供趋势图使用的分桶时间序列，以及按用户分组的聚合值（每组附带各自的分桶序列）。数据来自中继请求采样写入的性能聚合桶（系统设置 → 运维 → 模型性能指标）；查询结果合并已落库桶与内存热桶，最近一次落库之后的样本同样计入。
+
+该接口受顶部导航模块配置中 `perf_metrics` 模块的开关控制。默认模块启用且公开：无需鉴权，若调用者携带登录会话则自动识别其身份；若模块配置为需要登录，则强制校验登录（User 权限）。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
+
+## 请求
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url 'https://your-nookmux-domain/api/perf-metrics?model=gpt-4o&hours=24'
+```
+
+</RequestExample>
+
+### 查询参数
+
+<ParamField path="model" type="string" required>
+  待查询的模型名。首尾空白会被去除，去除后为空时报错。
+</ParamField>
+
+<ParamField path="hours" type="integer" default="24">
+  查询窗口长度（小时），取值 `1` 至 `720`（30 天）。窗口终点为请求时刻。
+</ParamField>
+
+## 响应
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": {
+    "model_name": "gpt-4o",
+    "series_schema": "v1",
+    "summary": {
+      "avg_latency_ms": 2850,
+      "success_rate": 99.25,
+      "avg_tps": 42.5
+    },
+    "series": [
+      {
+        "ts": 1760745600,
+        "avg_ttft_ms": 640,
+        "avg_latency_ms": 2760,
+        "success_rate": 99.5,
+        "avg_tps": 43.1
+      },
+      {
+        "ts": 1760749200,
+        "avg_ttft_ms": 0,
+        "avg_latency_ms": 2980,
+        "success_rate": 98.75,
+        "avg_tps": 41.8
+      }
+    ],
+    "window_start": 1760745600,
+    "window_end": 1760832000,
+    "groups": [
+      {
+        "group": "default",
+        "avg_ttft_ms": 620,
+        "avg_latency_ms": 2850,
+        "success_rate": 99.25,
+        "avg_tps": 42.5,
+        "series": [
+          {
+            "ts": 1760745600,
+            "avg_ttft_ms": 640,
+            "avg_latency_ms": 2760,
+            "success_rate": 99.5,
+            "avg_tps": 43.1
+          }
+        ]
+      },
+      {
+        "group": "vip",
+        "avg_ttft_ms": 700,
+        "avg_latency_ms": 3100,
+        "success_rate": 98.8,
+        "avg_tps": 40.2,
+        "series": [
+          {
+            "ts": 1760745600,
+            "avg_ttft_ms": 680,
+            "avg_latency_ms": 3050,
+            "success_rate": 98.8,
+            "avg_tps": 40.5
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+
+</ResponseExample>
+
+### 响应字段
+
+<ResponseField name="success" type="boolean" required>
+  请求是否成功。
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  `success` 为 `false` 时的错误描述；成功时为空字符串。
+</ResponseField>
+
+<ResponseField name="data" type="object" required>
+  所查询模型在窗口内的性能明细。
+
+  <Expandable title="性能明细结构">
+    <ResponseField name="model_name" type="string" required>
+      所请求的模型名（已去除首尾空白）。
+    </ResponseField>
+    <ResponseField name="series_schema" type="string" required>
+      `series` 与 `groups` 的结构指纹，当前为 `v1`；序列结构变更时会变化，客户端可据此识别缓存失效。
+    </ResponseField>
+    <ResponseField name="summary" type="object">
+      全窗口、全分组的模型级汇总；窗口内无请求样本时为 `null`。
+
+      <Expandable title="summary 结构">
+        <ResponseField name="avg_latency_ms" type="integer" required>
+          端到端请求延迟均值（毫秒）。
+        </ResponseField>
+        <ResponseField name="success_rate" type="number" required>
+          成功请求百分比，`0`-`100`，保留 2 位小数。网关侧业务拒绝（额度、敏感词、违规费）与本地校验失败不计入样本基数。
+        </ResponseField>
+        <ResponseField name="avg_tps" type="number" required>
+          生成阶段平均每秒输出 token 数；窗口内无生成耗时时为 `0`。
+        </ResponseField>
+      </Expandable>
+    </ResponseField>
+    <ResponseField name="series" type="array" required>
+      整个模型的分桶数据点，按 `ts` 升序；窗口内无样本时为空数组。每个有样本的桶一个点，桶按配置的粒度对齐。
+
+      <Expandable title="序列数据点结构">
+        <ResponseField name="ts" type="integer" required>
+          桶起点的 Unix 时间戳（秒）。
+        </ResponseField>
+        <ResponseField name="avg_ttft_ms" type="integer" required>
+          首字延迟均值（毫秒），仅统计已发出首帧的流式请求；该桶无此类样本时为 `0`。
+        </ResponseField>
+        <ResponseField name="avg_latency_ms" type="integer" required>
+          该桶端到端请求延迟均值（毫秒）。
+        </ResponseField>
+        <ResponseField name="success_rate" type="number" required>
+          该桶成功率（百分比），保留 2 位小数。
+        </ResponseField>
+        <ResponseField name="avg_tps" type="number" required>
+          该桶平均每秒输出 token 数；无生成耗时时为 `0`。
+        </ResponseField>
+      </Expandable>
+    </ResponseField>
+    <ResponseField name="window_start" type="integer" required>
+      窗口起点的 Unix 时间戳（秒），即 `window_end - hours*3600`。
+    </ResponseField>
+    <ResponseField name="window_end" type="integer" required>
+      窗口终点的 Unix 时间戳（秒），取请求时刻。
+    </ResponseField>
+    <ResponseField name="groups" type="array" required>
+      窗口内各用户分组的聚合值，按分组名升序。仅暴露分组倍率配置中存在的分组；窗口内无样本的分组不出现。
+
+      <Expandable title="分组结构">
+        <ResponseField name="group" type="string" required>
+          分组名。
+        </ResponseField>
+        <ResponseField name="avg_ttft_ms" type="integer" required>
+          该分组窗口内首字延迟均值（毫秒）；无首帧样本时为 `0`。
+        </ResponseField>
+        <ResponseField name="avg_latency_ms" type="integer" required>
+          该分组窗口内端到端延迟均值（毫秒）。
+        </ResponseField>
+        <ResponseField name="success_rate" type="number" required>
+          该分组窗口内成功率（百分比），保留 2 位小数。
+        </ResponseField>
+        <ResponseField name="avg_tps" type="number" required>
+          该分组窗口内平均每秒输出 token 数。
+        </ResponseField>
+        <ResponseField name="series" type="array" required>
+          该分组的分桶数据点，成员结构与顶层 `series` 相同。
+        </ResponseField>
+      </Expandable>
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<Note>
+指标口径：
+
+- `avg_latency_ms`：中继请求端到端延迟均值。
+- `avg_ttft_ms`：首字延迟均值，仅统计已发出首帧的流式请求。
+- `success_rate`：成功请求百分比；网关侧业务拒绝（额度、敏感词、违规费）与本地校验失败既不计入请求也不计入失败。
+- `avg_tps`：生成阶段每秒输出 token 数；流式请求的生成阶段为端到端延迟扣除首字延迟，非流式请求为整体延迟。
+
+时间桶按 `perf_metrics_setting.bucket_time` 配置的粒度对齐（`minute`/`5min`/`hour`，默认 `hour`）。可通过 `perf_metrics_setting.enabled` 关闭采样；关闭后新样本不再记录，接口继续返回窗口内的历史桶数据。
+</Note>
+
+## 错误说明
+
+| 条件 | 说明 |
+| --- | --- |
+| perf_metrics is disabled | 顶部导航模块设置中关闭 perf_metrics 模块时返回 HTTP `403` 与该消息 |
+| 需要登录 | perf_metrics 模块配置为需要登录且调用者未认证时的标准鉴权错误（HTTP `401`） |
+| 模型名不能为空 | 缺少 `model` 或去除首尾空白后为空；以 HTTP `200`、`success: false` 返回 |
+| 查询时间范围无效（1-720 小时） | `hours` 不是 `1` 至 `720` 的整数；以 HTTP `200`、`success: false` 返回 |
+| 数据库错误 | 读取聚合桶失败；详见服务端日志 |

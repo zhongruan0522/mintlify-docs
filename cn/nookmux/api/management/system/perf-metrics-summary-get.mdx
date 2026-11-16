@@ -1,0 +1,131 @@
+---
+title: 获取模型性能汇总
+description: 获取指定查询窗口内全站中继性能汇总与各模型性能摘要。
+api: "GET /api/perf-metrics/summary"
+---
+
+返回整个实例在查询窗口内的中继请求性能：跨全部模型的全站汇总，以及按请求量降序排列的各模型性能摘要。数据与单模型明细接口同源（性能聚合桶），模型广场的性能徽章即由该接口驱动。
+
+该接口受顶部导航模块配置中 `perf_metrics` 模块的开关控制。默认模块启用且公开：无需鉴权，若调用者携带登录会话则自动识别其身份；若模块配置为需要登录，则强制校验登录（User 权限）。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
+
+## 请求
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url 'https://your-nookmux-domain/api/perf-metrics/summary?hours=24'
+```
+
+</RequestExample>
+
+### 查询参数
+
+<ParamField path="hours" type="integer" default="24">
+  查询窗口长度（小时），取值 `1` 至 `720`（30 天）。窗口终点为请求时刻。
+</ParamField>
+
+## 响应
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": {
+    "summary": {
+      "avg_latency_ms": 3120,
+      "success_rate": 98.9,
+      "avg_tps": 38.4
+    },
+    "window_start": 1760745600,
+    "window_end": 1760832000,
+    "models": [
+      {
+        "model_name": "gpt-4o",
+        "avg_latency_ms": 2850,
+        "success_rate": 99.25,
+        "avg_tps": 42.5
+      },
+      {
+        "model_name": "claude-sonnet-4",
+        "avg_latency_ms": 3420,
+        "success_rate": 98.4,
+        "avg_tps": 35.2
+      }
+    ]
+  }
+}
+```
+
+</ResponseExample>
+
+### 响应字段
+
+<ResponseField name="success" type="boolean" required>
+  请求是否成功。
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  `success` 为 `false` 时的错误描述；成功时为空字符串。
+</ResponseField>
+
+<ResponseField name="data" type="object" required>
+  查询窗口内的全站汇总与各模型性能摘要。
+
+  <Expandable title="性能汇总结构">
+    <ResponseField name="summary" type="object">
+      全站窗口汇总；窗口内无请求样本时为 `null`。
+
+      <Expandable title="summary 结构">
+        <ResponseField name="avg_latency_ms" type="integer" required>
+          端到端请求延迟均值（毫秒）。
+        </ResponseField>
+        <ResponseField name="success_rate" type="number" required>
+          成功请求百分比，`0`-`100`，保留 2 位小数。网关侧业务拒绝（额度、敏感词、违规费）与本地校验失败不计入样本基数。
+        </ResponseField>
+        <ResponseField name="avg_tps" type="number" required>
+          生成阶段平均每秒输出 token 数；窗口内无生成耗时时为 `0`。
+        </ResponseField>
+      </Expandable>
+    </ResponseField>
+    <ResponseField name="window_start" type="integer" required>
+      窗口起点的 Unix 时间戳（秒），即 `window_end - hours*3600`。
+    </ResponseField>
+    <ResponseField name="window_end" type="integer" required>
+      窗口终点的 Unix 时间戳（秒），取请求时刻。
+    </ResponseField>
+    <ResponseField name="models" type="array" required>
+      窗口内各模型的性能摘要，按请求量降序；窗口内无样本的模型不出现。
+
+      <Expandable title="模型摘要结构">
+        <ResponseField name="model_name" type="string" required>
+          模型名。
+        </ResponseField>
+        <ResponseField name="avg_latency_ms" type="integer" required>
+          该模型端到端请求延迟均值（毫秒）。
+        </ResponseField>
+        <ResponseField name="success_rate" type="number" required>
+          该模型成功率（百分比），保留 2 位小数。
+        </ResponseField>
+        <ResponseField name="avg_tps" type="number" required>
+          该模型平均每秒输出 token 数。
+        </ResponseField>
+      </Expandable>
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<Note>
+指标口径与[获取模型性能指标](/cn/nookmux/api/management/system/perf-metrics-get)一致；首字延迟仅在单模型明细接口中提供。时间桶按 `perf_metrics_setting.bucket_time` 配置的粒度对齐，且仅分组倍率配置中存在的分组参与聚合。
+</Note>
+
+## 错误说明
+
+| 条件 | 说明 |
+| --- | --- |
+| perf_metrics is disabled | 顶部导航模块设置中关闭 perf_metrics 模块时返回 HTTP `403` 与该消息 |
+| 需要登录 | perf_metrics 模块配置为需要登录且调用者未认证时的标准鉴权错误（HTTP `401`） |
+| 查询时间范围无效（1-720 小时） | `hours` 不是 `1` 至 `720` 的整数；以 HTTP `200`、`success: false` 返回 |
+| 数据库错误 | 读取聚合桶失败；详见服务端日志 |
