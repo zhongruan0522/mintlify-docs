@@ -1,10 +1,10 @@
 ---
 title: Delete History Logs
-description: Batch-delete historical logs, stored media and audit records inside a time range.
+description: Batch-delete historical logs, dashboard usage stats, stored media and audit records inside a time range.
 api: "DELETE /api/log/"
 ---
 
-Delete historical data inside a `created_at` time range, choosing which data types to clean: usage logs, stored images, stored videos and audit logs. Each requested type reports the number of rows actually deleted.
+Delete historical data inside a `created_at` time range, choosing which data types to clean: usage logs, dashboard usage stats (`quota_data`), stored images, stored videos and audit logs. Each requested type reports the number of rows actually deleted.
 
 Requires **Admin** permissions. See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
 
@@ -35,6 +35,10 @@ curl --request DELETE \
   Set to `true` or `1` to delete usage log rows (`logs` table).
 </ParamField>
 
+<ParamField path="query.clean_quota_data" type="string">
+  Set to `true` or `1` to delete dashboard usage aggregation rows (`quota_data` table) inside the range. The user analytics cache is cleared automatically and the rankings cache is invalidated after deletion.
+</ParamField>
+
 <ParamField path="query.clean_stored_images" type="string">
   Set to `true` or `1` to delete stored image media inside the range.
 </ParamField>
@@ -48,7 +52,7 @@ curl --request DELETE \
 </ParamField>
 
 <Note>
-At least one of the four `clean_*` flags must be set; a request without any of them is rejected as invalid parameters. The flags can be combined in one call, and every requested type reports its own deleted count.
+At least one of the five `clean_*` flags must be set; a request without any of them is rejected as invalid parameters. The flags can be combined in one call, and every requested type reports its own deleted count.
 </Note>
 
 ## Response
@@ -79,6 +83,10 @@ At least one of the four `clean_*` flags must be set; a request without any of t
 
 <ResponseField name="data.logs" type="integer">
   Number of usage log rows deleted. Present only when `clean_logs` was requested.
+</ResponseField>
+
+<ResponseField name="data.quota_data" type="integer">
+  Number of dashboard usage aggregation rows deleted. Present only when `clean_quota_data` was requested.
 </ResponseField>
 
 <ResponseField name="data.stored_images" type="integer">

@@ -1,10 +1,10 @@
 ---
 title: 删除历史日志
-description: 按时间范围批量删除历史日志、已存储媒体与审计记录。
+description: 按时间范围批量删除历史日志、数据看板统计、已存储媒体与审计记录。
 api: "DELETE /api/log/"
 ---
 
-删除指定 `created_at` 时间范围内的历史数据，可按类型勾选清理范围：用量日志、已存储图片、已存储视频与审计日志。每个勾选的类型都会返回实际删除的行数。
+删除指定 `created_at` 时间范围内的历史数据，可按类型勾选清理范围：用量日志、数据看板统计（`quota_data`）、已存储图片、已存储视频与审计日志。每个勾选的类型都会返回实际删除的行数。
 
 需要**管理员**权限。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
 
@@ -35,6 +35,10 @@ curl --request DELETE \
   设为 `true` 或 `1` 时删除用量日志行（`logs` 表）。
 </ParamField>
 
+<ParamField path="query.clean_quota_data" type="string">
+  设为 `true` 或 `1` 时删除范围内数据看板用量聚合行（`quota_data` 表）。删除完成后用户分析缓存自动清空，排行榜缓存自动失效。
+</ParamField>
+
 <ParamField path="query.clean_stored_images" type="string">
   设为 `true` 或 `1` 时删除范围内已存储的图片媒体。
 </ParamField>
@@ -48,7 +52,7 @@ curl --request DELETE \
 </ParamField>
 
 <Note>
-四个 `clean_*` 开关至少需勾选一个；全部未勾选的请求按参数无效拒绝。多个开关可在一次调用中组合使用，每个勾选类型各自返回删除数量。
+五个 `clean_*` 开关至少需勾选一个；全部未勾选的请求按参数无效拒绝。多个开关可在一次调用中组合使用，每个勾选类型各自返回删除数量。
 </Note>
 
 ## 响应
@@ -79,6 +83,10 @@ curl --request DELETE \
 
 <ResponseField name="data.logs" type="integer">
   删除的用量日志行数。仅在请求了 `clean_logs` 时返回。
+</ResponseField>
+
+<ResponseField name="data.quota_data" type="integer">
+  删除的数据看板用量聚合行数。仅在请求了 `clean_quota_data` 时返回。
 </ResponseField>
 
 <ResponseField name="data.stored_images" type="integer">
