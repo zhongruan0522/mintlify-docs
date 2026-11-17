@@ -4,7 +4,7 @@ description: 分页列出全部用户的用量与系统日志，支持丰富的�
 api: "GET /api/log/"
 ---
 
-列出 NookMux 记录的全部日志——消费、充值、错误、退款、管理与系统条目——按时间倒序分页返回，并解析渠道名称与模型图标用于展示。
+列出 NookMux 记录的全部日志——消费、充值、错误、退款、管理与系统条目——按时间倒序分页返回，返回时解析模型图标用于展示；渠道名为写入日志时持久化的快照。
 
 需要**管理员**权限。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
 
@@ -203,7 +203,7 @@ curl --request GET \
       承接该请求的渠道 id。
     </ResponseField>
     <ResponseField name="channel_name" type="string" required>
-      承接该请求的渠道名称，从 channels 表解析；未涉及渠道时为空字符串。
+      承接该请求的渠道名称，写入日志时的快照；未涉及渠道或渠道已删除时为空字符串。
     </ResponseField>
     <ResponseField name="token_id" type="integer" required>
       请求所用的 API 令牌 id。

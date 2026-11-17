@@ -4,7 +4,7 @@ description: List all usage and system logs across every user with pagination an
 api: "GET /api/log/"
 ---
 
-List every log recorded by NookMux — consumption, top-up, error, refund, manage and system entries — ordered newest first and paginated. Channel names and model icons are resolved for display.
+List every log recorded by NookMux — consumption, top-up, error, refund, manage and system entries — ordered newest first and paginated. Model icons are resolved for display; channel names are snapshots persisted when each log was written.
 
 Requires **Admin** permissions. See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
 
@@ -203,7 +203,7 @@ curl --request GET \
       Id of the channel that served the request.
     </ResponseField>
     <ResponseField name="channel_name" type="string" required>
-      Name of the channel that served the request, resolved from the channels table; empty when no channel was involved.
+      Name of the channel that served the request, snapshotted when the log was written; empty when no channel was involved or the channel has been deleted.
     </ResponseField>
     <ResponseField name="token_id" type="integer" required>
       Id of the API token used for the request.
