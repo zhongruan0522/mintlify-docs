@@ -225,5 +225,5 @@ curl --request GET \
 
 | Condition | Description |
 | --- | --- |
-| Module disabled | HTTP `403` with message `pricing is disabled` when the pricing module is switched off in header navigation module settings |
+| Module disabled | HTTP `403` when the `pricing` module is switched off in header navigation module settings; `message` is localized via `Accept-Language` (`pricing 已禁用` by default, `pricing is disabled` for English) |
 | Login required | Standard authentication errors (HTTP `401`) when the pricing module is configured to require login and the caller is not authenticated |

@@ -11,7 +11,7 @@ GitHub OAuth 回调。NookMux 通过统一的 `GET /api/oauth/{provider}` 路由
 
 在把用户重定向到 GitHub 之前，前端必须先在同一会话中调用[生成 OAuth State](/cn/nookmux/api/management/oauth/oauth-state-get)，该调用返回的 `state` 必须经 GitHub 原样回传到本端点。
 
-本端点为**公开（Public）**接口，无需访问令牌，但挂载了更严格的限流（CriticalRateLimit）。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
+本端点为**公开（Public）**接口，无需 Access Token，但挂载了更严格的限流（CriticalRateLimit）。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
 
 ## 请求
 

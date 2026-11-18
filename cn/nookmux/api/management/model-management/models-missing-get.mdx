@@ -48,11 +48,11 @@ curl --request GET \
 </ResponseField>
 
 <Note>
-管理接口在业务失败时同样返回 HTTP `200`，必须以 `success` 字段判断结果。与其他模型接口不同，本接口成功响应不含 `message` 字段；失败时通过 `success: false` 加原始错误信息的 `message` 返回。
+管理接口在业务失败时同样返回 HTTP `200`，必须以 `success` 字段判断结果。与其他模型接口不同，本接口成功响应不含 `message` 字段；失败时返回 `success: false` 与本地化的 `message`（根据 `Accept-Language` 切换，默认中文）。
 </Note>
 
 ## 错误说明
 
 | 条件 | 说明 |
 | --- | --- |
-| 数据库错误 | 读取启用模型或已有元数据失败，`message` 返回原始错误 |
+| 数据库错误，请稍后重试 | 读取启用模型或已有元数据失败，详见服务端日志 |

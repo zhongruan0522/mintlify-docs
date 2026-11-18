@@ -66,7 +66,7 @@ curl --request POST \
 </ResponseField>
 
 <Note>
-  Management endpoints return HTTP `200` even on business failures; always check the `success` field. Service-layer failures, including empty or over-length content, a missing ticket, access denial and database errors, are all returned with the localized database-error message; the specific cause is recorded in the server logs.
+  Management endpoints return HTTP `200` even on business failures; always check the `success` field. Validation, access-denial, missing-ticket, and reply write failures return specific localized messages according to the `Accept-Language` request header (defaulting to Chinese), while underlying database read failures fall back to `Database error, please try again later`.
 </Note>
 
 ## Error messages
@@ -75,4 +75,8 @@ curl --request POST \
 | --- | --- |
 | Invalid ticket ID | `id` is not a positive integer |
 | Invalid request body | The JSON body is missing or malformed |
-| Database error, please try again later | `content` is empty after trimming or exceeds 10000 characters, no ticket with this id exists, the caller is neither the ticket owner nor an administrator, or appending the reply failed; see server logs |
+| Reply content cannot be empty / Reply content is too long | `content` is empty after trimming or exceeds `10000` characters |
+| Ticket not found | No ticket with this id exists |
+| No access to this ticket | The caller is neither the ticket owner nor an administrator |
+| Failed to send the reply | Appending the reply or updating the ticket timestamp transaction failed; see server logs |
+| Database error, please try again later | Underlying database read errors while loading the ticket; see server logs |

@@ -66,7 +66,7 @@ curl --request POST \
 </ResponseField>
 
 <Note>
-  Management endpoints return HTTP `200` even on business failures; always check the `success` field. Service-layer failures, including an unknown status value, non-admin callers, a missing ticket, concurrent status changes and database errors, are all returned with the localized database-error message; the specific cause is recorded in the server logs.
+  Management endpoints return HTTP `200` even on business failures; always check the `success` field. Permission, validation, missing-ticket, concurrency-conflict, and status update failures return specific localized messages according to the `Accept-Language` request header (defaulting to Chinese), while underlying database read failures fall back to `Database error, please try again later`.
 </Note>
 
 ## Error messages
@@ -75,4 +75,9 @@ curl --request POST \
 | --- | --- |
 | Invalid ticket ID | `id` is not a positive integer |
 | Invalid request body | The JSON body is missing or malformed |
-| Database error, please try again later | `status` is not `pending`, `processing` or `completed`, the caller is not an administrator, no ticket with this id exists, the ticket status changed concurrently between the read and the update (refresh and retry), or updating the ticket failed; see server logs |
+| No permission to perform this operation | The caller is not an administrator |
+| Invalid ticket status | `status` is not `pending`, `processing`, or `completed` |
+| Ticket not found | No ticket with this id exists |
+| Ticket status has changed, please refresh and try again | The ticket status changed concurrently between reading and updating |
+| Failed to update the ticket status | Updating the status or recording the system event transaction failed; see server logs |
+| Database error, please try again later | Underlying database read errors while loading the ticket; see server logs |

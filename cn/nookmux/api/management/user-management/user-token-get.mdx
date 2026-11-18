@@ -1,10 +1,10 @@
 ---
-title: 生成访问令牌
-description: 为当前用户生成新的系统访问令牌，替换原有令牌。
+title: 生成 Access Token
+description: 为当前用户生成新的系统 Access Token，替换原有令牌。
 api: "GET /api/user/token"
 ---
 
-为当前用户生成新的系统访问令牌并写入账号，替换原有令牌。该令牌配合 `Authorization: Bearer` 请求头与 `New-Api-User` 头用于管理接口的鉴权。
+为当前用户生成新的系统 Access Token 并写入账号，替换原有令牌。该令牌配合 `Authorization: Bearer` 请求头与 `New-Api-User` 头用于管理接口的鉴权。
 
 需要**用户（User）**权限（任意登录用户）。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
 
@@ -48,7 +48,7 @@ curl --request GET \
 </ResponseField>
 
 <ResponseField name="data" type="string" required>
-新生成的访问令牌，为随机生成的字符串。
+新生成的 Access Token，为随机生成的字符串。
 </ResponseField>
 
 <Note>

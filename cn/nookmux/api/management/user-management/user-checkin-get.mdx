@@ -78,10 +78,10 @@ curl --request GET \
     签到功能是否开启；成功响应中恒为 `true`。
   </ParamField>
   <ParamField path="min_quota" type="integer" required>
-    每次签到随机额度奖励的下界。服务端默认 `1000`（约 0.002 美元），由管理员配置。
+    每次签到随机额度奖励的下界。服务端默认 `1000`（约 0.002 USD），由管理员配置。
   </ParamField>
   <ParamField path="max_quota" type="integer" required>
-    每次签到随机额度奖励的上界。服务端默认 `10000`（约 0.02 美元），由管理员配置。
+    每次签到随机额度奖励的上界。服务端默认 `10000`（约 0.02 USD），由管理员配置。
   </ParamField>
   <ParamField path="stats" type="object" required>
     签到统计信息，结构见下方可展开部分。
@@ -133,4 +133,4 @@ curl --request GET \
 | 条件 | 说明 |
 | --- | --- |
 | 签到功能未启用 | 服务端未开启签到功能 |
-| 数据库错误 | 读取签到记录失败，返回原始错误文本，详见服务端日志 |
+| 数据库错误，请稍后重试 | 读取签到记录失败，详见服务端日志 |

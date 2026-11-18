@@ -47,7 +47,7 @@ curl --request POST \
 </ParamField>
 
 <Note>
-请求体中只有 `name`、`count`、`quota` 和 `expired_time` 会生效。密钥由服务端生成，创建人取自访问令牌，创建时间由服务端记录；请求体中的其他字段一律忽略。
+请求体中只有 `name`、`count`、`quota` 和 `expired_time` 会生效。密钥由服务端生成，创建人取自 Access Token，创建时间由服务端记录；请求体中的其他字段一律忽略。
 </Note>
 
 ## 响应

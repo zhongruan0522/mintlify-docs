@@ -110,7 +110,7 @@ curl --request GET \
     任务是否以覆盖模式启动。
   </ResponseField>
   <ResponseField name="current_step" type="string" required>
-    当前步骤的可读描述，由服务端生成（例如 `校验目标数据库连接`、`完成`）。
+    当前步骤的可读描述，由服务端按启动任务请求的 `Accept-Language` 本地化生成（例如 `校验目标数据库连接`、`完成`）。
   </ResponseField>
   <ResponseField name="tables" type="array" required>
     分表复制进度。
@@ -128,10 +128,10 @@ curl --request GET \
     </Expandable>
   </ResponseField>
   <ResponseField name="logs" type="string[]" required>
-    按时间排序的任务日志行，由服务端生成，含各表完成记录。
+    按时间排序的任务日志行，由服务端按启动任务请求的 `Accept-Language` 本地化生成，含各表完成记录。
   </ResponseField>
   <ResponseField name="error" type="string">
-    失败原因；仅当 `status` 为 `failed` 时出现。
+    失败原因（按启动任务请求的 `Accept-Language` 本地化）；仅当 `status` 为 `failed` 时出现。
   </ResponseField>
 </ResponseField>
 

@@ -317,4 +317,4 @@ AI 扩展字段是否会被转发还取决于目标渠道及参数过滤配置�
 - Token 列表/详情不再返回明文 key；读取和重置 key 必须走专用接口。
 - `GET /api/pricing`、`GET /api/rankings` 受对应 Header Nav 模块开关控制。
 - `POST /api/verify` 的验证态绑定请求用户与单个 `scope`（或无作用域）；受保护端点对未验证会话返回 HTTP `403`，`code` 为 `VERIFICATION_REQUIRED`/`VERIFICATION_INVALID`/`VERIFICATION_EXPIRED`。
-- 访问令牌仅授予 User 级 API；Admin / Root 端点对访问令牌鉴权一律拒绝，与账号角色无关。
+- Access Token 仅授予 User 级 API；Admin / Root 端点对 Access Token 鉴权一律拒绝，与账号角色无关。

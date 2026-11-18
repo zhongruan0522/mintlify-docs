@@ -1,14 +1,14 @@
 ---
-title: 按标识拉黑用户
+title: 按标识封禁用户
 description: 按一键登录标识（GitHub/LinuxDO ID、邮箱、GitHub 用户名）定位用户并禁用账号。
 api: "POST /api/user/ban"
 ---
 
-按一键登录标识（而非用户 ID）拉黑用户。服务端会找出匹配该标识的所有用户（含软删除用户），然后：
+按一键登录标识（而非用户 ID）封禁用户。服务端会找出匹配该标识的所有用户（含软删除用户），然后：
 
 - 恰好一个匹配：禁用该账号（状态置为 `2`）；传了 `remark` 时会替换用户备注。若该账号本已禁用或已删除，则返回对应结果且不做其他操作。
 - 无匹配：插入一个绑定该标识、预先禁用的占位用户，使该标识首次登录即被拒绝。
-- 多个匹配：不拉黑任何人，返回全部候选用户供逐条确认。
+- 多个匹配：不封禁任何人，返回全部候选用户供逐条确认。
 
 `type` 为 `github_username` 时，先通过 GitHub API 把用户名解析为数字 ID 再匹配。
 
@@ -53,7 +53,7 @@ curl --request POST \
 </ParamField>
 
 <ParamField path="body.remark" type="string">
-可选的管理员备注，写入被拉黑用户，去除首尾空白后最长 255 字符。非空时替换被拉黑既有用户的备注。
+可选的管理员备注，写入被封禁用户，去除首尾空白后最长 255 字符。非空时替换被封禁既有用户的备注。
 </ParamField>
 
 ## 响应
@@ -90,7 +90,7 @@ curl --request POST \
 ### 响应字段
 
 <ResponseField name="success" type="boolean" required>
-拉黑请求是否处理成功。
+封禁请求是否处理成功。
 </ResponseField>
 
 <ResponseField name="message" type="string" required>
@@ -98,17 +98,17 @@ curl --request POST \
 </ResponseField>
 
 <ResponseField name="data" type="object" required>
-拉黑结果。
+封禁结果。
 
 <Expandable title="data 结构">
   <ParamField path="result" type="string" required>
   请求结果：
 
   - `banned_existing`：找到唯一启用用户并已禁用。
-  - `created_placeholder`：无匹配用户，已创建拉黑占位用户。
+  - `created_placeholder`：无匹配用户，已创建封禁占位用户。
   - `already_banned`：匹配用户本已处于禁用状态。
   - `already_deleted`：标识属于已删除用户，无需处理。
-  - `ambiguous`：多个用户匹配，未拉黑任何人。
+  - `ambiguous`：多个用户匹配，未封禁任何人。
   </ParamField>
   <ParamField path="identifier" type="object" required>
   请求标识回显。
@@ -177,7 +177,7 @@ GitHub 用户名解析结果，仅当 `body.type` 为 `github_username` 时返�
   角色等级：`1` 普通用户，`10` 管理员，`100` 超级管理员。
   </ParamField>
   <ParamField path="status" type="integer" required>
-  操作后的账号状态：被拉黑或占位用户为 `2`（禁用）。
+  操作后的账号状态：被封禁或占位用户为 `2`（禁用）。
   </ParamField>
   <ParamField path="deleted" type="boolean" required>
   账号是否已被软删除。
@@ -186,7 +186,7 @@ GitHub 用户名解析结果，仅当 `body.type` 为 `github_username` 时返�
 </ResponseField>
 
 <Note>
-拉黑既有用户沿用用户管理的角色校验：管理员不能拉黑同权限等级或更高权限等级的用户，超级管理员账号不可被拉黑。`github_username` 匹配时同时探测解析出的数字 ID 与用户名字符串，覆盖数字 ID 迁移前创建的账号。
+封禁既有用户沿用用户管理的角色校验：管理员不能封禁同权限等级或更高权限等级的用户，超级管理员账号不可被封禁。`github_username` 匹配时同时探测解析出的数字 ID 与用户名字符串，覆盖数字 ID 迁移前创建的账号。
 </Note>
 
 ## 错误说明
@@ -196,7 +196,7 @@ GitHub 用户名解析结果，仅当 `body.type` 为 `github_username` 时返�
 | 标识类型或取值不合法 | 请求体不是合法 JSON、`type` 未知，或 `value` 未通过该类型的格式校验 |
 | 备注长度不能超过 255 个字符 | `remark` 去除首尾空白后超过 255 字符 |
 | GitHub 上不存在该用户名 | GitHub API 报告该用户名不存在 |
-| GitHub API 请求过于频繁（无凭证限流 60 次/小时/IP），请稍后重试 | 无凭证 GitHub 查询配额耗尽 |
+| GitHub API 请求过于频繁（无凭证限流 60 次/小时/IP），请稍后重试 | 无凭证 GitHub 查询额度耗尽 |
 | 查询 GitHub 用户信息失败，请稍后重试 | GitHub API 请求失败，详见服务端日志 |
 | 无权更新同权限等级或更高权限等级的用户信息 | 调用者角色不高于目标用户（超级管理员除外） |
 | 无法禁用超级管理员用户 | 匹配到的用户是超级管理员账号 |

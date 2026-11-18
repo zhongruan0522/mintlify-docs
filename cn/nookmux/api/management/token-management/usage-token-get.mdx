@@ -4,7 +4,7 @@ description: 查询 Authorization 头中所携带令牌密钥的额度与用量�
 api: "GET /api/usage/token/"
 ---
 
-返回请求所携带的 API 令牌的限额模式、消耗情况与重置时间。该接口直接用令牌密钥本身鉴权——`Authorization` 头必须携带令牌密钥（例如 `sk-xxxx`），而不是管理用的系统访问令牌。
+返回请求所携带的 API 令牌的限额模式、消耗情况与重置时间。该接口直接用令牌密钥本身鉴权——`Authorization` 头必须携带令牌密钥（例如 `sk-xxxx`），而不是管理用的 Access Token。
 
 令牌由只读令牌鉴权中间件解析。管理接口的通用鉴权模型参见[身份认证](/cn/nookmux/api/management/auth)。
 

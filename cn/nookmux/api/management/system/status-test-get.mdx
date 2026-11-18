@@ -28,7 +28,7 @@ curl --request GET \
 ```json 200
 {
   "success": true,
-  "message": "Server is running",
+  "message": "服务运行中",
   "http_stats": {
     "active_connections": 12
   }
@@ -44,7 +44,7 @@ curl --request GET \
 </ResponseField>
 
 <ResponseField name="message" type="string" required>
-  状态描述：成功时为 `Server is running`，失败时为 `Database connection failed`。消息按调用者语言偏好本地化。
+  状态描述：默认中文下成功时为 `服务运行中`、失败时为 `数据库连接失败`（英文下分别为 `Server is running` 与 `Database connection failed`），随 `Accept-Language` 本地化。
 </ResponseField>
 
 <ResponseField name="http_stats" type="object">

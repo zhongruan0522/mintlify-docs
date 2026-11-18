@@ -73,7 +73,7 @@ Gotify 消息优先级，取值 `0` 到 `10`；超出范围时回退为 `5`。
 ```json 200
 {
   "success": true,
-  "message": "Settings updated",
+  "message": "设置已更新",
   "data": null
 }
 ```
@@ -87,7 +87,7 @@ Gotify 消息优先级，取值 `0` 到 `10`；超出范围时回退为 `5`。
 </ResponseField>
 
 <ResponseField name="message" type="string" required>
-`success` 为 `true` 时为本地化的成功提示；否则为错误描述。
+`success` 为 `true` 时为本地化的成功提示（默认中文为 `设置已更新`）；否则为错误描述。
 </ResponseField>
 
 <ResponseField name="data" type="null">
@@ -102,12 +102,11 @@ Gotify 消息优先级，取值 `0` 到 `10`；超出范围时回退为 `5`。
 
 | 条件 | 说明 |
 | --- | --- |
-| 参数非法 | JSON 请求体缺失或格式错误 |
+| 无效的参数 | JSON 请求体缺失或格式错误 |
 | 无效的预警类型 | `notify_type` 不是 `email`、`webhook`、`bark` 或 `gotify` |
 | 阈值必须大于零 | `quota_warning_threshold` 为 `0` 或负数 |
-| Webhook地址不能为空 / 无效的Webhook地址 | `webhook` 类型未提供 `webhook_url`，或 URL 无法解析 |
+| Webhook 地址不能为空 / 无效的 Webhook 地址 | `webhook` 类型未提供 `webhook_url`，或 URL 无法解析 |
 | 无效的邮箱地址 | `email` 类型填写的 `notification_email` 不包含 `@` |
-| Bark地址非法 | `bark` 类型未提供 `bark_url`、URL 无法解析，或未以 `http://` 或 `https://` 开头 |
-| Gotify配置非法 | `gotify` 类型未提供 `gotify_url` 或 `gotify_token`、URL 无法解析，或未以 `http://` 或 `https://` 开头 |
-| 数据库错误 | 加载用户失败，详见服务端日志 |
-| 更新失败 | 保存设置失败，详见服务端日志 |
+| Bark 推送 URL 不能为空 / 无效的 Bark 推送 URL / URL 必须以 http:// 或 https:// 开头 | `bark` 类型未提供 `bark_url`、URL 无法解析，或未以 `http://` 或 `https://` 开头 |
+| Gotify 服务器地址不能为空 / Gotify 令牌不能为空 / 无效的 Gotify 服务器地址 / URL 必须以 http:// 或 https:// 开头 | `gotify` 类型未提供 `gotify_url` 或 `gotify_token`、URL 无法解析，或未以 `http://` 或 `https://` 开头 |
+| 数据库错误，请稍后重试 | 加载用户或保存设置失败，详见服务端日志 |

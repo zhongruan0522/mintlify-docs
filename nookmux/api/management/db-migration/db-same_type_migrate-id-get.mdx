@@ -44,7 +44,7 @@ curl --request GET \
     "target_db_type": "postgres",
     "include_logs": true,
     "force": false,
-    "current_step": "完成",
+    "current_step": "Completed",
     "tables": [
       {
         "name": "users",
@@ -63,8 +63,8 @@ curl --request GET \
       }
     ],
     "logs": [
-      "[2026-08-23T10:13:20+08:00] 同类型迁移启动：postgres -> postgres",
-      "[2026-08-23T10:13:21+08:00] 迁移表 users 完成"
+      "[2026-08-23T10:13:20+08:00] Same-type migration started: postgres -> postgres",
+      "[2026-08-23T10:13:21+08:00] Migrated table: users"
     ]
   }
 }
@@ -110,7 +110,7 @@ curl --request GET \
     Whether the job was started in overwrite mode.
   </ResponseField>
   <ResponseField name="current_step" type="string" required>
-    Human-readable description of the current step, generated server-side (for example `校验目标数据库连接` or `完成`).
+    Human-readable description of the current step, localized using the `Accept-Language` header from the `POST /api/db/same_type_migrate` start request (defaulting to Chinese; for example `Validating target database connection` or `Completed` when started with English).
   </ResponseField>
   <ResponseField name="tables" type="array" required>
     Per-table copy progress.
@@ -128,10 +128,10 @@ curl --request GET \
     </Expandable>
   </ResponseField>
   <ResponseField name="logs" type="string[]" required>
-    Chronological job log lines generated server-side, including per-table completion lines.
+    Chronological job log lines localized using the `Accept-Language` header from the `POST /api/db/same_type_migrate` start request (defaulting to Chinese), including per-table completion lines.
   </ResponseField>
   <ResponseField name="error" type="string">
-    Failure reason; present only when `status` is `failed`.
+    Failure reason (localized using the start request's `Accept-Language`); present only when `status` is `failed`.
   </ResponseField>
 </ResponseField>
 

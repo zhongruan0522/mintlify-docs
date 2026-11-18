@@ -44,7 +44,7 @@ curl --request POST \
 </ResponseField>
 
 <ResponseField name="message" type="string" required>
-  成功时为 `重置工具计费规则成功`；`success` 为 `false` 时为原始错误文本。
+  成功时为 `重置工具计费规则成功`（随 `Accept-Language` 本地化）；`success` 为 `false` 时为本地化的错误描述。
 </ResponseField>
 
 <ResponseField name="data" type="null" required>
@@ -52,5 +52,5 @@ curl --request POST \
 </ResponseField>
 
 <Note>
-  自定义的工具计费规则会被直接覆盖且无二次确认；如需恢复请通过 `PUT /api/option/` 手动写回。持久化失败时返回 HTTP `200` 加 `success: false`，`message` 为原始错误文本；审计条目仅在重置成功后写入。
+  自定义的工具计费规则会被直接覆盖且无二次确认；如需恢复请通过 `PUT /api/option/` 手动写回。持久化失败时返回 HTTP `200`、`success: false` 与 `数据库错误，请稍后重试`（详见服务端日志）；审计条目仅在重置成功后写入。
 </Note>

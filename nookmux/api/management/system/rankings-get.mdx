@@ -300,6 +300,6 @@ curl --request GET \
 
 | Condition | Description |
 | --- | --- |
-| rankings is disabled | HTTP `403` with this message when the rankings module is switched off in header navigation module settings |
+| Module disabled | HTTP `403` when the `rankings` module is switched off in header navigation module settings; `message` is localized via `Accept-Language` (`rankings 已禁用` by default, `rankings is disabled` for English) |
 | Login required | Standard authentication errors (HTTP `401`) when the rankings module is configured to require login and the caller is not authenticated |
 | Database error, please try again later | Building the snapshot failed; also returned for an unknown `period` value; see server logs |

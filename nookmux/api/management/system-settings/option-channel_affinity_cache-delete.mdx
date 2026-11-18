@@ -79,4 +79,4 @@ curl --request DELETE \
 | Channel affinity setting is not initialized | HTTP `400`; the channel affinity setting is unavailable |
 | Unknown rule name | HTTP `400`; `rule_name` matches no configured rule |
 | include_rule_name is not enabled for this rule | HTTP `400`; the matched rule does not key entries by rule name, so its entries cannot be cleared selectively |
-| Cache backend error | HTTP `400`; deleting from the cache failed; the raw error text is returned in `message`, see server logs |
+| Cache backend error | HTTP `400`; deleting from the cache failed; returns a localized error message or falls back to `Database error, please try again later`, see server logs |

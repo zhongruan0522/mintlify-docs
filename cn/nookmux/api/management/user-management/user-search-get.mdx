@@ -4,7 +4,7 @@ description: 按用户名、邮箱、OAuth ID、状态、角色与分组分页�
 api: "GET /api/user/search"
 ---
 
-按字段级条件分页搜索用户，结果按 `id` 降序排列。文本条件为模糊 `LIKE` 匹配；`status`、`role` 与 `group` 为精确匹配。密码与访问令牌永不返回。
+按字段级条件分页搜索用户，结果按 `id` 降序排列。文本条件为模糊 `LIKE` 匹配；`status`、`role` 与 `group` 为精确匹配。密码与 Access Token 永不返回。
 
 需要**管理员（Admin）**权限。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
 

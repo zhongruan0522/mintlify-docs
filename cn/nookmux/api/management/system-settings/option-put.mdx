@@ -62,7 +62,7 @@ curl --request PUT \
 </ResponseField>
 
 <Note>
-  请求体形状类错误在统一包装之前返回，使用真实 HTTP 状态码：JSON 缺失/格式错误或值类型不支持返回 HTTP `400`，已废弃旧键返回 HTTP `404`。逐键校验失败（倍率 JSON 非法、`RetryTimes` 超出 `0-99`、未配置客户端 ID 就启用 OAuth 提供商等）返回 HTTP `200` 且 `success: false`，`message` 为本地化描述。启用 `EmailDomainRestrictionEnabled` 要求邮箱域名白名单非空；启用 `TurnstileCheckEnabled` 要求已配置 Turnstile 站点密钥。
+  请求体形状类错误在统一包装之前返回，使用真实 HTTP 状态码：JSON 缺失/格式错误或值类型不支持返回 HTTP `400`，已废弃旧键返回 HTTP `404`。逐键校验失败（倍率 JSON 非法、`RetryTimes` 超出 `0-99`、未配置客户端 ID 就启用 OAuth 提供商等）返回 HTTP `200` 且 `success: false`，`message` 为本地化描述。启用 `EmailDomainRestrictionEnabled` 要求邮箱域名白名单非空；启用 `TurnstileCheckEnabled` 要求已配置 Turnstile Site Key。
 </Note>
 
 ## 错误说明

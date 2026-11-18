@@ -141,7 +141,7 @@ curl --request GET \
 </ResponseField>
 
 <Note>
-  Management endpoints return HTTP `200` even on business failures; always check the `success` field. Detail failures, including a missing ticket and access denial, are all returned with the localized database-error message; the specific cause is recorded in the server logs.
+  Management endpoints return HTTP `200` even on business failures; always check the `success` field. Missing-ticket and access-denial errors return specific localized messages according to the `Accept-Language` request header (defaulting to Chinese), while underlying database read failures fall back to `Database error, please try again later`.
 </Note>
 
 ## Error messages
@@ -149,4 +149,6 @@ curl --request GET \
 | Condition | Description |
 | --- | --- |
 | Invalid ticket ID | `id` is not a positive integer |
-| Database error, please try again later | No ticket with this id exists, the caller is neither the ticket owner nor an administrator, or loading the ticket or its messages failed; see server logs |
+| Ticket not found | No ticket with this id exists |
+| No access to this ticket | The caller is neither the ticket owner nor an administrator |
+| Database error, please try again later | Loading the ticket or its messages failed; see server logs |

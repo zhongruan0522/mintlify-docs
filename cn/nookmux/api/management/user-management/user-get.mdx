@@ -4,7 +4,7 @@ description: 分页列出全部用户，包含软删除的账号。
 api: "GET /api/user/"
 ---
 
-分页返回全部用户列表，按 `id` 降序排列。列表包含软删除的账号，`total` 计数同样包含它们。密码与访问令牌永不返回。
+分页返回全部用户列表，按 `id` 降序排列。列表包含软删除的账号，`total` 计数同样包含它们。密码与 Access Token 永不返回。
 
 需要**管理员（Admin）**权限。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
 

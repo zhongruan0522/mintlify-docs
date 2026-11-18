@@ -148,16 +148,16 @@ curl --request GET \
       前端展示的文档链接。
     </ParamField>
     <ParamField path="quota_per_unit" type="number" required>
-      每计价单位的配额数（默认 `500000`），用于把配额换算为货币金额。
+      每计价单位的额度数（默认 `500000`），用于把额度换算为货币金额。
     </ParamField>
     <ParamField path="enable_batch_update" type="boolean" required>
       是否启用用量计数器的聚合批量更新模式。
     </ParamField>
     <ParamField path="dashboard_refresh_interval" type="integer" required>
-      数据看板刷新间隔，单位秒，取自仪表台配置的 `quota_data_refresh_interval`（默认 `3600`）。
+      数据看板刷新间隔，单位秒，取自数据看板配置的 `quota_data_refresh_interval`（默认 `3600`）。
     </ParamField>
     <ParamField path="dashboard_default_time_range_days" type="integer" required>
-      数据看板默认查询窗口（天），取自仪表台配置的 `default_time_range_days`（默认 `7`）。
+      数据看板默认查询窗口（天），取自数据看板配置的 `default_time_range_days`（默认 `7`）。
     </ParamField>
     <ParamField path="default_collapse_sidebar" type="boolean" required>
       控制台侧栏是否默认折叠。
@@ -166,7 +166,7 @@ curl --request GET \
       新建令牌是否默认选择 auto 分组。
     </ParamField>
     <ParamField path="price" type="number" required>
-      充值单价系数，用于把配额金额换算为展示货币。
+      充值单价系数，用于把额度金额换算为展示货币。
     </ParamField>
     <ParamField path="stripe_unit_price" type="number" required>
       Stripe 充值使用的单价。

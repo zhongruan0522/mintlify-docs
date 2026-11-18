@@ -1,10 +1,10 @@
 ---
-title: 更新仪表板配置
-description: 按字段校验并部分更新仪表板配置。
+title: 更新数据看板配置
+description: 按字段校验并部分更新数据看板配置。
 api: "PUT /api/dashboard/config"
 ---
 
-部分更新仪表板配置。请求体为扁平 JSON 对象，只需携带要修改的键；每个键会先做取值范围校验，再以 `dashboard_config.<key>` 选项落库并立即生效。
+部分更新数据看板配置。请求体为扁平 JSON 对象，只需携带要修改的键；每个键会先做取值范围校验，再以 `dashboard_config.<key>` 选项落库并立即生效。
 
 需要**管理员（Admin）**权限。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
 
@@ -28,10 +28,10 @@ curl --request PUT \
 
 ### 请求体
 
-请求体为扁平 JSON 对象，只发送需要更新的键。以下为已定义的配置项及其约束；各键含义与默认值参见[获取仪表板配置](/cn/nookmux/api/management/dashboard/dashboard-config-get)。
+请求体为扁平 JSON 对象，只发送需要更新的键。以下为已定义的配置项及其约束；各键含义与默认值参见[获取数据看板配置](/cn/nookmux/api/management/dashboard/dashboard-config-get)。
 
 <ParamField path="body.quota_data_enabled" type="boolean">
-是否启用配额数据（时间序列）面板。
+是否启用额度数据（时间序列）面板。
 </ParamField>
 
 <ParamField path="body.user_analytics_enabled" type="boolean">
@@ -47,15 +47,15 @@ curl --request PUT \
 </ParamField>
 
 <ParamField path="body.quota_data_track_tokens" type="boolean">
-是否随配额数据记录 token 用量。
+是否随额度数据记录 token 用量。
 </ParamField>
 
 <ParamField path="body.quota_data_track_by_model" type="boolean">
-是否按模型维度聚合配额数据。
+是否按模型维度聚合额度数据。
 </ParamField>
 
 <ParamField path="body.quota_data_track_by_user" type="boolean">
-是否按用户维度聚合配额数据。
+是否按用户维度聚合额度数据。
 </ParamField>
 
 <ParamField path="body.api_info_enabled" type="boolean">
@@ -75,7 +75,7 @@ curl --request PUT \
 </ParamField>
 
 <ParamField path="body.quota_data_refresh_interval" type="integer">
-配额数据刷新间隔（秒），60-86400。
+额度数据刷新间隔（秒），60-86400。
 </ParamField>
 
 <ParamField path="body.user_analytics_refresh_interval" type="integer">
@@ -91,11 +91,11 @@ Uptime Kuma 刷新间隔（秒），30-3600。
 </ParamField>
 
 <ParamField path="body.default_time_range_days" type="integer">
-仪表板默认查询时间范围（天），1-365，且不得超过当前生效的 `max_time_range_days`。
+数据看板默认查询时间范围（天），1-365，且不得超过当前生效的 `max_time_range_days`。
 </ParamField>
 
 <ParamField path="body.max_time_range_days" type="integer">
-仪表板最大查询时间范围（天），1-365。
+数据看板最大查询时间范围（天），1-365。
 </ParamField>
 
 <ParamField path="body.rankings_model_limit" type="integer">
@@ -115,7 +115,7 @@ Uptime Kuma 刷新间隔（秒），30-3600。
 </ParamField>
 
 <Note>
-JSON 数字按浮点读取并以整数存储，请发送整数值。未在上方列出的键会被接受并落库，但不会影响仪表板配置。修改 `rankings_refresh_interval`、`user_analytics_refresh_interval` 或 `uptime_kuma_refresh_interval` 会立即失效对应缓存数据。开启审计后，本次更新会写入审计日志（模块 `dashboard_config`）。
+JSON 数字按浮点读取并以整数存储，请发送整数值。未在上方列出的键会被接受并落库，但不会影响数据看板配置。修改 `rankings_refresh_interval`、`user_analytics_refresh_interval` 或 `uptime_kuma_refresh_interval` 会立即失效对应缓存数据。开启审计后，本次更新会写入审计日志（模块 `dashboard_config`）。
 </Note>
 
 ## 响应

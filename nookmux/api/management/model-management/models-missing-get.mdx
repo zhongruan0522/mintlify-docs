@@ -48,11 +48,11 @@ Names of the models that are enabled on at least one channel but have no model m
 </ResponseField>
 
 <Note>
-Management endpoints return HTTP `200` even on business failures; always check the `success` field. Unlike the other model endpoints, the success payload of this endpoint does not include a `message` field; failures are reported through `success: false` with the raw error in `message`.
+Management endpoints return HTTP `200` even on business failures; always check the `success` field. Unlike the other model endpoints, the success payload of this endpoint does not include a `message` field; failures return `success: false` with a localized `message` according to `Accept-Language` (defaulting to Chinese).
 </Note>
 
 ## Error messages
 
 | Condition | Description |
 | --- | --- |
-| Database error | Reading the enabled models or the existing metadata failed; the raw error is returned in `message` |
+| Database error, please try again later | Reading the enabled models or the existing metadata failed; see server logs |

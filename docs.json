@@ -456,7 +456,7 @@
                     ]
                   },
                   {
-                    "group": "仪表盘配置",
+                    "group": "数据看板配置",
                     "pages": [
                       "cn/nookmux/api/management/dashboard/dashboard-config-get",
                       "cn/nookmux/api/management/dashboard/dashboard-config-put",

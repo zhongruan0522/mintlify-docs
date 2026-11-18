@@ -225,5 +225,5 @@ curl --request GET \
 
 | 条件 | 说明 |
 | --- | --- |
-| 模块已禁用 | 顶部导航模块设置中关闭 pricing 模块时返回 HTTP `403`，message 为 `pricing is disabled` |
+| 模块已禁用 | 顶部导航模块设置中关闭 `pricing` 模块时返回 HTTP `403`，`message` 根据 `Accept-Language` 本地化（默认中文为 `pricing 已禁用`，英文为 `pricing is disabled`） |
 | 需要登录 | pricing 模块配置为需要登录且调用者未通过鉴权时，返回标准鉴权错误（HTTP `401`） |

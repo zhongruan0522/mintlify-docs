@@ -163,7 +163,7 @@ curl --request GET \
       渠道类型的附加选项，例如 Vertex AI 的区域 JSON。
     </ResponseField>
     <ResponseField name="balance" type="number" required>
-      预估剩余余额，单位美元。
+      预估剩余余额，单位 USD。
     </ResponseField>
     <ResponseField name="balance_updated_time" type="integer" required>
       最近一次余额更新的 Unix 时间戳。
@@ -175,7 +175,7 @@ curl --request GET \
       可使用该渠道的用户分组，逗号分隔。
     </ResponseField>
     <ResponseField name="used_quota" type="integer" required>
-      该渠道累计消耗的配额。
+      该渠道累计消耗的额度。
     </ResponseField>
     <ResponseField name="model_mapping" type="string" required>
       模型名重定向的 JSON 对象。可能为 `null`。

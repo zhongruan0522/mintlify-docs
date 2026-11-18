@@ -56,7 +56,7 @@ curl --request POST \
 </ResponseField>
 
 <Note>
-  Management endpoints return HTTP `200` even on business failures; always check the `success` field. Service-layer failures, including a missing ticket, access denial, concurrent status changes and database errors, are all returned with the localized database-error message; the specific cause is recorded in the server logs.
+  Management endpoints return HTTP `200` even on business failures; always check the `success` field. Missing-ticket, access-denial, concurrency-conflict, and status update failures return specific localized messages according to the `Accept-Language` request header (defaulting to Chinese), while underlying database read failures fall back to `Database error, please try again later`.
 </Note>
 
 ## Error messages
@@ -64,4 +64,8 @@ curl --request POST \
 | Condition | Description |
 | --- | --- |
 | Invalid ticket ID | `id` is not a positive integer |
-| Database error, please try again later | No ticket with this id exists, the caller is neither the ticket owner nor an administrator, the ticket status changed concurrently between the read and the update (refresh and retry), or updating the ticket failed; see server logs |
+| Ticket not found | No ticket with this id exists |
+| No access to this ticket | The caller is neither the ticket owner nor an administrator |
+| Ticket status has changed, please refresh and try again | The ticket status changed concurrently between reading and updating |
+| Failed to update the ticket status | Updating the status or recording the system event transaction failed; see server logs |
+| Database error, please try again later | Underlying database read errors while loading the ticket; see server logs |

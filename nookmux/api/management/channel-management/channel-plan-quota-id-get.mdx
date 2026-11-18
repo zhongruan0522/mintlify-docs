@@ -274,4 +274,4 @@ Management endpoints return HTTP `200` even on business failures; always check t
 | Channel not found | `Channel not found` | The channel does not exist or could not be loaded |
 | Not a plan channel | `This channel is not a plan channel` | `channel_info.is_plan` is `false` |
 | Channel key invalid | `The channel API key is invalid or authentication failed. Please check the key configuration` | The upstream rejected the key (GLM plans) |
-| Quota query failed | `Failed to query quota: {{.Error}}` | The upstream request or response parsing failed; `{{.Error}}` carries the underlying error |
+| Quota query failed | `Failed to query quota: {error}` | The upstream request or response parsing failed; `{error}` carries the underlying error |

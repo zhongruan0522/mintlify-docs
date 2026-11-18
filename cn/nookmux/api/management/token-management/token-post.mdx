@@ -4,7 +4,7 @@ description: 为当前用户创建一个新的 API 令牌，完整密钥仅在�
 api: "POST /api/token/"
 ---
 
-为当前用户创建一个新的 API 令牌。令牌密钥由服务端生成（站点密钥前缀，默认 `sk-`，加 48 位随机字符），仅在本次响应中完整返回一次。每个用户最多持有 1000 个令牌。
+为当前用户创建一个新的 API 令牌。令牌密钥由服务端生成（API Key 前缀，默认 `sk-`，加 48 位随机字符），仅在本次响应中完整返回一次。每个用户最多持有 1000 个令牌。
 
 需要登录（**User** 权限）。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
 
@@ -139,7 +139,7 @@ curl --request POST \
 </ResponseField>
 
 <ResponseField name="data.key" type="string" required>
-  完整令牌密钥（站点密钥前缀，默认 `sk-`，加 48 位随机字符）。仅在此返回一次；列表与详情接口返回的均为脱敏密钥。
+  完整令牌密钥（API Key 前缀，默认 `sk-`，加 48 位随机字符）。仅在此返回一次；列表与详情接口返回的均为脱敏密钥。
 </ResponseField>
 
 <Note>

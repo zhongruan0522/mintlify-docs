@@ -4,7 +4,7 @@ description: 获取当前用户名下指定令牌的完整密钥；列表与详�
 api: "POST /api/token/{id}/key"
 ---
 
-获取单个令牌的完整密钥（站点密钥前缀，默认 `sk-`，加 48 位随机串）。列表与详情接口返回的密钥均为脱敏星号，本接口返回完整密钥。只能访问当前用户自己名下的令牌。
+获取单个令牌的完整密钥（API Key 前缀，默认 `sk-`，加 48 位随机串）。列表与详情接口返回的密钥均为脱敏星号，本接口返回完整密钥。只能访问当前用户自己名下的令牌。
 
 需要登录（**User** 权限）。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
 
@@ -58,7 +58,7 @@ curl --request POST \
 </ResponseField>
 
 <ResponseField name="data.key" type="string" required>
-  令牌完整密钥（站点密钥前缀，默认 `sk-`，加 48 位随机串）。
+  令牌完整密钥（API Key 前缀，默认 `sk-`，加 48 位随机串）。
 </ResponseField>
 
 <Note>

@@ -43,7 +43,7 @@ curl --request GET \
     { "value": "performance", "label": "性能管理" },
     { "value": "log", "label": "日志清理" },
     { "value": "setup", "label": "系统初始化" },
-    { "value": "dashboard_config", "label": "仪表板配置" },
+    { "value": "dashboard_config", "label": "数据看板配置" },
     { "value": "voice", "label": "音色管理" }
   ]
 }
@@ -75,5 +75,5 @@ Error description when `success` is `false`; empty otherwise.
 </ResponseField>
 
 <Note>
-The list is fixed by the server and returned identically on every call. Labels are currently defined in Chinese regardless of the request language.
+The module `value` keys and order are fixed by the server on every call; `label` is localized according to the `Accept-Language` request header (defaulting to Chinese, for example `"Dashboard Config"` when `Accept-Language: en` is sent).
 </Note>

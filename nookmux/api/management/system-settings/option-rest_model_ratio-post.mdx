@@ -52,5 +52,5 @@ curl --request POST \
 </ResponseField>
 
 <Note>
-  Custom model ratios are overwritten without confirmation; restore them manually via `PUT /api/option/` if needed. Failure of either the persist step or the runtime re-apply step returns `success: false` with the raw error text in `message`, and the audit entry is written only after both steps succeed.
+  Custom model ratios are overwritten without confirmation; restore them manually via `PUT /api/option/` if needed. Failure of either the persist step or the runtime re-apply step returns `success: false` with a localized error message (`Database error, please try again later` for English, see server logs), and the audit entry is written only after both steps succeed.
 </Note>

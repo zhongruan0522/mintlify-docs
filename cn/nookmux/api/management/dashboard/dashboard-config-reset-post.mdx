@@ -1,10 +1,10 @@
 ---
-title: 重置仪表板配置
-description: 将全部仪表板配置项重置为默认值。
+title: 重置数据看板配置
+description: 将全部数据看板配置项重置为默认值。
 api: "POST /api/dashboard/config/reset"
 ---
 
-将全部仪表板配置项重置为内置默认值。所有配置项会落库并立即生效，响应返回完整的默认值映射。该接口无请求体。
+将全部数据看板配置项重置为内置默认值。所有配置项会落库并立即生效，响应返回完整的默认值映射。该接口无请求体。
 
 需要**管理员（Admin）**权限。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
 
@@ -68,7 +68,7 @@ curl --request POST \
 </ResponseField>
 
 <ResponseField name="data" type="object">
-  重置后的完整配置映射；每个值均为下方所示的默认值，以字符串返回。键集合与[获取仪表板配置](/cn/nookmux/api/management/dashboard/dashboard-config-get)一致。
+  重置后的完整配置映射；每个值均为下方所示的默认值，以字符串返回。键集合与[获取数据看板配置](/cn/nookmux/api/management/dashboard/dashboard-config-get)一致。
 
   <Expandable title="data 结构">
     <ResponseField name="api_info_enabled" type="string" required>
@@ -90,19 +90,19 @@ curl --request POST \
       图片/视频转 URL 统计面板开关，重置为 `true`。
     </ResponseField>
     <ResponseField name="quota_data_enabled" type="string" required>
-      配额数据（时间序列）面板开关，重置为 `true`。
+      额度数据（时间序列）面板开关，重置为 `true`。
     </ResponseField>
     <ResponseField name="quota_data_refresh_interval" type="string" required>
-      配额数据刷新间隔（秒），重置为 `3600`。
+      额度数据刷新间隔（秒），重置为 `3600`。
     </ResponseField>
     <ResponseField name="quota_data_track_by_model" type="string" required>
-      按模型维度聚合配额数据，重置为 `true`。
+      按模型维度聚合额度数据，重置为 `true`。
     </ResponseField>
     <ResponseField name="quota_data_track_by_user" type="string" required>
-      按用户维度聚合配额数据，重置为 `true`。
+      按用户维度聚合额度数据，重置为 `true`。
     </ResponseField>
     <ResponseField name="quota_data_track_tokens" type="string" required>
-      随配额数据记录 token 用量，重置为 `true`。
+      随额度数据记录 token 用量，重置为 `true`。
     </ResponseField>
     <ResponseField name="rankings_enabled" type="string" required>
       排行榜面板开关，重置为 `true`。

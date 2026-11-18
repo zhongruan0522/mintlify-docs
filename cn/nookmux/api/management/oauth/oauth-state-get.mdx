@@ -8,7 +8,7 @@ api: "GET /api/oauth/state"
 
 可选传入邀请（`aff`）码；它会保存在同一会话中，并在后续 OAuth 流程创建新账号时记为邀请人。
 
-本端点为**公开（Public）**接口，无需访问令牌，但挂载了更严格的限流（CriticalRateLimit）。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
+本端点为**公开（Public）**接口，无需 Access Token，但挂载了更严格的限流（CriticalRateLimit）。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
 
 ## 请求
 

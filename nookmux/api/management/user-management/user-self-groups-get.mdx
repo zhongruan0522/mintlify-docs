@@ -36,7 +36,7 @@ curl --request GET \
     },
     "vip": {
       "ratio": 1.5,
-      "desc": "vip分组"
+      "desc": "VIP 分组"
     }
   }
 }
@@ -59,10 +59,10 @@ Map of group names to group metadata. Each key is a group name and each value ha
 
 <Expandable title="group structure">
   <ResponseField name="ratio" type="number" required>
-Billing ratio applied when the user routes requests through this group. When the `auto` group is usable by the user, its entry carries the fixed string `自动` instead of a number, because automatic selection has no single ratio.
+Billing ratio applied when the user routes requests through this group. When the `auto` group is usable by the user, its entry carries a string localized via `Accept-Language` (`自动` in Chinese by default, `Auto` for English) instead of a number, because automatic selection has no single ratio.
 </ResponseField>
   <ResponseField name="desc" type="string" required>
-Group description configured by the administrator; falls back to the group name when no description is configured.
+Group description configured by the administrator; when unconfigured, built-in descriptions for `default` and `vip` are localized via `Accept-Language` (`默认分组` / `VIP 分组` in Chinese by default, `Default group` / `VIP group` in English), and other groups fall back to the group name.
 </ResponseField>
 </Expandable>
 </ResponseField>

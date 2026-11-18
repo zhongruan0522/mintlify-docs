@@ -137,14 +137,14 @@ Management endpoints return HTTP `200` even on business failures; always check t
 
 | Condition | Description |
 | --- | --- |
-| 使用日志详情已禁用，不支持按详情字段过滤 | A detail-only filter was used while the usage-log details switch is off for regular users |
-| 无权使用此过滤条件: channel | Filtering by `channel` is never allowed for regular users |
-| 无权使用此过滤条件: request_id | Filtering by `request_id` while the field is hidden from regular users |
-| 无权使用此过滤条件: upstream_request_id | Filtering by `upstream_request_id` while the field is hidden from regular users |
-| 无权使用此过滤条件: ip | Filtering by `ip` while the IP address field is hidden from regular users |
-| 无权使用此过滤条件: ua / x_title / http_referer | Filtering by a client header while the client headers field is hidden from regular users |
+| Usage log details are disabled; filtering by detail fields is not supported | A detail-only filter was used while the usage-log details switch is off for regular users |
+| No permission to use this filter: channel | Filtering by `channel` is never allowed for regular users |
+| No permission to use this filter: request_id | Filtering by `request_id` while the field is hidden from regular users |
+| No permission to use this filter: upstream_request_id | Filtering by `upstream_request_id` while the field is hidden from regular users |
+| No permission to use this filter: ip | Filtering by `ip` while the IP address field is hidden from regular users |
+| No permission to use this filter: ua / x_title / http_referer | Filtering by a client header while the client headers field is hidden from regular users |
 | Database error, please try again later | Aggregating the statistics failed; see server logs |
 
 <Note>
-The filter rejection messages are fixed Chinese strings returned verbatim by the server; they are not localized by the caller's language.
+Filter rejection and error messages are localized according to the `Accept-Language` request header (defaulting to Chinese when omitted).
 </Note>

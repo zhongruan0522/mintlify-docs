@@ -300,6 +300,6 @@ curl --request GET \
 
 | 条件 | 说明 |
 | --- | --- |
-| rankings is disabled | 顶部导航模块设置中关闭 rankings 模块时返回 HTTP `403` 与该消息 |
+| 模块已禁用 | 顶部导航模块设置中关闭 `rankings` 模块时返回 HTTP `403`，`message` 根据 `Accept-Language` 本地化（默认中文为 `rankings 已禁用`，英文为 `rankings is disabled`） |
 | 需要登录 | rankings 模块配置为需要登录且调用者未认证时的标准鉴权错误（HTTP `401`） |
 | 数据库错误，请稍后重试 | 构建快照失败；`period` 值未知时也返回该错误；详见服务端日志 |

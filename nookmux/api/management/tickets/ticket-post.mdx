@@ -139,7 +139,7 @@ curl --request POST \
 </ResponseField>
 
 <Note>
-  Management endpoints return HTTP `200` even on business failures; always check the `success` field. Service-layer failures, including an empty or over-length title or content, an unknown ticket type and database errors, are all returned with the localized database-error message; the specific cause is recorded in the server logs.
+  Management endpoints return HTTP `200` even on business failures; always check the `success` field. Input validation and creation failures return specific localized messages according to the `Accept-Language` request header (defaulting to Chinese); check server logs for underlying persistence causes.
 </Note>
 
 ## Error messages
@@ -147,4 +147,8 @@ curl --request POST \
 | Condition | Description |
 | --- | --- |
 | Invalid request body | The JSON body is missing or malformed |
-| Database error, please try again later | `title` or `content` is empty after trimming or exceeds its length limit, `type` is not `bug`, `feature`, `question` or `other`, or persisting the ticket failed; see server logs |
+| Ticket title cannot be empty / Ticket title is too long | `title` is empty after trimming or exceeds its length limit |
+| Ticket content cannot be empty / Ticket content is too long | `content` is empty after trimming or exceeds its length limit |
+| Invalid ticket type | `type` is not `bug`, `feature`, `question`, or `other` |
+| Failed to create the ticket | Persisting the ticket or its creation transaction failed; see server logs |
+| Database error, please try again later | Other underlying database errors; see server logs |
