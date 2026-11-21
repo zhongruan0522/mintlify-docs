@@ -26,7 +26,7 @@ curl --request GET \
 ### Path parameters
 
 <ParamField path="id" type="integer" required>
-  Id of the Ollama channel to query.
+  ID of the Ollama channel to query.
 </ParamField>
 
 ## Response
@@ -61,7 +61,7 @@ curl --request GET \
 </ResponseField>
 
 <Note>
-Failures before the upstream call (malformed id, unknown channel, non-Ollama type) are reported with real HTTP status codes (`400`, `404`), while a failed version request itself returns HTTP `200` with `success: false` and a localized `message`. The success response does not include a `message` field.
+Failures before the upstream call (malformed ID, unknown channel, non-Ollama type) are reported with real HTTP status codes (`400`, `404`), while a failed version request itself returns HTTP `200` with `success: false` and a localized `message`. The success response does not include a `message` field.
 </Note>
 
 ## Error messages

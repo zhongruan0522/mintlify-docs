@@ -1,10 +1,10 @@
 ---
 title: Start Passkey Verification
-description: Start a WebAuthn assertion ceremony for step-up secure verification of the logged-in user.
+description: Start a WebAuthn assertion ceremony for step-up security verification of the logged-in user.
 api: "POST /api/user/passkey/verify/begin"
 ---
 
-Starts the first half of a WebAuthn assertion ceremony used for step-up (secure) verification of the already logged-in user — not for login. The server generates a challenge for the user's bound passkeys, stores it in the session, and returns assertion options that the browser passes to `navigator.credentials.get()`.
+Starts the first half of a WebAuthn assertion ceremony used for step-up (security) verification of the already logged-in user — not for login. The server generates a challenge for the user's bound passkeys, stores it in the session, and returns assertion options that the browser passes to `navigator.credentials.get()`.
 
 Requires **User** permission (any logged-in user). See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
 
@@ -73,7 +73,7 @@ The passkey feature must be enabled in the server settings and the user must hav
 
 | Condition | Description |
 | --- | --- |
-| Passkey login is not enabled by administrator | The passkey feature is disabled in the server settings |
+| Passkey login is not enabled by the administrator | The passkey feature is disabled in the server settings |
 | Not logged in / user disabled | The session cannot be resolved; returned as HTTP `401` |
 | This user has not bound a Passkey | There is no credential to verify with |
 | Database error | Loading the credentials, generating the ceremony, or saving the session state failed; see server logs |

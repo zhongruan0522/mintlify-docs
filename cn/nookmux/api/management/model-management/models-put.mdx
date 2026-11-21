@@ -69,7 +69,7 @@ curl --request PUT \
 </ParamField>
 
 <ParamField path="body.vendor_id" type="integer">
-模型所属供应商的 ID；`0` 表示未指定供应商。供应商记录由 [供应商接口](/cn/nookmux/api/management/vendors/vendors-get) 管理。
+模型所属供应商的 ID；`0` 表示未指定供应商。供应商记录由[供应商接口](/cn/nookmux/api/management/vendors/vendors-get)管理。
 </ParamField>
 
 <ParamField path="body.endpoints" type="string">
@@ -77,11 +77,11 @@ curl --request PUT \
 </ParamField>
 
 <ParamField path="body.context_length" type="integer" default="0">
-上下文窗口大小（token 数）。
+上下文窗口大小（Token 数）。
 </ParamField>
 
 <ParamField path="body.max_output_tokens" type="integer" default="0">
-最大输出 token 数。
+最大输出 Token 数。
 </ParamField>
 
 <ParamField path="body.input_modalities" type="array of string">
@@ -164,7 +164,7 @@ curl --request PUT \
 </ResponseField>
 
 <Note>
-管理接口在业务失败时同样返回 HTTP `200`，必须以 `success` 字段判断结果。全量更新模式下省略的可选字段会被写入零值，因此务必提交完整记录；status_only 模式下只需 `id` 与 `status`。
+管理接口在业务失败时同样返回 HTTP `200`，必须以 `success` 字段判断结果。全量更新模式下省略的可选字段会被写入零值，因此务必提交完整记录；`status_only` 模式下只需 `id` 与 `status`。
 </Note>
 
 ## 错误说明

@@ -67,7 +67,7 @@ curl --request GET \
 <ResponseField name="data" type="array" required>
   上游返回的供应商条目列表。
 
-  <Expandable title="provider 结构">
+  <Expandable title="供应商结构">
     <ResponseField name="slug" type="string" required>
       供应商标识，用于 OpenRouter 模型 ID，例如 `openrouter/openai/gpt-4o` 中的 `openai`。
     </ResponseField>
@@ -91,7 +91,7 @@ curl --request GET \
 
 | 条件 | 说明 |
 | --- | --- |
-| 渠道ID格式错误 | 路径中的 `id` 不是整数 |
+| 渠道 ID 格式错误 | 路径中的 `id` 不是整数 |
 | 数据库错误，请稍后重试 | 渠道加载失败，包括渠道不存在的情况 |
 | 此操作仅支持 OpenRouter 渠道 | 渠道类型不是 OpenRouter |
 | 获取供应商失败 | 上游请求失败或返回非 200 状态码 |

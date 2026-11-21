@@ -4,7 +4,7 @@ description: Query the usage logs of the token key presented in the Authorizatio
 api: "GET /api/log/token"
 ---
 
-Return the usage logs of the API token whose key is presented in the request. The token id is forced from the authenticated token, so a caller can never read the logs of another token. This endpoint is authenticated by the token key itself — the `Authorization` header must carry the token key (for example `sk-xxxx`), not a management access token.
+Return the usage logs of the API token whose key is presented in the request. The token ID is forced from the authenticated token, so a caller can never read the logs of another token. This endpoint is authenticated by the token key itself — the `Authorization` header must carry the token key (for example `sk-xxxx`), not a management access token.
 
 The token is resolved by the read-only token authentication middleware, which only checks that the key exists: disabled, expired or exhausted tokens are still accepted; banned users are rejected. See [Authentication](/nookmux/api/management/auth) for the general authentication model of the management API.
 
@@ -41,7 +41,7 @@ curl --request GET \
 </ParamField>
 
 <ParamField path="query.type" type="integer">
-  Log type: `1` top-up, `2` consumption, `3` manage, `4` system, `5` error, `6` refund. Omitted or `0` matches all types. Only applied in paginated mode.
+  Log type: `1` top-up, `2` consumption, `3` management, `4` system, `5` error, `6` refund. Omitted or `0` matches all types. Only applied in paginated mode.
 </ParamField>
 
 <ParamField path="query.start_timestamp" type="integer">
@@ -128,16 +128,16 @@ curl --request GET \
 
   <Expandable title="log structure">
     <ResponseField name="id" type="integer" required>
-      Sequence number within the result (page start index plus position), not the database row id.
+      Sequence number within the result (page start index plus position), not the database row ID.
     </ResponseField>
     <ResponseField name="user_id" type="integer" required>
-      Id of the user who owns the token.
+      ID of the user who owns the token.
     </ResponseField>
     <ResponseField name="created_at" type="integer" required>
       Unix timestamp (seconds) when the log was recorded.
     </ResponseField>
     <ResponseField name="type" type="integer" required>
-      Log type: `1` top-up, `2` consumption, `3` manage, `4` system, `5` error, `6` refund.
+      Log type: `1` top-up, `2` consumption, `3` management, `4` system, `5` error, `6` refund.
     </ResponseField>
     <ResponseField name="content" type="string" required>
       Human-readable summary of the log entry.
@@ -167,13 +167,13 @@ curl --request GET \
       Whether the response was streamed.
     </ResponseField>
     <ResponseField name="channel" type="integer" required>
-      Id of the channel that served the request.
+      ID of the channel that served the request.
     </ResponseField>
     <ResponseField name="channel_name" type="string" required>
       Always empty on this endpoint.
     </ResponseField>
     <ResponseField name="token_id" type="integer" required>
-      Id of the API token.
+      ID of the API token.
     </ResponseField>
     <ResponseField name="group" type="string" required>
       Group used for channel selection.
@@ -191,10 +191,10 @@ curl --request GET \
       Referer header; blanked when the client headers field is hidden from regular users.
     </ResponseField>
     <ResponseField name="request_id" type="string">
-      NookMux request id; blanked when the `request_id` field is hidden from regular users. Omitted when empty.
+      NookMux request ID; blanked when the `request_id` field is hidden from regular users. Omitted when empty.
     </ResponseField>
     <ResponseField name="upstream_request_id" type="string">
-      Upstream provider request id; blanked when the `upstream_request_id` field is hidden from regular users. Omitted when empty.
+      Upstream provider request ID; blanked when the `upstream_request_id` field is hidden from regular users. Omitted when empty.
     </ResponseField>
     <ResponseField name="other" type="string" required>
       JSON object string with supplementary details. `admin_info` and `reject_reason` are always removed; detail-dialog-only keys are removed when hidden from regular users.

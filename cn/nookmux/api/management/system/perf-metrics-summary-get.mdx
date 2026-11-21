@@ -86,7 +86,7 @@ curl --request GET \
           成功请求百分比，`0`-`100`，保留 2 位小数。网关侧业务拒绝（额度、敏感词、违规费）与本地校验失败不计入样本基数。
         </ResponseField>
         <ResponseField name="avg_tps" type="number" required>
-          生成阶段平均每秒输出 token 数；窗口内无生成耗时时为 `0`。
+          生成阶段平均每秒输出 Token 数；窗口内无生成耗时时为 `0`。
         </ResponseField>
       </Expandable>
     </ResponseField>
@@ -110,7 +110,7 @@ curl --request GET \
           该模型成功率（百分比），保留 2 位小数。
         </ResponseField>
         <ResponseField name="avg_tps" type="number" required>
-          该模型平均每秒输出 token 数。
+          该模型平均每秒输出 Token 数。
         </ResponseField>
       </Expandable>
     </ResponseField>
@@ -126,6 +126,6 @@ curl --request GET \
 | 条件 | 说明 |
 | --- | --- |
 | 模块已禁用 | 顶部导航模块设置中关闭 `perf_metrics` 模块时返回 HTTP `403`，`message` 根据 `Accept-Language` 本地化（默认中文为 `perf_metrics 已禁用`，英文为 `perf_metrics is disabled`） |
-| 需要登录 | perf_metrics 模块配置为需要登录且调用者未认证时的标准鉴权错误（HTTP `401`） |
+| 需要登录 | `perf_metrics` 模块配置为需要登录且调用者未认证时的标准鉴权错误（HTTP `401`） |
 | 查询时间范围无效（1-720 小时） | `hours` 不是 `1` 至 `720` 的整数；以 HTTP `200`、`success: false` 返回 |
 | 数据库错误，请稍后重试 | 读取聚合桶失败；详见服务端日志 |

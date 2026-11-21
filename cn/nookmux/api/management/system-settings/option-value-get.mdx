@@ -62,7 +62,7 @@ curl --request GET \
       选项键，与 `key` 查询参数一致。
     </ResponseField>
     <ResponseField name="value" type="string" required>
-      选项当前值的字符串形式；布尔值与数字按其字符串形式渲染。
+      选项当前值的字符串形式；布尔值与数字以字符串形式返回。
     </ResponseField>
   </Expandable>
 </ResponseField>
@@ -75,6 +75,6 @@ curl --request GET \
 
 | 条件 | 说明 |
 | --- | --- |
-| 缺少配置项 key | HTTP `400`；`key` 查询参数缺失或为空 |
+| 缺少配置项 Key | HTTP `400`；`key` 查询参数缺失或为空 |
 | 该配置项不允许读取 | HTTP `403`；`key` 命中敏感键规则（以 `Token`/`Secret`/`Key`/`secret`/`api_key` 结尾或包含 `Password`/`password`） |
 | 配置项不存在 | HTTP `404`；`key` 不在内存选项表中 |

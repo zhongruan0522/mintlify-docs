@@ -74,7 +74,7 @@ curl --request GET \
     重置每周额度的卡（同时重置 5 小时额度）；无卡时为空数组。卡结构相同。
     <Expandable title="card 结构">
       <ResponseField name="recordId" type="integer" required>
-        卡记录 ID，使用端点以 `recordId` 提交。
+        卡记录 ID，调用使用重置卡端点时以 `recordId` 字段提交。
       </ResponseField>
       <ResponseField name="expireTime" type="string" required>
         卡过期时间，格式为上游返回的 `YYYY-MM-DD HH:MM:SS` 或 RFC3339。
@@ -102,5 +102,5 @@ curl --request GET \
 | 渠道不存在 | `渠道不存在` | 渠道不存在或加载失败 |
 | 非套餐渠道 | `该渠道不是套餐渠道` | `channel_info.is_plan` 为 `false` |
 | 不支持重置卡查询 | `该渠道不支持重置卡查询` | 渠道套餐不是 `glm-coding-plan` 或 `glm-coding-plan-international` |
-| 渠道密钥无效 | `渠道 API Key 无效或认证失败，请检查 Key 配置` | 上游拒绝该密钥 |
-| 查询重置卡失败 | `查询重置卡失败: {{.Error}}` | 上游请求或响应解析失败；`{{.Error}}` 为底层错误详情 |
+| 渠道密钥无效 | `渠道 API Key 无效或认证失败，请检查密钥配置` | 上游拒绝该密钥 |
+| 查询重置卡失败 | `查询重置卡失败：{{.Error}}` | 上游请求或响应解析失败；`{{.Error}}` 为底层错误详情 |

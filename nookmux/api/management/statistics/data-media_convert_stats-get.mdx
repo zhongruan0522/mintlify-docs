@@ -1,6 +1,6 @@
 ---
-title: Get All Media Convert Statistics
-description: Count stored image and video to URL conversions across all users within a time range.
+title: Get All Media Conversion Statistics
+description: Count stored image/video-to-URL conversions across all users within a time range.
 api: "GET /api/data/media_convert_stats"
 ---
 
@@ -61,7 +61,7 @@ curl --request GET \
 <ResponseField name="data" type="object" required>
   Conversion counters for the requested range.
 
-  <Expandable title="media convert stats structure">
+  <Expandable title="media conversion stats structure">
     <ResponseField name="image_count" type="integer" required>
       Number of stored image assets created in the range.
     </ResponseField>
@@ -72,7 +72,7 @@ curl --request GET \
 </ResponseField>
 
 <Note>
-  When media convert statistics are disabled in the dashboard configuration, the endpoint returns `success: true` with the message `Image/video to URL statistics are disabled` and zeroed counters instead of an error.
+  When media conversion statistics are disabled in the dashboard configuration, the endpoint returns `success: true` with the message `Image/video to URL statistics are disabled` and zeroed counters instead of an error.
 </Note>
 
 ## Error messages

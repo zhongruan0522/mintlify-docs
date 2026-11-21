@@ -62,7 +62,7 @@ curl --request DELETE \
 </ResponseField>
 
 <Note>
-虽然是 `DELETE` 请求，参数通过 JSON 请求体传递而非 URL。与其他 Ollama 接口一样，失败时返回真实的 HTTP 状态码（`400`、`404`、`500`），成功时不返回 `data` 字段。
+虽然是 `DELETE` 请求，但参数通过 JSON 请求体传递而非 URL。与其他 Ollama 接口一样，失败时返回真实的 HTTP 状态码（`400`、`404`、`500`），而非一律 `200`，且成功时不返回 `data` 字段。
 </Note>
 
 ## 错误说明

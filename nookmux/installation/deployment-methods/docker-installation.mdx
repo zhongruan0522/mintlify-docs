@@ -2,7 +2,7 @@
 title: Docker Deployment
 ---
 
-This document explains how to run NookMux directly from the Docker image. Production still recommends [Docker Compose Deployment](/nookmux/installation/deployment-methods/docker-compose-installation) so you can manage Redis, logs, and data volumes in one place.
+This document explains how to run NookMux directly from the Docker image. For production, [Docker Compose Deployment](/nookmux/installation/deployment-methods/docker-compose-installation) is still recommended so you can manage Redis, logs, and data volumes in one place.
 
 ## Basic Requirements
 
@@ -54,7 +54,7 @@ docker run --name nookmux -d --restart always \
 
 ## Run with external openGauss
 
-Switch `SQL_DSN` to the `opengauss://` prefix to connect openGauss 7.0 (the target database must be created with `DBCOMPATIBILITY='PG'`):
+Switch `SQL_DSN` to the `opengauss://` prefix to connect to openGauss 7.0 (the target database must be created with `DBCOMPATIBILITY='PG'`):
 
 ```shell
 docker run --name nookmux -d --restart always \
@@ -69,7 +69,7 @@ docker run --name nookmux -d --restart always \
 
 ## Run with external Dameng DM8
 
-Switch `SQL_DSN` to the `dm://` prefix to connect Dameng DM8 (the instance must be initialized with `CASE_SENSITIVE=N`, run in DM native mode (`COMPATIBLE_MODE=0`, a dm.ini parameter), and the account needs the `SELECT ANY DICTIONARY` privilege):
+Switch `SQL_DSN` to the `dm://` prefix to connect to Dameng DM8 (the instance must be initialized with `CASE_SENSITIVE=N`, run in DM native mode (`COMPATIBLE_MODE=0`, a `dm.ini` parameter), and the account needs the `SELECT ANY DICTIONARY` privilege):
 
 ```shell
 docker run --name nookmux -d --restart always \
@@ -84,7 +84,7 @@ docker run --name nookmux -d --restart always \
 
 ## Run with external KingbaseES
 
-Switch `SQL_DSN` to the `kingbase://` prefix to connect KingbaseES in Oracle-compatible mode (the instance must not enable `enable_ci`, otherwise startup is rejected; percent-encode the password per URL rules):
+Switch `SQL_DSN` to the `kingbase://` prefix to connect to KingbaseES in Oracle-compatible mode (the instance must not enable `enable_ci`, otherwise startup is rejected; percent-encode the password per URL rules):
 
 ```shell
 docker run --name nookmux -d --restart always \
@@ -103,7 +103,7 @@ Production sizing notes:
 - Keep `sslmode=disable` in the DSN for instances without SSL: the Gokb driver defaults to `require` with no plaintext fallback.
 - The Gokb driver's default path costs two round trips per parameterized statement with no statement cache; `SQL_PREPARE_STMT=true` is recommended for production workloads.
 
-## Optional: connect Redis
+## Optional: Connect to Redis
 
 ```shell
 -e REDIS_CONN_STRING="redis://:password@redis-host:6379"

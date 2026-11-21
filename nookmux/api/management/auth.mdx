@@ -1,39 +1,39 @@
 ---
-title: Authentication System Description (Auth)
-description: Description of backend management interface authentication methods and permission levels
+title: Authentication Overview (Auth)
+description: Authentication methods and permission levels for the management API
 ---
 
-## Description
+## Overview
 
-Backend management interfaces adopt a multi-level authentication mechanism, commonly: **Public**, **User**, **Admin**, **Root**.
+The management API uses a multi-level authentication mechanism, typically with four permission levels: **Public**, **User**, **Admin**, and **Root**.
 
 ## Authentication Methods (Choose One)
 
 ### Session
 
-Obtain Session via the login interface:
+Obtain a session via the login endpoint:
 
 - `POST /api/user/login`
 
 ### Access Token (Recommended)
 
-Carry in the request header:
+Include the token in the request header:
 
 ```text
 Authorization: Bearer {token}
 ```
 
-Tokens can be generated in "Personal Settings - Security Settings - System Access Tokens".
+Access tokens can be generated in "Personal Settings - Security Settings - Access Token".
 
 ## Required Request Headers
 
-Some interfaces require carrying a user identification request header:
+Some endpoints require a user identification request header:
 
 ```text
 New-Api-User: {user_id}
 ```
 
-Where `{user_id}` must match the currently logged-in user.
+Here, `{user_id}` must match the currently logged-in user.
 
 ## Permission Levels
 
@@ -51,5 +51,5 @@ Access tokens grant **User-level API access only**. Even an administrator accoun
 Sessions are re-validated against the database on every request, so credential changes invalidate existing sessions immediately:
 
 - A password change, disabling 2FA, or other credential changes bump the account's `auth_version`; older sessions are rejected with HTTP `401` and the message `Session expired, please log in again`.
-- Banning or role changes take effect on the affected session's next request as well, forcing a re-login.
+- Banning, demotion, and similar administrative actions also take effect on the affected session's next request, forcing a re-login.
 - After upgrading NookMux, sessions issued by an older version fail the same `auth_version` check once; a single re-login is expected.

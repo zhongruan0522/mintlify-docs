@@ -24,7 +24,7 @@ curl --request DELETE \
 ### 查询参数
 
 <ParamField path="query.start_timestamp" type="integer" default="0">
-  Unix 时间戳（秒）；只删除 `created_at` 大于等于该值的行。`0` 表示不限下界（删除 `end_timestamp` 之前的全部数据）。
+  Unix 时间戳（秒）；只删除 `created_at` 大于等于该值的行。`0` 表示不限下界（删除 `end_timestamp` 及之前的全部数据）。
 </ParamField>
 
 <ParamField path="query.end_timestamp" type="integer" required>

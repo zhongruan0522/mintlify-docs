@@ -56,7 +56,7 @@ When submitted as `multipart/form-data`, each field is a form part:
 </ParamField>
 
 <ParamField path="body.prompt" type="string" required>
-  A description of the desired edit. Describe the changes to make; content outside the transparent area of the `mask` (or outside the input image) stays unchanged.
+  A description of the desired edit. Describe the changes to make; areas of the input image outside the transparent region of `mask` (or not targeted by the edit) stay unchanged.
 </ParamField>
 
 <ParamField path="body.image" type="string" required>
@@ -154,7 +154,7 @@ When submitted as `multipart/form-data`, each field is a form part:
       Tokens consumed by the input (prompt and input images).
     </ResponseField>
     <ResponseField name="output_tokens" type="integer">
-      Tokens consumed by the output (prorated by generated images).
+      Tokens consumed by the output (converted from generated images).
     </ResponseField>
     <ResponseField name="input_tokens_details" type="object">
       Input breakdown, including `text_tokens` and `image_tokens`.

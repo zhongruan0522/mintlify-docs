@@ -4,7 +4,7 @@ description: Remove a single entry from a JSON map system option.
 api: "DELETE /api/option/json_map"
 ---
 
-Removes one entry from a JSON-object-valued system option. The supported key set matches [Get JSON Map Option](/nookmux/api/management/system-settings/option-json_map-get): the MiniMax redirect options and the pricing options. After the removal the whole option is re-serialized, validated, persisted through the option store (database write plus in-memory refresh), and the change is recorded in the admin audit log as an option update.
+Removes one entry from a JSON-object-valued system option. The supported key set matches [Get JSON Map Option](/nookmux/api/management/system-settings/option-json_map-get): the MiniMax redirect options and the pricing options. After the removal, the whole option is re-serialized, validated, and persisted through the option store (database write plus in-memory refresh), and the change is recorded in the admin audit log as an option update.
 
 Requires **Root** (super administrator) permissions. See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
 
@@ -33,7 +33,7 @@ curl --request DELETE \
 </ParamField>
 
 <ParamField path="body.map_key" type="string" required>
-  Key of the entry to remove inside the JSON object, whitespace-trimmed; must be non-empty.
+  Key of the entry to remove inside the JSON object; must be non-empty after trimming whitespace.
 </ParamField>
 
 ## Response

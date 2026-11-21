@@ -25,11 +25,11 @@ Send all requests to your deployed NookMux instance, shown as `https://your-nook
 
 ## Authentication
 
-All AI model APIs use an API token (starting with `sk-`) created on the Console → Tokens page. Each protocol family passes the token the way its vendor defines it, and NookMux additionally accepts all three methods on every endpoint:
+All AI model APIs use an API token (starting with `sk-`) created on the Console → Tokens page. Each protocol family accepts its vendor's standard authentication method as well as the compatible alternatives listed below:
 
 | Protocol | Recommended | Also accepted |
 | --- | --- | --- |
-| OpenAI (`/v1/*`) | `Authorization: Bearer sk-xxx` | `x-api-key`, `x-goog-api-key` |
+| OpenAI (`/v1/*`) | `Authorization: Bearer sk-xxx` | `Sec-WebSocket-Protocol` (Realtime); `x-api-key` (`/v1/models*`), `x-goog-api-key` / `?key=` (`/v1/models/*`) |
 | Claude (`/v1/messages`) | `x-api-key: sk-xxx` | `Authorization: Bearer sk-xxx` |
 | Gemini (`/v1beta/*`) | `x-goog-api-key: sk-xxx` | `Authorization: Bearer sk-xxx`, query parameter `?key=sk-xxx` |
 
@@ -42,4 +42,4 @@ All AI model APIs use an API token (starting with `sk-`) created on the Console 
 
 ## Scope
 
-This section documents every API NookMux relays. Endpoints not listed here (such as OpenAI Files and Fine-tuning, or standalone Gemini TTS/video generation) are not implemented or supported; calling them returns an explicit error rather than failing silently.
+This section documents every API NookMux relays. Endpoints marked as not implemented or not listed here (such as OpenAI Files and Fine-tuning, or standalone Gemini TTS/video generation) are not supported; calling them returns an explicit error rather than failing silently.

@@ -21,7 +21,7 @@ api: "GET /v1beta/openai/models"
 `/v1beta/openai/models` 与 `/v1/models/{model}:{action}` 两个前缀的认证方式与 Gemini 端点一致：推荐 `x-goog-api-key` 请求头，兼容 `Authorization: Bearer <token>` 与 `?key=<token>` 查询参数。`/v1/engines/{model}/embeddings` 仅接受 `Authorization: Bearer <token>`。
 
 <ParamField path="header.x-goog-api-key" type="string">
-  NookMux API 令牌，格式为 `x-goog-api-key: <token>`。仅 `/v1beta/openai/models` 与 `/v1/models/{model}:{action}` 前缀接受该头。
+  NookMux API 令牌，格式为 `x-goog-api-key: <token>`。仅 `/v1beta/openai/models` 与 `/v1/models/{model}:{action}` 前缀接受该请求头。
 </ParamField>
 
 ### GET /v1beta/openai/models
@@ -76,7 +76,7 @@ curl --request POST \
 请求与响应字段说明见对应的 Gemini 页面：[生成内容](/cn/nookmux/api/ai-model/gemini/generate-content)、[流式生成内容](/cn/nookmux/api/ai-model/gemini/stream-generate-content)、[统计 Token](/cn/nookmux/api/ai-model/gemini/count-tokens)、[文本嵌入](/cn/nookmux/api/ai-model/gemini/embed-content)、[批量文本嵌入](/cn/nookmux/api/ai-model/gemini/batch-embed-contents)。
 
 <Note>
-  该前缀的 TokenAuth 同样接受 `x-goog-api-key` 头与 `?key=` 查询参数。注意与 OpenAI 原生的 `GET /v1/models` 区分：直接请求 `GET /v1/models` 且携带 `x-goog-api-key` 头（或 `?key=`）时，网关会将其识别为 Gemini 侧请求并按 Gemini 模型分支处理；OpenAI 客户端请使用普通的 `Authorization: Bearer` 调用 `GET /v1/models`。
+  该前缀的令牌认证同样接受 `x-goog-api-key` 请求头与 `?key=` 查询参数。注意与 OpenAI 原生的 `GET /v1/models` 区分：直接请求 `GET /v1/models` 且携带 `x-goog-api-key` 请求头（或 `?key=`）时，网关会将其识别为 Gemini 侧请求并按 Gemini 模型分支处理；OpenAI 客户端请使用普通的 `Authorization: Bearer` 调用 `GET /v1/models`。
 </Note>
 
 ### POST /v1/engines/{model}/embeddings

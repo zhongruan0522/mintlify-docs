@@ -128,7 +128,7 @@ print(message.content[0].text)
 </ParamField>
 
 <ParamField path="body.max_tokens" type="integer" required>
-  停止生成前允许生成的最大 token 数。模型可能在达到上限前提前停止；不同模型的上限不同。未显式传入时，NookMux 按渠道的「默认 max_tokens」配置补齐。
+  停止生成前允许生成的最大 Token 数。模型可能在达到上限前提前停止；不同模型的上限不同。未显式传入时，NookMux 按渠道的「默认 max_tokens」配置补齐。
 </ParamField>
 
 <ParamField path="body.max_tokens_to_sample" type="integer">
@@ -136,7 +136,7 @@ print(message.content[0].text)
 </ParamField>
 
 <ParamField path="body.system" type="string | object[]">
-  系统提示词，用于设定模型的角色与行为约束。可以是字符串，也可以是带 `cache_control` 的 `text` 块数组。
+  系统提示词，用于设定模型的角色与行为约束。可以是字符串，也可以是带可选 `cache_control` 的 `text` 块数组。
 
   <Expandable title="system 块结构">
     <ParamField path="type" type="string" required>
@@ -213,14 +213,14 @@ print(message.content[0].text)
 </ParamField>
 
 <ParamField path="body.thinking" type="object">
-  扩展思考配置。开启后模型先思考再回答，思维链以 `thinking` 块返回；思考 token 计入 `max_tokens`。
+  扩展思考配置。开启后模型先思考再回答，思维链以 `thinking` 块返回；思考 Token 计入 `max_tokens`。
 
   <Expandable title="thinking 结构">
     <ParamField path="type" type="string" required>
       `enabled`（开启扩展思考）或 `disabled`（关闭）。
     </ParamField>
     <ParamField path="budget_tokens" type="integer">
-      思考预算 token 数，须不小于 `1024` 且小于 `max_tokens`。`type` 为 `enabled` 时必填。
+      思考预算 Token 数，须不小于 `1024` 且小于 `max_tokens`。`type` 为 `enabled` 时必填。
     </ParamField>
     <ParamField path="display" type="string">
       思维链的返回方式：`summarized`（正常返回）或 `omitted`（省略内容但保留签名以维持多轮连续性）。
@@ -355,7 +355,7 @@ print(message.content[0].text)
 </ResponseField>
 
 <ResponseField name="stop_reason" type="string" required>
-  生成停止原因：`end_turn`（自然结束）、`max_tokens`（达到 token 上限）、`stop_sequence`（命中停止序列）、`tool_use`（模型请求调用工具）。
+  生成停止原因：`end_turn`（自然结束）、`max_tokens`（达到 Token 上限）、`stop_sequence`（命中停止序列）、`tool_use`（模型请求调用工具）。
 </ResponseField>
 
 <ResponseField name="stop_sequence" type="string">
@@ -367,16 +367,16 @@ print(message.content[0].text)
 
   <Expandable title="usage 结构">
     <ResponseField name="input_tokens" type="integer">
-      输入消耗的 token 数。
+      输入消耗的 Token 数。
     </ResponseField>
     <ResponseField name="output_tokens" type="integer">
-      输出消耗的 token 数。
+      输出消耗的 Token 数。
     </ResponseField>
     <ResponseField name="cache_creation_input_tokens" type="integer">
-      写入提示词缓存的 token 数（产生缓存写入费用）。
+      写入提示词缓存的 Token 数（产生缓存写入费用）。
     </ResponseField>
     <ResponseField name="cache_read_input_tokens" type="integer">
-      命中提示词缓存的 token 数。
+      命中提示词缓存的 Token 数。
     </ResponseField>
   </Expandable>
 </ResponseField>

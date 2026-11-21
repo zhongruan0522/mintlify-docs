@@ -4,7 +4,7 @@ description: 查询 Authorization 请求头所携带令牌密钥的用量日志�
 api: "GET /api/log/token"
 ---
 
-返回请求所携带的 API 令牌的用量日志。令牌 id 由认证上下文强制注入，调用方无法查询其他令牌的日志。本接口通过令牌密钥本身鉴权——`Authorization` 请求头必须携带令牌密钥（例如 `sk-xxxx`），而不是管理用 Access Token。
+返回请求所携带的 API 令牌的用量日志。令牌 ID 由认证上下文强制注入，调用方无法查询其他令牌的日志。本接口通过令牌密钥本身鉴权——`Authorization` 请求头必须携带令牌密钥（例如 `sk-xxxx`），而不是管理用 Access Token。
 
 令牌由只读令牌鉴权中间件解析，只校验密钥是否存在：已禁用、已过期或额度耗尽的令牌同样允许访问；被封禁的用户会被拒绝。管理接口的通用鉴权模型参见[身份认证](/cn/nookmux/api/management/auth)。
 
@@ -126,12 +126,12 @@ curl --request GET \
 <ResponseField name="data.items" type="array" required>
   当前页的日志对象，按 `created_at` 倒序、再按 `id` 倒序排列。按普通用户视角脱敏：`channel_name` 为空，`id` 为结果集内序号（分页起始下标加位置），`other` 中的 `admin_info` 与 `reject_reason` 被移除，详情弹窗独有字段按使用日志字段可见性配置清空。
 
-  <Expandable title="log 结构">
+  <Expandable title="日志结构">
     <ResponseField name="id" type="integer" required>
-      结果集内的序号（分页起始下标加位置），不是数据库行 id。
+      结果集内的序号（分页起始下标加位置），不是数据库行 ID。
     </ResponseField>
     <ResponseField name="user_id" type="integer" required>
-      持有该令牌的用户 id。
+      持有该令牌的用户 ID。
     </ResponseField>
     <ResponseField name="created_at" type="integer" required>
       日志记录的 Unix 时间戳（秒）。
@@ -155,10 +155,10 @@ curl --request GET \
       请求消耗的额度。
     </ResponseField>
     <ResponseField name="prompt_tokens" type="integer" required>
-      输入（prompt）token 数。
+      输入（prompt）Token 数。
     </ResponseField>
     <ResponseField name="completion_tokens" type="integer" required>
-      输出（completion）token 数。
+      输出（completion）Token 数。
     </ResponseField>
     <ResponseField name="use_time" type="integer" required>
       请求耗时，毫秒。
@@ -167,13 +167,13 @@ curl --request GET \
       响应是否为流式。
     </ResponseField>
     <ResponseField name="channel" type="integer" required>
-      承接该请求的渠道 id。
+      承接该请求的渠道 ID。
     </ResponseField>
     <ResponseField name="channel_name" type="string" required>
       本接口恒为空字符串。
     </ResponseField>
     <ResponseField name="token_id" type="integer" required>
-      API 令牌 id。
+      API 令牌 ID。
     </ResponseField>
     <ResponseField name="group" type="string" required>
       渠道选择所用的分组。
@@ -191,10 +191,10 @@ curl --request GET \
       Referer 请求头；客户端请求头字段对普通用户隐藏时被清空。
     </ResponseField>
     <ResponseField name="request_id" type="string">
-      NookMux 请求 id；`request_id` 字段对普通用户隐藏时被清空。为空时省略。
+      NookMux 请求 ID；`request_id` 字段对普通用户隐藏时被清空。为空时省略。
     </ResponseField>
     <ResponseField name="upstream_request_id" type="string">
-      上游供应商请求 id；`upstream_request_id` 字段对普通用户隐藏时被清空。为空时省略。
+      上游供应商请求 ID；`upstream_request_id` 字段对普通用户隐藏时被清空。为空时省略。
     </ResponseField>
     <ResponseField name="other" type="string" required>
       补充详情的 JSON 对象字符串。`admin_info` 与 `reject_reason` 始终移除；详情弹窗独有键在对普通用户隐藏时移除。
@@ -206,7 +206,7 @@ curl --request GET \
 </ResponseField>
 
 <Note>
-旧版数组模式：`p` 与 `page_size` 都缺省时，`data` 直接为该令牌最近最多 1000 条日志的数组（log 结构与脱敏规则相同，`id` 从 1 起编号），而非分页对象；类型、时间与模型过滤在该模式下不生效。
+旧版数组模式：`p` 与 `page_size` 都缺省时，`data` 直接为该令牌最近最多 1000 条日志的数组（日志结构与脱敏规则相同，`id` 从 1 起编号），而非分页对象；类型、时间与模型过滤在该模式下不生效。
 </Note>
 
 <Note>

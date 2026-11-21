@@ -79,7 +79,7 @@ curl --request POST \
 </ResponseField>
 
 <ResponseField name="data" type="array" required>
-  生成的兑换码密钥，条数等于 `count`。这是唯一会返回完整密钥的响应。
+  生成的兑换码密钥，条数等于 `count`。列表、详情与更新接口均会脱敏密钥；单个兑换码的完整密钥后续仅能通过 `GET /api/redemption/{id}/key` 按需查看。
 </ResponseField>
 
 <Note>

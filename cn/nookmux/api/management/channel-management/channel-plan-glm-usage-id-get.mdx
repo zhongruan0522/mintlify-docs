@@ -91,6 +91,6 @@ curl --request GET \
 | 不支持用量查询 | `该渠道不支持用量查询` | 渠道套餐不是 `glm-coding-plan` 或 `glm-coding-plan-international` |
 | 时间格式错误 | `时间格式错误，应为 YYYY-MM-DD HH:MM:SS` | `startTime` 或 `endTime` 无法解析 |
 | 结束时间早于开始时间 | `结束时间不能早于开始时间` | `endTime` 早于 `startTime` |
-| 时间范围过长 | `查询时间范围不能超过31天` | `startTime` 到 `endTime` 超过 31 天 |
-| 渠道密钥无效 | `渠道 API Key 无效或认证失败，请检查 Key 配置` | 上游拒绝该密钥 |
-| 查询用量失败 | `查询用量失败: {{.Error}}` | 上游请求失败，包括 `type` 不支持的情况；`{{.Error}}` 为底层错误详情 |
+| 时间范围过长 | `查询时间范围不能超过 31 天` | `startTime` 到 `endTime` 超过 31 天 |
+| 渠道密钥无效 | `渠道 API Key 无效或认证失败，请检查密钥配置` | 上游拒绝该密钥 |
+| 查询用量失败 | `查询用量失败：{{.Error}}` | 上游请求失败，包括 `type` 不支持的情况；`{{.Error}}` 为底层错误详情 |

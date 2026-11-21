@@ -58,7 +58,7 @@ curl --request GET \
 </ResponseField>
 
 <Note>
-  The response varies with the caller's role, so the route is mounted with a no-cache middleware: responses carry `Cache-Control: no-store, no-cache, must-revalidate, private, max-age=0` to prevent an administrator's payload from being replayed through shared caches.
+  The response varies with the caller's role, so the route is mounted with no-cache middleware: responses carry `Cache-Control: no-store, no-cache, must-revalidate, private, max-age=0` to prevent an administrator's payload from being replayed through shared caches.
 </Note>
 
 ## Error messages

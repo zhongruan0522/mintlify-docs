@@ -1,10 +1,10 @@
 ---
 title: Ban User by Identifier
-description: Locate a user by a one-click-login identifier (GitHub or LinuxDO ID, email, GitHub username) and disable the account.
+description: Locate a user by a third-party login identifier (GitHub or LinuxDO ID, email, GitHub username) and disable the account.
 api: "POST /api/user/ban"
 ---
 
-Bans a user identified by a one-click-login identifier instead of a user ID. The server locates every user matching the identifier (soft-deleted users included) and then:
+Bans a user identified by a third-party login identifier instead of a user ID. The server locates every user matching the identifier (soft-deleted users included) and then:
 
 - exactly one match: the account is disabled (status `2`); an optional `remark` replaces the user's remark. If it is already disabled or already deleted, the corresponding outcome is reported without further action.
 - no match: a pre-created, already-disabled placeholder user bound to the identifier is inserted, so the identifier is rejected on its first login attempt.
@@ -53,7 +53,7 @@ Identifier value, matched after trimming. Format constraints by type:
 </ParamField>
 
 <ParamField path="body.remark" type="string">
-Optional admin note stored on the banned user, matched after trimming, at most 255 characters. When non-empty it replaces the existing remark of a banned existing user.
+Optional admin note stored on the banned user, at most 255 characters after trimming. When non-empty, it replaces the existing remark of a banned existing user.
 </ParamField>
 
 ## Response
@@ -174,7 +174,7 @@ The located user.
   Bound LinuxDO ID; empty when not bound.
   </ParamField>
   <ParamField path="role" type="integer" required>
-  Role level: `1` common user, `10` admin, `100` root.
+  Role level: `1` regular user, `10` admin, `100` root.
   </ParamField>
   <ParamField path="status" type="integer" required>
   Account status after the operation: `2` disabled for a banned or placeholder user.
@@ -198,7 +198,7 @@ Banning an existing user applies the same role checks as user management: an adm
 | This GitHub username does not exist | The GitHub API reports the login does not exist |
 | GitHub API rate limit reached (60 requests/hour/IP unauthenticated), please try again later | The unauthenticated GitHub lookup quota is exhausted |
 | Failed to look up GitHub user info, please try again later | The GitHub API request failed; see server logs |
-| No permission to update users of same or higher permission level | The caller's role is not higher than the target's role (root exempted) |
-| Cannot disable super administrator user | The matched user is the root account |
+| No permission to update users of the same or higher permission level | The caller's role is not higher than the target's role (root exempted) |
+| Cannot disable a super administrator | The matched user is the root account |
 | Failed to create the banned placeholder user, please try again | Inserting the placeholder failed; see server logs |
 | Database error, please try again later | Locating or updating the user failed; see server logs |

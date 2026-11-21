@@ -10,7 +10,7 @@ api: "POST /api/channel/fetch_models"
 - AWS Bedrock 用给定密钥与密钥类型拉取 Claude 模型列表。
 - Gemini 请求 Gemini 的模型列表接口。
 - Vertex AI 直接返回适配器内置的模型清单，不发起上游请求。
-- 其余类型请求 `{base_url}/v1/models`（Zhipu v4 使用 `/api/paas/v4/models`，Moonshot 使用 `/v1/models`；已知套餐 Base URL 会替换为其 OpenAI 兼容端点），返回 `data[].id` 的值。
+- 其余类型请求 `{base_url}/v1/models`（智谱 v4 使用 `/api/paas/v4/models`，Moonshot 使用 `/v1/models`；已知套餐 Base URL 会替换为其 OpenAI 兼容端点），返回 `data[].id` 的值。
 
 目标 URL 会按拉取安全设置（SSRF 防护、内网 IP 放行、域名与 IP 过滤、端口白名单）校验。
 
@@ -42,7 +42,7 @@ curl --request POST \
 </ParamField>
 
 <ParamField path="body.type" type="integer" required>
-  渠道类型常量，决定拉取方式（例如 Ollama、AWS Bedrock、Gemini、Vertex AI、Zhipu v4、Moonshot 或通用 OpenAI 风格路径）。
+  渠道类型常量，决定拉取方式（例如 Ollama、AWS Bedrock、Gemini、Vertex AI、智谱 v4、Moonshot 或通用 OpenAI 风格路径）。
 </ParamField>
 
 <ParamField path="body.key" type="string">
@@ -50,7 +50,7 @@ curl --request POST \
 </ParamField>
 
 <ParamField path="body.aws_key_type" type="string" default="ak_sk">
-  AWS Bedrock 渠道的凭据类型：`ak_sk`（访问密钥 + 私钥）或 `api_key`。
+  AWS Bedrock 渠道的凭据类型：`ak_sk`（Access Key + Secret Key）或 `api_key`。
 </ParamField>
 
 <ParamField path="body.proxy" type="string">

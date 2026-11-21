@@ -33,7 +33,7 @@ curl --request POST \
 ### 请求体
 
 <ParamField path="body.username" type="string" required>
-登录用户名，最长 20 字符。首尾空白会被裁剪。
+登录用户名，最长 20 字符。首尾空白会被去除。
 </ParamField>
 
 <ParamField path="body.password" type="string" required>

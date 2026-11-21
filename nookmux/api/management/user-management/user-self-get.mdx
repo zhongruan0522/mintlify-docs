@@ -81,7 +81,7 @@ Login username.
 Display name.
 </ResponseField>
   <ResponseField name="role" type="integer" required>
-Role level: `1` common user, `10` admin, `100` root.
+Role level: `1` regular user, `10` admin, `100` root.
 </ResponseField>
   <ResponseField name="status" type="integer" required>
 Account status: `1` enabled, `2` disabled.
@@ -123,7 +123,7 @@ User ID of the inviter; `0` when the user registered without an invitation code.
 Bound LinuxDO ID; empty when not bound.
 </ResponseField>
   <ResponseField name="setting" type="string" required>
-Notification settings serialized as a JSON string; see the expandable structure below. Empty fields are omitted; `gotify_priority` is always present, so a user without settings serializes as `{\"gotify_priority\":0}`. Written through `PUT /api/user/setting`.
+Notification settings serialized as a JSON string; see the expandable structure below. Empty fields are omitted; `gotify_priority` is always present, so a user without settings serializes as `{"gotify_priority":0}`. Written through `PUT /api/user/setting`.
 
 <Expandable title="setting structure">
   <ResponseField name="notify_type" type="string">

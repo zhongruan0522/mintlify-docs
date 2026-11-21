@@ -1,6 +1,6 @@
 ---
 title: Delete Passkey
-description: Unbind one passkey credential by ID, or all passkeys of the current user, after step-up secure verification.
+description: Unbind one passkey credential by ID, or all passkeys of the current user, after step-up security verification.
 api: "DELETE /api/user/passkey"
 ---
 
@@ -56,12 +56,12 @@ Always `null` for this endpoint.
 </ResponseField>
 
 <Note>
-The call requires a completed step-up secure verification bound to the current user and no older than 5 minutes:
+The call requires a completed step-up security verification bound to the current user and no older than 5 minutes:
 
 - With 2FA enabled, verification with the `2fa` method is required (`POST /api/verify` with a TOTP or backup code).
 - Without 2FA, at least one passkey must be bound and verification with the `passkey` method is required: finish `POST /api/user/passkey/verify/begin` and `POST /api/user/passkey/verify/finish`, then call `POST /api/verify` with `{"method": "passkey"}`.
 
-See [Universal secure verification](/nookmux/api/management/security-verification/verify-post). Like the other passkey endpoints, this endpoint resolves the user from the server-side session cookie; access-token-only authentication is rejected with HTTP `401`.
+See [General Security Verification](/nookmux/api/management/security-verification/verify-post). Like the other passkey endpoints, this endpoint resolves the user from the server-side session cookie; access-token-only authentication is rejected with HTTP `401`.
 </Note>
 
 ## Error messages
@@ -69,7 +69,7 @@ See [Universal secure verification](/nookmux/api/management/security-verificatio
 | Condition | Description |
 | --- | --- |
 | Not logged in / user disabled | The session cannot be resolved; returned as HTTP `401` |
-| Secure verification required | No valid step-up verification (`2fa` or `passkey` method, within 5 minutes) for this user |
+| Security verification required | No valid step-up verification (`2fa` or `passkey` method, within 5 minutes) for this user |
 | Passkey not bound | Without 2FA, deletion requires a bound passkey but none exists |
 | Invalid Passkey ID | `{id}` in the path is not an integer |
 | No permission to delete this Passkey | The credential belongs to another user; returned as HTTP `403` |

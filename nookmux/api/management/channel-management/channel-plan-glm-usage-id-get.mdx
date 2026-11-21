@@ -24,7 +24,7 @@ curl --request GET \
 ### Path parameters
 
 <ParamField path="id" type="integer" required>
-Channel id.
+Channel ID.
 </ParamField>
 
 ### Query parameters
@@ -79,7 +79,7 @@ Usage chart payload defined by the GLM upstream. Its shape varies with `type` an
 </ResponseField>
 
 <Note>
-Management endpoints return HTTP `200` even on business failures; always check the `success` flag of the body. Errors detected by NookMux (invalid id, non-GLM plan, invalid time range, invalid key, upstream failure) are returned as the standard envelope with `success: false` and a localized `message`, not as passthrough bodies.
+Management endpoints return HTTP `200` even on business failures; always check the `success` flag of the body. Errors detected by NookMux (invalid ID, non-GLM plan, invalid time range, invalid key, upstream failure) are returned as the standard envelope with `success: false` and a localized `message`, not as passthrough bodies.
 </Note>
 
 ## Error messages

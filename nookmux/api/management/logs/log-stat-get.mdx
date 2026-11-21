@@ -1,10 +1,10 @@
 ---
-title: Get Logs Stat
-description: Aggregate quota consumption, realtime RPM/TPM and success/failure counts over all logs.
+title: Get Log Statistics
+description: Aggregate quota consumption, real-time RPM/TPM, and success/failure counts over all logs.
 api: "GET /api/log/stat"
 ---
 
-Return aggregate statistics over all logs for the given filters: total quota consumed, realtime requests and tokens per minute, and success/failure counts. When the pre-aggregated quota data is enabled and no log-only filter is set, the quota and counts come from the `quota_data` table instead of scanning `logs`.
+Return aggregate statistics over all logs for the given filters: total quota consumed, real-time requests and tokens per minute, and success/failure counts. When the pre-aggregated quota data is enabled and no log-only filter is set, the quota and counts come from the `quota_data` table instead of scanning `logs`.
 
 Requires **Admin** permissions. See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
 
@@ -24,7 +24,7 @@ curl --request GET \
 ### Query parameters
 
 <ParamField path="query.type" type="integer">
-  Log type: `1` top-up, `2` consumption, `3` manage, `4` system, `5` error, `6` refund. Omitted or `0` defaults the quota and success count to consumption logs (type `2`); the failure count always counts error logs.
+  Log type: `1` top-up, `2` consumption, `3` management, `4` system, `5` error, `6` refund. Omitted or `0` defaults the quota and success count to consumption logs (type `2`); the failure count always counts error logs.
 </ParamField>
 
 <ParamField path="query.start_timestamp" type="integer">
@@ -48,7 +48,7 @@ curl --request GET \
 </ParamField>
 
 <ParamField path="query.channel" type="integer">
-  Channel id. `0` (default) matches all channels.
+  Channel ID. `0` (default) matches all channels.
 </ParamField>
 
 <ParamField path="query.group" type="string">
@@ -56,11 +56,11 @@ curl --request GET \
 </ParamField>
 
 <ParamField path="query.request_id" type="string">
-  Exact match on the NookMux request id.
+  Exact match on the NookMux request ID.
 </ParamField>
 
 <ParamField path="query.upstream_request_id" type="string">
-  Exact match on the upstream provider request id.
+  Exact match on the upstream provider request ID.
 </ParamField>
 
 <ParamField path="query.ip" type="string">
@@ -114,11 +114,11 @@ curl --request GET \
 </ResponseField>
 
 <ResponseField name="data.rpm" type="integer" required>
-  Requests per minute: number of consumption logs of the last 60 seconds, regardless of the requested time range.
+  Requests per minute: number of consumption logs in the last 60 seconds, regardless of the requested time range.
 </ResponseField>
 
 <ResponseField name="data.tpm" type="integer" required>
-  Tokens per minute: sum of prompt and completion tokens of consumption logs of the last 60 seconds, regardless of the requested time range.
+  Tokens per minute: sum of prompt and completion tokens from consumption logs in the last 60 seconds, regardless of the requested time range.
 </ResponseField>
 
 <ResponseField name="data.success_count" type="integer" required>
@@ -130,7 +130,7 @@ curl --request GET \
 </ResponseField>
 
 <Note>
-When the quota-data write is enabled and none of `token_name`, `channel`, `group`, `model_name` or the detail-only filters (`request_id`, `upstream_request_id`, `ip`, `ua`, `x_title`, `http_referer`) is set and `type` is omitted or `0`, `quota`, `success_count` and `fail_count` are aggregated from the pre-aggregated `quota_data` table (a `username` filter is still allowed), while `rpm` and `tpm` are always queried live from the `logs` table.
+When quota-data writes are enabled and none of `token_name`, `channel`, `group`, `model_name`, or the detail-only filters (`request_id`, `upstream_request_id`, `ip`, `ua`, `x_title`, `http_referer`) is set and `type` is omitted or `0`, `quota`, `success_count`, and `fail_count` are aggregated from the pre-aggregated `quota_data` table (a `username` filter is still allowed), while `rpm` and `tpm` are always queried live from the `logs` table.
 </Note>
 
 <Note>

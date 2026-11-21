@@ -26,7 +26,7 @@ curl --request GET \
 ### Path parameters
 
 <ParamField path="id" type="integer" required>
-  Id of the OpenRouter channel whose upstream should be queried.
+  ID of the OpenRouter channel whose upstream should be queried.
 </ParamField>
 
 ## Response
@@ -69,7 +69,7 @@ curl --request GET \
 
   <Expandable title="provider structure">
     <ResponseField name="slug" type="string" required>
-      Provider identifier used by OpenRouter model ids, for example the `openai` in `openrouter/openai/gpt-4o`.
+      Provider identifier used by OpenRouter model IDs, for example the `openai` in `openrouter/openai/gpt-4o`.
     </ResponseField>
     <ResponseField name="name" type="string">
       Display name of the provider.
@@ -91,7 +91,7 @@ Management endpoints return HTTP `200` even on business failures; always check t
 
 | Condition | Description |
 | --- | --- |
-| Channel id format error | `id` in the path is not an integer |
+| Channel ID format error | `id` in the path is not an integer |
 | Database error | The channel could not be loaded, including when it does not exist |
 | OpenRouter channels only | The channel type is not OpenRouter |
 | Failed to fetch providers | The upstream request failed or returned a non-200 status |

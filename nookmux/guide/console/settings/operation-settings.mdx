@@ -6,14 +6,14 @@ The old "Operations Settings" page is now split mainly between **System Settings
 
 The Operations group includes:
 
-- **Auto Retry**: the auto retry switch, retry times, and retry status codes.
-- **Monitoring and Alerts**: channel response thresholds, quota alert thresholds, auto-disable or restore channels, and scheduled channel tests.
+- **Auto Retry**: the auto-retry toggle, retry count, and retry status codes.
+- **Monitoring and Alerts**: channel response time thresholds, quota alert thresholds, auto-disable or restore channels, and scheduled channel tests.
 - **SMTP Mail**: mail server configuration.
 - **Worker Proxy**: Worker URL, verification key, and whether HTTP image requests are allowed.
-- **Log Maintenance**: cleanup for consumption, error, top-up, admin, and system logs plus dashboard usage stats; supports an auto cleanup schedule (maximum data retention, cleanup interval, and cleanup targets; cleanup runs at natural 00:00 boundaries in the server's local timezone).
+- **Log Maintenance**: cleanup for consumption, error, top-up, admin, and system logs plus dashboard usage stats; supports an auto-cleanup schedule (maximum data retention, cleanup interval, and cleanup targets; cleanup runs at midnight 00:00 in the server's local time zone).
 - **Database Maintenance**: migration and sync tools.
 - **Performance**: disk cache and performance monitoring thresholds.
-- **Model Performance Metrics**: sampling of relay request performance (first-token latency, end-to-end latency, success rate, throughput) with flush interval, aggregation bucket granularity (`minute` / `5min` / `hour`) and bucket retention days (`0` keeps data forever).
+- **Model Performance Metrics**: toggle for sampling relay request performance (first-token latency, end-to-end latency, success rate, and throughput), flush interval, aggregation bucket granularity (`minute` / `5min` / `hour`), and bucket retention days (`0` keeps data indefinitely).
 - **Maintenance**: version and update checks.
 
 Top-up, payment, check-in, quota, and ratio settings belong under **Billing & Payments**.

@@ -56,7 +56,7 @@ print(result.data[0].b64_json)
 </ParamField>
 
 <ParamField path="body.prompt" type="string" required>
-  期望的编辑描述。说明要对图像做的修改，未在 `mask` 透明区域或输入图像范围内的内容保持不变。
+  期望的编辑描述。说明要对图像做的修改；输入图像中未位于 `mask` 透明区域内（或未被修改描述覆盖）的部分保持不变。
 </ParamField>
 
 <ParamField path="body.image" type="string" required>
@@ -144,17 +144,17 @@ print(result.data[0].b64_json)
 </ResponseField>
 
 <ResponseField name="usage" type="object">
-  本次编辑的 token 用量，仅 `gpt-image-1` 系列模型返回。
+  本次编辑的 Token 用量，仅 `gpt-image-1` 系列模型返回。
 
   <Expandable title="usage 结构">
     <ResponseField name="total_tokens" type="integer">
-      总消耗 token 数。
+      总消耗 Token 数。
     </ResponseField>
     <ResponseField name="input_tokens" type="integer">
-      输入消耗的 token 数（提示词与输入图像）。
+      输入消耗的 Token 数（提示词与输入图像）。
     </ResponseField>
     <ResponseField name="output_tokens" type="integer">
-      输出消耗的 token 数（按生成图像折算）。
+      输出消耗的 Token 数（按生成图像折算）。
     </ResponseField>
     <ResponseField name="input_tokens_details" type="object">
       输入明细，含 `text_tokens`、`image_tokens`。

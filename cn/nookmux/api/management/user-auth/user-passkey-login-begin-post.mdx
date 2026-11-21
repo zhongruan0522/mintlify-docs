@@ -1,10 +1,10 @@
 ---
-title: 开始Passkey登录
+title: 开始 Passkey 登录
 description: 发起可发现凭据（Discoverable）的 Passkey/WebAuthn 登录，返回断言请求参数。
 api: "POST /api/user/passkey/login/begin"
 ---
 
-Passkey 登录第一步。发起可发现凭据（驻留密钥）的 WebAuthn 认证仪式：服务端生成一次性挑战值（challenge），存入服务端会话，并返回需交给 `navigator.credentials.get()` 的请求参数。随后携带同一会话 Cookie 调用 `POST /api/user/passkey/login/finish` 完成登录。挑战值按 2 分钟超时强制校验。
+Passkey 登录第一步。发起可发现凭据（驻留密钥）的 WebAuthn 认证流程：服务端生成一次性挑战值（challenge），存入服务端会话，并返回需交给 `navigator.credentials.get()` 的请求参数。随后携带同一会话 Cookie 调用 `POST /api/user/passkey/login/finish` 完成登录。挑战值按 2 分钟超时强制校验。
 
 本接口为 **Public（公开）**——无需鉴权。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
 
@@ -49,7 +49,7 @@ curl --request POST \
 ### 响应字段
 
 <ResponseField name="success" type="boolean" required>
-登录仪式是否成功启动且挑战值会话已保存。
+登录流程是否成功启动且挑战值会话已保存。
 </ResponseField>
 
 <ResponseField name="message" type="string" required>
@@ -64,7 +64,7 @@ curl --request POST \
     URL 安全 base64 编码的待签名挑战值。一次性，由完成步骤消费。
   </ResponseField>
   <ResponseField name="timeout" type="integer">
-    仪式超时时间，毫秒（120000 即 2 分钟）。
+    流程超时时间，毫秒（120000 即 2 分钟）。
   </ResponseField>
   <ResponseField name="rpId" type="string">
     凭据必须归属的依赖方（Relying Party）ID。
@@ -84,4 +84,4 @@ curl --request POST \
 | 条件 | 说明 |
 | --- | --- |
 | Passkey 登录未开启 | 管理员未启用 Passkey 登录 |
-| 数据库错误 | WebAuthn 实例构建失败、登录仪式启动失败或挑战值会话保存失败 |
+| 数据库错误 | WebAuthn 实例构建失败、登录流程启动失败或挑战值会话保存失败 |

@@ -9,7 +9,7 @@ Fetch the model list of an arbitrary upstream by supplying a base URL, channel t
 - Ollama queries the Ollama `/v1/models` endpoint.
 - AWS Bedrock fetches the Claude model list using the given key and key type.
 - Gemini queries the Gemini model list endpoint.
-- Vertex AI returns the adaptor's built-in model list without any upstream call.
+- Vertex AI returns the adapter's built-in model list without any upstream call.
 - All other types request `{base_url}/v1/models` (Zhipu v4 uses `/api/paas/v4/models`, Moonshot uses `/v1/models`; known plan base URLs are swapped to their OpenAI-compatible endpoint) and return the `data[].id` values.
 
 The target URL is checked against the fetch security settings (SSRF protection, private IP allowance, domain and IP filters, allowed ports).
@@ -80,7 +80,7 @@ curl --request POST \
 </ResponseField>
 
 <ResponseField name="data" type="array" required>
-  Model ids returned by the upstream. Entries with an empty id are dropped.
+  Model IDs returned by the upstream. Entries with an empty ID are dropped.
 </ResponseField>
 
 <Note>

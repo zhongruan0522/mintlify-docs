@@ -1,10 +1,10 @@
 ---
 title: Get Channel Model List
-description: List all models built into the NookMux channel adaptors.
+description: List all models built into the NookMux channel adapters.
 api: "GET /api/channel/models"
 ---
 
-Return the built-in catalog of every model known to NookMux, compiled from the model lists of all channel adaptors (including the Moonshot and MiniMax built-in lists), deduplicated by model id. This is a static catalog; it does not reflect the channels configured in the database.
+Return the built-in catalog of every model known to NookMux, compiled from the model lists of all channel adapters (including the Moonshot and MiniMax built-in lists), deduplicated by model ID. This is a static catalog; it does not reflect the channels configured in the database.
 
 Requires **Admin** permissions. See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
 
@@ -69,7 +69,7 @@ curl --request GET \
       Fixed placeholder timestamp; the same for every entry.
     </ResponseField>
     <ResponseField name="owned_by" type="string" required>
-      Name of the adaptor that provides the model, for example `openai` or `claude`.
+      Name of the adapter that provides the model, for example `openai` or `claude`.
     </ResponseField>
     <ResponseField name="supported_endpoint_types" type="array">
       Not populated by this endpoint; always `null` in the response.

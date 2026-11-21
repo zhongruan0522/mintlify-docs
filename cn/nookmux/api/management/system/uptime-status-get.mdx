@@ -1,5 +1,5 @@
 ---
-title: 获取Uptime Kuma状态
+title: 获取 Uptime Kuma 状态
 description: 获取由已配置的 Uptime Kuma 状态页聚合出的监控可用性数据。
 api: "GET /api/uptime/status"
 ---
@@ -78,7 +78,7 @@ curl --request GET \
       Uptime Kuma 状态页发布的监控项名称。
     </ParamField>
     <ParamField path="uptime" type="number" required>
-      Uptime Kuma 上报的 24 小时可用率（0 到 1 之间）。实例未上报该监控项时为 `0`。
+      Uptime Kuma 上报的 24 小时可用率（0 到 1 之间）。实例未上报该监控项的可用率时为 `0`。
     </ParamField>
     <ParamField path="status" type="integer" required>
       来自 Uptime Kuma 实例的最新心跳状态整数。无心跳数据时为 `0`。
@@ -90,5 +90,5 @@ curl --request GET \
 </ResponseField>
 
 <Note>
-  每个上游 Uptime Kuma 请求的超时为 10 秒，整体聚合的超时为 30 秒；实例不可达的分组会以空 `monitors` 数组返回，而不是让整个请求失败。该面板仅在数据看板开启 Uptime Kuma 面板后启用。
+  每个上游 Uptime Kuma 请求的超时为 10 秒，整体聚合的超时为 30 秒；实例不可达的分组会以空 `monitors` 数组返回，而不是让整个请求失败。该接口仅在数据看板开启 Uptime Kuma 面板后于看板中启用。
 </Note>

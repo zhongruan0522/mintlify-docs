@@ -9,7 +9,7 @@ Fetch the model list offered by the upstream of a saved channel, so it can be pa
 - Ollama channels query the Ollama `/v1/models` endpoint and return model names.
 - AWS Bedrock channels fetch the Claude model list using the channel key.
 - Gemini channels query the Gemini model list endpoint.
-- Vertex AI channels have no public list endpoint, so the adaptor's built-in model list is returned without any upstream call.
+- Vertex AI channels have no public list endpoint, so the adapter's built-in model list is returned without any upstream call.
 - All other channels request `{base_url}/v1/models` (Zhipu v4 uses `/api/paas/v4/models`, Moonshot uses `/v1/models`; known plan base URLs are swapped to their OpenAI-compatible endpoint) and return the `data[].id` values.
 
 Requests to the upstream go through the proxy configured on the channel.
@@ -32,7 +32,7 @@ curl --request GET \
 ### Path parameters
 
 <ParamField path="id" type="integer" required>
-  Id of the channel whose upstream should be queried.
+  ID of the channel whose upstream should be queried.
 </ParamField>
 
 ## Response
@@ -63,7 +63,7 @@ curl --request GET \
 </ResponseField>
 
 <ResponseField name="data" type="array" required>
-  Model ids returned by the upstream. Entries with an empty id are dropped.
+  Model IDs returned by the upstream. Entries with an empty ID are dropped.
 </ResponseField>
 
 <Note>
@@ -74,7 +74,7 @@ curl --request GET \
 
 | Condition | Description |
 | --- | --- |
-| Channel id format error | `id` in the path is not an integer |
+| Channel ID format error | `id` in the path is not an integer |
 | Database error | The channel could not be loaded, including when it does not exist |
 | No usable key | A multi-key channel has no enabled key |
 | Upstream fetch failed | The upstream request failed or returned a non-200 status |

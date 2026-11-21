@@ -75,5 +75,5 @@ curl --request GET \
 </ResponseField>
 
 <Note>
-模块的 `value` 与返回顺序由服务端固定，每次调用保持一致；`label` 根据请求的 `Accept-Language` 头本地化（默认返回中文）。
+模块的 `value` 与返回顺序由服务端固定，每次调用保持一致；`label` 根据 `Accept-Language` 请求头本地化（默认返回中文，例如传入 `Accept-Language: en` 时返回 `"Dashboard Config"`）。
 </Note>

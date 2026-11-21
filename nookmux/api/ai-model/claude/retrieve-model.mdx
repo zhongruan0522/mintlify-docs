@@ -6,7 +6,7 @@ api: "GET /v1/models/{model}"
 
 Retrieve a single model object by its model ID, with the response compatible with the Anthropic Models API.
 
-As with List models, the response format of `GET /v1/models/{model}` depends on the request headers: NookMux returns the Anthropic format only when the request carries **both** the `x-api-key` and `anthropic-version` headers; otherwise it defaults to the OpenAI format, see [List models](/nookmux/api/ai-model/openai/list-models).
+As with List models, the response format of `GET /v1/models/{model}` depends on the request headers: NookMux returns the Anthropic format only when the request carries **both** the `x-api-key` and `anthropic-version` headers; otherwise it defaults to the OpenAI format (see [Retrieve model](/nookmux/api/ai-model/openai/retrieve-model)).
 
 ## Request
 

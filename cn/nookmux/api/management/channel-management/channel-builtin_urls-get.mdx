@@ -83,7 +83,7 @@ curl --request GET \
 <ResponseField name="data" type="object" required>
   渠道类型到其 Base URL 预设列表的映射。键为渠道类型数字常量序列化后的 JSON 字符串；映射覆盖 OpenAI（`1`）、Ollama（`4`）、小米（`6`）、Anthropic（`14`）、OpenRouter（`20`）、Gemini（`24`）、Moonshot（`25`）、智谱 v4（`26`）、MiniMax（`35`）、SiliconFlow（`40`）、DeepSeek（`43`）和字节跳动（`44`）。
 
-  <Expandable title="preset 结构">
+  <Expandable title="预设结构">
     <ResponseField name="value" type="string" required>
       预设值，选中后原样存为渠道的 `base_url`：普通站点为厂商官方地址，套餐预设为套餐标识。
     </ResponseField>

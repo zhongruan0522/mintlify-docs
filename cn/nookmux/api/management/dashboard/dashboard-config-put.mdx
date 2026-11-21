@@ -47,7 +47,7 @@ curl --request PUT \
 </ParamField>
 
 <ParamField path="body.quota_data_track_tokens" type="boolean">
-是否随额度数据记录 token 用量。
+是否随额度数据记录 Token 用量。
 </ParamField>
 
 <ParamField path="body.quota_data_track_by_model" type="boolean">
@@ -115,7 +115,7 @@ Uptime Kuma 刷新间隔（秒），30-3600。
 </ParamField>
 
 <Note>
-JSON 数字按浮点读取并以整数存储，请发送整数值。未在上方列出的键会被接受并落库，但不会影响数据看板配置。修改 `rankings_refresh_interval`、`user_analytics_refresh_interval` 或 `uptime_kuma_refresh_interval` 会立即失效对应缓存数据。开启审计后，本次更新会写入审计日志（模块 `dashboard_config`）。
+JSON 数字按浮点读取并以整数存储，请发送整数值。未在上方列出的键会被接受并落库，但不会影响数据看板配置。修改 `rankings_refresh_interval`、`user_analytics_refresh_interval` 或 `uptime_kuma_refresh_interval` 会立即使对应缓存数据失效。开启审计后，本次更新会写入审计日志（模块 `dashboard_config`）。
 </Note>
 
 ## 响应

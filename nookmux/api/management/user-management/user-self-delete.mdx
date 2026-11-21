@@ -54,6 +54,6 @@ This endpoint returns no `data` field. Unlike the admin endpoint `DELETE /api/us
 
 | Condition | Description |
 | --- | --- |
-| Secure verification required | HTTP `403` with `code: VERIFICATION_REQUIRED`: the session has no valid verification bound to scope `account_delete` |
+| Security verification required | HTTP `403` with `code: VERIFICATION_REQUIRED`: the session has no valid verification bound to scope `account_delete` |
 | Cannot delete super administrator | The current account is the root user |
 | Database error | The deletion failed; see server logs |

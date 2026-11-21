@@ -169,7 +169,7 @@ Management endpoints return HTTP `200` even on business failures; always check t
 | Channel not found | No channel exists with the given `channel_id` |
 | Not a multi-key channel | `channel_info.is_multi_key` is `false` for the channel |
 | Key index required | `key_index` is missing for `disable_key`, `enable_key`, or `delete_key` |
-| Key index out of range | `key_index` is negative or not smaller than `multi_key_size` |
+| Key index out of range | `key_index` is negative or greater than or equal to `multi_key_size` |
 | Last key cannot be deleted | `delete_key` targets the only remaining key |
 | No keys to disable | `disable_all_keys` finds no currently enabled key |
 | No auto-disabled keys to delete | `delete_disabled_keys` finds no auto-disabled key |

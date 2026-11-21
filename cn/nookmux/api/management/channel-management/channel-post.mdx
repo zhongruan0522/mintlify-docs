@@ -41,12 +41,12 @@ curl --request POST \
   渠道创建模式：
 
   - `single`：用 `channel.key` 中的单个密钥创建一个渠道。
-  - `batch`：按行拆分 `channel.key`（换行分隔），每行密钥创建一个渠道。
+  - `batch`：按行拆分 `channel.key`（换行分隔），每个非空行密钥创建一个渠道。
   - `multi_to_single`：将 `channel.key` 中的全部密钥聚合为一个多 Key 渠道（换行分隔；Vertex AI 的 JSON 凭据使用 JSON 数组形式）。
 </ParamField>
 
 <ParamField path="body.multi_key_mode" type="string">
-  `multi_to_single` 模式下的轮询策略：`random`（随机）或 `polling`（轮询）。`mode` 为 `multi_to_single` 时必填，其他模式下忽略。
+  `multi_to_single` 模式下的密钥轮换策略：`random`（随机）或 `polling`（轮询）。`mode` 为 `multi_to_single` 时必填，其他模式下忽略。
 </ParamField>
 
 <ParamField path="body.batch_add_set_key_prefix_2_name" type="boolean" default="false">
@@ -115,7 +115,7 @@ curl --request POST \
       上游连续失败后是否自动禁用渠道：`1` 启用，`0` 关闭。
     </ParamField>
     <ParamField path="openai_organization" type="string">
-      OpenAI 类型渠道的 organization 头（`OpenAI-Organization`）。
+      OpenAI 类型渠道的组织请求头（`OpenAI-Organization`）。
     </ParamField>
     <ParamField path="remark" type="string">
       自由备注，最长 255 字符。

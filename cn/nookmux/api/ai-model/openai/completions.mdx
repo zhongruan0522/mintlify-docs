@@ -82,7 +82,7 @@ print(response.choices[0].text)
 </ParamField>
 
 <ParamField path="body.max_tokens" type="integer">
-  生成的最大 token 数量。达到上限时输出被截断，`finish_reason` 为 `length`。
+  生成的最大 Token 数量。达到上限时输出被截断，`finish_reason` 为 `length`。
 </ParamField>
 
 <ParamField path="body.temperature" type="number">
@@ -110,15 +110,15 @@ print(response.choices[0].text)
 </ParamField>
 
 <ParamField path="body.logprobs" type="boolean">
-  是否返回输出 token 的对数概率。
+  是否返回输出 Token 的对数概率。
 </ParamField>
 
 <ParamField path="body.top_logprobs" type="integer">
-  每个输出位置返回概率最高的 n 个 token（`0 ~ 20`）。设置 `logprobs` 时生效。
+  每个输出位置返回概率最高的 n 个 Token（`0 ~ 20`）。设置 `logprobs` 时生效。
 </ParamField>
 
 <ParamField path="body.logit_bias" type="object">
-  修改指定 token 在采样中的出现概率，键为 token ID，值为 `-100 ~ 100`。
+  修改指定 Token 在采样中的出现概率，键为 Token ID，值为 `-100 ~ 100`。
 </ParamField>
 
 <ParamField path="body.user" type="string">
@@ -195,13 +195,13 @@ print(response.choices[0].text)
 
   <Expandable title="usage 结构">
     <ResponseField name="prompt_tokens" type="integer">
-      输入消耗的 token 数。
+      输入消耗的 Token 数。
     </ResponseField>
     <ResponseField name="completion_tokens" type="integer">
-      输出消耗的 token 数。
+      输出消耗的 Token 数。
     </ResponseField>
     <ResponseField name="total_tokens" type="integer">
-      总消耗 token 数。
+      总消耗 Token 数。
     </ResponseField>
   </Expandable>
 </ResponseField>

@@ -4,7 +4,7 @@ description: Delete multiple channels and their routing abilities in one call.
 api: "POST /api/channel/batch"
 ---
 
-Delete multiple channels by id. The channels and their routing abilities are removed in a single transaction (processed in chunks of 200 ids), the in-memory channel cache is reloaded, and the operation is recorded in the admin audit log.
+Delete multiple channels by ID. The channels and their routing abilities are removed in a single transaction (processed in chunks of 200 IDs), the in-memory channel cache is reloaded, and the operation is recorded in the admin audit log.
 
 Requires **Admin** permissions. See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
 
@@ -28,7 +28,7 @@ curl --request POST \
 ### Body
 
 <ParamField path="body.ids" type="array" required>
-  Ids of the channels to delete. Must contain at least one element.
+  IDs of the channels to delete. Must contain at least one element.
 </ParamField>
 
 <ParamField path="body.tag" type="string">
@@ -60,7 +60,7 @@ curl --request POST \
 </ResponseField>
 
 <ResponseField name="data" type="integer" required>
-  Number of requested ids.
+  Number of requested IDs.
 </ResponseField>
 
 <Note>

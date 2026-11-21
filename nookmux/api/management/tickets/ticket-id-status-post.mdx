@@ -28,7 +28,7 @@ curl --request POST \
 ### Path parameters
 
 <ParamField path="id" type="integer" required>
-  Ticket id, a positive integer.
+  Ticket ID, a positive integer.
 </ParamField>
 
 ### Body
@@ -77,7 +77,7 @@ curl --request POST \
 | Invalid request body | The JSON body is missing or malformed |
 | No permission to perform this operation | The caller is not an administrator |
 | Invalid ticket status | `status` is not `pending`, `processing`, or `completed` |
-| Ticket not found | No ticket with this id exists |
+| Ticket not found | No ticket with this ID exists |
 | Ticket status has changed, please refresh and try again | The ticket status changed concurrently between reading and updating |
 | Failed to update the ticket status | Updating the status or recording the system event transaction failed; see server logs |
 | Database error, please try again later | Underlying database read errors while loading the ticket; see server logs |

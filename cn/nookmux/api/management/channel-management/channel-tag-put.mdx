@@ -4,7 +4,7 @@ description: 批量编辑同一标签下的渠道，支持重命名标签并覆�
 api: "PUT /api/channel/tag"
 ---
 
-批量编辑携带指定标签的全部渠道：重命名标签，或一次性更新共享的模型映射、模型列表、分组、参数覆盖与请求头覆盖。只有发送的字段才会被应用；修改 `models` 或 `groups` 会重建受影响渠道路由能力。
+批量编辑携带指定标签的全部渠道：重命名标签，或一次性更新共享的模型映射、模型列表、分组、参数覆盖与请求头覆盖。只有发送的字段才会被应用；修改 `models` 或 `groups` 会重建受影响渠道的路由能力。
 
 需要**管理员（Admin）**权限。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
 
@@ -46,11 +46,11 @@ curl --request PUT \
 </ParamField>
 
 <ParamField path="body.models" type="string">
-逗号分隔的模型列表。仅在存在且非空时应用；会重建受影响渠道路由能力。
+逗号分隔的模型列表。仅在存在且非空时应用；会重建受影响渠道的路由能力。
 </ParamField>
 
 <ParamField path="body.groups" type="string">
-可使用这些渠道的用户分组，逗号分隔。仅在存在且非空时应用；会重建受影响渠道路由能力。
+可使用这些渠道的用户分组，逗号分隔。仅在存在且非空时应用；会重建受影响渠道的路由能力。
 </ParamField>
 
 <ParamField path="body.param_override" type="string">

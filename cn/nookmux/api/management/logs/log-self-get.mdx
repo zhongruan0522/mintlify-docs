@@ -56,11 +56,11 @@ curl --request GET \
 </ParamField>
 
 <ParamField path="query.request_id" type="string">
-  按 NookMux 请求 id 精确匹配。仅当 `request_id` 详情字段对普通用户可见时可用，否则请求被拒绝。
+  按 NookMux 请求 ID 精确匹配。仅当 `request_id` 详情字段对普通用户可见时可用，否则请求被拒绝。
 </ParamField>
 
 <ParamField path="query.upstream_request_id" type="string">
-  按上游供应商请求 id 精确匹配。仅当 `upstream_request_id` 详情字段对普通用户可见时可用，否则请求被拒绝。
+  按上游供应商请求 ID 精确匹配。仅当 `upstream_request_id` 详情字段对普通用户可见时可用，否则请求被拒绝。
 </ParamField>
 
 <ParamField path="query.ip" type="string">
@@ -154,12 +154,12 @@ curl --request GET \
 <ResponseField name="data.items" type="array" required>
   当前页的日志对象，按 `created_at` 倒序、再按 `id` 倒序排列。
 
-  <Expandable title="log 结构">
+  <Expandable title="日志结构">
     <ResponseField name="id" type="integer" required>
-      结果集内的序号（分页起始下标加位置），不是数据库行 id。
+      结果集内的序号（分页起始下标加位置），不是数据库行 ID。
     </ResponseField>
     <ResponseField name="user_id" type="integer" required>
-      产生该日志的用户 id。
+      产生该日志的用户 ID。
     </ResponseField>
     <ResponseField name="created_at" type="integer" required>
       日志记录的 Unix 时间戳（秒）。
@@ -183,10 +183,10 @@ curl --request GET \
       请求消耗的额度。
     </ResponseField>
     <ResponseField name="prompt_tokens" type="integer" required>
-      输入（prompt）token 数。
+      输入（prompt）Token 数。
     </ResponseField>
     <ResponseField name="completion_tokens" type="integer" required>
-      输出（completion）token 数。
+      输出（completion）Token 数。
     </ResponseField>
     <ResponseField name="use_time" type="integer" required>
       请求耗时，毫秒。
@@ -195,13 +195,13 @@ curl --request GET \
       响应是否为流式。
     </ResponseField>
     <ResponseField name="channel" type="integer" required>
-      承接该请求的渠道 id。
+      承接该请求的渠道 ID。
     </ResponseField>
     <ResponseField name="channel_name" type="string" required>
       本接口恒为空字符串。
     </ResponseField>
     <ResponseField name="token_id" type="integer" required>
-      请求所用的 API 令牌 id。
+      请求所用的 API 令牌 ID。
     </ResponseField>
     <ResponseField name="group" type="string" required>
       渠道选择所用的分组。
@@ -222,13 +222,13 @@ curl --request GET \
       根据请求的 `ua`、`x_title` 与 `http_referer` 请求头识别的客户端平台，为受控 kebab-case ID（如 `claude-code`、`codex`）；无法识别时为空串。不受使用日志字段可见性配置影响，恒返回。
     </ResponseField>
     <ResponseField name="request_id" type="string">
-      NookMux 请求 id；`request_id` 字段对普通用户隐藏时被清空。为空时省略。
+      NookMux 请求 ID；`request_id` 字段对普通用户隐藏时被清空。为空时省略。
     </ResponseField>
     <ResponseField name="upstream_request_id" type="string">
-      上游供应商请求 id；`upstream_request_id` 字段对普通用户隐藏时被清空。为空时省略。
+      上游供应商请求 ID；`upstream_request_id` 字段对普通用户隐藏时被清空。为空时省略。
     </ResponseField>
     <ResponseField name="other" type="string" required>
-      补充详情的 JSON 对象字符串。`admin_info` 与 `reject_reason` 始终移除；计费来源、token 明细、请求转换、订阅计费等详情弹窗独有键在对普通用户隐藏时移除。
+      补充详情的 JSON 对象字符串。`admin_info` 与 `reject_reason` 始终移除；计费来源、Token 明细、请求转换、订阅计费等详情弹窗独有键在对普通用户隐藏时移除。
     </ResponseField>
     <ResponseField name="model_icon" type="string">
       从模型或供应商元数据解析的模型图标。未配置时省略。
@@ -253,5 +253,5 @@ curl --request GET \
 | 数据库错误，请稍后重试 | 查询或统计日志失败，详见服务端日志 |
 
 <Note>
-过滤条件被拒绝时的提示文案会根据请求的 `Accept-Language` 头本地化，未指定时默认返回中文。
+过滤条件被拒绝时的提示文案会根据 `Accept-Language` 请求头本地化，未指定时默认返回中文。
 </Note>

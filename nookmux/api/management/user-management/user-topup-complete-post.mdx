@@ -1,12 +1,12 @@
 ---
-title: Admin Completes Top-up
+title: Complete Top-up (Admin)
 description: Manually complete a pending online top-up order and credit the user, with per-order locking and idempotency.
 api: "POST /api/user/topup/complete"
 ---
 
 Manually completes a pending online top-up order and credits the user, for example when the payment gateway callback was lost. The order is locked for the duration of the call to prevent concurrent completion, and an order that is already `success` returns success without crediting again.
 
-Credited quota follows the provider: Stripe orders credit `money` multiplied by the quota-per-unit conversion, other orders credit `amount` multiplied by it (500,000 quota per $1 by default). A top-up log entry is written for the user.
+Credited quota follows the provider: Stripe orders credit `money` multiplied by the quota-per-unit conversion, while other orders credit `amount` multiplied by it (500,000 quota per $1 by default). A top-up log entry is written for the user.
 
 Requires **Admin** permissions. See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
 

@@ -89,18 +89,18 @@ curl --request GET \
 分页结构。
 
 <Expandable title="data 结构">
-  <ParamField path="page" type="integer" required>
+  <ResponseField name="page" type="integer" required>
     当前页码。
-  </ParamField>
-  <ParamField path="page_size" type="integer" required>
+  </ResponseField>
+  <ResponseField name="page_size" type="integer" required>
     实际生效的页大小（经过默认值填充与 100 上限截断）。
-  </ParamField>
-  <ParamField path="total" type="integer" required>
+  </ResponseField>
+  <ResponseField name="total" type="integer" required>
     符合条件的记录总数。
-  </ParamField>
-  <ParamField path="items" type="array" required>
+  </ResponseField>
+  <ResponseField name="items" type="array" required>
     当前页的存储媒体记录，按 `created_at` 倒序、`id` 倒序排列。
-  </ParamField>
+  </ResponseField>
 </Expandable>
 </ResponseField>
 
@@ -108,24 +108,24 @@ curl --request GET \
 单条存储媒体记录。
 
 <Expandable title="存储媒体结构">
-  <ParamField path="id" type="string" required>
+  <ResponseField name="id" type="string" required>
     存储媒体记录 ID（UUID）。
-  </ParamField>
-  <ParamField path="media_type" type="string" required>
+  </ResponseField>
+  <ResponseField name="media_type" type="string" required>
     媒体类型：`image` 或 `video`。
-  </ParamField>
-  <ParamField path="created_at" type="integer" required>
+  </ResponseField>
+  <ResponseField name="created_at" type="integer" required>
     存入时间，Unix 秒级时间戳。
-  </ParamField>
-  <ParamField path="mime_type" type="string" required>
+  </ResponseField>
+  <ResponseField name="mime_type" type="string" required>
     原始文件的 MIME 类型，例如 `image/png`、`video/mp4`。
-  </ParamField>
-  <ParamField path="size_bytes" type="integer" required>
+  </ResponseField>
+  <ResponseField name="size_bytes" type="integer" required>
     存储文件大小，单位字节。
-  </ParamField>
-  <ParamField path="url" type="string" required>
+  </ResponseField>
+  <ResponseField name="url" type="string" required>
     媒体内容的签名下载链接，格式为 `{server_address}/mcp/{media_type}/{id}?exp=...&sig=...`，签名有效期 1 小时。
-  </ParamField>
+  </ResponseField>
 </Expandable>
 </ResponseField>
 

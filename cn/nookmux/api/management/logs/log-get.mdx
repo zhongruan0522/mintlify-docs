@@ -56,7 +56,7 @@ curl --request GET \
 </ParamField>
 
 <ParamField path="query.channel" type="integer">
-  渠道 id。`0`（默认）匹配全部渠道。
+  渠道 ID。`0`（默认）匹配全部渠道。
 </ParamField>
 
 <ParamField path="query.group" type="string">
@@ -64,11 +64,11 @@ curl --request GET \
 </ParamField>
 
 <ParamField path="query.request_id" type="string">
-  按 NookMux 请求 id 精确匹配。
+  按 NookMux 请求 ID 精确匹配。
 </ParamField>
 
 <ParamField path="query.upstream_request_id" type="string">
-  按上游供应商请求 id 精确匹配。
+  按上游供应商请求 ID 精确匹配。
 </ParamField>
 
 <ParamField path="query.ip" type="string">
@@ -159,12 +159,12 @@ curl --request GET \
 <ResponseField name="data.items" type="array" required>
   当前页的日志对象，按 `created_at` 倒序、再按 `id` 倒序排列。
 
-  <Expandable title="log 结构">
+  <Expandable title="日志结构">
     <ResponseField name="id" type="integer" required>
-      日志行的数据库 id。
+      日志行的数据库 ID。
     </ResponseField>
     <ResponseField name="user_id" type="integer" required>
-      产生该日志的用户 id。
+      产生该日志的用户 ID。
     </ResponseField>
     <ResponseField name="created_at" type="integer" required>
       日志记录的 Unix 时间戳（秒）。
@@ -188,10 +188,10 @@ curl --request GET \
       请求消耗的额度。
     </ResponseField>
     <ResponseField name="prompt_tokens" type="integer" required>
-      输入（prompt）token 数。
+      输入（prompt）Token 数。
     </ResponseField>
     <ResponseField name="completion_tokens" type="integer" required>
-      输出（completion）token 数。
+      输出（completion）Token 数。
     </ResponseField>
     <ResponseField name="use_time" type="integer" required>
       请求耗时，毫秒。
@@ -200,13 +200,13 @@ curl --request GET \
       响应是否为流式。
     </ResponseField>
     <ResponseField name="channel" type="integer" required>
-      承接该请求的渠道 id。
+      承接该请求的渠道 ID。
     </ResponseField>
     <ResponseField name="channel_name" type="string" required>
       承接该请求的渠道名称，写入日志时的快照；未涉及渠道或渠道已删除时为空字符串。
     </ResponseField>
     <ResponseField name="token_id" type="integer" required>
-      请求所用的 API 令牌 id。
+      请求所用的 API 令牌 ID。
     </ResponseField>
     <ResponseField name="group" type="string" required>
       渠道选择所用的分组。
@@ -227,13 +227,13 @@ curl --request GET \
       根据请求的 `ua`、`x_title` 与 `http_referer` 请求头识别的客户端平台，为受控 kebab-case ID（如 `claude-code`、`codex`、`opencode`、`cherry-studio`）；无法识别时为空串。恒返回。
     </ResponseField>
     <ResponseField name="request_id" type="string">
-      NookMux 请求 id。为空时省略。
+      NookMux 请求 ID。为空时省略。
     </ResponseField>
     <ResponseField name="upstream_request_id" type="string">
-      上游供应商返回的请求 id。为空时省略。
+      上游供应商返回的请求 ID。为空时省略。
     </ResponseField>
     <ResponseField name="other" type="string" required>
-      补充详情的 JSON 对象字符串，如计费来源、token 明细、流式状态，以及（面向管理员的）`admin_info` 内的重试链路；键集合随日志类型变化。
+      补充详情的 JSON 对象字符串，如计费来源、Token 明细、流式状态，以及（面向管理员的）`admin_info` 内的重试链路；键集合随日志类型变化。
     </ResponseField>
     <ResponseField name="model_icon" type="string">
       从模型或供应商元数据解析的模型图标。未配置时省略。

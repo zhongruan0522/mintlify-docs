@@ -34,7 +34,7 @@ Model to test with. Defaults to the channel's `test_model`, then the first entry
 </ParamField>
 
 <ParamField path="endpoint_type" type="string">
-Relay endpoint to exercise: `openai`, `openai-response`, `openai-response-compact`, `anthropic`, `gemini`, `jina-rerank`, `image-generation`, or `embeddings`. Unknown values fall back to the OpenAI format. When omitted, the endpoint is auto-detected from the model name (rerank, embedding, codex, and compact-suffixed models use their dedicated paths; models ending with the compact suffix are normalized to it).
+Relay endpoint to exercise: `openai`, `openai-response`, `openai-response-compact`, `anthropic`, `gemini`, `jina-rerank`, `image-generation`, or `embeddings`. Unknown values fall back to the OpenAI format. When omitted, the endpoint is auto-detected from the model name (rerank, embedding, codex, and compact-suffixed models use their dedicated paths; models ending with the compact suffix are normalized to `openai-response-compact`).
 </ParamField>
 
 <ParamField path="stream" type="boolean" default="false">

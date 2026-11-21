@@ -4,7 +4,7 @@ description: List the tickets of all users with pagination, status filter and ke
 api: "GET /api/ticket/admin"
 ---
 
-Retrieve a paginated list of the tickets of all users, ordered by most recently updated first. Results can be filtered by status and searched by ticket id or title keyword. The response structure is identical to the user ticket list; only the scope differs.
+Retrieve a paginated list of the tickets of all users, ordered by most recently updated first. Results can be filtered by status and searched by ticket ID or title keyword. The response structure is identical to the user ticket list; only the scope differs.
 
 Requires **Admin** permissions. See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
 
@@ -94,7 +94,7 @@ curl --request GET \
 
   <Expandable title="ticket summary structure">
     <ResponseField name="id" type="integer" required>
-      Ticket id.
+      Ticket ID.
     </ResponseField>
     <ResponseField name="title" type="string" required>
       Ticket title.

@@ -46,19 +46,19 @@ JSON object mapping requested model names to upstream model names. Applied only 
 </ParamField>
 
 <ParamField path="body.models" type="string">
-Comma-separated model list. Applied only when present and non-empty; rebuilding routing abilities for the affected channels.
+Comma-separated model list. Applied only when present and non-empty; rebuilds routing abilities for the affected channels.
 </ParamField>
 
 <ParamField path="body.groups" type="string">
-Comma-separated user groups that can use the channels. Applied only when present and non-empty; rebuilding routing abilities for the affected channels.
+Comma-separated user groups that can use the channels. Applied only when present and non-empty; rebuilds routing abilities for the affected channels.
 </ParamField>
 
 <ParamField path="body.param_override" type="string">
-JSON object that overrides request parameters before the request is forwarded upstream. Applied whenever present; an empty string clears the override, a non-empty value must be valid JSON.
+JSON object that overrides request parameters before the request is forwarded upstream. Applied whenever present; an empty string clears the override, and a non-empty value must be valid JSON.
 </ParamField>
 
 <ParamField path="body.header_override" type="string">
-JSON object that adds or overrides headers sent upstream. Applied whenever present; an empty string clears the override, a non-empty value must be valid JSON.
+JSON object that adds or overrides headers sent upstream. Applied whenever present; an empty string clears the override, and a non-empty value must be valid JSON.
 </ParamField>
 
 ## Response

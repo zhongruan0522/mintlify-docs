@@ -52,5 +52,5 @@ curl --request POST \
 </ResponseField>
 
 <Note>
-  Customized tool billing rules are overwritten without confirmation; restore them manually via `PUT /api/option/` if needed. A persist failure returns HTTP `200` with `success: false` and `Database error, please try again later` (see server logs), and the audit entry is written only after the reset succeeds.
+  Customized tool billing rules are overwritten without confirmation; restore them manually via `PUT /api/option/` if needed. A persistence failure returns HTTP `200` with `success: false` and `Database error, please try again later` (see server logs), and the audit entry is written only after the reset succeeds.
 </Note>

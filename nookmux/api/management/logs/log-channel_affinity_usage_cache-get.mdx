@@ -4,7 +4,7 @@ description: Inspect usage-cache hit counters tracked for one channel affinity c
 api: "GET /api/log/channel_affinity_usage_cache"
 ---
 
-Return the usage-cache statistics observed for a single channel affinity cache entry, keyed by rule name, using group, model name and key fingerprint: how many of the routed requests saw a prompt cache hit, and cumulative token counters within the observation window.
+Return the usage-cache statistics observed for a single channel affinity cache entry, keyed by rule name, active group (`using_group`), model name, and key fingerprint: how many of the routed requests saw a prompt cache hit, and cumulative token counters within the observation window.
 
 Requires **Admin** permissions. See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
 
@@ -32,7 +32,7 @@ curl --request GET \
 </ParamField>
 
 <ParamField path="query.using_group" type="string">
-  Using group dimension of the entry. Omit when the entry was tracked without a group.
+  Active group (`using_group`) dimension of the entry. Omit when the entry was tracked without a group.
 </ParamField>
 
 <ParamField path="query.model_name" type="string">

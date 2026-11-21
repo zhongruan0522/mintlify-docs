@@ -1,10 +1,10 @@
 ---
 title: Create Token
-description: Create a new API token for the current user; the full key is returned exactly once in the response.
+description: Create a new API token for the current user and return the generated full key in the response.
 api: "POST /api/token/"
 ---
 
-Create a new API token owned by the current user. The token key is generated server-side (site key prefix, `sk-` by default, plus 48 random characters) and returned exactly once in the response. Each user can hold at most 1000 tokens.
+Create a new API token owned by the current user. The token key is generated server-side (site key prefix, `sk-` by default, plus 48 random characters) and returned in the response; list and detail endpoints always mask the key, and existing keys can be retrieved again only via `POST /api/token/{id}/key` or `POST /api/token/batch/keys`. Each user can hold at most 1000 tokens.
 
 Requires a logged-in user (**User** permissions). See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
 
@@ -93,7 +93,7 @@ curl --request POST \
 </ParamField>
 
 <ParamField path="body.model_mapping" type="string">
-  JSON object of token-level model redirects, for example `{"gpt-4o": "gpt-4o-2024-08-06"}`. Keys and values must be non-empty strings of at most 256 characters that do not contain `:`, `/`, tab, carriage return, line feed or spaces; the whole value is limited to 64 KB. `null` or an empty string leaves the redirect unconfigured.
+  JSON-encoded string representing a token-level model redirect object, for example `{"gpt-4o": "gpt-4o-2024-08-06"}`. Keys and values must be non-empty strings of at most 256 characters that do not contain `:`, `/`, tab, carriage return, line feed, or spaces; the whole value is limited to 64 KB. `null` or an empty string leaves the redirect unconfigured.
 </ParamField>
 
 <ParamField path="body.allow_ips" type="string">
@@ -139,7 +139,7 @@ curl --request POST \
 </ResponseField>
 
 <ResponseField name="data.key" type="string" required>
-  The full token key (site key prefix, `sk-` by default, plus 48 random characters). Returned only here; list and detail endpoints always return a masked key.
+  The full token key (site key prefix, `sk-` by default, plus 48 random characters). List and detail endpoints always return a masked key; retrieve it again later via `POST /api/token/{id}/key` or `POST /api/token/batch/keys`.
 </ResponseField>
 
 <Note>
@@ -152,7 +152,7 @@ Management endpoints return HTTP `200` even on business failures; always check t
 | --- | --- |
 | Invalid request body | The JSON body is missing or malformed |
 | Token name too long | `name` exceeds 50 characters |
-| Invalid model mapping | `model_mapping` is not a JSON object of non-empty string keys and values, contains characters that cannot be carried (`:` `/` whitespace), a name exceeds 256 characters, or the value exceeds 64 KB |
+| Invalid model mapping | `model_mapping` is not a valid JSON object string of non-empty string keys and values, contains disallowed characters (`:`, `/`, or whitespace), has a model name exceeding 256 characters, or exceeds 64 KB in total |
 | Quota value cannot be negative | `quota_type` is `1` but `remain_quota` is negative |
 | Quota value exceeds valid range | `remain_quota` exceeds the server-side upper bound |
 | Window duration must be at least 1 hour | `quota_type` is `2` or `3` but `window_hours` is below `1` |

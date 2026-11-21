@@ -1,10 +1,10 @@
 ---
 title: 更新用户设置
-description: 替换当前用户的额度预警通知设置，支持邮件、Webhook、Bark 与 Gotify。
+description: 替换当前用户的额度告警通知设置，支持邮件、Webhook、Bark 与 Gotify。
 api: "PUT /api/user/setting"
 ---
 
-替换当前用户的通知设置。该设置驱动额度预警通知：选择通知类型并填写其必需的目标后，剩余额度低于配置阈值时 NookMux 会通知用户。
+替换当前用户的通知设置。该设置驱动额度告警通知：选择通知类型并填写其必需的目标后，剩余额度低于配置阈值时 NookMux 会通知用户。
 
 需要**用户（User）**权限（任意登录用户）。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
 
@@ -35,7 +35,7 @@ curl --request PUT \
 </ParamField>
 
 <ParamField path="body.quota_warning_threshold" type="number" required>
-额度预警阈值；必须大于 `0`。
+额度告警阈值；必须大于 `0`。
 </ParamField>
 
 <ParamField path="body.webhook_url" type="string">
@@ -103,10 +103,10 @@ Gotify 消息优先级，取值 `0` 到 `10`；超出范围时回退为 `5`。
 | 条件 | 说明 |
 | --- | --- |
 | 无效的参数 | JSON 请求体缺失或格式错误 |
-| 无效的预警类型 | `notify_type` 不是 `email`、`webhook`、`bark` 或 `gotify` |
-| 阈值必须大于零 | `quota_warning_threshold` 为 `0` 或负数 |
+| 无效的告警类型 | `notify_type` 不是 `email`、`webhook`、`bark` 或 `gotify` |
+| 告警阈值必须大于 0 | `quota_warning_threshold` 为 `0` 或负数 |
 | Webhook 地址不能为空 / 无效的 Webhook 地址 | `webhook` 类型未提供 `webhook_url`，或 URL 无法解析 |
 | 无效的邮箱地址 | `email` 类型填写的 `notification_email` 不包含 `@` |
 | Bark 推送 URL 不能为空 / 无效的 Bark 推送 URL / URL 必须以 http:// 或 https:// 开头 | `bark` 类型未提供 `bark_url`、URL 无法解析，或未以 `http://` 或 `https://` 开头 |
-| Gotify 服务器地址不能为空 / Gotify 令牌不能为空 / 无效的 Gotify 服务器地址 / URL 必须以 http:// 或 https:// 开头 | `gotify` 类型未提供 `gotify_url` 或 `gotify_token`、URL 无法解析，或未以 `http://` 或 `https://` 开头 |
-| 数据库错误，请稍后重试 | 加载用户或保存设置失败，详见服务端日志 |
+| Gotify 服务器地址不能为空 / Gotify Token 不能为空 / 无效的 Gotify 服务器地址 / URL 必须以 http:// 或 https:// 开头 | `gotify` 类型未提供 `gotify_url` 或 `gotify_token`、URL 无法解析，或未以 `http://` 或 `https://` 开头 |
+| 更新失败 | 保存设置失败，详见服务端日志 |

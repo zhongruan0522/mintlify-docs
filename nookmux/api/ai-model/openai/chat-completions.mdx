@@ -60,7 +60,7 @@ print(response.choices[0].message.content)
 </ParamField>
 
 <ParamField path="body.messages" type="object[]" required>
-  A list of conversation messages in chronological order. Each message contains `role` and `content`; see the table below for details.
+  A list of conversation messages in chronological order. Each message contains `role` and `content`; see the fields below for details.
 
   <Expandable title="messages structure">
     <ParamField path="role" type="string" required>
@@ -118,7 +118,7 @@ print(response.choices[0].message.content)
 </ParamField>
 
 <ParamField path="body.max_completion_tokens" type="integer">
-  New name for `max_tokens` for next-generation reasoning models (o series, gpt-5, and later). When both are set, the larger value wins.
+  Equivalent replacement for `max_tokens` on next-generation reasoning models (such as the o series and gpt-5). When both are set, the larger value wins.
 </ParamField>
 
 <ParamField path="body.reasoning_effort" type="string">
@@ -154,7 +154,7 @@ print(response.choices[0].message.content)
 </ParamField>
 
 <ParamField path="body.presence_penalty" type="number">
-  Presence penalty between `-2.0` and `2.0`. Positive values increase the chance of introducing new topics.
+  Presence penalty between `-2.0` and `2.0`. Positive values reduce the chance of repeating tokens that have already appeared.
 </ParamField>
 
 <ParamField path="body.seed" type="integer">
@@ -254,11 +254,11 @@ print(response.choices[0].message.content)
 </ParamField>
 
 <ParamField path="body.thinking" type="object">
-  Thinking switch for GLM-4.5 and later / Claude channels, such as `{"type": "enabled", "budget_tokens": 1024}`.
+  Thinking mode configuration for GLM-4.5+ and Claude channels, such as `{"type": "enabled", "budget_tokens": 1024}`.
 </ParamField>
 
 <ParamField path="body.enable_thinking" type="boolean">
-  Thinking switch for the Qwen3 series.
+  Whether to enable thinking mode for the Qwen3 series.
 </ParamField>
 
 <ParamField path="body.extra_body" type="object">

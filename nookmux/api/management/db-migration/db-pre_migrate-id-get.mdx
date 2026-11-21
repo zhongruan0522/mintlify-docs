@@ -116,15 +116,15 @@ curl --request GET \
     Per-table copy progress.
 
     <Expandable title="table progress structure">
-      <ParamField path="name" type="string" required>
+      <ResponseField name="name" type="string" required>
         Table name, for example `users`, `channels`, or `logs`.
-      </ParamField>
-      <ParamField path="copied" type="integer" required>
+      </ResponseField>
+      <ResponseField name="copied" type="integer" required>
         Number of rows already copied.
-      </ParamField>
-      <ParamField path="total" type="integer" required>
+      </ResponseField>
+      <ResponseField name="total" type="integer" required>
         Total number of rows in the source table.
-      </ParamField>
+      </ResponseField>
     </Expandable>
   </ResponseField>
   <ResponseField name="logs" type="string[]" required>
@@ -145,4 +145,4 @@ Unlike most management endpoints, failures use non-200 status codes: an empty or
 | --- | --- |
 | job_id cannot be empty | The `id` path parameter is empty or blank (HTTP `400`) |
 | Task does not exist | No job with this ID is known to this instance — wrong ID, another instance, or the process has restarted (HTTP `404`) |
-| Authentication failed | Standard authentication errors (HTTP `401`) when the caller is not a root user |
+| Authentication failed | HTTP `401` when unauthenticated or the session is invalid; HTTP `200` with `success: false` when an authenticated caller lacks Root permissions |

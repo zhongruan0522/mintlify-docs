@@ -30,7 +30,7 @@ curl --request POST \
 ```json 200
 {
   "success": true,
-  "message": "2FA setup initialized. Scan the QR code with an authenticator and enter the code to finish setup",
+  "message": "2FA setup initialized. Scan the QR code with an authenticator app and enter the code to finish setup",
   "data": {
     "secret": "JBSWY3DPEHPK3PXPJBSWY3DPEHPK3PXP",
     "qr_code_data": "otpauth://totp/NookMux:alice (NookMux)?secret=JBSWY3DPEHPK3PXPJBSWY3DPEHPK3PXP&issuer=NookMux&digits=6&period=30",
@@ -71,7 +71,7 @@ The record created by this call is still disabled. Finish the flow by confirming
 
 | Condition | Description |
 | --- | --- |
-| Secure verification required | HTTP `403` with `code: VERIFICATION_REQUIRED`: no valid verification bound to scope `2fa_setup`, or the verification used a method not matching the account's existing factors |
+| Security verification required | HTTP `403` with `code: VERIFICATION_REQUIRED`: no valid verification bound to scope `2fa_setup`, or the verification used a method not matching the account's existing factors |
 | 2FA already enabled | 2FA must be disabled before setting it up again |
 | Database error | Loading the account or persisting the 2FA record failed; see server logs |
 | Secret generation failed | The server failed to generate the TOTP secret; see server logs |

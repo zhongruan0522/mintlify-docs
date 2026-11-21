@@ -8,7 +8,7 @@ Performs a management action on a single user. Supported actions are `disable`, 
 
 Requires **Admin** permissions. See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
 
-The `disable`, `enable`, `promote`, `demote`, and `delete` actions additionally require a prior single-step verification: complete `POST /api/verify` with `scope=admin_user_manage` (see [General Security Verification](/nookmux/api/management/security-verification/verify-post)) before calling, otherwise the request is rejected with HTTP `403` and `code: VERIFICATION_REQUIRED`. The `add_quota` action does not require this verification.
+The `disable`, `enable`, `promote`, `demote`, and `delete` actions additionally require a prior step-up security verification: complete `POST /api/verify` with `scope=admin_user_manage` (see [General Security Verification](/nookmux/api/management/security-verification/verify-post)) before calling; otherwise, the request is rejected with HTTP `403` and `code: VERIFICATION_REQUIRED`. The `add_quota` action does not require this verification.
 
 ## Request
 
@@ -41,8 +41,8 @@ Action to perform:
 - `disable`: set the account status to disabled (`2`). The root account cannot be disabled.
 - `enable`: set the account status to enabled (`1`).
 - `delete`: soft-delete the account. The root account cannot be deleted.
-- `promote`: promote a common user to admin (role `10`). Only the root admin can promote.
-- `demote`: demote an admin to common user (role `1`). The root account cannot be demoted.
+- `promote`: promote a regular user to admin (role `10`). Only the root admin can promote.
+- `demote`: demote an admin to a regular user (role `1`). The root account cannot be demoted.
 - `add_quota`: adjust the user's quota as specified by `mode` and `value`.
 </ParamField>
 
@@ -55,7 +55,7 @@ Quota adjustment mode, required when `action` is `add_quota`:
 </ParamField>
 
 <ParamField path="body.value" type="integer">
-Quota amount for `add_quota`, in quota units (500,000 quota equals $1 by default). Must not be negative.
+Quota amount for `add_quota`, in raw quota (500,000 quota equals $1 by default). Must not be negative.
 </ParamField>
 
 <ParamField path="body.remark" type="string">
@@ -143,7 +143,7 @@ The `data` object uses the user structure; the fields not listed above are alway
 
 | Condition | Description |
 | --- | --- |
-| Secure verification required | HTTP `403` with `code: VERIFICATION_REQUIRED`: one of `disable`/`enable`/`promote`/`demote`/`delete` was requested without a valid verification bound to scope `admin_user_manage` (`add_quota` is exempt) |
+| Security verification required | HTTP `403` with `code: VERIFICATION_REQUIRED`: one of `disable`/`enable`/`promote`/`demote`/`delete` was requested without a valid verification bound to scope `admin_user_manage` (`add_quota` is exempt) |
 | Invalid parameters | The JSON body is malformed, `action` or `mode` is unknown, or `value` is negative |
 | Remark too long | `remark` exceeds 255 characters |
 | User does not exist | No user matches `id` |
@@ -151,6 +151,6 @@ The `data` object uses the user structure; the fields not listed above are alway
 | Cannot disable super administrator | `action` is `disable` and the target is the root user |
 | Cannot delete super administrator | `action` is `delete` and the target is the root user |
 | Cannot promote | `action` is `promote` and the caller is not root, or the target is already an admin |
-| Cannot demote | `action` is `demote` and the target is root or already a common user |
+| Cannot demote | `action` is `demote` and the target is root or already a regular user |
 | Quota out of range | `subtract` exceeds the current quota, `add` would overflow, or `override` exceeds the upper limit |
 | Database error | Persisting the change failed; see server logs |

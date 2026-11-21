@@ -70,24 +70,24 @@ curl --request GET \
 存储媒体元数据。
 
 <Expandable title="data 结构">
-  <ParamField path="id" type="string" required>
+  <ResponseField name="id" type="string" required>
     存储媒体记录 ID（UUID）。
-  </ParamField>
-  <ParamField path="media_type" type="string" required>
+  </ResponseField>
+  <ResponseField name="media_type" type="string" required>
     媒体类型：`image` 或 `video`。
-  </ParamField>
-  <ParamField path="created_at" type="integer" required>
+  </ResponseField>
+  <ResponseField name="created_at" type="integer" required>
     存入时间，Unix 秒级时间戳。
-  </ParamField>
-  <ParamField path="mime_type" type="string" required>
+  </ResponseField>
+  <ResponseField name="mime_type" type="string" required>
     原始文件的 MIME 类型，例如 `image/png`、`video/mp4`。
-  </ParamField>
-  <ParamField path="size_bytes" type="integer" required>
+  </ResponseField>
+  <ResponseField name="size_bytes" type="integer" required>
     存储文件大小，单位字节。
-  </ParamField>
-  <ParamField path="url" type="string" required>
+  </ResponseField>
+  <ResponseField name="url" type="string" required>
     媒体内容的签名下载链接，格式为 `{server_address}/mcp/{media_type}/{id}?exp=...&sig=...`，签名有效期 1 小时。
-  </ParamField>
+  </ResponseField>
 </Expandable>
 </ResponseField>
 
@@ -95,7 +95,7 @@ curl --request GET \
 
 | 条件 | 说明 |
 | --- | --- |
-| id 不能为空 | 路径中的 `{id}` 为空或仅空白字符 |
+| ID 不能为空 | 路径中的 `{id}` 为空或仅空白字符 |
 | media_type 必须为 image 或 video | `{media_type}` 不是 `image` 或 `video` |
 | 资源不存在 | `{id}` 对应的记录不存在，或其存储类型与 `{media_type}` 不一致 |
 | 无权访问该资源 | 调用者既非所有者也非管理员 |

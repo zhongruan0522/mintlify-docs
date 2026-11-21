@@ -4,7 +4,7 @@ description: List all usage and system logs across every user with pagination an
 api: "GET /api/log/"
 ---
 
-List every log recorded by NookMux — consumption, top-up, error, refund, manage and system entries — ordered newest first and paginated. Model icons are resolved for display; channel names are snapshots persisted when each log was written.
+List every log recorded by NookMux — consumption, top-up, error, refund, management, and system entries — ordered newest first and paginated. Model icons are resolved for display; channel names are snapshots persisted when each log was written.
 
 Requires **Admin** permissions. See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
 
@@ -32,7 +32,7 @@ curl --request GET \
 </ParamField>
 
 <ParamField path="query.type" type="integer">
-  Log type: `1` top-up, `2` consumption, `3` manage, `4` system, `5` error, `6` refund. Omitted or `0` matches all types.
+  Log type: `1` top-up, `2` consumption, `3` management, `4` system, `5` error, `6` refund. Omitted or `0` matches all types.
 </ParamField>
 
 <ParamField path="query.start_timestamp" type="integer">
@@ -56,7 +56,7 @@ curl --request GET \
 </ParamField>
 
 <ParamField path="query.channel" type="integer">
-  Channel id. `0` (default) matches all channels.
+  Channel ID. `0` (default) matches all channels.
 </ParamField>
 
 <ParamField path="query.group" type="string">
@@ -64,11 +64,11 @@ curl --request GET \
 </ParamField>
 
 <ParamField path="query.request_id" type="string">
-  Exact match on the NookMux request id.
+  Exact match on the NookMux request ID.
 </ParamField>
 
 <ParamField path="query.upstream_request_id" type="string">
-  Exact match on the upstream provider request id.
+  Exact match on the upstream provider request ID.
 </ParamField>
 
 <ParamField path="query.ip" type="string">
@@ -161,16 +161,16 @@ curl --request GET \
 
   <Expandable title="log structure">
     <ResponseField name="id" type="integer" required>
-      Database id of the log row.
+      Database ID of the log row.
     </ResponseField>
     <ResponseField name="user_id" type="integer" required>
-      Id of the user who produced the log.
+      ID of the user who produced the log.
     </ResponseField>
     <ResponseField name="created_at" type="integer" required>
       Unix timestamp (seconds) when the log was recorded.
     </ResponseField>
     <ResponseField name="type" type="integer" required>
-      Log type: `1` top-up, `2` consumption, `3` manage, `4` system, `5` error, `6` refund.
+      Log type: `1` top-up, `2` consumption, `3` management, `4` system, `5` error, `6` refund.
     </ResponseField>
     <ResponseField name="content" type="string" required>
       Human-readable summary of the log entry.
@@ -200,13 +200,13 @@ curl --request GET \
       Whether the response was streamed.
     </ResponseField>
     <ResponseField name="channel" type="integer" required>
-      Id of the channel that served the request.
+      ID of the channel that served the request.
     </ResponseField>
     <ResponseField name="channel_name" type="string" required>
       Name of the channel that served the request, snapshotted when the log was written; empty when no channel was involved or the channel has been deleted.
     </ResponseField>
     <ResponseField name="token_id" type="integer" required>
-      Id of the API token used for the request.
+      ID of the API token used for the request.
     </ResponseField>
     <ResponseField name="group" type="string" required>
       Group used for channel selection.
@@ -227,10 +227,10 @@ curl --request GET \
       Client platform identified from the request's `ua`, `x_title` and `http_referer` headers, as a controlled kebab-case ID (for example `claude-code`, `codex`, `opencode`, `cherry-studio`); empty string when the client could not be identified. Always present.
     </ResponseField>
     <ResponseField name="request_id" type="string">
-      NookMux request id. Omitted when empty.
+      NookMux request ID. Omitted when empty.
     </ResponseField>
     <ResponseField name="upstream_request_id" type="string">
-      Request id returned by the upstream provider. Omitted when empty.
+      Request ID returned by the upstream provider. Omitted when empty.
     </ResponseField>
     <ResponseField name="other" type="string" required>
       JSON object string with supplementary details such as billing source, token breakdown, stream status and (for admins) the retry chain under `admin_info`; the key set varies by log type.

@@ -52,7 +52,7 @@ curl --request POST \
 </ResponseField>
 
 <Note>
-  Migration writes are all-or-nothing per step: if any write fails the endpoint stops immediately and returns HTTP `500`, avoiding a partially migrated state. This is a legacy-key migration helper kept for upgrade detection and will be removed in a future version.
+  Migration writes fail fast per step: if any write fails, the endpoint stops immediately and returns HTTP `500`, avoiding a partially migrated state. This is a legacy-key migration helper kept for upgrade detection and will be removed in a future version.
 </Note>
 
 ## Error messages
@@ -60,4 +60,4 @@ curl --request POST \
 | Condition | Description |
 | --- | --- |
 | Failed to get configuration, please try again later | Reading the option table failed; HTTP `500` |
-| Update failed | Writing one of the migrated options failed; the migration stopped at that step, HTTP `500` |
+| Update failed | Writing one of the migrated options failed; the migration stopped at that step; HTTP `500` |

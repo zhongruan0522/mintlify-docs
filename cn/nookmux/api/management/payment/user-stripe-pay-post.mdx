@@ -1,5 +1,5 @@
 ---
-title: 发起Stripe支付
+title: 发起 Stripe 支付
 description: 创建待支付的 Stripe 充值订单并获取 Stripe Checkout 托管支付链接。
 api: "POST /api/user/stripe/pay"
 ---
@@ -33,7 +33,7 @@ curl --request POST \
 ### 请求体
 
 <ParamField path="body.amount" type="integer" required>
-充值数量。不得低于配置的 Stripe 最低充值数量，且不得大于 `10000`。 单笔充值上限为 `floor((MaxInt-1)/quota_per_unit)`（默认 `quota_per_unit` 为 `500000` 时约 18.4 万亿）；换算额度无法表示的数量同样会被拒绝。
+充值数量。不得低于配置的 Stripe 最低充值数量，且不得大于 `10000`。单笔充值上限为 `floor((MaxInt-1)/quota_per_unit)`（默认 `quota_per_unit` 为 `500000` 时约 18.4 万亿）；换算额度无法表示的数量同样会被拒绝。
 </ParamField>
 
 <ParamField path="body.payment_method" type="string" required>

@@ -88,6 +88,6 @@ Management endpoints return HTTP `200` even on business failures; always check t
 | Voice validation failed, please try again later | The expired-preview cleanup failed |
 | Invalid voice ID | No record exists for `voice_id` |
 | This voice does not need confirmation or has already been processed | The record is not in the `preview` state |
-| No permission to operate this voice | The record belongs to another user |
+| No permission to manage this voice | The record belongs to another user |
 | The selected billing model is currently unavailable, please contact the administrator | No pricing exists for the billing model (fail closed, never free) |
 | The price of the selected billing model is invalid, please contact the administrator | The computed quota is not positive |

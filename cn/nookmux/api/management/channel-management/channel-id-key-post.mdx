@@ -9,7 +9,7 @@ api: "POST /api/channel/{id}/key"
 需要**超级管理员（Root）**权限。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
 
 <Note>
-  本接口受严格限流和安全验证中间件保护：会话中没有有效的不带作用域验证的请求会在进入处理函数前被拒绝，返回 HTTP `403` 与机器可读的 `code`（`VERIFICATION_REQUIRED`、`VERIFICATION_INVALID` 或 `VERIFICATION_EXPIRED`）；带 `scope` 获取的验证态不能满足本门禁。验证态绑定当前用户，300 秒内有效。响应带有 no-store 缓存指令。
+  本接口受严格限流和安全验证中间件保护：若会话中没有有效的不绑定作用域验证态，请求会在进入处理函数前被拒绝，返回 HTTP `403` 与机器可读的 `code`（`VERIFICATION_REQUIRED`、`VERIFICATION_INVALID` 或 `VERIFICATION_EXPIRED`）；带 `scope` 获取的验证态不能满足本门禁。验证态绑定当前用户，300 秒内有效。响应带有 no-store 缓存指令。
 </Note>
 
 ## 请求

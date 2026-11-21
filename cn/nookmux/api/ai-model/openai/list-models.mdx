@@ -6,7 +6,7 @@ api: "GET /v1/models"
 
 返回当前令牌可用的模型列表，响应格式兼容 OpenAI Models list API。
 
-列表范围由令牌与用户分组决定：令牌启用「模型限制」时返回其允许的模型；否则返回用户（或令牌）分组下已启用渠道的模型，且仅包含已配置价格的模型。本端点按请求头自动分流，详见下文「Header 分流说明」。
+列表范围由令牌与用户分组决定：令牌启用「模型限制」时返回其允许的模型；否则返回用户（或令牌）分组下已启用渠道的模型，且仅包含已配置价格的模型。本端点按请求头自动分流，详见下文「请求头分流说明」。
 
 ## 请求
 
@@ -39,12 +39,12 @@ for model in models.data:
   以 `Bearer` 开头的 NookMux API 令牌，格式为 `Authorization: Bearer <token>`。令牌在控制台「令牌」页创建。
 </ParamField>
 
-### Header 分流说明
+### 请求头分流说明
 
 同一端点按请求头自动识别返回格式：
 
-- 同时携带 `x-api-key` 与 `anthropic-version` 头：返回 Anthropic 格式的模型列表，见 [Claude 模型列表](/cn/nookmux/api/ai-model/claude/list-models)。
-- 携带 `x-goog-api-key` 头或 `?key=` 查询参数：按 Gemini 模型查询处理，见 [Gemini 兼容接口](/cn/nookmux/api/ai-model/gemini/openai-compat)。
+- 同时携带 `x-api-key` 与 `anthropic-version` 请求头：返回 Anthropic 格式的模型列表，见 [Claude 模型列表](/cn/nookmux/api/ai-model/claude/list-models)。
+- 携带 `x-goog-api-key` 请求头或 `?key=` 查询参数：按 Gemini 模型查询处理，见 [Gemini 兼容接口](/cn/nookmux/api/ai-model/gemini/openai-compat)。
 - 其他情况：返回本页的 OpenAI 格式。
 
 ## 响应

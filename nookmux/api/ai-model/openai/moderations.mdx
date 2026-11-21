@@ -162,7 +162,7 @@ for i, result in enumerate(response.results):
       Overall flag. `true` when any category score exceeds the upstream threshold.
     </ResponseField>
     <ResponseField name="categories" type="object">
-      Boolean flags per violation category, keyed by category name and true when the threshold is exceeded. Categories include `harassment`, `harassment/threatening`, `hate`, `hate/threatening`, `illicit`, `illicit/violent`, `self-harm`, `self-harm/instructions`, `self-harm/intent`, `sexual`, `sexual/minors`, `violence`, and `violence/graphic` (the exact set varies by model; see the actual response).
+      Boolean flags per violation category, keyed by category name and `true` when the threshold is exceeded. Categories include `harassment`, `harassment/threatening`, `hate`, `hate/threatening`, `illicit`, `illicit/violent`, `self-harm`, `self-harm/instructions`, `self-harm/intent`, `sexual`, `sexual/minors`, `violence`, and `violence/graphic` (the exact set varies by model; see the actual response).
     </ResponseField>
     <ResponseField name="category_scores" type="object">
       Confidence score per category, keyed the same as `categories`, ranging from `0.0` to `1.0`; higher means more likely to match the category.

@@ -205,7 +205,7 @@ action 固定为 `generateContent`。
       生成的候选回复数量。
     </ParamField>
     <ParamField path="maxOutputTokens" type="integer">
-      生成的最大 token 数量（含可见输出与思维链）。达到上限时输出被截断（`finishReason` 为 `MAX_TOKENS`）。
+      生成的最大 Token 数量（含可见输出与思维链）。达到上限时输出被截断（`finishReason` 为 `MAX_TOKENS`）。
     </ParamField>
     <ParamField path="stopSequences" type="string[]">
       停止序列列表。模型生成包含任一序列的文本时停止输出。
@@ -226,10 +226,10 @@ action 固定为 `generateContent`。
       频率惩罚。正值根据已有词的出现频率降低其重复概率。
     </ParamField>
     <ParamField path="responseLogprobs" type="boolean">
-      是否返回输出 token 的对数概率。
+      是否返回输出 Token 的对数概率。
     </ParamField>
     <ParamField path="logprobs" type="integer">
-      每个输出位置返回概率最高的 n 个 token。设置 `responseLogprobs` 时生效。
+      每个输出位置返回概率最高的 n 个 Token。设置 `responseLogprobs` 时生效。
     </ParamField>
     <ParamField path="seed" type="integer">
       采样随机种子。相同种子与参数下尽量输出可复现的结果。
@@ -238,14 +238,14 @@ action 固定为 `generateContent`。
       请求的输出模态：`TEXT`、`IMAGE`、`AUDIO`。文本生成默认 `["TEXT"]`；图像生成模型需包含 `IMAGE`；TTS 设为 `["AUDIO"]`。
     </ParamField>
     <ParamField path="mediaResolution" type="string">
-      输入媒体的处理精度：`LOW`、`MEDIUM` 或 `HIGH`。较低精度可降低 token 消耗。
+      输入媒体的处理精度：`LOW`、`MEDIUM` 或 `HIGH`。较低精度可降低 Token 消耗。
     </ParamField>
     <ParamField path="thinkingConfig" type="object">
       思考（思维链）配置。
 
       <Expandable title="thinkingConfig 结构">
         <ParamField path="thinkingBudget" type="integer">
-          思考 token 预算。`0` 关闭思考；`-1` 表示动态思考（模型自行决定）。
+          思考 Token 预算。`0` 关闭思考；`-1` 表示动态思考（模型自行决定）。
         </ParamField>
         <ParamField path="includeThoughts" type="boolean">
           是否在响应中返回思维链摘要片段（`parts[].thought` 为 `true`）。
@@ -379,22 +379,22 @@ action 固定为 `generateContent`。
 
   <Expandable title="usageMetadata 结构">
     <ResponseField name="promptTokenCount" type="integer">
-      输入消耗的 token 数。
+      输入消耗的 Token 数。
     </ResponseField>
     <ResponseField name="candidatesTokenCount" type="integer">
-      输出消耗的 token 数。
+      输出消耗的 Token 数。
     </ResponseField>
     <ResponseField name="thoughtsTokenCount" type="integer">
-      思维链消耗的 token 数。
+      思维链消耗的 Token 数。
     </ResponseField>
     <ResponseField name="totalTokenCount" type="integer">
-      总消耗 token 数。
+      总消耗 Token 数。
     </ResponseField>
     <ResponseField name="cachedContentTokenCount" type="integer">
-      命中上下文缓存的 token 数。
+      命中上下文缓存的 Token 数。
     </ResponseField>
     <ResponseField name="toolUsePromptTokenCount" type="integer">
-      工具使用部分消耗的 token 数。
+      工具使用部分消耗的 Token 数。
     </ResponseField>
   </Expandable>
 </ResponseField>

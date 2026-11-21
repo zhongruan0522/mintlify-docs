@@ -4,7 +4,7 @@ description: 创建供应商元数据，供模型条目引用。
 api: "POST /api/vendors/"
 ---
 
-创建一条供应商元数据。模型条目通过 `vendor_id` 关联供应商，图标、数据保留天数、训练退出等字段会展示在面向终端用户的定价页上。
+创建一条供应商元数据。模型条目通过 `vendor_id` 关联供应商，图标、数据保留天数、是否不用于模型训练等字段会展示在面向终端用户的定价页上。
 
 供应商名称必须非空，且在未删除的供应商中唯一。`id`、`created_time`、`updated_time` 由服务端生成；创建成功后在 `data` 中返回完整记录。
 
@@ -95,7 +95,7 @@ curl --request POST \
 <ResponseField name="data" type="object" required>
   创建成功的供应商记录。
 
-  <Expandable title="vendor 结构">
+  <Expandable title="供应商结构">
     <ResponseField name="id" type="integer" required>
       服务端分配的供应商 ID。
     </ResponseField>
@@ -127,7 +127,7 @@ curl --request POST \
 </ResponseField>
 
 <Note>
-管理接口在业务失败时同样返回 HTTP `200`，必须以 `success` 字段判断结果。创建成功会记录到管理端审计日志（vendor 模块）。
+管理接口在业务失败时同样返回 HTTP `200`，必须以 `success` 字段判断结果。创建成功会记录到管理端审计日志（`vendor` 模块）。
 </Note>
 
 ## 错误说明

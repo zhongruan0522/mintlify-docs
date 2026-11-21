@@ -166,7 +166,7 @@ curl --request GET \
       新建令牌是否默认选择 auto 分组。
     </ParamField>
     <ParamField path="price" type="number" required>
-      充值单价系数，用于把额度金额换算为展示货币。
+      充值单价系数，用于把额度换算为展示货币。
     </ParamField>
     <ParamField path="stripe_unit_price" type="number" required>
       Stripe 充值使用的单价。
@@ -196,7 +196,7 @@ curl --request GET \
       Passkey Relying Party ID（未显式配置时从服务地址推导）。
     </ParamField>
     <ParamField path="passkey_origins" type="string" required>
-      Passkey 允许的 origins。
+      Passkey 允许的 origin 列表。
     </ParamField>
     <ParamField path="passkey_allow_insecure" type="boolean" required>
       Passkey 注册是否接受非 HTTPS 的不安全 origin。

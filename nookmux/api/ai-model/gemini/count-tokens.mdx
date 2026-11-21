@@ -64,7 +64,7 @@ The action is fixed to `countTokens`.
 
 ### Body
 
-Two shapes are accepted: top-level `contents`, or a full generate request wrapped in `generateContentRequest`. Provide exactly one of them.
+Two shapes are accepted: top-level `contents`, or a full generation request wrapped in `generateContentRequest`. Provide exactly one of them.
 
 <ParamField path="body.contents" type="object[]">
   The content entries to count. The structure is identical to the `contents` of Generate content (`role`, `parts[]` with `text`, `inlineData`, and more).
@@ -131,7 +131,7 @@ Two shapes are accepted: top-level `contents`, or a full generate request wrappe
 
 | HTTP status | Description |
 | --- | --- |
-| 400 | Invalid request parameters (neither `contents` nor `generateContentRequest` provided, and similar) |
+| 400 | Invalid request parameters (such as providing neither `contents` nor `generateContentRequest`) |
 | 401 | Token is invalid, disabled, or expired |
 | 403 | Token cannot access the model, or quota is insufficient |
 | 429 | Rate limit triggered |

@@ -4,7 +4,7 @@ description: 汇总当前用户自己的额度消耗、实时 RPM/TPM 与成功/
 api: "GET /api/log/self/stat"
 ---
 
-返回当前用户自身日志的聚合统计：消耗额度总量、每分钟实时请求数与 token 数、成功与失败次数。用户名维度强制取会话用户；额度数据聚合按用户 id 维度执行。
+返回当前用户自身日志的聚合统计：消耗额度总量、每分钟实时请求数与 Token 数、成功与失败次数。用户名维度强制取会话用户；额度数据聚合按用户 ID 维度执行。
 
 需要登录用户（**User**）权限。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
 
@@ -48,11 +48,11 @@ curl --request GET \
 </ParamField>
 
 <ParamField path="query.request_id" type="string">
-  按 NookMux 请求 id 精确匹配。仅当 `request_id` 详情字段对普通用户可见时可用，否则请求被拒绝。
+  按 NookMux 请求 ID 精确匹配。仅当 `request_id` 详情字段对普通用户可见时可用，否则请求被拒绝。
 </ParamField>
 
 <ParamField path="query.upstream_request_id" type="string">
-  按上游供应商请求 id 精确匹配。仅当 `upstream_request_id` 详情字段对普通用户可见时可用，否则请求被拒绝。
+  按上游供应商请求 ID 精确匹配。仅当 `upstream_request_id` 详情字段对普通用户可见时可用，否则请求被拒绝。
 </ParamField>
 
 <ParamField path="query.ip" type="string">
@@ -114,7 +114,7 @@ curl --request GET \
 </ResponseField>
 
 <ResponseField name="data.tpm" type="integer" required>
-  每分钟 token 数：最近 60 秒内该用户消费日志的 prompt 与 completion token 之和，不受所传时间范围影响。
+  每分钟 Token 数：最近 60 秒内该用户消费日志的 prompt 与 completion Token 之和，不受所传时间范围影响。
 </ResponseField>
 
 <ResponseField name="data.success_count" type="integer" required>
@@ -126,7 +126,7 @@ curl --request GET \
 </ResponseField>
 
 <Note>
-当额度数据（quota_data）写入开启，且未设置 `token_name`、`channel`、`group`、`model_name` 及仅日志表可用的过滤条件（`request_id`、`upstream_request_id`、`ip`、`ua`、`x_title`、`http_referer`）、`type` 缺省或为 `0` 时，`quota`、`success_count`、`fail_count` 按会话用户 id 从预聚合的 `quota_data` 表汇总；`rpm` 与 `tpm` 始终从 `logs` 表实时查询。
+当额度数据（`quota_data`）写入开启，且未设置 `token_name`、`channel`、`group`、`model_name` 及仅日志表可用的过滤条件（`request_id`、`upstream_request_id`、`ip`、`ua`、`x_title`、`http_referer`）、`type` 缺省或为 `0` 时，`quota`、`success_count`、`fail_count` 按会话用户 ID 从预聚合的 `quota_data` 表汇总；`rpm` 与 `tpm` 始终从 `logs` 表实时查询。
 </Note>
 
 <Note>
@@ -146,5 +146,5 @@ curl --request GET \
 | 数据库错误，请稍后重试 | 统计聚合失败，详见服务端日志 |
 
 <Note>
-过滤条件被拒绝时的提示文案会根据请求的 `Accept-Language` 头本地化，未指定时默认返回中文。
+过滤条件被拒绝时的提示文案会根据 `Accept-Language` 请求头本地化，未指定时默认返回中文。
 </Note>

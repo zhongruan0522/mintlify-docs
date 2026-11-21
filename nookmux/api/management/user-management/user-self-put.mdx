@@ -1,6 +1,6 @@
 ---
 title: Update Current User Information
-description: Update the current user's username, display name, and password with original-password confirmation.
+description: Update the current user's username, display name, and password with current-password confirmation.
 api: "PUT /api/user/self"
 ---
 
@@ -79,5 +79,5 @@ Only the fields above are written; other fields of the bound user structure are 
 | --- | --- |
 | Invalid parameters | The JSON body is missing or malformed |
 | Invalid input | Validation failed, for example `username` longer than 20 characters or `password` outside 8-20 characters |
-| Original password is incorrect | `original_password` does not match the current password (and the account already has a password) |
+| Current password is incorrect | `original_password` does not match the current password (and the account already has a password) |
 | Database error | The update failed, including a username conflict with an existing user; see server logs |

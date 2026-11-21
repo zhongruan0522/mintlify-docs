@@ -25,11 +25,11 @@ NookMux 的 AI 模型接口是面向终端调用方的统一入口：你以 Open
 
 ## 认证
 
-所有 AI 模型接口使用控制台「令牌」页创建的 API 令牌（`sk-` 开头）。不同协议格式的端点按各自厂商惯例传递令牌，NookMux 对每种端点均同时接受以下三种方式：
+所有 AI 模型接口使用控制台「令牌」页创建的 API 令牌（`sk-` 开头）。不同协议格式的端点按各自厂商惯例传递令牌，同时支持下表列出的兼容方式：
 
 | 协议格式 | 推荐方式 | 兼容方式 |
 | --- | --- | --- |
-| OpenAI（`/v1/*`） | `Authorization: Bearer sk-xxx` | `x-api-key`、`x-goog-api-key` |
+| OpenAI（`/v1/*`） | `Authorization: Bearer sk-xxx` | `Sec-WebSocket-Protocol`（Realtime）；`x-api-key`（`/v1/models*`）、`x-goog-api-key` / `?key=`（`/v1/models/*`） |
 | Claude（`/v1/messages`） | `x-api-key: sk-xxx` | `Authorization: Bearer sk-xxx` |
 | Gemini（`/v1beta/*`） | `x-goog-api-key: sk-xxx` | `Authorization: Bearer sk-xxx`、查询参数 `?key=sk-xxx` |
 
@@ -42,4 +42,4 @@ NookMux 的 AI 模型接口是面向终端调用方的统一入口：你以 Open
 
 ## 能力边界
 
-NookMux 中继以下能力的全部接口均在本目录列出。未列出的接口（如 OpenAI Files、Fine-tuning，Gemini 独立 TTS/视频生成等）当前未实现或不支持，调用会返回明确的错误信息，不会静默忽略。
+本目录列出了 NookMux 中继的全部接口。标注为未实现或未列出的接口（如 OpenAI Files、Fine-tuning，以及 Gemini 独立 TTS/视频生成等）当前不受支持，调用会返回明确的错误信息，不会静默忽略。

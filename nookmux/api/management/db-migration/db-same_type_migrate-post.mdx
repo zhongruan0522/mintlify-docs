@@ -95,4 +95,4 @@ A malformed JSON body is rejected with HTTP `400` and `Invalid parameters`, unli
 | Invalid parameters | The JSON body is missing or malformed (HTTP `400`) |
 | Localized startup validation error | Specific localized message when `target_dsn` is empty (`Target database DSN cannot be empty`), target type differs from source type or is unsupported (same-type migration requires identical types among MySQL / PostgreSQL / openGauss / DM / KingbaseES), current database type cannot be identified, or another same-type migration job is already running |
 | Database error, please try again later | Unwrapped startup failures such as an unrecognized DSN scheme; exact details are in the server logs |
-| Authentication failed | Standard authentication errors (HTTP `401`) when the caller is not a root user |
+| Authentication failed | HTTP `401` when unauthenticated or the session is invalid; HTTP `200` with `success: false` when an authenticated caller lacks Root permissions |

@@ -34,7 +34,7 @@ curl --request GET \
 </ParamField>
 
 <ParamField path="endpoint_type" type="string">
-要测试的中继端点：`openai`、`openai-response`、`openai-response-compact`、`anthropic`、`gemini`、`jina-rerank`、`image-generation` 或 `embeddings`。未知值回退为 OpenAI 格式。省略时按模型名自动推断（rerank、embedding、codex 与 compact 后缀模型使用专属路径；带 compact 后缀的模型会被规范化处理）。
+要测试的中继端点：`openai`、`openai-response`、`openai-response-compact`、`anthropic`、`gemini`、`jina-rerank`、`image-generation` 或 `embeddings`。未知值回退为 OpenAI 格式。省略时按模型名自动推断（rerank、embedding、codex 与 compact 后缀模型使用专属路径；带 compact 后缀的模型会将端点类型规范化为 `openai-response-compact`）。
 </ParamField>
 
 <ParamField path="stream" type="boolean" default="false">
@@ -42,7 +42,7 @@ curl --request GET \
 </ParamField>
 
 <ParamField path="tool" type="boolean" default="false">
-强制测试请求使用确定性的工具调用。渠道或模型不支持测试工具时会被拒绝。
+强制测试请求使用确定性的工具调用。渠道或模型不支持工具调用测试时会被拒绝。
 </ParamField>
 
 ## 响应

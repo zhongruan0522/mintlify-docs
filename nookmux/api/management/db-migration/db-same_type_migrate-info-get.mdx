@@ -74,4 +74,4 @@ Management endpoints return HTTP `200` even on business failures; always check t
 | Condition | Description |
 | --- | --- |
 | Database error, please try again later | The current main or log database type could not be determined; see server logs |
-| Authentication failed | Standard authentication errors (HTTP `401`) when the caller is not a root user |
+| Authentication failed | HTTP `401` when unauthenticated or the session is invalid; HTTP `200` with `success: false` when an authenticated caller lacks Root permissions |

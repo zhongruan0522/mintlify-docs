@@ -26,7 +26,7 @@ curl --request GET \
 ### Path parameters
 
 <ParamField path="id" type="integer" required>
-Channel id.
+Channel ID.
 </ParamField>
 
 ## Response
@@ -122,4 +122,4 @@ Management endpoints return HTTP `200` even on business failures; always check t
 | Not a plan channel | `This channel is not a plan channel` | `channel_info.is_plan` is `false` |
 | Activity query unsupported | `This channel does not support activity data query` | The channel plan is neither `glm-coding-plan` nor `glm-coding-plan-international` |
 | Channel key invalid | `The channel API key is invalid or authentication failed. Please check the key configuration` | The upstream rejected the key |
-| Activity query failed | `Activity data query failed: {{.Error}}` | The upstream request failed or reported a non-success status; `{{.Error}}` carries the underlying error |
+| Activity query failed | `Failed to query activity data: {{.Error}}` | The upstream request failed or reported a non-success status; `{{.Error}}` carries the underlying error |

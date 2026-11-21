@@ -84,7 +84,7 @@ asyncio.run(main())
 
 连接建立后的事件遵循 OpenAI Realtime API 的语义，典型流程如下：
 
-- 连接成功后，上游首先下发 `session.created`，携带默认会话配置（模型、语音、音频格式、工具等）；客户端可通过 `session.update` 调整配置。
+- 连接成功后，上游首先下发 `session.created`，携带默认会话配置（模型、音色、音频格式、工具等）；客户端可通过 `session.update` 调整配置。
 - 客户端通过 `input_audio_buffer.append` 追加 Base64 编码的音频（24kHz 16-bit 单声道 PCM），通过 `input_audio_buffer.commit` 显式提交；或依赖服务端语音活动检测（`input_audio_buffer.speech_started` / `input_audio_buffer.speech_committed`）自动分段。
 - 客户端通过 `response.create` 触发模型生成；上游通过 `response.audio.delta`、`response.audio_transcript.delta` 增量返回合成音频与文本，以 `response.done` 表示完成。
 - 对话内容以 `conversation.item.create` / `conversation.item.created` 等事件维护；错误统一以 `error` 事件下发。
@@ -104,7 +104,7 @@ asyncio.run(main())
 ```
 
 <Note>
-  NookMux 对事件内容不做改写，双向原样转发；各事件的完整定义参见 OpenAI Realtime API 文档。会话事件中的文本与音频 token 用量按模型价格计费。
+  NookMux 对事件内容不做改写，双向原样转发；各事件的完整定义参见 OpenAI Realtime API 文档。会话事件中的文本与音频 Token 用量按模型价格计费。
 </Note>
 
 ## 错误码

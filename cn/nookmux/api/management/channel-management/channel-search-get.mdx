@@ -56,7 +56,7 @@ curl --request GET \
 </ParamField>
 
 <ParamField path="id_sort" type="boolean" default="false">
-排序方式：`true` 按渠道 ID 降序；`false` 按名称（不区分大小写）升序、再按 ID 升序。标签模式下忽略该参数，渠道固定按优先级降序、同标签内权重降序排列。
+排序方式：`true` 按渠道 ID 降序；`false` 按名称（不区分大小写）升序、再按 ID 升序。标签模式下忽略该参数，每个标签内的渠道固定按优先级降序、权重降序排列。
 </ParamField>
 
 <ParamField path="tag_mode" type="boolean" default="false">
@@ -228,7 +228,7 @@ curl --request GET \
       上游状态码映射 JSON。
     </ResponseField>
     <ResponseField name="openai_organization" type="string">
-      OpenAI organization 头的值。
+      OpenAI 组织请求头（`OpenAI-Organization`）的值。
     </ResponseField>
     <ResponseField name="remark" type="string">
       自由备注。

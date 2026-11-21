@@ -1,6 +1,6 @@
 ---
 title: Delete Channel
-description: Delete one channel and its routing abilities by id.
+description: Delete one channel and its routing abilities by ID.
 api: "DELETE /api/channel/{id}"
 ---
 
@@ -24,7 +24,7 @@ curl --request DELETE \
 ### Path parameters
 
 <ParamField path="id" type="integer" required>
-  Id of the channel to delete.
+  ID of the channel to delete.
 </ParamField>
 
 ## Response
@@ -51,7 +51,7 @@ curl --request DELETE \
 </ResponseField>
 
 <Note>
-  Management endpoints return HTTP `200` even on business failures; always check the `success` field. Deleting a non-existent id still succeeds.
+  Management endpoints return HTTP `200` even on business failures; always check the `success` field. Deleting a non-existent ID still succeeds.
 </Note>
 
 ## Error messages

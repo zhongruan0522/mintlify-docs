@@ -84,7 +84,7 @@ curl --request GET \
       桶内失败请求次数。
     </ResponseField>
     <ResponseField name="token_used" type="integer" required>
-      桶内消耗的总 token 数。
+      桶内消耗的总 Token 数。
     </ResponseField>
     <ResponseField name="quota" type="integer" required>
       桶内消耗的总额度。
@@ -102,7 +102,7 @@ curl --request GET \
 </ResponseField>
 
 <Note>
-  当看板配置关闭额度数据功能时，端点返回 `success: true`、`message` 为 `配额数据功能已禁用` 且 `data` 为空数组，而不是报错。两个时间戳都提供时，范围不得超过配置的最大查询窗口（默认 31 天）；拒绝提示文案固定，不随配置变化。
+  当数据看板配置关闭额度数据功能时，端点返回 `success: true`、`message` 为 `额度数据功能已禁用` 且 `data` 为空数组，而不是报错。两个时间戳都提供时，范围不得超过配置的最大查询窗口（默认 31 天）；拒绝提示文案固定，不随配置变化。
 </Note>
 
 ## 错误说明

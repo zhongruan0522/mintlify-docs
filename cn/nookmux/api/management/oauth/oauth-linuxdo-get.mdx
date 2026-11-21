@@ -1,5 +1,5 @@
 ---
-title: LinuxDO OAuth登录
+title: LinuxDO OAuth 登录
 description: Linux DO 登录与账号绑定的 OAuth 回调，带最低信任等级校验。
 api: "GET /api/oauth/linuxdo"
 ---
@@ -121,11 +121,11 @@ curl --request GET \
 | 需要安全验证 | HTTP `403` 且 `code` 为 `VERIFICATION_REQUIRED`：会话中没有绑定作用域 `oauth_bind` 的有效验证 |
 | 未知的 OAuth 提供商 | `provider` 未注册；HTTP `400` |
 | state 参数为空或不匹配 | `state` 缺失或与会话不一致；HTTP `403` |
-| 管理员未开启通过 Linux DO 登录以及注册 | Linux DO OAuth 未配置或未启用 |
+| 管理员未开启通过 Linux DO 登录和注册 | Linux DO OAuth 未配置或未启用 |
 | 提供商错误 | Linux DO 传入 `error`/`error_description`；`error_description` 原样回填到 `message` |
 | 无法连接至 Linux DO 服务器，请稍后重试 | 交换令牌或获取资料时无法连接 Linux DO |
-| Linux DO 获取 Token 失败，请检查设置 | 授权码交换失败，例如授权码无效 |
-| Linux DO 获取用户信息为空，请检查设置 | 资料响应中没有有效的用户 ID |
+| 从 Linux DO 获取 Token 失败，请检查设置 | 授权码交换失败，例如授权码无效 |
+| Linux DO 返回的用户信息为空，请检查设置 | 资料响应中没有有效的用户 ID |
 | Linux DO 信任等级未达到管理员设置的最低信任等级 | Linux DO 信任等级低于配置的最低值 |
 | 管理员关闭了新用户注册 | 没有匹配账号且自助注册已关闭 |
 | 用户已注销 | 关联账号已不存在 |

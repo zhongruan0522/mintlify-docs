@@ -59,7 +59,7 @@ Generating a new token invalidates the previous one immediately. The token grant
 
 | Condition | Description |
 | --- | --- |
-| Secure verification required | HTTP `403` with `code: VERIFICATION_REQUIRED`: the session has no valid verification bound to scope `access_token` |
+| Security verification required | HTTP `403` with `code: VERIFICATION_REQUIRED`: the session has no valid verification bound to scope `access_token` |
 | Generation failed | Generating the random key failed |
 | Database error | Loading the user or saving the token failed; see server logs |
 | Duplicate token | The randomly generated token already exists on another account (extremely unlikely); retry |

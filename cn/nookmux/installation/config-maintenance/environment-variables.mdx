@@ -28,10 +28,10 @@ title: 环境变量配置指南
 
 | 环境变量 | 说明 | 默认值 | 示例 |
 | --- | --- | --- | --- |
-| `SQL_DSN` | 数据库连接字符串，必须以 `mysql://`、`postgres://`、`postgresql://`、`opengauss://`、`dm://` 或 `kingbase://` 开头，其他前缀启动时报错；不设置使用 SQLite | SQLite（`data/one-api.db`） | MySQL: `SQL_DSN=mysql://user:password@127.0.0.1:3306/dbname`；PostgreSQL: `SQL_DSN=postgres://user:password@127.0.0.1:5432/dbname`；openGauss: `SQL_DSN=opengauss://user:password@127.0.0.1:5432/dbname`（库需以 `DBCOMPATIBILITY='PG'` 创建，口令按 URL 规则 percent-encode）；达梦 DM8: `SQL_DSN=dm://user:password@127.0.0.1:5236?schema=NOOKMUX`（实例需以 `CASE_SENSITIVE=N` 初始化（`dminit` 参数）并运行于 DM 原生模式（`COMPATIBLE_MODE=0`，dm.ini 服务器参数），账号需 `SELECT ANY DICTIONARY` 权限；口令按字面值写入，不得包含 `?`（`:` 与 `@` 可用））；金仓 KingbaseES: `SQL_DSN=kingbase://user:password@127.0.0.1:54321/dbname?sslmode=disable`（Oracle 兼容模式；实例不得开启 `enable_ci`，否则启动时被拒绝；口令按 URL 规则 percent-encode；未开启 SSL 的实例须保留 `sslmode=disable`——Gokb 驱动默认 `require` 且无明文回退；空串语义由连接层自动对齐，无需配置） |
+| `SQL_DSN` | 数据库连接字符串，必须以 `mysql://`、`postgres://`、`postgresql://`、`opengauss://`、`dm://` 或 `kingbase://` 开头，其他前缀启动时报错；不设置使用 SQLite | SQLite（`data/one-api.db`） | MySQL：`SQL_DSN=mysql://user:password@127.0.0.1:3306/dbname`；PostgreSQL：`SQL_DSN=postgres://user:password@127.0.0.1:5432/dbname`；openGauss：`SQL_DSN=opengauss://user:password@127.0.0.1:5432/dbname`（库需以 `DBCOMPATIBILITY='PG'` 创建，口令按 URL 规则 percent-encode）；达梦 DM8：`SQL_DSN=dm://user:password@127.0.0.1:5236?schema=NOOKMUX`（实例需以 `CASE_SENSITIVE=N` 初始化（`dminit` 参数）并运行于 DM 原生模式（`COMPATIBLE_MODE=0`，`dm.ini` 服务器参数），账号需 `SELECT ANY DICTIONARY` 权限；口令按字面值写入，不得包含 `?`（`:` 与 `@` 可用））；金仓 KingbaseES：`SQL_DSN=kingbase://user:password@127.0.0.1:54321/dbname?sslmode=disable`（Oracle 兼容模式；实例不得开启 `enable_ci`，否则启动时被拒绝；口令按 URL 规则 percent-encode；未开启 SSL 的实例须保留 `sslmode=disable`——Gokb 驱动默认 `require` 且无明文回退；空串语义由连接层自动对齐，无需配置） |
 | `LOG_SQL_DSN` | 日志表独立数据库连接字符串，留空与主库共用 | - | `LOG_SQL_DSN=mysql://user:password@127.0.0.1:3306/logs` |
 | `SQLITE_PATH` | SQLite 数据库文件路径 | `data/one-api.db` | `SQLITE_PATH=/var/lib/nookmux/nookmux.db` |
-| `SQL_MAX_IDLE_CONNS` | 空闲连接池最大连接数 | `20` | `SQL_MAX_IDLE_CONNS=50` |
+| `SQL_MAX_IDLE_CONNS` | 连接池最大空闲连接数 | `20` | `SQL_MAX_IDLE_CONNS=50` |
 | `SQL_MAX_OPEN_CONNS` | 连接池最大打开连接数；金仓需按实例 `max_connections`（默认 100，主库与日志库两套池独立计算）显著调低，否则高峰会耗尽服务端会话 | `1000` | `SQL_MAX_OPEN_CONNS=500` |
 | `SQL_MAX_LIFETIME` | 连接最大生命周期（秒） | `60` | `SQL_MAX_LIFETIME=120` |
 | `SQL_PREPARE_STMT` | 启用 GORM 预编译语句缓存（高频 SQL 路径可开启）；金仓生产建议开启（Gokb 默认路径每条带参 SQL 需两次往返） | `false` | `SQL_PREPARE_STMT=true` |
@@ -127,13 +127,13 @@ title: 环境变量配置指南
 | 环境变量 | 说明 | 默认值 | 示例 |
 | --- | --- | --- | --- |
 | `FORCE_STREAM_OPTION` | 覆盖客户端 `stream_options` 参数以强制返回 usage | `true` | `FORCE_STREAM_OPTION=false` |
-| `CountToken` | 是否统计文本 token | `true` | `CountToken=false` |
-| `GET_MEDIA_TOKEN` | 是否统计图片 token（流式） | `true` | - |
-| `GET_MEDIA_TOKEN_NOT_STREAM` | 非流模式下是否统计图片 token | `false` | - |
+| `CountToken` | 是否统计文本 Token | `true` | `CountToken=false` |
+| `GET_MEDIA_TOKEN` | 是否统计图片 Token（流式） | `true` | - |
+| `GET_MEDIA_TOKEN_NOT_STREAM` | 非流式模式下是否统计图片 Token | `false` | - |
 
 ## 多模态资源存储配置
 
-用于 text-only 模型调用 MCP 图像/视频理解工具时的自动转 URL 存储。
+用于纯文本模型调用 MCP 图像/视频理解工具时的自动转 URL 存储。
 
 | 环境变量 | 说明 | 默认值 |
 | --- | --- | --- |
@@ -223,7 +223,7 @@ title: 环境变量配置指南
 | `TEST_PROMPT` | 已移除，测试 prompt 由系统设置控制 |
 | `TASK_PRICE_PATCH` | 已移除，任务计费请使用系统设置中的倍率配置 |
 | `REDIS_MASTER_NAME`、`REDIS_CONN_POOL_SIZE`、`REDIS_PASSWORD` | 已移除，Redis 配置统一通过 `REDIS_CONN_STRING` 连接字符串及 `REDIS_POOL_SIZE` 等变量控制 |
-| `GEMINI_MODEL_MAP`、`GEMINI_SAFETY_SETTING` | 已废弃，请在系统设置-模型相关设置中配置 |
+| `GEMINI_MODEL_MAP`、`GEMINI_SAFETY_SETTING` | 已废弃，请在系统设置 → 模型与路由中配置 |
 
 ## 多机部署示例
 

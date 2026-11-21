@@ -93,7 +93,7 @@ curl --request GET \
       Display name of the account.
     </ResponseField>
     <ResponseField name="role" type="integer" required>
-      Role: `1` common user, `10` admin, `100` root.
+      Role: `1` regular user, `10` admin, `100` root.
     </ResponseField>
     <ResponseField name="status" type="integer" required>
       Account status: `1` enabled.
@@ -118,16 +118,16 @@ curl --request GET \
 
 | Condition | Description |
 | --- | --- |
-| Secure verification required | HTTP `403` with `code: VERIFICATION_REQUIRED`: the session has no valid verification bound to scope `oauth_bind` |
+| Security verification required | HTTP `403` with `code: VERIFICATION_REQUIRED`: the session has no valid verification bound to scope `oauth_bind` |
 | Unknown OAuth provider | `provider` is not registered; HTTP `400` |
 | State parameter is empty or mismatched | `state` missing or not matching the session; HTTP `403` |
-| Linux DO login and registration has not been enabled by administrator | Linux DO OAuth is not configured/enabled |
+| Linux DO login and registration have not been enabled by the administrator | Linux DO OAuth is not configured/enabled |
 | Provider error | `error`/`error_description` returned by Linux DO; `error_description` is echoed in `message` |
 | Unable to connect to Linux DO server | Token exchange or profile fetch could not reach Linux DO |
 | Failed to get token from Linux DO | Authorization code exchange failed, for example an invalid code |
 | Linux DO returned empty user info | The profile response did not contain a valid user id |
-| Linux DO trust level does not meet the minimum required by administrator | The Linux DO trust level is below the configured minimum |
-| New user registration has been disabled by administrator | No matching account exists and self-registration is disabled |
+| Linux DO trust level does not meet the minimum required by the administrator | The Linux DO trust level is below the configured minimum |
+| New user registration has been disabled by the administrator | No matching account exists and self-registration is disabled |
 | User has been deleted | The linked account no longer exists |
 | User has been banned | The linked account is not enabled |
 | This Linux DO account has already been bound | Another user already uses this Linux DO identity |

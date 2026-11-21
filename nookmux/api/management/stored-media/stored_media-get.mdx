@@ -89,18 +89,18 @@ Error description when `success` is `false`; empty otherwise.
 Pagination envelope.
 
 <Expandable title="data structure">
-  <ParamField path="page" type="integer" required>
+  <ResponseField name="page" type="integer" required>
     Current page number.
-  </ParamField>
-  <ParamField path="page_size" type="integer" required>
+  </ResponseField>
+  <ResponseField name="page_size" type="integer" required>
     Page size actually applied (after defaulting and the 100 cap).
-  </ParamField>
-  <ParamField path="total" type="integer" required>
+  </ResponseField>
+  <ResponseField name="total" type="integer" required>
     Total number of matching records.
-  </ParamField>
-  <ParamField path="items" type="array" required>
+  </ResponseField>
+  <ResponseField name="items" type="array" required>
     Stored media records of the current page, ordered by `created_at` descending, then `id` descending.
-  </ParamField>
+  </ResponseField>
 </Expandable>
 </ResponseField>
 
@@ -108,24 +108,24 @@ Pagination envelope.
 One stored media record.
 
 <Expandable title="stored media structure">
-  <ParamField path="id" type="string" required>
+  <ResponseField name="id" type="string" required>
     Record ID (UUID) of the stored media.
-  </ParamField>
-  <ParamField path="media_type" type="string" required>
+  </ResponseField>
+  <ResponseField name="media_type" type="string" required>
     Media type: `image` or `video`.
-  </ParamField>
-  <ParamField path="created_at" type="integer" required>
+  </ResponseField>
+  <ResponseField name="created_at" type="integer" required>
     Storage time as a Unix timestamp in seconds.
-  </ParamField>
-  <ParamField path="mime_type" type="string" required>
+  </ResponseField>
+  <ResponseField name="mime_type" type="string" required>
     MIME type of the original file, for example `image/png` or `video/mp4`.
-  </ParamField>
-  <ParamField path="size_bytes" type="integer" required>
+  </ResponseField>
+  <ResponseField name="size_bytes" type="integer" required>
     Size of the stored file in bytes.
-  </ParamField>
-  <ParamField path="url" type="string" required>
+  </ResponseField>
+  <ResponseField name="url" type="string" required>
     Signed download URL for the media content, in the form `{server_address}/mcp/{media_type}/{id}?exp=...&sig=...`. The signature expires after one hour.
-  </ParamField>
+  </ResponseField>
 </Expandable>
 </ResponseField>
 

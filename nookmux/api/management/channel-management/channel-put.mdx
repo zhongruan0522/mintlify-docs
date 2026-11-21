@@ -38,7 +38,7 @@ ID of the channel to update. Must not be `0`.
 </ParamField>
 
 <ParamField path="body.multi_key_mode" type="string">
-New polling strategy for multi-key channels: `random` or `polling`. Applied only when non-empty; any other value is rejected.
+New key rotation strategy for multi-key channels: `random` or `polling` (round-robin). Applied only when non-empty; any other value is rejected.
 </ParamField>
 
 <ParamField path="body.key_mode" type="string">
@@ -46,7 +46,7 @@ How `key` is applied on multi-key channels: `replace` (default behavior, also wh
 </ParamField>
 
 <ParamField path="body" type="object">
-Channel fields to update, using the same structure as the `channel` object in [Add channel](/nookmux/api/management/channel-management/channel-post). The fields below are the editable ones; server-managed fields (`created_time`, `balance`, `used_quota`, `channel_info`) are filled by the server.
+Channel fields to update, using the same structure as the `channel` object in [Add Channel](/nookmux/api/management/channel-management/channel-post). The fields below are the editable ones; server-managed fields (`created_time`, `balance`, `used_quota`, `channel_info`) are filled by the server.
 
   <Expandable title="channel structure">
     <ParamField path="type" type="integer">
@@ -291,10 +291,10 @@ The updated channel. `key` is always returned as an empty string, and multi-key 
           Map of key index to status (`1` enabled, `2` manually disabled, `3` auto-disabled); absent entries are enabled.
         </ResponseField>
         <ResponseField name="multi_key_mode" type="string">
-          Polling strategy: `random` or `polling`.
+          Key rotation strategy: `random` or `polling` (round-robin).
         </ResponseField>
         <ResponseField name="multi_key_polling_index" type="integer">
-          Current index used by the `polling` strategy.
+          Current index used by the `polling` (round-robin) strategy.
         </ResponseField>
         <ResponseField name="is_plan" type="boolean">
           Whether the channel points to a subscription-style (plan) upstream.

@@ -4,7 +4,7 @@ description: Fetch the site-wide relay performance summary and per-model perform
 api: "GET /api/perf-metrics/summary"
 ---
 
-Returns the relay performance of the whole instance over a query window: a site-wide summary across all models plus one aggregate per model sorted by request volume. It is computed from the same performance-metrics buckets as the per-model detail endpoint and backs the model plaza performance badges.
+Returns the relay performance of the whole instance over a query window: a site-wide summary across all models plus one aggregate per model sorted by request volume descending. It is computed from the same performance-metrics buckets as the per-model detail endpoint and backs the model plaza performance badges.
 
 The endpoint is gated by the header navigation module configuration of the `perf_metrics` module. By default the module is enabled and public: no authentication is required, and the caller's identity is resolved from the login session when one is present. If the module is configured to require login, a valid login is enforced (User permission). See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
 
@@ -126,6 +126,6 @@ Metric definitions match [Get Model Performance Metrics](/nookmux/api/management
 | Condition | Description |
 | --- | --- |
 | Module disabled | HTTP `403` when the `perf_metrics` module is switched off in header navigation module settings; `message` is localized via `Accept-Language` (`perf_metrics 已禁用` by default, `perf_metrics is disabled` for English) |
-| Login required | Standard authentication errors (HTTP `401`) when the perf_metrics module is configured to require login and the caller is not authenticated |
+| Login required | Standard authentication errors (HTTP `401`) when the `perf_metrics` module is configured to require login and the caller is not authenticated |
 | Invalid query window (1-720 hours) | `hours` is not an integer between `1` and `720`; returned as HTTP `200` with `success: false` |
 | Database error, please try again later | Loading the aggregation buckets failed; see server logs |

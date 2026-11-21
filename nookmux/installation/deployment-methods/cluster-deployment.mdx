@@ -37,7 +37,7 @@ All nodes in a cluster must:
 
 ## Deployment Steps
 
-### Step One: Prepare Shared Database and Redis
+### Step 1: Prepare Shared Database and Redis
 
 Prepare external MySQL/PostgreSQL/openGauss/DM8/KingbaseES and Redis services. These can be:
 
@@ -47,7 +47,7 @@ Prepare external MySQL/PostgreSQL/openGauss/DM8/KingbaseES and Redis services. T
 
 The application only needs one unified `SQL_DSN` entry point. If the database itself uses replication or a proxy layer for load balancing, configure that on the database side.
 
-### Step Two: Configure the Master Node
+### Step 2: Configure the Master Node
 
 Create `docker-compose.yml` on the master node server:
 
@@ -79,7 +79,7 @@ Start the master node:
 docker compose up -d
 ```
 
-### Step Three: Configure the Slave Nodes
+### Step 3: Configure the Slave Nodes
 
 Create `docker-compose.yml` on each slave node server:
 
@@ -115,7 +115,7 @@ docker compose up -d
 
 Repeat this step for each slave node server.
 
-### Step Four: Configure the Load Balancer
+### Step 4: Configure the Load Balancer
 
 The following is an Nginx load balancer example:
 
@@ -192,7 +192,7 @@ For large-scale clusters, consider a centralized log management system or a sepa
 ## Scaling Guide
 
 1. **Prepare new servers**: install Docker and Docker Compose.
-2. **Configure slave nodes**: follow Step Three to configure the new slave nodes.
+2. **Configure slave nodes**: follow Step 3 to configure the new slave nodes.
 3. **Update the load balancer**: add the new nodes to the load balancer configuration.
 4. **Test the new nodes**: make sure they work correctly and participate in load balancing.
 

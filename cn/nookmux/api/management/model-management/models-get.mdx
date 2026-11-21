@@ -125,16 +125,16 @@ curl --request GET \
       逗号分隔的标签。
     </ResponseField>
     <ResponseField name="vendor_id" type="integer">
-      模型所属供应商的 ID；`0` 表示未指定供应商。供应商记录由 [供应商接口](/cn/nookmux/api/management/vendors/vendors-get) 管理。
+      模型所属供应商的 ID；`0` 表示未指定供应商。供应商记录由[供应商接口](/cn/nookmux/api/management/vendors/vendors-get)管理。
     </ResponseField>
     <ResponseField name="endpoints" type="string">
       支持的端点类型，序列化为 JSON 数组字符串，例如 `"[\"openai\",\"anthropic\"]"`。可取值：`openai`、`openai-response`、`openai-response-compact`、`anthropic`、`gemini`、`jina-rerank`、`image-generation`、`embeddings`。存储值为空时由定价缓存自动填充。
     </ResponseField>
     <ResponseField name="context_length" type="integer">
-      上下文窗口大小（token 数）。
+      上下文窗口大小（Token 数）。
     </ResponseField>
     <ResponseField name="max_output_tokens" type="integer">
-      最大输出 token 数。
+      最大输出 Token 数。
     </ResponseField>
     <ResponseField name="input_modalities" type="array of string">
       接受的输入模态，例如 `["text","image"]`。

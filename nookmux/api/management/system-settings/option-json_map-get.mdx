@@ -106,7 +106,7 @@ curl --request GET \
 </ResponseField>
 
 <Note>
-  Parameter errors use real HTTP status codes: an unsupported `key` returns HTTP `400`. A stored option value that fails JSON parsing returns HTTP `200` with `success: false` and the parse error in `message`. Use [Update System Options](/nookmux/api/management/system-settings/option-put) or the JSON map write endpoints to modify these options entry by entry.
+  Parameter errors use real HTTP status codes: an unsupported `key` returns HTTP `400`. A stored option value that fails JSON parsing returns HTTP `200` with `success: false` and the parse error in `message`. Use [Update System Options](/nookmux/api/management/system-settings/option-put) to replace an entire option, or use the JSON map write endpoints (`PUT` and `DELETE /api/option/json_map`) to modify entries one by one.
 </Note>
 
 ## Error messages

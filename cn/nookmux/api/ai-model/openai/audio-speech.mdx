@@ -6,7 +6,7 @@ api: "POST /v1/audio/speech"
 
 将文本合成为语音音频。请求与响应格式兼容 OpenAI Audio Speech 接口。
 
-NookMux 根据请求中的 `model` 将请求分发到对应渠道并计费：按输入文本 token 与输出音频时长统计用量（输出音频每分钟折算 1000 token）。可用模型由控制台「渠道 → 模型」配置决定，常见如 `tts-1`、`tts-1-hd`、`gpt-4o-mini-tts`。
+NookMux 根据请求中的 `model` 将请求分发到对应渠道并计费：按输入文本 Token 与输出音频时长统计用量（输出音频每分钟折算 1000 Token）。可用模型由控制台「渠道 → 模型」配置决定，常见如 `tts-1`、`tts-1-hd`、`gpt-4o-mini-tts`。
 
 ## 请求
 

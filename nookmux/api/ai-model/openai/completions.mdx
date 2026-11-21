@@ -60,7 +60,7 @@ print(response.choices[0].text)
 </ParamField>
 
 <ParamField path="body.prompt" type="string | string[]" required>
-  The prompt to generate completions for, as a string or an array of strings. When an array is provided, each item is an independent completion request, and the results are returned merged in order in `choices`. This endpoint does not use the `messages` field.
+  The prompt to generate completions for, as a string or an array of strings. When an array is provided, each item is an independent completion request, and the results are merged and returned in order in `choices`. This endpoint does not use the `messages` field.
 </ParamField>
 
 <ParamField path="body.suffix" type="string">

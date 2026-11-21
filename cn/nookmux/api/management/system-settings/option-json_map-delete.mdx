@@ -60,7 +60,7 @@ curl --request DELETE \
 </ResponseField>
 
 <Note>
-  删除最后一个条目后选项保留为空 JSON 对象 `{}`，选项本身不会被移除。请求体形态错误（JSON 缺失或非法、`map_key` 为空、`key` 不受支持）返回 HTTP `400`；条目不存在与整体校验失败返回 HTTP `200` 加 `success: false` 和本地化的 `message`。
+  删除最后一个条目后选项保留为空 JSON 对象 `{}`，选项本身不会被移除。请求体格式或参数错误（JSON 缺失或非法、`map_key` 为空、`key` 不受支持）返回 HTTP `400`；条目不存在与整体校验失败返回 HTTP `200` 加 `success: false` 和本地化的 `message`。
 </Note>
 
 ## 错误说明
@@ -71,6 +71,6 @@ curl --request DELETE \
 | 映射键不能为空 | HTTP `400`；`map_key` 去除空白后为空 |
 | 不支持的 JSON 映射配置项 | HTTP `400`；`key` 不是受支持的 JSON 映射选项键 |
 | 映射项不存在 | HTTP `200` 加 `success: false`；`map_key` 下没有条目 |
-| `JSON 映射配置解析失败: {Error}` | HTTP `200` 加 `success: false`；计价选项重新序列化或校验失败 |
-| `MiniMax 设置失败: {Error}` | HTTP `200` 加 `success: false`；MiniMax 选项值校验失败 |
+| `JSON 映射配置解析失败：{Error}` | HTTP `200` 加 `success: false`；计价选项重新序列化或校验失败 |
+| `MiniMax 设置失败：{Error}` | HTTP `200` 加 `success: false`；MiniMax 选项值校验失败 |
 | 数据库错误，请稍后重试 | HTTP `200` 加 `success: false`；选项持久化失败，详见服务端日志 |

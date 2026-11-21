@@ -6,7 +6,7 @@ api: "GET /api/user/self/usage_log_fields"
 
 返回调用者可见的使用日志详情弹窗字段。每个字段的可见性由管理员按角色配置（系统设置 → 控制台内容 → 使用日志字段）；本接口按调用者自身角色计算该配置并返回可见字段 key 列表。控制台据此决定是否展示详情入口以及渲染哪些字段。
 
-需要**用户**权限（任意登录用户）。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
+需要**用户（User）**权限（任意登录用户）。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
 
 ## 请求
 
@@ -58,12 +58,12 @@ curl --request GET \
 可见的使用日志字段。
 
 <Expandable title="data 结构">
-  <ParamField path="enabled" type="boolean" required>
+  <ResponseField name="enabled" type="boolean" required>
     调用者角色是否启用了使用日志详情弹窗。为 `false` 时 `fields` 为空列表，控制台隐藏详情入口。
-  </ParamField>
-  <ParamField path="fields" type="array" required>
+  </ResponseField>
+  <ResponseField name="fields" type="array" required>
     调用者角色可见的使用日志字段 key，例如 `request_id`、`ip_address`、`billing_details`。可配置的 key 集合与默认值由服务端定义。
-  </ParamField>
+  </ResponseField>
 </Expandable>
 </ResponseField>
 

@@ -81,7 +81,7 @@ curl --request POST \
 <ResponseField name="data" type="object" required>
   创建成功的预填分组。`id`、`created_time`、`updated_time` 由服务端填充；其余字段为请求内容落库后的表示。
 
-  <Expandable title="prefill group 结构">
+  <Expandable title="预填分组结构">
     <ResponseField name="id" type="integer" required>
       服务端分配的分组 ID。
     </ResponseField>
@@ -114,7 +114,7 @@ curl --request POST \
 
 | 条件 | 说明 |
 | --- | --- |
-| Invalid request body | JSON 请求体缺失或格式错误 |
-| Group name and type cannot be empty | `name` 或 `type` 缺失或为空 |
-| Group name already exists | 已存在同名且未删除的分组 |
-| Database error, please try again later | 分组落库失败，详见服务端日志 |
+| 请求体格式不正确 | JSON 请求体缺失或格式错误 |
+| 分组名称和类型不能为空 | `name` 或 `type` 缺失或为空 |
+| 分组名称已存在 | 已存在同名且未删除的分组 |
+| 数据库错误，请稍后重试 | 分组落库失败，详见服务端日志 |

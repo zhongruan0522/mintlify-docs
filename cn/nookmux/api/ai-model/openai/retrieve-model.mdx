@@ -6,7 +6,7 @@ api: "GET /v1/models/{model}"
 
 按模型 ID 获取单个模型对象，响应格式兼容 OpenAI Models retrieve API。
 
-模型 ID 需为 NookMux 内置渠道模型清单中的名称；手动添加且不在内置清单内的自定义模型会返回 `model_not_found` 错误，即使它们可以通过其他接口调用。同时携带 `x-api-key` 与 `anthropic-version` 头时返回 Anthropic 格式的单模型对象，详见下文「Header 分流说明」。
+模型 ID 需为 NookMux 内置渠道模型清单中的名称；手动添加且不在内置清单内的自定义模型会返回 `model_not_found` 错误，即使它们可以通过其他接口调用。同时携带 `x-api-key` 与 `anthropic-version` 请求头时返回 Anthropic 格式的单模型对象，详见下文「请求头分流说明」。
 
 ## 请求
 
@@ -44,9 +44,9 @@ print(model.id, model.owned_by)
   要获取的模型 ID，如 `gpt-4o`。
 </ParamField>
 
-### Header 分流说明
+### 请求头分流说明
 
-- 同时携带 `x-api-key` 与 `anthropic-version` 头：返回 Anthropic 格式的单模型对象，见 [Claude 获取模型](/cn/nookmux/api/ai-model/claude/retrieve-model)。
+- 同时携带 `x-api-key` 与 `anthropic-version` 请求头：返回 Anthropic 格式的单模型对象，见 [Claude 获取模型](/cn/nookmux/api/ai-model/claude/retrieve-model)。
 - 其他情况：返回本页的 OpenAI 格式。
 
 <Note>

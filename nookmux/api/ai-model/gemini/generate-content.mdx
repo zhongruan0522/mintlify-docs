@@ -119,7 +119,7 @@ The action is fixed to `generateContent`.
           Thought signature. Returned by the model for thinking-enabled function calling; pass it back verbatim in subsequent turns.
         </ParamField>
         <ParamField path="videoMetadata" type="object">
-          Metadata for a video fragment (such as `fps`), used for video cutting and similar scenarios.
+          Metadata for a video fragment (such as `fps`), used for video clipping and similar scenarios.
         </ParamField>
         <ParamField path="executableCode" type="object">
           A code fragment produced by the code execution tool, containing `language` and `code`.
@@ -356,7 +356,7 @@ The upstream response body is returned verbatim by the gateway; the key fields o
       The response content, with the same structure as a `contents` entry (`role` is `model`; `parts[]` contains `text`, `inlineData` (image/audio output), `functionCall`, `thought`, and other fragments).
     </ResponseField>
     <ResponseField name="finishReason" type="string">
-      Why generation stopped: `STOP` (natural end), `MAX_TOKENS` (maxOutputTokens limit), `SAFETY` (blocked by safety policy), `RECITATION` (citation restriction triggered), `MALFORMED_FUNCTION_CALL` (malformed function call), `IMAGE_SAFETY`, `OTHER`.
+      Why generation stopped: `STOP` (natural end), `MAX_TOKENS` (maxOutputTokens limit), `SAFETY` (blocked by safety policy), `RECITATION` (recitation restriction triggered), `MALFORMED_FUNCTION_CALL` (malformed function call), `IMAGE_SAFETY`, `OTHER`.
     </ResponseField>
     <ResponseField name="index" type="integer">
       Index of this candidate in the list (starting at 0).

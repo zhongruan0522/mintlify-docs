@@ -9,7 +9,7 @@ Retrieves audit log entries that record administrator create, update, and delete
 Requires **Admin** permissions. See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
 
 <Note>
-Audit logging is disabled by default. Entries exist only after an administrator enables audit in system settings, and only for enabled modules. Read-only operations are never audited.
+Audit logging is disabled by default. Entries exist only after an administrator enables audit logging in system settings, and only for enabled modules. Read-only operations are never audited.
 </Note>
 
 ## Request
@@ -121,7 +121,7 @@ Error description when `success` is `false`; empty otherwise.
           Operation type: `create`, `update`, or `delete`.
         </ResponseField>
         <ResponseField name="description" type="string" required>
-          Human-readable summary of the operation written by the server.
+          Human-readable summary of the operation written by the server (recorded in Chinese; for example, `"更新仪表板配置"` means "Update dashboard configuration").
         </ResponseField>
         <ResponseField name="before_data" type="string">
           JSON string of the pre-operation data; for updates only the fields that changed are kept. Recorded only when diff recording is enabled in audit settings; omitted when empty.

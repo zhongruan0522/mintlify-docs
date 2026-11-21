@@ -24,7 +24,7 @@ curl --request GET \
 ### 查询参数
 
 <ParamField path="exclude_large_options" type="string" default="">
-  设为 `true` 时，已废弃的大型 JSON 选项的值替换为 `{}`，以缩小响应体。其他取值（包括缺省）返回存储的原值。
+  设为 `true` 时，会将已废弃的大型 JSON 选项的值替换为 `{}`，以缩小响应体。其他取值（包括省略该参数）返回存储的原值。
 </ParamField>
 
 ## 响应

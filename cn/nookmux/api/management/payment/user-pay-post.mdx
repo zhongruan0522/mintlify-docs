@@ -33,7 +33,7 @@ curl --request POST \
 ### 请求体
 
 <ParamField path="body.amount" type="integer" required>
-充值数量。不得低于配置的最低充值数量。 单笔充值上限为 `floor((MaxInt-1)/quota_per_unit)`（默认 `quota_per_unit` 为 `500000` 时约 18.4 万亿）；换算额度无法表示的数量同样会被拒绝。
+充值数量。不得低于配置的最低充值数量。单笔充值上限为 `floor((MaxInt-1)/quota_per_unit)`（默认 `quota_per_unit` 为 `500000` 时约 18.4 万亿）；换算额度无法表示的数量同样会被拒绝。
 </ParamField>
 
 <ParamField path="body.payment_method" type="string" required>

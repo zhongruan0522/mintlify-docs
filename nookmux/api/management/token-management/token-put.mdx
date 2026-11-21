@@ -45,7 +45,7 @@ curl --request PUT \
 ### Body
 
 <ParamField path="body.id" type="integer" required>
-  Id of the token to update. The token must belong to the current user.
+  ID of the token to update. The token must belong to the current user.
 </ParamField>
 
 <ParamField path="body.status" type="integer">
@@ -101,7 +101,7 @@ curl --request PUT \
 </ParamField>
 
 <ParamField path="body.model_mapping" type="string">
-  JSON object of token-level model redirects, with the same validation rules as in [Create Token](/nookmux/api/management/token-management/token-post). `null` or an empty string clears the redirect.
+  JSON-encoded string representing a token-level model redirect object, with the same validation rules as in [Create Token](/nookmux/api/management/token-management/token-post). `null` or an empty string clears the redirect.
 </ParamField>
 
 <ParamField path="body.allow_ips" type="string">
@@ -173,7 +173,7 @@ curl --request PUT \
 </ResponseField>
 
 <ResponseField name="data" type="object" required>
-  The updated token object. Same structure as in [Get Specified Token](/nookmux/api/management/token-management/token-id-get); the `key` is masked.
+  The updated token object. Same structure as in [Get Specific Token](/nookmux/api/management/token-management/token-id-get); the `key` is masked.
 </ResponseField>
 
 <Note>

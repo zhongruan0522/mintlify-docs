@@ -74,7 +74,7 @@ curl --request GET \
 <ResponseField name="data" type="array" required>
   按 `updated_time` 降序排列的预填分组列表。
 
-  <Expandable title="prefill group 结构">
+  <Expandable title="预填分组结构">
     <ResponseField name="id" type="integer" required>
       分组 ID。
     </ResponseField>
@@ -107,4 +107,4 @@ curl --request GET \
 
 | 条件 | 说明 |
 | --- | --- |
-| Database error, please try again later | 读取预填分组失败，详见服务端日志 |
+| 数据库错误，请稍后重试 | 读取预填分组失败，详见服务端日志 |

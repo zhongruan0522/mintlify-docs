@@ -4,7 +4,7 @@ description: List the current user's tickets with pagination, status filter and 
 api: "GET /api/ticket/"
 ---
 
-Retrieve a paginated list of the tickets created by the current user, ordered by most recently updated first. Results can be filtered by status and searched by ticket id or title keyword.
+Retrieve a paginated list of the tickets created by the current user, ordered by most recently updated first. Results can be filtered by status and searched by ticket ID or title keyword.
 
 Requires a logged-in user (**User** permissions). See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
 
@@ -102,7 +102,7 @@ curl --request GET \
 
   <Expandable title="ticket summary structure">
     <ResponseField name="id" type="integer" required>
-      Ticket id.
+      Ticket ID.
     </ResponseField>
     <ResponseField name="title" type="string" required>
       Ticket title.

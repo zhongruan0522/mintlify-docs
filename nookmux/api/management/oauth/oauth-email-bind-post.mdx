@@ -1,6 +1,6 @@
 ---
 title: Bind Email
-description: Bind an email address to the current logged-in account with an email verification code.
+description: Bind an email address to the currently logged-in account with an email verification code.
 api: "POST /api/oauth/email/bind"
 ---
 
@@ -69,7 +69,7 @@ curl --request POST \
 
 | Condition | Description |
 | --- | --- |
-| Secure verification required | HTTP `403` with `code: VERIFICATION_REQUIRED`: the session has no valid verification bound to scope `email_bind` |
+| Security verification required | HTTP `403` with `code: VERIFICATION_REQUIRED`: the session has no valid verification bound to scope `email_bind` |
 | Invalid request body | The JSON body is missing or malformed, or `email`/`code` is empty after trimming |
 | Verification code is incorrect or has expired | No valid verification code matches this email address |
 | Not logged in | No user id found in the login session (HTTP 401) |

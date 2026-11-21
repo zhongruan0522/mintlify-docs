@@ -65,7 +65,7 @@ A non-root admin can only disable 2FA for users with a strictly lower role. The 
 
 | Condition | Description |
 | --- | --- |
-| Secure verification required | HTTP `403` with `code: VERIFICATION_REQUIRED`: the session has no valid verification bound to scope `admin_user_manage` |
+| Security verification required | HTTP `403` with `code: VERIFICATION_REQUIRED`: the session has no valid verification bound to scope `admin_user_manage` |
 | Invalid user ID | `id` in the path is not an integer |
 | Database error | The target user cannot be loaded (including an unknown `id`) or the update failed |
 | No permission | The caller is not root and the target user has the same or a higher role |

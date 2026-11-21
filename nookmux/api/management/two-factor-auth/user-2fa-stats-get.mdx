@@ -15,7 +15,7 @@ Requires **Admin** permissions. See [Authentication](/nookmux/api/management/aut
 ```bash cURL
 curl --request GET \
   --url 'https://your-nookmux-domain/api/user/2fa/stats' \
-  --header 'Authorization: Bearer {access_token}' \
+  --header 'Cookie: session={session_cookie}' \
   --header 'New-Api-User: 1'
 ```
 

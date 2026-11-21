@@ -4,7 +4,7 @@ description: Complete a scope-bound step-up verification with 2FA, passkey, or t
 api: "POST /api/verify"
 ---
 
-Universal step-up (secure) verification endpoint. Security-sensitive operations require a fresh proof that the caller controls the account's credentials. Each call verifies one factor and records a verification bound to the current user **and** to a single `scope`; guarded endpoints then accept requests from that user within the verification window for exactly that scope. A verification obtained for one action cannot be replayed against another.
+Universal step-up (security) verification endpoint. Security-sensitive operations require a fresh proof that the caller controls the account's credentials. Each call verifies one factor and records a verification bound to the current user **and** to a single `scope`; guarded endpoints then accept requests from that user within the verification window for exactly that scope. A verification obtained for one action cannot be replayed against another.
 
 Three methods are supported:
 

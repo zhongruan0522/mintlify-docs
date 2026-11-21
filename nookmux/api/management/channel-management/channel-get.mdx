@@ -36,7 +36,7 @@ curl --request GET \
 </ParamField>
 
 <ParamField path="query.status" type="string">
-  Status filter: `enabled` or `1` returns only enabled channels; `disabled` or `0` returns all disabled channels (both manually and auto disabled); any other value returns everything.
+  Status filter: `enabled` or `1` returns only enabled channels; `disabled` or `0` returns all disabled channels (both manually disabled and auto-disabled); any other value returns everything.
 </ParamField>
 
 <ParamField path="query.type" type="integer">
@@ -130,7 +130,7 @@ curl --request GET \
 
   <Expandable title="channel structure">
     <ResponseField name="id" type="integer" required>
-      Channel id.
+      Channel ID.
     </ResponseField>
     <ResponseField name="type" type="integer" required>
       Channel type constant, for example `1` for OpenAI.
@@ -221,13 +221,13 @@ curl --request GET \
           Map of key index to key status.
         </ResponseField>
         <ResponseField name="multi_key_polling_index" type="integer" required>
-          Index of the key to be used next under polling mode.
+          Index of the key to be used next under round-robin (`polling`) mode.
         </ResponseField>
         <ResponseField name="multi_key_mode" type="string" required>
-          Multi-key strategy: `random` or `polling`.
+          Multi-key strategy: `random` or `polling` (round-robin).
         </ResponseField>
         <ResponseField name="is_plan" type="boolean" required>
-          Whether the channel points to a metered plan base.
+          Whether the channel points to a metered plan base URL.
         </ResponseField>
         <ResponseField name="plan_name" type="string" required>
           Plan identifier, matching a known special base URL.

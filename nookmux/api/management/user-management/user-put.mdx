@@ -97,9 +97,9 @@ This endpoint returns no `data` field. When the quota changes, the adjustment is
 
 | Condition | Description |
 | --- | --- |
-| Secure verification required | HTTP `403` with `code: VERIFICATION_REQUIRED`: the session has no valid verification bound to scope `admin_user_manage` |
+| Security verification required | HTTP `403` with `code: VERIFICATION_REQUIRED`: the session has no valid verification bound to scope `admin_user_manage` |
 | Invalid parameters | The JSON body is malformed or `id` is missing or `0` |
 | Invalid input | Field constraints are violated (`username` up to 20 characters, `password` 8 to 20 characters when set, `display_name` up to 20 characters, `remark` up to 255 characters) |
 | No permission | The caller is not root and the target user has the same or a higher role |
-| Cannot create higher level user | `role` is equal to or higher than the caller's role |
+| Cannot create same- or higher-level user | `role` is equal to or higher than the caller's role |
 | Database error | Loading or updating the user failed |

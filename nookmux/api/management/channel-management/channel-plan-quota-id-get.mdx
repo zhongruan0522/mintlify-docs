@@ -31,7 +31,7 @@ curl --request GET \
 ### Path parameters
 
 <ParamField path="id" type="integer" required>
-Channel id.
+Channel ID.
 </ParamField>
 
 ## Response
@@ -94,7 +94,7 @@ Whether the request succeeded.
 Plan quota data. The structure depends on the channel's `plan_name`; see the variants below.
 </ResponseField>
 
-<Expandable title="glm plan data structure">
+<Expandable title="GLM plan data structure">
 
 Returned when `plan_name` is `glm-coding-plan` or `glm-coding-plan-international`.
 
@@ -133,7 +133,7 @@ Whether the subscription auto-renews.
     Quota reset time, normalized to RFC3339. Omitted when the upstream sends none.
   </ResponseField>
   <ResponseField name="status" type="string" required>
-    Usage pressure computed by the server: `充裕` (below 50%), `适中` (50-79%), `紧张` (80% and above).
+    Usage pressure computed by the server: `充裕` (ample, below 50%), `适中` (moderate, 50-79%), `紧张` (tight, 80% and above).
   </ResponseField>
 </Expandable>
 </ResponseField>
@@ -157,7 +157,7 @@ Weekly token quota, present when the plan includes one (V2 plans). Same structur
     Quota reset time, normalized to RFC3339. Omitted when the upstream sends none.
   </ResponseField>
   <ResponseField name="status" type="string" required>
-    Usage pressure computed by the server: `充裕`, `适中`, or `紧张`.
+    Usage pressure computed by the server: `充裕` (ample), `适中` (moderate), or `紧张` (tight).
   </ResponseField>
 </Expandable>
 </ResponseField>
@@ -178,17 +178,17 @@ MCP tool quota.
     Quota reset time, normalized to RFC3339. Omitted when the upstream sends none.
   </ResponseField>
   <ResponseField name="status" type="string" required>
-    Usage pressure computed by the server: `充裕`, `适中`, or `紧张`.
+    Usage pressure computed by the server: `充裕` (ample), `适中` (moderate), or `紧张` (tight).
   </ResponseField>
   <ResponseField name="tools" type="object[]">
-    Per-tool usage. `name` is a display name mapped by the server (`联网搜索`, `网页读取`, `开源仓库`) or the raw upstream model code when unmapped; `usage` is the call count.
+    Per-tool usage. `name` is a display name mapped by the server (`联网搜索` — web search, `网页读取` — web reader, `开源仓库` — open-source repository) or the raw upstream model code when unmapped; `usage` is the call count.
   </ResponseField>
 </Expandable>
 </ResponseField>
 
 </Expandable>
 
-<Expandable title="kimi plan data structure">
+<Expandable title="Kimi plan data structure">
 
 Returned when `plan_name` is `kimi-coding-plan`.
 
@@ -218,7 +218,7 @@ Quota tiers of the plan.
     Reset time in RFC3339. Omitted when the upstream sends none.
   </ResponseField>
   <ResponseField name="status" type="string" required>
-    Usage pressure: `充裕`, `适中`, or `紧张`.
+    Usage pressure: `充裕` (ample), `适中` (moderate), or `紧张` (tight).
   </ResponseField>
 </Expandable>
 </ResponseField>
@@ -228,9 +228,9 @@ Upstream credential state: `valid`, `expired`, or `error`.
 
 </Expandable>
 
-<Expandable title="minimax plan data structure">
+<Expandable title="MiniMax plan data structure">
 
-Returned when `plan_name` is `minimax-coding-plan` or `minimax-coding-plan-international`. Same structure as the kimi plan data: `plan_name`, `tiers` (`five_hour` / `weekly_limit` entries with `percentage`, `used`, `limit`, `remaining`, optional `resets_at`, `status`), and `credential` (`valid` / `expired` / `error`).
+Returned when `plan_name` is `minimax-coding-plan` or `minimax-coding-plan-international`. Same structure as the Kimi plan data: `plan_name`, `tiers` (`five_hour` / `weekly_limit` entries with `percentage`, `used`, `limit`, `remaining`, optional `resets_at`, `status`), and `credential` (`valid` / `expired` / `error`).
 
 </Expandable>
 
@@ -254,7 +254,7 @@ Plan identifier taken from the channel.
 Always `false` in this variant.
 </ResponseField>
 <ResponseField name="channel_id" type="integer" required>
-Channel id.
+Channel ID.
 </ResponseField>
 <ResponseField name="channel_name" type="string" required>
 Channel name.
@@ -274,4 +274,4 @@ Management endpoints return HTTP `200` even on business failures; always check t
 | Channel not found | `Channel not found` | The channel does not exist or could not be loaded |
 | Not a plan channel | `This channel is not a plan channel` | `channel_info.is_plan` is `false` |
 | Channel key invalid | `The channel API key is invalid or authentication failed. Please check the key configuration` | The upstream rejected the key (GLM plans) |
-| Quota query failed | `Failed to query quota: {error}` | The upstream request or response parsing failed; `{error}` carries the underlying error |
+| Quota query failed | `Failed to query quota: {{.Error}}` | The upstream request or response parsing failed; `{{.Error}}` carries the underlying error |

@@ -53,11 +53,11 @@ On receiving SIGTERM (the default behavior of `docker stop` / `docker compose do
 
 ## 1Panel / Baota Panel Update
 
-- For instances installed through the panel app store, prefer the panel's built-in upgrade entry.
+- For instances installed through the panel app store, prefer the panel's built-in upgrade option.
 - For instances created with a custom image, pull `ghcr.io/nookmux/nookmux:latest` again and recreate the container.
 - Before recreating, confirm that the data volume, port mapping, and environment variables are not reset by the panel.
 
-## Update from Source Compilation
+## Update from Source
 
 The backend is bundled with `web/dist` through Go `embed`, so the frontend assets must be built before compiling from source.
 

@@ -6,7 +6,7 @@ api: "POST /v1beta/models/{model}:batchEmbedContents"
 
 一次请求为多条内容生成文本嵌入向量，兼容 Google Gemini API 的 `batchEmbedContents` 方法。模型由 URL 路径指定，需为嵌入模型（如 `gemini-embedding-001`、`text-embedding-004`）；返回的向量顺序与请求顺序一致。
 
-NookMux 将请求转发到 `{model}` 对应的渠道并原样回传上游响应；按全部输入 token 计费。适合批量构建向量库的场景。
+NookMux 将请求转发到 `{model}` 对应的渠道并原样回传上游响应；按全部输入 Token 计费。适合批量构建向量库的场景。
 
 ## 请求
 

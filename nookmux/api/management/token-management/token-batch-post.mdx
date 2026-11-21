@@ -4,7 +4,7 @@ description: Delete several tokens owned by the current user in one call and ret
 api: "POST /api/token/batch"
 ---
 
-Delete multiple tokens owned by the current user in a single transaction. Ids that do not exist or belong to another user are silently skipped and not counted; the response returns the number of tokens actually deleted.
+Delete multiple tokens owned by the current user in a single transaction. IDs that do not exist or belong to another user are silently skipped and not counted; the response returns the number of tokens actually deleted.
 
 Requires a logged-in user (**User** permissions). See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
 
@@ -28,7 +28,7 @@ curl --request POST \
 ### Body
 
 <ParamField path="body.ids" type="integer[]" required>
-  Ids of the tokens to delete. Must be a non-empty array; only tokens owned by the current user are matched.
+  IDs of the tokens to delete. Must be a non-empty array; only tokens owned by the current user are matched.
 </ParamField>
 
 ## Response
@@ -56,7 +56,7 @@ curl --request POST \
 </ResponseField>
 
 <ResponseField name="data" type="integer" required>
-  Number of tokens actually deleted. Ids that were not found among the current user's tokens do not count.
+  Number of tokens actually deleted. IDs that were not found among the current user's tokens do not count.
 </ResponseField>
 
 <Note>

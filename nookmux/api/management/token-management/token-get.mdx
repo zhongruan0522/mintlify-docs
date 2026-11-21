@@ -4,7 +4,7 @@ description: List the current user's API tokens with pagination, newest first, w
 api: "GET /api/token/"
 ---
 
-List the API tokens owned by the current user, ordered newest first (`id` descending) and paginated. The `key` of every token is masked; the full key is only returned when the token is created.
+List the API tokens owned by the current user, ordered newest first (`id` descending) and paginated. The `key` of every token is masked; to retrieve the full key of an existing token, use `POST /api/token/{id}/key` or `POST /api/token/batch/keys`.
 
 Requires a logged-in user (**User** permissions). See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
 
@@ -110,7 +110,7 @@ curl --request GET \
       Token id.
     </ResponseField>
     <ResponseField name="user_id" type="integer" required>
-      Id of the user who owns the token.
+      ID of the user who owns the token.
     </ResponseField>
     <ResponseField name="key" type="string" required>
       Masked token key: asterisks with the same length as the real key.
@@ -143,7 +143,7 @@ curl --request GET \
       Comma-separated list of model names the token may call.
     </ResponseField>
     <ResponseField name="model_mapping" type="string" required>
-      JSON object of token-level model redirects, for example `{"gpt-4o": "gpt-4o-2024-08-06"}`. `null` when not configured.
+      JSON-encoded string representing a token-level model redirect object, for example `{"gpt-4o": "gpt-4o-2024-08-06"}`. `null` when not configured.
     </ResponseField>
     <ResponseField name="allow_ips" type="string" required>
       Newline-separated IP whitelist for the token key. Empty or `null` means no restriction.

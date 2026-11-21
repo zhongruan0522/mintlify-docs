@@ -28,7 +28,7 @@ curl --request DELETE \
 </ParamField>
 
 <ParamField path="rule_name" type="string">
-  Name of the affinity rule whose entries should be deleted; used when `all` is not `true`. Exactly one of `all=true` or `rule_name` must be provided, otherwise the request is rejected.
+  Name of the affinity rule whose entries should be deleted; used when `all` is not `true`. At least one of `all=true` or `rule_name` must be provided; otherwise, the request is rejected.
 </ParamField>
 
 ## Response
@@ -78,5 +78,5 @@ curl --request DELETE \
 | Missing parameter: rule_name, or use all=true to clear all | HTTP `400`; neither `all=true` nor `rule_name` was provided |
 | Channel affinity setting is not initialized | HTTP `400`; the channel affinity setting is unavailable |
 | Unknown rule name | HTTP `400`; `rule_name` matches no configured rule |
-| include_rule_name is not enabled for this rule | HTTP `400`; the matched rule does not key entries by rule name, so its entries cannot be cleared selectively |
-| Cache backend error | HTTP `400`; deleting from the cache failed; returns a localized error message or falls back to `Database error, please try again later`, see server logs |
+| include_rule_name is not enabled for this rule; cannot clear cache by rule | HTTP `400`; the matched rule does not key entries by rule name, so its entries cannot be cleared selectively |
+| Cache backend error | HTTP `400`; deleting from the cache failed; returns a localized error message or falls back to `Database error, please try again later`; see server logs |

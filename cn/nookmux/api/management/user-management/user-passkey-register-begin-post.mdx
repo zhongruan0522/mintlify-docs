@@ -1,5 +1,5 @@
 ---
-title: 开始注册Passkey
+title: 开始注册 Passkey
 description: 发起 WebAuthn 注册流程，获取用于绑定新 Passkey 的创建参数。
 api: "POST /api/user/passkey/register/begin"
 ---
@@ -79,7 +79,7 @@ curl --request POST \
 </ResponseField>
 
 <ResponseField name="data.options" type="object" required>
-遵循标准 WebAuthn `PublicKeyCredentialCreationOptions` 结构的创建参数：服务端生成的 `challenge`、依赖方信息（`rp`）、用户实体（`user`）、可接受的算法参数（`pubKeyCredParams`），以及列出该用户已绑定凭据的 `excludeCredentials`（让认证器跳过它们）。上例为 condensed 结构示意，协议内部字段以 WebAuthn 标准与服务端 Passkey 设置为准。
+遵循标准 WebAuthn `PublicKeyCredentialCreationOptions` 结构的创建参数：服务端生成的 `challenge`、依赖方信息（`rp`）、用户实体（`user`）、可接受的算法参数（`pubKeyCredParams`），以及列出该用户已绑定凭据的 `excludeCredentials`（让认证器跳过它们）。上例为精简后的结构示意，协议内部字段以 WebAuthn 标准与服务端 Passkey 设置为准。
 </ResponseField>
 
 <Note>

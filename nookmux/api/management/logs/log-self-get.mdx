@@ -32,7 +32,7 @@ curl --request GET \
 </ParamField>
 
 <ParamField path="query.type" type="integer">
-  Log type: `1` top-up, `2` consumption, `3` manage, `4` system, `5` error, `6` refund. Omitted or `0` matches all types.
+  Log type: `1` top-up, `2` consumption, `3` management, `4` system, `5` error, `6` refund. Omitted or `0` matches all types.
 </ParamField>
 
 <ParamField path="query.start_timestamp" type="integer">
@@ -56,11 +56,11 @@ curl --request GET \
 </ParamField>
 
 <ParamField path="query.request_id" type="string">
-  Exact match on the NookMux request id. Only accepted when the `request_id` detail field is visible to regular users; otherwise the request is rejected.
+  Exact match on the NookMux request ID. Only accepted when the `request_id` detail field is visible to regular users; otherwise the request is rejected.
 </ParamField>
 
 <ParamField path="query.upstream_request_id" type="string">
-  Exact match on the upstream provider request id. Only accepted when the `upstream_request_id` detail field is visible to regular users; otherwise the request is rejected.
+  Exact match on the upstream provider request ID. Only accepted when the `upstream_request_id` detail field is visible to regular users; otherwise the request is rejected.
 </ParamField>
 
 <ParamField path="query.ip" type="string">
@@ -156,16 +156,16 @@ There is no `channel` or `username` filter on this endpoint: `username` is alway
 
   <Expandable title="log structure">
     <ResponseField name="id" type="integer" required>
-      Sequence number within the result (page start index plus position), not the database row id.
+      Sequence number within the result (page start index plus position), not the database row ID.
     </ResponseField>
     <ResponseField name="user_id" type="integer" required>
-      Id of the user who produced the log.
+      ID of the user who produced the log.
     </ResponseField>
     <ResponseField name="created_at" type="integer" required>
       Unix timestamp (seconds) when the log was recorded.
     </ResponseField>
     <ResponseField name="type" type="integer" required>
-      Log type: `1` top-up, `2` consumption, `3` manage, `4` system, `5` error, `6` refund.
+      Log type: `1` top-up, `2` consumption, `3` management, `4` system, `5` error, `6` refund.
     </ResponseField>
     <ResponseField name="content" type="string" required>
       Human-readable summary of the log entry.
@@ -195,13 +195,13 @@ There is no `channel` or `username` filter on this endpoint: `username` is alway
       Whether the response was streamed.
     </ResponseField>
     <ResponseField name="channel" type="integer" required>
-      Id of the channel that served the request.
+      ID of the channel that served the request.
     </ResponseField>
     <ResponseField name="channel_name" type="string" required>
       Always empty on this endpoint.
     </ResponseField>
     <ResponseField name="token_id" type="integer" required>
-      Id of the API token used for the request.
+      ID of the API token used for the request.
     </ResponseField>
     <ResponseField name="group" type="string" required>
       Group used for channel selection.
@@ -222,10 +222,10 @@ There is no `channel` or `username` filter on this endpoint: `username` is alway
       Client platform identified from the request's `ua`, `x_title` and `http_referer` headers, as a controlled kebab-case ID (for example `claude-code`, `codex`); empty string when the client could not be identified. Not affected by the usage-log field visibility configuration; always present.
     </ResponseField>
     <ResponseField name="request_id" type="string">
-      NookMux request id; blanked when the `request_id` field is hidden from regular users. Omitted when empty.
+      NookMux request ID; blanked when the `request_id` field is hidden from regular users. Omitted when empty.
     </ResponseField>
     <ResponseField name="upstream_request_id" type="string">
-      Upstream provider request id; blanked when the `upstream_request_id` field is hidden from regular users. Omitted when empty.
+      Upstream provider request ID; blanked when the `upstream_request_id` field is hidden from regular users. Omitted when empty.
     </ResponseField>
     <ResponseField name="other" type="string" required>
       JSON object string with supplementary details. `admin_info` and `reject_reason` are always removed; detail-dialog-only keys (billing source, token breakdown, request conversion, subscription billing, and so on) are removed when hidden from regular users.

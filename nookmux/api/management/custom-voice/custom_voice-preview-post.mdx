@@ -130,6 +130,6 @@ Management endpoints return HTTP `200` even on business failures; always check t
 | Failed to query quota, please try again later | Reading the user's quota failed |
 | Failed to charge quota, please try again later | Deducting the preview quota failed |
 | Failed to save the voice record, please try again later | The preview record could not be persisted; the preview charge is refunded |
-| Upstream service is temporarily unavailable, please try again later | The upstream request failed or returned a server error |
+| Upstream service is temporarily unavailable, please try again later | The upstream request failed (for example, a network or proxy error) |
 | Upstream service is busy, please try again later | The upstream returned HTTP 5xx |
 | Voice processing failed, please try again later | The upstream rejected the request; may include a short upstream summary |

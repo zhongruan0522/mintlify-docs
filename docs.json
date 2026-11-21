@@ -222,7 +222,7 @@
                     ]
                   },
                   {
-                    "group": "default",
+                    "group": "默认",
                     "pages": [
                       "cn/nookmux/api/management/default/user-topup-post"
                     ]
@@ -374,7 +374,7 @@
                     ]
                   },
                   {
-                    "group": "用户登陆注册",
+                    "group": "用户登录注册",
                     "pages": [
                       "cn/nookmux/api/management/user-auth/reset_password-get",
                       "cn/nookmux/api/management/user-auth/user-login-2fa-post",

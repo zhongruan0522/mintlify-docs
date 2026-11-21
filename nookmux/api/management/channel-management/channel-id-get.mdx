@@ -1,6 +1,6 @@
 ---
 title: Get Specific Channel
-description: Retrieve a single channel by its id, without the upstream key.
+description: Retrieve a single channel by its ID, without the upstream key.
 api: "GET /api/channel/{id}"
 ---
 
@@ -24,7 +24,7 @@ curl --request GET \
 ### Path parameters
 
 <ParamField path="id" type="integer" required>
-  Channel id.
+  Channel ID.
 </ParamField>
 
 ## Response
@@ -95,7 +95,7 @@ curl --request GET \
 
   <Expandable title="channel structure">
     <ResponseField name="id" type="integer" required>
-      Channel id.
+      Channel ID.
     </ResponseField>
     <ResponseField name="type" type="integer" required>
       Channel type constant, for example `1` for OpenAI.
@@ -186,13 +186,13 @@ curl --request GET \
           Map of key index to key status.
         </ResponseField>
         <ResponseField name="multi_key_polling_index" type="integer" required>
-          Index of the key to be used next under polling mode.
+          Index of the key to be used next under round-robin (`polling`) mode.
         </ResponseField>
         <ResponseField name="multi_key_mode" type="string" required>
-          Multi-key strategy: `random` or `polling`.
+          Multi-key strategy: `random` or `polling` (round-robin).
         </ResponseField>
         <ResponseField name="is_plan" type="boolean" required>
-          Whether the channel points to a metered plan base.
+          Whether the channel points to a metered plan base URL.
         </ResponseField>
         <ResponseField name="plan_name" type="string" required>
           Plan identifier, matching a known special base URL.
@@ -212,12 +212,12 @@ curl --request GET \
 </ResponseField>
 
 <Note>
-  Management endpoints return HTTP `200` even on business failures; always check the `success` field. A non-existent channel id is reported as a database error with `success: false`.
+  Management endpoints return HTTP `200` even on business failures; always check the `success` field. A non-existent channel ID is reported as a database error with `success: false`.
 </Note>
 
 ## Error messages
 
 | Condition | Description |
 | --- | --- |
-| Channel id format error | `id` in the path is not an integer |
+| Channel ID format error | `id` in the path is not an integer |
 | Database error | The channel could not be loaded, including when it does not exist |

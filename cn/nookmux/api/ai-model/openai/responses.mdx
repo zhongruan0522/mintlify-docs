@@ -56,7 +56,7 @@ print(response.output_text)
 </ParamField>
 
 <ParamField path="body.input" type="string | object[]" required>
-  输入内容。字符串为纯文本输入；数组为输入项列表，每项含 `type`、`role`、`content`，可混合多轮对话与多模态内容，详细结构见下表。
+  输入内容。字符串为纯文本输入；数组为输入项列表，每项含 `type`、`role`、`content`，可混合多轮对话与多模态内容，详细结构见下方展开项。
 
   <Expandable title="input 结构">
     <ParamField path="type" type="string">
@@ -85,7 +85,7 @@ print(response.output_text)
 </ParamField>
 
 <ParamField path="body.max_output_tokens" type="integer">
-  单次响应生成的 token 数量上限（含可见输出与推理内容）。达到上限时 `status` 为 `incomplete`。
+  单次响应生成的 Token 数量上限（含可见输出与推理内容）。达到上限时 `status` 为 `incomplete`。
 </ParamField>
 
 <ParamField path="body.previous_response_id" type="string">
@@ -105,7 +105,7 @@ print(response.output_text)
 </ParamField>
 
 <ParamField path="body.top_logprobs" type="integer">
-  每个输出位置返回概率最高的 n 个 token（`0 ~ 20`）。
+  每个输出位置返回概率最高的 n 个 Token（`0 ~ 20`）。
 </ParamField>
 
 <ParamField path="body.truncation" type="string">
@@ -123,7 +123,7 @@ print(response.output_text)
       是否生成思维链摘要：`auto`、`concise`、`detailed`。
     </ParamField>
     <ParamField path="max_tokens" type="integer">
-      推理 token 数量上限（部分渠道支持，如 OpenRouter）。
+      推理 Token 数量上限（部分渠道支持，如 OpenRouter）。
     </ParamField>
   </Expandable>
 </ParamField>
@@ -312,19 +312,19 @@ print(response.output_text)
 
   <Expandable title="usage 结构">
     <ResponseField name="input_tokens" type="integer">
-      输入消耗的 token 数。
+      输入消耗的 Token 数。
     </ResponseField>
     <ResponseField name="input_tokens_details" type="object">
-      输入明细，含 `cached_tokens`（命中缓存的 token 数）。
+      输入明细，含 `cached_tokens`（命中缓存的 Token 数）。
     </ResponseField>
     <ResponseField name="output_tokens" type="integer">
-      输出消耗的 token 数（含推理内容）。
+      输出消耗的 Token 数（含推理内容）。
     </ResponseField>
     <ResponseField name="output_tokens_details" type="object">
-      输出明细，含 `reasoning_tokens`（推理消耗的 token 数）。
+      输出明细，含 `reasoning_tokens`（推理消耗的 Token 数）。
     </ResponseField>
     <ResponseField name="total_tokens" type="integer">
-      总消耗 token 数。
+      总消耗 Token 数。
     </ResponseField>
   </Expandable>
 </ResponseField>

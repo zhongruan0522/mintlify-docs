@@ -173,7 +173,7 @@ curl --request GET \
           Group name.
         </ResponseField>
         <ResponseField name="avg_ttft_ms" type="integer" required>
-          Window mean time to first token of the group; `0` when there is no first-frame sample.
+          Window mean time to first token of the group in milliseconds; `0` when there is no first-frame sample.
         </ResponseField>
         <ResponseField name="avg_latency_ms" type="integer" required>
           Window mean end-to-end latency of the group in milliseconds.
@@ -198,7 +198,7 @@ Metric definitions:
 - `avg_latency_ms` — mean end-to-end latency of the relay request.
 - `avg_ttft_ms` — mean time to first token; only streaming requests that emitted a first frame are counted.
 - `success_rate` — successful requests in percent; gateway-side business rejections (quota, sensitive words, violation fees) and local validation failures count neither into requests nor into failures.
-- `avg_tps` — output tokens per second of the generation phase; for streaming requests the generation phase is the end-to-end latency minus the first-token latency, for non-streaming requests the whole latency.
+- `avg_tps` — output tokens per second of the generation phase; for streaming requests the generation phase is the end-to-end latency minus the first-token latency, and for non-streaming requests it is the full end-to-end latency.
 
 Buckets align to the granularity configured as `perf_metrics_setting.bucket_time` (`minute` / `5min` / `hour`, `hour` by default). Sampling can be switched off with `perf_metrics_setting.enabled`; while off, new samples are dropped and the endpoint keeps serving the historical buckets inside the window.
 </Note>
@@ -208,7 +208,7 @@ Buckets align to the granularity configured as `perf_metrics_setting.bucket_time
 | Condition | Description |
 | --- | --- |
 | Module disabled | HTTP `403` when the `perf_metrics` module is switched off in header navigation module settings; `message` is localized via `Accept-Language` (`perf_metrics 已禁用` by default, `perf_metrics is disabled` for English) |
-| Login required | Standard authentication errors (HTTP `401`) when the perf_metrics module is configured to require login and the caller is not authenticated |
+| Login required | Standard authentication errors (HTTP `401`) when the `perf_metrics` module is configured to require login and the caller is not authenticated |
 | Model name is required | `model` is missing or blank; returned as HTTP `200` with `success: false` |
 | Invalid query window (1-720 hours) | `hours` is not an integer between `1` and `720`; returned as HTTP `200` with `success: false` |
 | Database error, please try again later | Loading the aggregation buckets failed; see server logs |

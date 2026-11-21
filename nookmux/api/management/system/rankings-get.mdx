@@ -235,7 +235,7 @@ curl --request GET \
       </Expandable>
     </ResponseField>
     <ResponseField name="top_movers" type="array" required>
-      Models that climbed the most ranks versus the previous period, up to 6 entries. Same member fields as `models` plus `rank_delta` (positive integer), `current_rank` and `growth_pct`, minus the aggregate fields.
+      Models that climbed the most ranks versus the previous period, up to 6 entries. Each entry contains `model_name`, `vendor`, optional `vendor_icon` and `model_icon`, `rank_delta` (positive integer), `current_rank`, and `growth_pct`.
     </ResponseField>
     <ResponseField name="top_droppers" type="array" required>
       Models that fell the most ranks versus the previous period, up to 6 entries; `rank_delta` is negative.
@@ -301,5 +301,5 @@ curl --request GET \
 | Condition | Description |
 | --- | --- |
 | Module disabled | HTTP `403` when the `rankings` module is switched off in header navigation module settings; `message` is localized via `Accept-Language` (`rankings 已禁用` by default, `rankings is disabled` for English) |
-| Login required | Standard authentication errors (HTTP `401`) when the rankings module is configured to require login and the caller is not authenticated |
+| Login required | Standard authentication errors (HTTP `401`) when the `rankings` module is configured to require login and the caller is not authenticated |
 | Database error, please try again later | Building the snapshot failed; also returned for an unknown `period` value; see server logs |

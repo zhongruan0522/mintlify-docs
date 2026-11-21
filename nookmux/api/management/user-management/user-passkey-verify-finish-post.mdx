@@ -1,10 +1,10 @@
 ---
 title: Complete Passkey Verification
-description: Submit the WebAuthn assertion response and mark the session ready for step-up secure verification.
+description: Submit the WebAuthn assertion response and mark the session ready for step-up security verification.
 api: "POST /api/user/passkey/verify/finish"
 ---
 
-Completes the second half of the passkey step-up verification. The server verifies the assertion produced by the browser authenticator against the challenge started by `POST /api/user/passkey/verify/begin`, refreshes the credential's last-used time, and marks the session as ready for finalizing step-up secure verification.
+Completes the second half of the passkey step-up verification. The server verifies the assertion produced by the browser authenticator against the challenge started by `POST /api/user/passkey/verify/begin`, refreshes the credential's last-used time, and marks the session as ready for finalizing step-up security verification.
 
 Requires **User** permission (any logged-in user). See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
 
@@ -68,14 +68,14 @@ Always `null` for this endpoint.
 </ResponseField>
 
 <Note>
-A successful assertion alone does not yet satisfy step-up secure verification. The session is only marked "passkey ready"; within 60 seconds, call `POST /api/verify` with `{"method": "passkey"}` to finalize it. The finalized verification is then valid for 5 minutes and unlocks passkey operations such as deleting passkeys on accounts without 2FA. See [Universal secure verification](/nookmux/api/management/security-verification/verify-post).
+A successful assertion alone does not yet satisfy step-up security verification. The session is only marked "passkey ready"; within 60 seconds, call `POST /api/verify` with `{"method": "passkey"}` to finalize it. The finalized verification is then valid for 5 minutes and unlocks passkey operations such as deleting passkeys on accounts without 2FA. See [General Security Verification](/nookmux/api/management/security-verification/verify-post).
 </Note>
 
 ## Error messages
 
 | Condition | Description |
 | --- | --- |
-| Passkey login is not enabled by administrator | The passkey feature is disabled in the server settings |
+| Passkey login is not enabled by the administrator | The passkey feature is disabled in the server settings |
 | Not logged in / user disabled | The session cannot be resolved; returned as HTTP `401` |
 | This user has not bound a Passkey | There is no credential to verify with |
 | Database error | Loading the credentials, reading the ceremony state (missing or already consumed challenge), or verifying the assertion failed; see server logs |

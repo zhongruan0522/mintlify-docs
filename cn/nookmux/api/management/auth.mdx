@@ -23,7 +23,7 @@ description: 后台管理接口鉴权方式与权限级别说明
 Authorization: Bearer {token}
 ```
 
-Token 可在「个人设置 - 安全设置 - Access Token」中生成。
+Access Token 可在「个人设置 - 安全设置 - Access Token」中生成。
 
 ## 必需请求头
 
@@ -44,7 +44,7 @@ New-Api-User: {user_id}
 
 ## Access Token 权限范围
 
-Access Token 仅授予**用户（User）级 API**。管理员账号也无法以 Access Token 调用 Admin / Root 端点，服务端会直接拒绝，与账号角色无关。需要管理员权限的控制台操作请使用会话 Cookie。
+Access Token 仅授予**用户（User）级 API 访问权限**。管理员账号也无法以 Access Token 调用 Admin / Root 端点，服务端会直接拒绝，与账号角色无关。需要管理员权限的控制台操作请使用会话 Cookie。
 
 ## 凭证变更后的会话失效
 

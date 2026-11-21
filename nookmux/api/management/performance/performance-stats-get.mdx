@@ -192,7 +192,7 @@ curl --request GET \
         Configured disk cache base directory; empty means the system temp directory.
       </ResponseField>
       <ResponseField name="is_running_in_container" type="boolean" required>
-        Whether the process is detected to run inside a container.
+        Whether the process is detected as running inside a container.
       </ResponseField>
       <ResponseField name="monitor_enabled" type="boolean" required>
         Whether background performance monitoring is enabled.
@@ -218,4 +218,4 @@ Unlike most management endpoints, the success payload of this endpoint contains 
 
 | Condition | Description |
 | --- | --- |
-| Authentication failed | Standard authentication errors (HTTP `401`) when the caller is not a root user |
+| Authentication failed | HTTP `401` when unauthenticated or the session is invalid; HTTP `200` with `success: false` when an authenticated caller lacks Root permissions |

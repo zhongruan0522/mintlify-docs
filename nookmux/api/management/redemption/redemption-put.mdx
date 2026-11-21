@@ -1,6 +1,6 @@
 ---
 title: Update Redemption Code
-description: Update a redemption code's name, quota and expiry, or only its status with status_only mode.
+description: Update a redemption code's name, quota, and expiration time, or only its status with status_only mode.
 api: "PUT /api/redemption/"
 ---
 
@@ -37,7 +37,7 @@ curl --request PUT \
 ### Body
 
 <ParamField path="body.id" type="integer" required>
-  Id of the redemption code to update. The stored record is loaded by this id; the update fails if no code exists with it.
+  ID of the redemption code to update. The stored record is loaded by this ID; the update fails if no code exists with it.
 </ParamField>
 
 <ParamField path="body.name" type="string">
@@ -49,7 +49,7 @@ curl --request PUT \
 </ParamField>
 
 <ParamField path="body.expired_time" type="integer">
-  New expiry as a Unix timestamp (seconds); `0` means no expiry. Applied only when `status_only` is not set. When non-zero, it must not be earlier than the current time.
+  New expiration time as a Unix timestamp (seconds); `0` means no expiration. Applied only when `status_only` is not set. When non-zero, it must not be earlier than the current time.
 </ParamField>
 
 <ParamField path="body.status" type="integer">
@@ -57,7 +57,7 @@ curl --request PUT \
 </ParamField>
 
 <Note>
-The store-layer update applies non-zero values: in the default mode, fields left at their zero value (empty `name`, `0` quota, `0` expired_time) keep their stored value.
+The store-layer update applies non-zero values: in the default mode, fields left at their zero value (empty `name`, `0` `quota`, `0` `expired_time`) keep their stored value.
 </Note>
 
 ## Response
@@ -105,7 +105,7 @@ The store-layer update applies non-zero values: in the default mode, fields left
       Redemption code id.
     </ResponseField>
     <ResponseField name="user_id" type="integer" required>
-      Id of the administrator who created the code.
+      ID of the administrator who created the code.
     </ResponseField>
     <ResponseField name="key" type="string" required>
       The redemption key. Always returned as an empty string by this endpoint; fetch the full key on demand from `GET /api/redemption/{id}/key`.
@@ -129,13 +129,13 @@ The store-layer update applies non-zero values: in the default mode, fields left
       Number of codes to generate in one create call. Request-only field, always `0` in responses.
     </ResponseField>
     <ResponseField name="used_user_id" type="integer" required>
-      Id of the user who redeemed the code; `0` if the code has not been redeemed.
+      ID of the user who redeemed the code; `0` if the code has not been redeemed.
     </ResponseField>
     <ResponseField name="DeletedAt" type="string" required>
       Soft-delete marker; always `null` because soft-deleted rows are excluded from queries.
     </ResponseField>
     <ResponseField name="expired_time" type="integer" required>
-      Unix timestamp (seconds) after which the code can no longer be redeemed; `0` means no expiry.
+      Unix timestamp (seconds) after which the code can no longer be redeemed; `0` means no expiration.
     </ResponseField>
   </Expandable>
 </ResponseField>
@@ -149,5 +149,5 @@ Management endpoints return HTTP `200` even on business failures; always check t
 | Condition | Description |
 | --- | --- |
 | Invalid request body | The JSON body is missing or malformed |
-| Expire time invalid | `expired_time` is non-zero and earlier than the current time (default mode only) |
+| Invalid expiration time | `expired_time` is non-zero and earlier than the current time (default mode only) |
 | Database error | No redemption code exists with the given `id`, or persisting the change failed; see server logs |

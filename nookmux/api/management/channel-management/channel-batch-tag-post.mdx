@@ -4,7 +4,7 @@ description: Set or clear the tag of multiple channels in one call.
 api: "POST /api/channel/batch/tag"
 ---
 
-Set (or clear) the tag of multiple channels by id. The tag column is updated in a transaction, the routing abilities of the affected channels are rebuilt, the in-memory channel cache is reloaded, and the operation is recorded in the admin audit log.
+Set (or clear) the tag of multiple channels by ID. The tag column is updated in a transaction, the routing abilities of the affected channels are rebuilt, the in-memory channel cache is reloaded, and the operation is recorded in the admin audit log.
 
 Requires **Admin** permissions. See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
 
@@ -29,7 +29,7 @@ curl --request POST \
 ### Body
 
 <ParamField path="body.ids" type="array" required>
-  Ids of the channels to update. Must contain at least one element.
+  IDs of the channels to update. Must contain at least one element.
 </ParamField>
 
 <ParamField path="body.tag" type="string">
@@ -61,7 +61,7 @@ curl --request POST \
 </ResponseField>
 
 <ResponseField name="data" type="integer" required>
-  Number of requested ids.
+  Number of requested IDs.
 </ResponseField>
 
 <Note>

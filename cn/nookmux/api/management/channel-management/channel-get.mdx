@@ -128,7 +128,7 @@ curl --request GET \
 <ResponseField name="data.items" type="array" required>
   当前页的渠道对象数组。`key` 字段恒为空字符串，不会泄露已存密钥。
 
-  <Expandable title="channel 结构">
+  <Expandable title="渠道结构">
     <ResponseField name="id" type="integer" required>
       渠道 ID。
     </ResponseField>
@@ -221,7 +221,7 @@ curl --request GET \
           密钥索引到密钥状态的映射。
         </ResponseField>
         <ResponseField name="multi_key_polling_index" type="integer" required>
-          轮询模式下一次使用的密钥索引。
+          轮询模式下，下一次使用的密钥索引。
         </ResponseField>
         <ResponseField name="multi_key_mode" type="string" required>
           多 Key 策略：`random`（随机）或 `polling`（轮询）。
@@ -238,7 +238,7 @@ curl --request GET \
       额外设置的 JSON 对象，例如 Azure 的 API 版本。
     </ResponseField>
     <ResponseField name="openai_organization" type="string" required>
-      OpenAI 类型渠道的 organization 头。可能为 `null`。
+      OpenAI 类型渠道的 organization 请求头。可能为 `null`。
     </ResponseField>
     <ResponseField name="test_model" type="string" required>
       渠道测试所用的模型。可能为 `null`。

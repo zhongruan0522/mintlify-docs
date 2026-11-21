@@ -88,7 +88,7 @@ curl --request POST \
 
   <Expandable title="ticket detail structure">
     <ResponseField name="id" type="integer" required>
-      Ticket id.
+      Ticket ID.
     </ResponseField>
     <ResponseField name="title" type="string" required>
       Ticket title.
@@ -109,11 +109,11 @@ curl --request POST \
       Unix timestamp (seconds) at which the ticket was completed; `0` while it is not completed.
     </ResponseField>
     <ResponseField name="messages" type="array" required>
-      Message timeline, ordered by message id ascending.
+      Message timeline, ordered by message ID ascending.
 
       <Expandable title="message structure">
         <ResponseField name="id" type="integer" required>
-          Message entry id.
+          Message entry ID.
         </ResponseField>
         <ResponseField name="type" type="string" required>
           Entry kind: `message` for a conversation message, `status` for a status-change record.

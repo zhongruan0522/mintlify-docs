@@ -1,10 +1,10 @@
 ---
 title: 创建令牌
-description: 为当前用户创建一个新的 API 令牌，完整密钥仅在响应中返回一次。
+description: 为当前用户创建一个新的 API 令牌，并在响应中返回生成的完整密钥。
 api: "POST /api/token/"
 ---
 
-为当前用户创建一个新的 API 令牌。令牌密钥由服务端生成（API Key 前缀，默认 `sk-`，加 48 位随机字符），仅在本次响应中完整返回一次。每个用户最多持有 1000 个令牌。
+为当前用户创建一个新的 API 令牌。令牌密钥由服务端生成（API Key 前缀，默认 `sk-`，加 48 位随机字符）并在本次响应中完整返回；列表与详情接口均会脱敏密钥，后续仅可通过 `POST /api/token/{id}/key` 或 `POST /api/token/batch/keys` 重新获取完整密钥。每个用户最多持有 1000 个令牌。
 
 需要登录（**User** 权限）。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
 
@@ -93,7 +93,7 @@ curl --request POST \
 </ParamField>
 
 <ParamField path="body.model_mapping" type="string">
-  令牌级模型重定向的 JSON 对象，例如 `{"gpt-4o": "gpt-4o-2024-08-06"}`。键与值必须为非空字符串、最长 256 字符，且不得包含 `:`、`/`、制表符、回车、换行或空格；整体不超过 64 KB。`null` 或空字符串表示不配置重定向。
+  令牌级模型重定向的 JSON 对象字符串，例如 `{"gpt-4o": "gpt-4o-2024-08-06"}`。键与值必须为非空字符串、最长 256 字符，且不得包含 `:`、`/`、制表符、回车、换行或空格；整体不超过 64 KB。`null` 或空字符串表示不配置重定向。
 </ParamField>
 
 <ParamField path="body.allow_ips" type="string">
@@ -139,7 +139,7 @@ curl --request POST \
 </ResponseField>
 
 <ResponseField name="data.key" type="string" required>
-  完整令牌密钥（API Key 前缀，默认 `sk-`，加 48 位随机字符）。仅在此返回一次；列表与详情接口返回的均为脱敏密钥。
+  完整令牌密钥（API Key 前缀，默认 `sk-`，加 48 位随机字符）。列表与详情接口返回的均为脱敏密钥；后续可通过 `POST /api/token/{id}/key` 或 `POST /api/token/batch/keys` 重新获取。
 </ResponseField>
 
 <Note>
@@ -152,7 +152,7 @@ curl --request POST \
 | --- | --- |
 | 请求体非法 | JSON 缺失或格式错误 |
 | 令牌名称过长 | `name` 超过 50 字符 |
-| 模型重定向配置格式错误 | `model_mapping` 不是键值均为非空字符串的 JSON 对象、包含无法安全承载的字符（`:` `/` 空白）、名称超过 256 字符，或整体超过 64 KB |
+| 模型重定向配置格式错误 | `model_mapping` 不是键值均为非空字符串的 JSON 对象字符串、包含不允许的字符（`:`、`/` 或空白）、名称超过 256 字符，或整体超过 64 KB |
 | 额度值不能为负数 | `quota_type` 为 `1` 但 `remain_quota` 为负数 |
 | 额度值超出有效范围 | `remain_quota` 超过服务端上限 |
 | 窗口时长必须大于等于 1 小时 | `quota_type` 为 `2` 或 `3` 但 `window_hours` 小于 `1` |
@@ -160,7 +160,7 @@ curl --request POST \
 | 窗口起始小时必须在 0-23 之间 | `window_start_hour` 不在 `0`-`23` 范围内 |
 | 周期天数必须大于等于 1 | `quota_type` 为 `3` 但 `cycle_days` 小于 `1` |
 | 周期总额度必须大于 0 | `quota_type` 为 `3` 但 `cycle_quota` 不为正 |
-| 无效的限额类型 | （兼容旧逻辑后）`quota_type` 不是 `0`、`1`、`2`、`3` 之一 |
+| 无效的额度类型 | （兼容旧逻辑后）`quota_type` 不是 `0`、`1`、`2`、`3` 之一 |
 | 已达到最大令牌数量限制 | 该用户已持有 1000 个令牌 |
 | 生成令牌失败 | 生成随机密钥失败 |
 | 数据库错误 | 令牌落库失败，详见服务端日志 |

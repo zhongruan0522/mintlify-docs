@@ -4,7 +4,7 @@ description: Clone an existing channel, including its upstream key.
 api: "POST /api/channel/copy/{id}"
 ---
 
-Clone an existing channel. The copy keeps every field of the source channel, including its key, but gets a new id and creation time; the last test time and response time are reset. The copy is created together with its routing abilities, the in-memory channel cache is reloaded, and the operation is recorded in the admin audit log.
+Clone an existing channel. The copy keeps every field of the source channel, including its key, but gets a new ID and creation time; the last test time and response time are reset. The copy is created together with its routing abilities, the in-memory channel cache is reloaded, and the operation is recorded in the admin audit log.
 
 Requires **Admin** permissions. See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
 
@@ -24,13 +24,13 @@ curl --request POST \
 ### Path parameters
 
 <ParamField path="id" type="integer" required>
-  Id of the channel to copy.
+  ID of the channel to copy.
 </ParamField>
 
 ### Query parameters
 
 <ParamField path="query.suffix" type="string" default="_复制">
-  Suffix appended to the source channel name for the copy.
+  Suffix appended to the source channel name for the copy. Defaults to the literal string `_复制` (Chinese for `_copy`).
 </ParamField>
 
 <ParamField path="query.reset_balance" type="boolean" default="true">
@@ -64,7 +64,7 @@ curl --request POST \
 </ResponseField>
 
 <ResponseField name="data.id" type="integer" required>
-  Id of the newly created channel.
+  ID of the newly created channel.
 </ResponseField>
 
 <Note>
@@ -75,6 +75,6 @@ curl --request POST \
 
 | Condition | Description |
 | --- | --- |
-| Invalid channel id | `id` in the path is not an integer |
-| Copy source failed | The source channel could not be loaded, including when it does not exist |
+| Invalid channel ID | `id` in the path is not an integer |
+| Failed to load source channel | The source channel could not be loaded, including when it does not exist |
 | Copy failed | Inserting the copy failed; see server logs |

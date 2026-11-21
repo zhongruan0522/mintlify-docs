@@ -6,7 +6,7 @@ api: "POST /api/ticket/{id}/status"
 
 变更工单状态。目标状态为 `completed` 时记录 `closed_at` 为变更时间；其他目标状态会把 `closed_at` 重置为 `0`。变更会在消息时间线追加一条状态变更记录。工单已处于目标状态时请求同样成功，但不会产生任何变更。
 
-该路由挂载在**用户（User）**鉴权之下，但领域层将此操作限制为**管理员（Admin）**角色，普通用户调用会被拒绝。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
+该路由挂载在**用户（User）**鉴权之下，但服务层将此操作限制为**管理员（Admin）**角色，普通用户调用会被拒绝。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
 
 ## 请求
 
@@ -28,7 +28,7 @@ curl --request POST \
 ### 路径参数
 
 <ParamField path="id" type="integer" required>
-  工单 id，正整数。
+  工单 ID，正整数。
 </ParamField>
 
 ### 请求体

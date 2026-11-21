@@ -4,7 +4,7 @@ description: 返回当前登录用户的资料、额度、邀请统计与通知�
 api: "GET /api/user/self"
 ---
 
-返回发起请求用户自己的资料：账号身份、角色与状态、额度与用量计数、邀请统计、已绑定的 OAuth 身份，以及序列化后的通知设置。用户通过会话或 Access Token 结合 `New-Api-User` 头解析。
+返回发起请求用户自己的资料：账号身份、角色与状态、额度与用量计数、邀请统计、已绑定的 OAuth 身份，以及序列化后的通知设置。用户通过会话或 Access Token 结合 `New-Api-User` 请求头解析。
 
 需要**用户（User）**权限（任意登录用户）。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
 
@@ -96,10 +96,10 @@ curl --request GET \
 用户分组，例如 `default`。
 </ResponseField>
   <ResponseField name="quota" type="integer" required>
-剩余额度，单位为额度（默认 500,000 额度折合 $1）。
+剩余额度（默认 500,000 额度折合 $1）。
 </ResponseField>
   <ResponseField name="used_quota" type="integer" required>
-已消耗额度，单位为额度。
+已消耗额度。
 </ResponseField>
   <ResponseField name="request_count" type="integer" required>
 用户的请求总数。
@@ -111,7 +111,7 @@ curl --request GET \
 使用该用户邀请码注册的用户数。
 </ResponseField>
   <ResponseField name="aff_quota" type="integer" required>
-仍可转换的剩余邀请奖励额度。
+仍可划转的剩余邀请奖励额度。
 </ResponseField>
   <ResponseField name="aff_history_quota" type="integer" required>
 累计邀请奖励额度。
@@ -123,14 +123,14 @@ curl --request GET \
 绑定的 LinuxDO ID；未绑定时为空字符串。
 </ResponseField>
   <ResponseField name="setting" type="string" required>
-序列化为 JSON 字符串的通知设置，结构见下方展开项。为空的字段会被省略；`gotify_priority` 始终存在，未配置设置的用户该值为 `{\"gotify_priority\":0}`。通过 `PUT /api/user/setting` 写入。
+序列化为 JSON 字符串的通知设置，结构见下方展开项。为空的字段会被省略；`gotify_priority` 始终存在，未配置设置的用户该值为 `{"gotify_priority":0}`。通过 `PUT /api/user/setting` 写入。
 
 <Expandable title="setting 结构">
   <ResponseField name="notify_type" type="string">
-额度预警通知类型：`email`、`webhook`、`bark` 或 `gotify`。
+额度告警通知类型：`email`、`webhook`、`bark` 或 `gotify`。
 </ResponseField>
   <ResponseField name="quota_warning_threshold" type="number">
-额度预警阈值。
+额度告警阈值。
 </ResponseField>
   <ResponseField name="webhook_url" type="string">
 Webhook 地址，`webhook` 类型时存在。

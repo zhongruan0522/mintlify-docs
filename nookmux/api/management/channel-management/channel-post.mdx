@@ -1,5 +1,5 @@
 ---
-title: Add channel
+title: Add Channel
 description: Create one or more upstream channels in a single call, with support for batch and multi-key modes.
 api: "POST /api/channel/"
 ---
@@ -46,7 +46,7 @@ curl --request POST \
 </ParamField>
 
 <ParamField path="body.multi_key_mode" type="string">
-  Polling strategy for `multi_to_single` mode: `random` or `polling`. Required when `mode` is `multi_to_single`; ignored otherwise.
+  Key rotation strategy for `multi_to_single` mode: `random` or `polling` (round-robin). Required when `mode` is `multi_to_single`; ignored otherwise.
 </ParamField>
 
 <ParamField path="body.batch_add_set_key_prefix_2_name" type="boolean" default="false">

@@ -28,7 +28,7 @@ curl --request POST \
 ### Body
 
 <ParamField path="body.quota" type="integer" required>
-Amount of invitation quota to convert, in quota units (500,000 quota equals $1 by default). Must be at least one quota unit, must not exceed the remaining invitation quota, and must not be `0`.
+Amount of invitation quota to convert, in raw quota (500,000 quota equals $1 by default). Must be at least one quota unit (500,000 quota by default), must not exceed the remaining invitation quota, and must not be `0`.
 </ParamField>
 
 ## Response
@@ -66,4 +66,4 @@ Always `null` for this endpoint.
 | Invalid request body | The JSON body is missing, malformed, or `quota` is `0` |
 | Transfer failed: below minimum | `quota` is smaller than one quota unit (500,000 by default) |
 | Transfer failed: insufficient invitation quota | `quota` exceeds the remaining invitation quota |
-| Database error | The transfer transaction failed; see server logs |
+| Database error | Loading the user or executing the transfer transaction failed; see server logs |

@@ -6,7 +6,7 @@ api: "GET /v1/models"
 
 List the models available to the current token, with the response compatible with the Anthropic Models API.
 
-`GET /v1/models` is also the OpenAI-format list models endpoint: NookMux returns the Anthropic format only when the request carries **both** the `x-api-key` and `anthropic-version` headers; otherwise it defaults to the OpenAI format, see [List models](/nookmux/api/ai-model/openai/list-models).
+`GET /v1/models` is also the OpenAI-format list models endpoint: NookMux returns the Anthropic format only when the request carries **both** the `x-api-key` and `anthropic-version` headers; otherwise it defaults to the OpenAI format (see [List models](/nookmux/api/ai-model/openai/list-models)).
 
 The list covers the models available to the current token: models within the token's model restriction when one is set, otherwise the models currently enabled for the token's group (or the user's group). NookMux returns all models in a single response; the `limit` / `after_id` / `before_id` pagination parameters are not supported, and `has_more` is always `false`.
 

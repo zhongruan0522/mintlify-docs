@@ -68,7 +68,7 @@ curl --request GET \
 </ResponseField>
 
 <ResponseField name="data" type="object">
-  全部数据看板配置键到当前值（字符串）的扁平映射。下方 `default` 为未做任何修改时的内置默认值。
+  全部数据看板配置键到当前值（字符串）的扁平映射。下方标注的默认值为未做任何修改时的内置默认值。
 
   <Expandable title="data 结构">
     <ResponseField name="api_info_enabled" type="string" required>
@@ -102,7 +102,7 @@ curl --request GET \
       是否按用户维度聚合额度数据（`true`/`false`）。默认 `true`。
     </ResponseField>
     <ResponseField name="quota_data_track_tokens" type="string" required>
-      是否随额度数据记录 token 用量（`true`/`false`）。默认 `true`。
+      是否随额度数据记录 Token 用量（`true`/`false`）。默认 `true`。
     </ResponseField>
     <ResponseField name="rankings_enabled" type="string" required>
       是否启用排行榜面板（`true`/`false`）。默认 `true`。

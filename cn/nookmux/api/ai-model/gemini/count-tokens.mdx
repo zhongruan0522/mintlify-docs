@@ -1,12 +1,12 @@
 ---
 title: 统计 Token
-description: 以 Gemini 原生格式预估给定内容将消耗的 token 数量。
+description: 以 Gemini 原生格式预估给定内容将消耗的 Token 数量。
 api: "POST /v1beta/models/{model}:countTokens"
 ---
 
-统计给定输入内容在该模型下将消耗的 token 数量，兼容 Google Gemini API 的 `countTokens` 方法。适合在正式生成前估算成本、控制上下文长度。
+统计给定输入内容在该模型下将消耗的 Token 数量，兼容 Google Gemini API 的 `countTokens` 方法。适合在正式生成前估算成本、控制上下文长度。
 
-NookMux 将请求转发到 `{model}` 对应的渠道并原样回传上游统计结果。注意：NookMux 按返回的 `totalTokens` 对本接口计费（按输入 token 口径结算），统计接口本身也会产生少量费用。
+NookMux 将请求转发到 `{model}` 对应的渠道并原样回传上游统计结果。注意：NookMux 按返回的 `totalTokens` 对本接口计费（按输入 Token 口径结算），统计接口本身也会产生少量费用。
 
 ## 请求
 
@@ -59,12 +59,12 @@ print(response.total_tokens)
 action 固定为 `countTokens`。
 
 <ParamField path="path.model" type="string" required>
-  用于统计 token 的模型名称，如 `gemini-2.5-flash`。不同模型的分词结果可能不同。
+  用于统计 Token 的模型名称，如 `gemini-2.5-flash`。不同模型的分词结果可能不同。
 </ParamField>
 
 ### 请求体
 
-支持两种形态：顶层 `contents`，或用 `generateContentRequest` 包装完整的生成请求。两者必须提供其一，`contents` 与 `generateContentRequest` 二选一。
+支持两种形态：顶层 `contents`，或用 `generateContentRequest` 包装完整的生成请求。两者须二选一提供。
 
 <ParamField path="body.contents" type="object[]">
   待统计的内容列表，结构与「生成内容」的 `contents` 完全一致（`role`、`parts[]`：`text`、`inlineData` 等）。
@@ -77,7 +77,7 @@ action 固定为 `countTokens`。
       文本片段。
     </ParamField>
     <ParamField path="parts[].inlineData" type="object">
-      内联多模态数据（Base64 编码），含 `mimeType` 与 `data`。图像、音频、视频等会按对应模态折算 token。
+      内联多模态数据（Base64 编码），含 `mimeType` 与 `data`。图像、音频、视频等会按对应模态折算 Token。
     </ParamField>
   </Expandable>
 </ParamField>
@@ -90,7 +90,7 @@ action 固定为 `countTokens`。
       对话内容列表，结构同上方 `contents`。
     </ParamField>
     <ParamField path="systemInstruction" type="object">
-      系统指令，同样计入 token 统计。
+      系统指令，同样计入 Token 统计。
     </ParamField>
     <ParamField path="tools" type="object[]">
       工具列表（如 `functionDeclarations`、`googleSearch`），工具声明计入统计。
@@ -120,7 +120,7 @@ action 固定为 `countTokens`。
 ### 响应字段
 
 <ResponseField name="totalTokens" type="integer" required>
-  输入内容消耗的 token 总数。NookMux 以该值对本接口计费。
+  输入内容消耗的 Token 总数。NookMux 以该值对本接口计费。
 </ResponseField>
 
 <ResponseField name="totalBillableCharacters" type="integer">

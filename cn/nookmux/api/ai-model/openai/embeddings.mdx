@@ -53,7 +53,7 @@ print(response.data[0].embedding[:8])
 </ParamField>
 
 <ParamField path="body.input" type="string | string[] | integer[]" required>
-  要嵌入的输入文本。支持单个字符串或字符串数组（批量嵌入，每条文本对应响应 `data` 中的一个元素）；也接受 OpenAI 的 token ID 数组形式并透传给上游渠道。不允许为空。
+  要嵌入的输入文本。支持单个字符串或字符串数组（批量嵌入，每条文本对应响应 `data` 中的一个元素）；也接受 OpenAI 的 Token ID 数组形式并透传给上游渠道。不允许为空。
 </ParamField>
 
 <ParamField path="body.encoding_format" type="string" default="float">
@@ -160,10 +160,10 @@ print(response.data[0].embedding[:8])
 
   <Expandable title="usage 结构">
     <ResponseField name="prompt_tokens" type="integer" required>
-      输入消耗的 token 数。
+      输入消耗的 Token 数。
     </ResponseField>
     <ResponseField name="total_tokens" type="integer" required>
-      总消耗 token 数。
+      总消耗 Token 数。
     </ResponseField>
   </Expandable>
 </ResponseField>

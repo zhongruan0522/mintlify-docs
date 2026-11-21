@@ -60,7 +60,7 @@ print(response.choices[0].message.content)
 </ParamField>
 
 <ParamField path="body.messages" type="object[]" required>
-  对话消息列表，按时间顺序排列。每条消息包含 `role` 与 `content`，详细结构见下表。
+  对话消息列表，按时间顺序排列。每条消息包含 `role` 与 `content`，详细结构见下方展开项。
 
   <Expandable title="messages 结构">
     <ParamField path="role" type="string" required>
@@ -73,7 +73,7 @@ print(response.choices[0].message.content)
       图像的 URL 或 Base64 编码数据（`data:image/jpeg;base64,...` 格式）。
     </ParamField>
     <ParamField path="content[].image_url.detail" type="string" default="high">
-      图像识别精度：`high`（高精度，消耗更多 token）或 `low`（低精度）。
+      图像识别精度：`high`（高精度，消耗更多 Token）或 `low`（低精度）。
     </ParamField>
     <ParamField path="content[].input_audio.data" type="string">
       音频的 Base64 编码数据。
@@ -114,7 +114,7 @@ print(response.choices[0].message.content)
 </ParamField>
 
 <ParamField path="body.max_tokens" type="integer">
-  生成的最大 token 数量（含可见输出与思维链）。达到上限时输出会被截断（`finish_reason` 为 `length`）。
+  生成的最大 Token 数量（含可见输出与思维链）。达到上限时输出会被截断（`finish_reason` 为 `length`）。
 </ParamField>
 
 <ParamField path="body.max_completion_tokens" type="integer">
@@ -202,15 +202,15 @@ print(response.choices[0].message.content)
 </ParamField>
 
 <ParamField path="body.logprobs" type="boolean">
-  是否返回输出 token 的对数概率。
+  是否返回输出 Token 的对数概率。
 </ParamField>
 
 <ParamField path="body.top_logprobs" type="integer">
-  每个输出位置返回概率最高的 n 个 token（0 ~ 20）。设置 `logprobs` 时生效。
+  每个输出位置返回概率最高的 n 个 Token（`0 ~ 20`）。设置 `logprobs` 时生效。
 </ParamField>
 
 <ParamField path="body.logit_bias" type="object">
-  修改指定 token 在采样中的出现概率，键为 token ID，值为 `-100 ~ 100`。
+  修改指定 Token 在采样中的出现概率，键为 Token ID，值为 `-100 ~ 100`。
 </ParamField>
 
 <ParamField path="body.modalities" type="string[]">
@@ -347,7 +347,7 @@ print(response.choices[0].message.content)
       </Expandable>
     </ResponseField>
     <ResponseField name="finish_reason" type="string">
-      生成结束原因：`stop`（自然结束或命中停止序列）、`length`（达到 max_tokens 上限）、`tool_calls`（模型请求调用工具）、`content_filter`（内容被安全策略拦截）。
+      生成结束原因：`stop`（自然结束或命中停止序列）、`length`（达到 `max_tokens` 上限）、`tool_calls`（模型请求调用工具）、`content_filter`（内容被安全策略拦截）。
     </ResponseField>
   </Expandable>
 </ResponseField>
@@ -357,19 +357,19 @@ print(response.choices[0].message.content)
 
   <Expandable title="usage 结构">
     <ResponseField name="prompt_tokens" type="integer">
-      输入消耗的 token 数。
+      输入消耗的 Token 数。
     </ResponseField>
     <ResponseField name="completion_tokens" type="integer">
-      输出消耗的 token 数。
+      输出消耗的 Token 数。
     </ResponseField>
     <ResponseField name="total_tokens" type="integer">
-      总消耗 token 数。
+      总消耗 Token 数。
     </ResponseField>
     <ResponseField name="prompt_tokens_details" type="object">
-      输入明细，含 `cached_tokens`（命中缓存的 token 数）。
+      输入明细，含 `cached_tokens`（命中缓存的 Token 数）。
     </ResponseField>
     <ResponseField name="completion_tokens_details" type="object">
-      输出明细，含 `reasoning_tokens`（思维链 token 数）。
+      输出明细，含 `reasoning_tokens`（思维链 Token 数）。
     </ResponseField>
   </Expandable>
 </ResponseField>

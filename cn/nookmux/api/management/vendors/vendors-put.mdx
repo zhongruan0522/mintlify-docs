@@ -100,7 +100,7 @@ curl --request PUT \
 <ResponseField name="data" type="object" required>
   更新后的供应商记录。
 
-  <Expandable title="vendor 结构">
+  <Expandable title="供应商结构">
     <ResponseField name="id" type="integer" required>
       供应商 ID。
     </ResponseField>
@@ -132,7 +132,7 @@ curl --request PUT \
 </ResponseField>
 
 <Note>
-管理接口在业务失败时同样返回 HTTP `200`，必须以 `success` 字段判断结果。更新成功会记录到管理端审计日志（vendor 模块）。
+管理接口在业务失败时同样返回 HTTP `200`，必须以 `success` 字段判断结果。更新成功会记录到管理端审计日志（`vendor` 模块）。
 </Note>
 
 ## 错误说明

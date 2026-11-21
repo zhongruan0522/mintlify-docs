@@ -5,7 +5,7 @@ description: 基于 NookMux 运行时路由和请求结构核对的接口差异
 
 ## 核对基准
 
-本页以当前仓库代码为准，核对范围仅限 `docs/zh/api/`：
+本页以当前仓库代码为准，核对范围仅限 `cn/nookmux/api/`：
 
 - 路由：`internal/httpapi/router/api_router.go`、`internal/httpapi/router/relay_router.go`、`internal/httpapi/router/dashboard.go`
 - 请求边界：`internal/httpapi/controller/`（按资源子包）
@@ -36,7 +36,7 @@ description: 基于 NookMux 运行时路由和请求结构核对的接口差异
 
 ## 原生成页缺少的运行时路由
 
-以下为代码实际注册、但原中文生成页没有对应契约的 99 条路由。
+以下为代码实际注册、但原中文生成页没有对应契约的路由。
 
 ### 系统、用户与认证
 
@@ -58,7 +58,7 @@ GET    /api/user/login/encryption-key
 - `PUT /api/user/passkey/:id`：JSON body `{ "device_name": "..." }`。
 - `POST /api/oauth/email/bind`：JSON body 必须含 `email`、`code`。
 - OAuth 回调必须同时携带会话中签发的 `state` 和 provider 返回的 `code`。
-- `GET /api/user/login/encryption-key`：`PASSWORD_LOGIN_ENCRYPTION_ENABLED` 未开启时返回 `{enabled:false}`；开启时返回 `{kid, public_key}`，`POST /api/user/login` 须改交 `password_encrypted`/`encryption_key_id`，不再接受明文 `password`。
+- `GET /api/user/login/encryption-key`：`PASSWORD_LOGIN_ENCRYPTION_ENABLED` 未开启时返回 `{enabled:false}`；开启时返回 `{kid, public_key}`，`POST /api/user/login` 须改为提交 `password_encrypted`/`encryption_key_id`，不再接受明文 `password`。
 
 ### Root 系统设置
 
@@ -282,8 +282,8 @@ GET    /mcp/video/:id
 - `/v1/images/variations` 和 `DELETE /v1/models/:model` 当前明确返回“未实现”。
 - 两个 `*path` 是 Gemini 动态 action 路由，实际 URL 形如
   `/v1beta/models/{model}:generateContent`。
-- `/pg/chat/completions` 使用用户 Session，服务于内置 Playground，不使用 API Token。
-- Billing 路由使用只读 API Token，响应兼容旧 OpenAI Dashboard 格式。
+- `/pg/chat/completions` 使用用户 Session，服务于内置 Playground，不使用 API 令牌。
+- Billing 路由使用只读 API 令牌，响应兼容旧 OpenAI Dashboard 格式。
 
 ## 已有接口的参数变化
 
@@ -296,7 +296,7 @@ GET    /mcp/video/:id
 | `GET /api/channel/search` | 除 `keyword`、`group`、`model` 外，新增 `id`、`name`、`tag`、`status`、`type`、`id_sort`、`tag_mode`、`p`、`page_size`。 |
 | `POST/PUT /api/token/` | 新增 `quota_type`、`window_hours`、`window_quota`、`window_start_hour`、`cycle_days`、`cycle_quota`；运行时统计字段不可由客户端设置。 |
 | `GET /api/token/search` | 新增 `token`、`group`、`status`、`all`、`p`、`page_size`；`status` 为 1 启用、2 禁用、3 过期、4 额度耗尽。 |
-| `POST/PUT /api/models/` | 新增 `context_length`、`max_output_tokens`、`input_modalities`、`output_modalities`、`capabilities`、`knowledge_cutoff`、`release_date`、`parameter_count`；`sync_official` 不再是 JSON API 字段。 |
+| `POST/PUT /api/models/` | 新增可空字段 `context_length`、`max_output_tokens`、`input_modalities`、`output_modalities`、`capabilities`、`knowledge_cutoff`、`release_date`、`parameter_count`；`sync_official` 不再是 JSON API 字段。 |
 | `POST/PUT /api/vendors/` | 新增可空字段 `data_retention_days`、`training_opt_out`。 |
 | `POST /v1/chat/completions` | 当前 DTO 还接受 `verbosity`、`top_k`、`parallel_tool_calls`、`safety_identifier`、`store`、`prompt_cache_key`、`prompt_cache_retention`、`metadata`、`prediction` 及若干供应商扩展字段。 |
 | `POST /v1/responses` | 新增 `include`、`metadata`、`parallel_tool_calls`、`top_logprobs`、`safety_identifier`、`service_tier`、`store`、`prompt_cache_key`、`prompt_cache_retention`、`text`、`user`、`max_tool_calls`、`prompt` 等字段；`instructions` 接受原始 JSON，而非仅限字符串。 |
@@ -314,7 +314,7 @@ AI 扩展字段是否会被转发还取决于目标渠道及参数过滤配置�
 - `GET /api/models` 需要 User 鉴权。
 - `GET /api/channel/fetch_models/:id`、`POST /api/channel/fetch_models` 需要 Root 鉴权。
 - `/api/option/*`、`/api/db/*`、`/api/performance/*` 均需要 Root 鉴权。
-- Token 列表/详情不再返回明文 key；读取和重置 key 必须走专用接口。
+- 令牌列表/详情不再返回明文 key；读取和重置 key 必须走专用接口。
 - `GET /api/pricing`、`GET /api/rankings` 受对应 Header Nav 模块开关控制。
 - `POST /api/verify` 的验证态绑定请求用户与单个 `scope`（或无作用域）；受保护端点对未验证会话返回 HTTP `403`，`code` 为 `VERIFICATION_REQUIRED`/`VERIFICATION_INVALID`/`VERIFICATION_EXPIRED`。
 - Access Token 仅授予 User 级 API；Admin / Root 端点对 Access Token 鉴权一律拒绝，与账号角色无关。

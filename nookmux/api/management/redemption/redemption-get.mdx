@@ -95,7 +95,7 @@ curl --request GET \
       Redemption code id.
     </ResponseField>
     <ResponseField name="user_id" type="integer" required>
-      Id of the administrator who created the code.
+      ID of the administrator who created the code.
     </ResponseField>
     <ResponseField name="key" type="string" required>
       The redemption key (a 32-character UUID without dashes). Always returned as an empty string by this endpoint; see the note below.
@@ -119,13 +119,13 @@ curl --request GET \
       Number of codes to generate in one create call. Request-only field, always `0` in responses.
     </ResponseField>
     <ResponseField name="used_user_id" type="integer" required>
-      Id of the user who redeemed the code; `0` if the code has not been redeemed.
+      ID of the user who redeemed the code; `0` if the code has not been redeemed.
     </ResponseField>
     <ResponseField name="DeletedAt" type="string" required>
       Soft-delete marker; always `null` because soft-deleted rows are excluded from queries.
     </ResponseField>
     <ResponseField name="expired_time" type="integer" required>
-      Unix timestamp (seconds) after which the code can no longer be redeemed; `0` means no expiry.
+      Unix timestamp (seconds) after which the code can no longer be redeemed; `0` means no expiration.
     </ResponseField>
   </Expandable>
 </ResponseField>

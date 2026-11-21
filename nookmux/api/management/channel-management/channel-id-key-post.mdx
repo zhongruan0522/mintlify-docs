@@ -28,7 +28,7 @@ curl --request POST \
 ### Path parameters
 
 <ParamField path="id" type="integer" required>
-  Id of the channel whose key should be revealed.
+  ID of the channel whose key should be revealed.
 </ParamField>
 
 ## Response
@@ -69,7 +69,7 @@ curl --request POST \
 
 | Condition | Description |
 | --- | --- |
-| Secure verification required | HTTP `403` with `code: VERIFICATION_REQUIRED` / `VERIFICATION_INVALID` / `VERIFICATION_EXPIRED`: the session holds no valid scopeless verification; complete `POST /api/verify` without a `scope` first |
-| Channel id format error | `id` in the path is not an integer |
-| Channel not found | No channel exists with the given id |
-| Channel info failed | The channel could not be loaded; see server logs |
+| Security verification required | HTTP `403` with `code: VERIFICATION_REQUIRED` / `VERIFICATION_INVALID` / `VERIFICATION_EXPIRED`: the session holds no valid scopeless verification; complete `POST /api/verify` without a `scope` first |
+| Channel ID format error | `id` in the path is not an integer |
+| Channel not found | No channel exists with the given ID |
+| Failed to load channel info | The channel could not be loaded; see server logs |

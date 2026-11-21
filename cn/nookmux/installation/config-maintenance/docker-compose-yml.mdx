@@ -111,7 +111,7 @@ environment:
 - 未开启 SSL 的实例须在 DSN 中保留 `sslmode=disable`：Gokb 驱动默认 `require` 且无明文回退。
 - Gokb 默认路径每条带参 SQL 需两次往返且无语句缓存，生产负载建议开启 `SQL_PREPARE_STMT=true`。
 
-NookMux 后端需要兼容 SQLite、MySQL、PostgreSQL、openGauss（7.0，PG 兼容内核）、达梦 DM8 和金仓 KingbaseES。请确保数据库字符集和权限满足生产需求。
+NookMux 后端兼容 SQLite、MySQL、PostgreSQL、openGauss（7.0，PG 兼容内核）、达梦 DM8 和金仓 KingbaseES。请确保数据库字符集和权限满足生产需求。
 
 ## Redis 配置
 

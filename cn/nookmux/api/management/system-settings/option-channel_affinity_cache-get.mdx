@@ -72,10 +72,10 @@ curl --request GET \
       按规则名分组的条目数（键为字符串，值为整数）。所有启用 `include_rule_name` 的已配置规则都会列出且初始值为 `0`，因此没有缓存条目的规则也会出现。
     </ResponseField>
     <ResponseField name="cache_capacity" type="integer" required>
-      内存主缓存的容量，默认 `max_entries` 为 `100000`。缓存走 Redis 时为 `0`。
+      内存主缓存的容量，例如默认 `max_entries` 为 `100000`。缓存后端为 Redis 时返回 `0`。
     </ResponseField>
     <ResponseField name="cache_algo" type="string" required>
-      主缓存淘汰算法，内存默认为 `lru`。缓存走 Redis 时为 `redis`。
+      主缓存淘汰算法，内存缓存默认为 `lru`。缓存后端为 Redis 时返回 `redis`。
     </ResponseField>
   </Expandable>
 </ResponseField>

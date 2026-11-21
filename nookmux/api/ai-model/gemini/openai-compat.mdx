@@ -1,14 +1,14 @@
 ---
 title: OpenAI-path compatibility
-description: A summary of the three compatibility entries that bridge OpenAI-style clients and native Gemini clients.
+description: A summary of the three compatibility endpoints that bridge OpenAI-style clients and native Gemini clients.
 api: "GET /v1beta/openai/models"
 ---
 
-Besides the main `/v1beta` path, NookMux provides three compatibility entries that bridge OpenAI base_url clients and native Gemini clients: an OpenAI-format model list served under the Gemini official OpenAI-compatibility path, a native Gemini endpoint mirror under the `/v1` prefix for SDKs whose base_url is `https://host/v1`, and a legacy OpenAI engine-style path for Gemini embeddings.
+Besides the main `/v1beta` path, NookMux provides three compatibility endpoints that bridge OpenAI base_url clients and native Gemini clients: an OpenAI-format model list served under the Gemini official OpenAI-compatibility path, a native Gemini endpoint mirror under the `/v1` prefix for SDKs whose base_url is `https://host/v1`, and a legacy OpenAI engine-style path for Gemini embeddings.
 
-All three entries share the same NookMux tokens, channels, and billing as the `/v1beta` path.
+All three endpoints share the same NookMux tokens, channels, and billing as the `/v1beta` path.
 
-| Entry | Purpose | Accepted authentication |
+| Endpoint | Purpose | Accepted authentication |
 | --- | --- | --- |
 | `GET /v1beta/openai/models` | Model list in the style of the Gemini official OpenAI compatibility layer, returned in OpenAI format | `x-goog-api-key`, `Authorization: Bearer`, `?key=` |
 | `POST /v1/models/{model}:{action}` | Native Gemini endpoint mirror under the `/v1` prefix, identical to `/v1beta` | `x-goog-api-key`, `Authorization: Bearer`, `?key=` |
@@ -59,7 +59,7 @@ curl --request GET \
 
 ### POST /v1/models/{model}:{action}
 
-Native Gemini clients whose gateway base_url is configured as `https://your-nookmux-domain/v1` can call this entry directly: the path is fully isomorphic to the `/v1beta` series — just replace `/v1beta` with `/v1` — and supports the same 5 actions (`generateContent`, `streamGenerateContent`, `countTokens`, `embedContent`, `batchEmbedContents`), with unchanged request and response formats.
+Native Gemini clients whose gateway base_url is configured as `https://your-nookmux-domain/v1` can call this endpoint directly: the path is fully isomorphic to the `/v1beta` series — just replace `/v1beta` with `/v1` — and supports the same 5 actions (`generateContent`, `streamGenerateContent`, `countTokens`, `embedContent`, `batchEmbedContents`), with unchanged request and response formats.
 
 ```bash cURL
 curl --request POST \
@@ -76,7 +76,7 @@ curl --request POST \
 For field-by-field request and response documentation, see the corresponding Gemini pages: [Generate content](/nookmux/api/ai-model/gemini/generate-content), [Stream generate content](/nookmux/api/ai-model/gemini/stream-generate-content), [Count tokens](/nookmux/api/ai-model/gemini/count-tokens), [Embed content](/nookmux/api/ai-model/gemini/embed-content), [Batch embed contents](/nookmux/api/ai-model/gemini/batch-embed-contents).
 
 <Note>
-  TokenAuth on this prefix also accepts the `x-goog-api-key` header and the `?key=` query parameter. Note the difference from the native OpenAI `GET /v1/models`: when `GET /v1/models` is requested with the `x-goog-api-key` header (or `?key=`), the gateway identifies it as a Gemini-side request and routes it through the Gemini model branch; OpenAI clients should call `GET /v1/models` with plain `Authorization: Bearer`.
+  Token authentication on this prefix also accepts the `x-goog-api-key` header and the `?key=` query parameter. Note the difference from the native OpenAI `GET /v1/models`: when `GET /v1/models` is requested with the `x-goog-api-key` header (or `?key=`), the gateway identifies it as a Gemini-side request and routes it through the Gemini model branch; OpenAI clients should call `GET /v1/models` with plain `Authorization: Bearer`.
 </Note>
 
 ### POST /v1/engines/{model}/embeddings
@@ -98,14 +98,14 @@ curl --request POST \
 ```
 
 <Warning>
-  `{model}` on this entry must be an embedding model (a name starting with `gemini-embedding`, `text-embedding`, or `embedding`), and authentication supports only `Authorization: Bearer` — neither `x-goog-api-key` nor `?key=` is accepted. For standard OpenAI-format embedding requests, use `POST /v1/embeddings` instead.
+  `{model}` on this endpoint must be an embedding model (a name starting with `gemini-embedding`, `text-embedding`, or `embedding`), and authentication supports only `Authorization: Bearer` — neither `x-goog-api-key` nor `?key=` is accepted. For standard OpenAI-format embedding requests, use `POST /v1/embeddings` instead.
 </Warning>
 
 ## Error codes
 
 | HTTP status | Description |
 | --- | --- |
-| 400 | Invalid request parameters, or the model does not match the entry (such as a non-embedding model on the engine path) |
+| 400 | Invalid request parameters, or the model does not match the endpoint (such as a non-embedding model on the engine path) |
 | 401 | Token is invalid, disabled, or expired |
 | 403 | Token cannot access the model, or quota is insufficient |
 | 429 | Rate limit triggered |

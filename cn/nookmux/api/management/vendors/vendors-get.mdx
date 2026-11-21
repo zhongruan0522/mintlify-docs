@@ -4,7 +4,7 @@ description: 分页获取全部供应商元数据列表。
 api: "GET /api/vendors/"
 ---
 
-供应商元数据用于描述上游模型厂商：模型条目通过 `vendor_id` 关联供应商，图标、数据保留天数、训练退出等字段会展示在面向终端用户的定价页上。
+供应商元数据用于描述上游模型厂商：模型条目通过 `vendor_id` 关联供应商，图标、数据保留天数、是否不用于模型训练等字段会展示在面向终端用户的定价页上。
 
 分页返回全部供应商列表。
 
@@ -97,7 +97,7 @@ curl --request GET \
 <ResponseField name="data.items" type="array" required>
   当前页的供应商对象数组。
 
-  <Expandable title="vendor 结构">
+  <Expandable title="供应商结构">
     <ResponseField name="id" type="integer" required>
       供应商 ID。
     </ResponseField>

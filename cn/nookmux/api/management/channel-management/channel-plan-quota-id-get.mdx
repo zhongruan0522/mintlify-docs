@@ -94,7 +94,7 @@ curl --request GET \
 套餐额度数据。结构取决于渠道的 `plan_name`，见下方各变体。
 </ResponseField>
 
-<Expandable title="glm 套餐数据结构">
+<Expandable title="GLM 套餐数据结构">
 
 `plan_name` 为 `glm-coding-plan` 或 `glm-coding-plan-international` 时返回。
 
@@ -188,7 +188,7 @@ MCP 工具额度。
 
 </Expandable>
 
-<Expandable title="kimi 套餐数据结构">
+<Expandable title="Kimi 套餐数据结构">
 
 `plan_name` 为 `kimi-coding-plan` 时返回。
 
@@ -228,9 +228,9 @@ MCP 工具额度。
 
 </Expandable>
 
-<Expandable title="minimax 套餐数据结构">
+<Expandable title="MiniMax 套餐数据结构">
 
-`plan_name` 为 `minimax-coding-plan` 或 `minimax-coding-plan-international` 时返回。结构与 kimi 套餐数据相同：`plan_name`、`tiers`（含 `five_hour` / `weekly_limit` 条目，字段为 `percentage`、`used`、`limit`、`remaining`、可选 `resets_at`、`status`）与 `credential`（`valid` / `expired` / `error`）。
+`plan_name` 为 `minimax-coding-plan` 或 `minimax-coding-plan-international` 时返回。结构与 Kimi 套餐数据相同：`plan_name`、`tiers`（含 `five_hour` / `weekly_limit` 条目，字段为 `percentage`、`used`、`limit`、`remaining`、可选 `resets_at`、`status`）与 `credential`（`valid` / `expired` / `error`）。
 
 </Expandable>
 
@@ -273,5 +273,5 @@ MCP 工具额度。
 | 参数错误 | `参数错误` | 路径中的 `id` 缺失或不是整数 |
 | 渠道不存在 | `渠道不存在` | 渠道不存在或加载失败 |
 | 非套餐渠道 | `该渠道不是套餐渠道` | `channel_info.is_plan` 为 `false` |
-| 渠道密钥无效 | `渠道 API Key 无效或认证失败，请检查 Key 配置` | 上游拒绝该密钥（GLM 套餐） |
-| 查询额度失败 | `查询额度失败: {error}` | 上游请求或响应解析失败；`{error}` 为底层错误详情 |
+| 渠道密钥无效 | `渠道 API Key 无效或认证失败，请检查密钥配置` | 上游拒绝该密钥（GLM 套餐） |
+| 查询额度失败 | `查询额度失败：{{.Error}}` | 上游请求或响应解析失败；`{{.Error}}` 为底层错误详情 |

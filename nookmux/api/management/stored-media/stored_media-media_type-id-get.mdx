@@ -70,24 +70,24 @@ Error description when `success` is `false`; empty otherwise.
 Stored media metadata.
 
 <Expandable title="data structure">
-  <ParamField path="id" type="string" required>
+  <ResponseField name="id" type="string" required>
     Record ID (UUID) of the stored media.
-  </ParamField>
-  <ParamField path="media_type" type="string" required>
+  </ResponseField>
+  <ResponseField name="media_type" type="string" required>
     Media type: `image` or `video`.
-  </ParamField>
-  <ParamField path="created_at" type="integer" required>
+  </ResponseField>
+  <ResponseField name="created_at" type="integer" required>
     Storage time as a Unix timestamp in seconds.
-  </ParamField>
-  <ParamField path="mime_type" type="string" required>
+  </ResponseField>
+  <ResponseField name="mime_type" type="string" required>
     MIME type of the original file, for example `image/png` or `video/mp4`.
-  </ParamField>
-  <ParamField path="size_bytes" type="integer" required>
+  </ResponseField>
+  <ResponseField name="size_bytes" type="integer" required>
     Size of the stored file in bytes.
-  </ParamField>
-  <ParamField path="url" type="string" required>
+  </ResponseField>
+  <ResponseField name="url" type="string" required>
     Signed download URL for the media content, in the form `{server_address}/mcp/{media_type}/{id}?exp=...&sig=...`. The signature expires after one hour.
-  </ParamField>
+  </ResponseField>
 </Expandable>
 </ResponseField>
 
@@ -95,7 +95,7 @@ Stored media metadata.
 
 | Condition | Description |
 | --- | --- |
-| id is required | `{id}` in the path is empty or whitespace only |
+| ID is required | `{id}` in the path is empty or whitespace only |
 | media_type must be image or video | `{media_type}` is not `image` or `video` |
 | Resource not found | No record exists for `{id}`, or its stored media type does not match `{media_type}` |
 | You do not have permission to access this resource | The caller is neither the owner nor an administrator |

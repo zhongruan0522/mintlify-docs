@@ -1,12 +1,12 @@
 ---
-title: 生成OAuth State
+title: 生成 OAuth State
 description: 生成与会话绑定的 state 参数，供 OAuth 登录回调做 CSRF 防护。
 api: "GET /api/oauth/state"
 ---
 
 生成用于 OAuth CSRF 防护的随机 state 参数并存入调用方会话。前端在把用户重定向到提供商授权页之前调用本端点；返回的 state 需在提供商回跳时作为 `state` 查询参数传给 [GitHub OAuth 登录](/cn/nookmux/api/management/oauth/oauth-github-get)或 [LinuxDO OAuth 登录](/cn/nookmux/api/management/oauth/oauth-linuxdo-get)。state 缺失或与会话不一致时，回调端点返回 HTTP `403` 拒绝请求。
 
-可选传入邀请（`aff`）码；它会保存在同一会话中，并在后续 OAuth 流程创建新账号时记为邀请人。
+可选传入邀请码（`aff`）；它会保存在同一会话中，并在后续 OAuth 流程创建新账号时记为邀请人。
 
 本端点为**公开（Public）**接口，无需 Access Token，但挂载了更严格的限流（CriticalRateLimit）。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
 
@@ -24,7 +24,7 @@ curl --request GET \
 ### 查询参数
 
 <ParamField path="aff" type="string">
-  邀请（affiliate）码。提供时保存到会话中；若后续 OAuth 回调注册了新账号，则记为该账号的邀请人。
+  邀请码（affiliate code）。提供时保存到会话中；若后续 OAuth 回调注册了新账号，则记为该账号的邀请人。
 </ParamField>
 
 ## 响应

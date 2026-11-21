@@ -6,7 +6,7 @@ api: "POST /api/custom_voice/voices/"
 
 直接创建音色记录，不经过用户试听/确认流程。可用于将上游音色收录进 TTS 白名单，必要时通过 `redirect_id` 让对外暴露一个不同的音色 ID。
 
-操作人记录为当前管理员（`operator_kind` 为 `admin`），`quota_cost` 为 `0`。音色 ID 重复时以统一的"不合规"错误拒绝，不暴露重复信息。
+操作人记录为当前管理员（`operator_kind` 为 `admin`），`quota_cost` 为 `0`。音色 ID 重复时以统一的“无效的音色 ID”错误拒绝，不暴露重复信息。
 
 需要**管理员（Admin）**权限。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
 
@@ -138,7 +138,7 @@ curl --request POST \
 | 条件 | 说明 |
 | --- | --- |
 | 无效的参数（HTTP 400） | JSON 请求体缺失或格式错误 |
-| 音色ID不能为空 | `voice_id` 去除首尾空白后为空 |
-| 音色类型不合规 | `type` 不是 `preview` 或 `created` |
-| 音色ID不合规 | `voice_id` 已存在（按不合规提示，不暴露重复） |
+| 音色 ID 不能为空 | `voice_id` 去除首尾空白后为空 |
+| 无效的音色类型 | `type` 不是 `preview` 或 `created` |
+| 无效的音色 ID | `voice_id` 已存在（按无效 ID 提示，不暴露重复） |
 | 数据库错误，请稍后重试 | 查重或写入失败，详见服务端日志 |

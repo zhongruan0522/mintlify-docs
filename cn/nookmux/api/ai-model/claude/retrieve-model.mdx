@@ -6,7 +6,7 @@ api: "GET /v1/models/{model}"
 
 按模型 ID 获取单个模型对象，响应格式兼容 Anthropic Models API。
 
-与「模型列表」相同，`GET /v1/models/{model}` 的返回格式取决于请求 header：仅当请求**同时**携带 `x-api-key` 与 `anthropic-version` 两个 header 时返回 Anthropic 格式；否则默认返回 OpenAI 格式，见[模型列表](/cn/nookmux/api/ai-model/openai/list-models)。
+与「模型列表」相同，`GET /v1/models/{model}` 的返回格式取决于请求头：仅当请求**同时**携带 `x-api-key` 与 `anthropic-version` 两个请求头时返回 Anthropic 格式；否则默认返回 OpenAI 格式，见[获取模型](/cn/nookmux/api/ai-model/openai/retrieve-model)。
 
 ## 请求
 
@@ -40,7 +40,7 @@ print(model.id, model.display_name)
 </ParamField>
 
 <ParamField path="header.anthropic-version" type="string" required>
-  Claude API 版本号，如 `2023-06-01`。与 `x-api-key` 同时携带时才会返回 Anthropic 格式；只带 `Authorization: Bearer <token>` 或缺少本 header 时，本端点退化为 OpenAI 格式响应。
+  Claude API 版本号，如 `2023-06-01`。与 `x-api-key` 同时携带时才会返回 Anthropic 格式；只带 `Authorization: Bearer <token>` 或缺少本请求头时，本端点退化为 OpenAI 格式响应。
 </ParamField>
 
 ### 路径参数

@@ -1,5 +1,5 @@
 ---
-title: 管理员禁用用户2FA
+title: 管理员禁用用户 2FA
 description: 为丢失验证器的用户强制禁用两步验证。
 api: "DELETE /api/user/{id}/2fa"
 ---
@@ -36,7 +36,7 @@ curl --request DELETE \
 ```json 200
 {
   "success": true,
-  "message": "User 2FA has been forcibly disabled",
+  "message": "用户 2FA 已被强制禁用",
   "data": null
 }
 ```
@@ -69,4 +69,4 @@ curl --request DELETE \
 | 无效的用户 ID | 路径中的 `id` 不是整数 |
 | 数据库错误 | 目标用户加载失败（含 `id` 不存在）或更新失败 |
 | 无权限 | 调用者不是超级管理员，且目标用户为同级或更高级 |
-| 用户未启用2FA | 目标用户没有已启用的 2FA |
+| 用户未启用 2FA | 目标用户没有已启用的 2FA |

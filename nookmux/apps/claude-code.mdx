@@ -67,7 +67,7 @@ To persist it, write the settings to `%USERPROFILE%\.claude\settings.json`:
 1. Create or select a token on the console's "Keys" page and copy the full secret. It starts with the site key prefix (default `sk-`; admins can customize it under System Settings → Site & Branding → System Information).
 2. Make sure the channel already has `claude-*` models configured.
 
-NookMux's Anthropic-compatible entry supports both authentication headers: `Authorization: Bearer <token>` (for `ANTHROPIC_AUTH_TOKEN`) and `x-api-key: <token>` (for `ANTHROPIC_API_KEY`). `ANTHROPIC_AUTH_TOKEN` is recommended.
+NookMux's Anthropic-compatible endpoint supports both authentication headers: `Authorization: Bearer <token>` (for `ANTHROPIC_AUTH_TOKEN`) and `x-api-key: <token>` (for `ANTHROPIC_API_KEY`). `ANTHROPIC_AUTH_TOKEN` is recommended.
 
 ## Verify the Connection
 
@@ -83,7 +83,7 @@ curl -X POST "$ANTHROPIC_BASE_URL/v1/messages" \
 
 If the response starts with `{"id":"msg_`, the address and token are valid. Then run `claude` and use `/status` to confirm that `Anthropic base URL` points to your NookMux site.
 
-## Start Using
+## Usage
 
 ```bash
 cd /path/to/your/project
@@ -93,7 +93,7 @@ claude
 After launch, use `/model` to select a model.
 
 <Info>
-  After setting `ANTHROPIC_BASE_URL`, all models, including officially preset names, are routed through NookMux instead of consuming the official account quota.
+  After setting `ANTHROPIC_BASE_URL`, all models, including official preset model names, are routed through NookMux instead of consuming your official account quota.
 </Info>
 
 ## Common Issues

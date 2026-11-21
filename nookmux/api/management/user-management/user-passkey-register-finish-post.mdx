@@ -74,9 +74,9 @@ The request must be sent from the same session as the `begin` call: the challeng
 
 | Condition | Description |
 | --- | --- |
-| Passkey login is not enabled by administrator | The passkey feature is disabled in the server settings |
+| Passkey login is not enabled by the administrator | The passkey feature is disabled in the server settings |
 | Not logged in / user disabled | The session cannot be resolved; returned as HTTP `401` |
-| Secure verification required | 2FA is enabled but no valid 2FA step-up verification exists |
+| Security verification required | 2FA is enabled but no valid 2FA step-up verification exists |
 | Passkey limit reached | The limit was reached between `begin` and `finish` |
 | Unable to create Passkey credential | No active registration challenge exists for this session (missing or already consumed), or the attestation failed verification; see server logs |
 | Database error | Persisting the credential failed; see server logs |

@@ -1,5 +1,5 @@
 ---
-title: 获取Stripe支付金额
+title: 获取 Stripe 支付金额
 description: 在创建 Checkout 会话前计算 Stripe 充值的应付金额。
 api: "POST /api/user/stripe/amount"
 ---
@@ -28,7 +28,7 @@ curl --request POST \
 ### 请求体
 
 <ParamField path="body.amount" type="integer" required>
-待计价的充值数量。不得低于配置的 Stripe 最低充值数量。 单笔充值上限为 `floor((MaxInt-1)/quota_per_unit)`（默认 `quota_per_unit` 为 `500000` 时约 18.4 万亿）；换算额度无法表示的数量同样会被拒绝。
+待计价的充值数量。不得低于配置的 Stripe 最低充值数量。单笔充值上限为 `floor((MaxInt-1)/quota_per_unit)`（默认 `quota_per_unit` 为 `500000` 时约 18.4 万亿）；换算额度无法表示的数量同样会被拒绝。
 </ParamField>
 
 ## 响应

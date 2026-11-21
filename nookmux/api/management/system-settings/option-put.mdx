@@ -62,7 +62,7 @@ curl --request PUT \
 </ResponseField>
 
 <Note>
-  Body-shape errors are reported before the unified wrapper and use real HTTP status codes: malformed JSON or an unsupported value type returns HTTP `400`, and removed legacy keys return HTTP `404`. Per-key validation failures (invalid ratio JSON, `RetryTimes` out of range, enabling an OAuth provider without its client id configured, and similar) return HTTP `200` with `success: false` and a localized `message`. Enabling `EmailDomainRestrictionEnabled` requires a non-empty email domain whitelist; enabling `TurnstileCheckEnabled` requires a configured Turnstile site key.
+  Body-shape errors are reported before the unified wrapper and use real HTTP status codes: malformed JSON or an unsupported value type returns HTTP `400`, and removed or migrated legacy keys return HTTP `404`. Per-key validation failures (invalid ratio JSON, `RetryTimes` out of range, enabling an OAuth provider without its client ID configured, and similar) return HTTP `200` with `success: false` and a localized `message`. Enabling `EmailDomainRestrictionEnabled` requires a non-empty email domain whitelist; enabling `TurnstileCheckEnabled` requires a configured Turnstile site key.
 </Note>
 
 ## Error messages
@@ -71,6 +71,7 @@ curl --request PUT \
 | --- | --- |
 | Invalid parameters | The JSON body is missing or malformed; HTTP `400` |
 | Option value must be a string, boolean, or number | `value` is not one of the accepted JSON types; HTTP `400` |
-| This option has been removed | `key` belongs to a removed legacy feature or a setting migrated elsewhere (voice options moved to voice management); HTTP `404` |
+| This option has been removed | `key` belongs to a removed legacy feature; HTTP `404` |
+| This option has been migrated to voice management. Please maintain it from the voice management page | `key` is `minimax.voice_whitelist` or `minimax.voice_redirect` (voice options moved to voice management); HTTP `404` |
 | Per-key validation failure | The value does not satisfy the key's rules (for example invalid `GroupRatio` JSON, `RetryTimes` outside `0-99`, enabling retry with `RetryTimes <= 0`, OAuth/provider toggles without required configuration); HTTP `200` with `success: false` |
 | Database error, please try again later | Persisting the option failed; see server logs |

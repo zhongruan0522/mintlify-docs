@@ -62,7 +62,7 @@ curl --request GET \
 用户经该分组路由请求时应用的计费倍率。当用户可使用 `auto` 分组时，该条目的 `ratio` 为随 `Accept-Language` 请求头本地化的字符串（默认中文为 `自动`，英文为 `Auto`）而非数字，因为自动选择不存在单一倍率。
 </ResponseField>
   <ResponseField name="desc" type="string" required>
-管理员配置的分组描述；未配置时，内置分组（如 `default` 与 `vip`）按请求语言返回本地化描述（中文为 `默认分组`、`VIP 分组`），其余分组回退为分组名。
+管理员配置的分组描述；未配置时，`default` 与 `vip` 的内置描述会随 `Accept-Language` 请求头本地化（默认中文为 `默认分组`、`VIP 分组`，英文为 `Default group`、`VIP group`），其余分组回退为分组名。
 </ResponseField>
 </Expandable>
 </ResponseField>

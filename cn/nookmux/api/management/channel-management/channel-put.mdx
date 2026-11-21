@@ -38,7 +38,7 @@ curl --request PUT \
 </ParamField>
 
 <ParamField path="body.multi_key_mode" type="string">
-多 Key 渠道的新轮询策略：`random` 或 `polling`。仅在非空时生效；其他值会被拒绝。
+多 Key 渠道的新密钥轮换策略：`random`（随机）或 `polling`（轮询）。仅在非空时生效；其他值会被拒绝。
 </ParamField>
 
 <ParamField path="body.key_mode" type="string">
@@ -107,7 +107,7 @@ curl --request PUT \
       上游连续失败后是否自动禁用渠道：`1` 启用，`0` 关闭。
     </ParamField>
     <ParamField path="openai_organization" type="string">
-      OpenAI 类型渠道的 organization 头（`OpenAI-Organization`）。
+      OpenAI 类型渠道的组织请求头（`OpenAI-Organization`）。
     </ParamField>
     <ParamField path="remark" type="string">
       自由备注，最长 255 字符。
@@ -263,7 +263,7 @@ curl --request PUT \
       上游状态码映射 JSON。
     </ResponseField>
     <ResponseField name="openai_organization" type="string">
-      OpenAI organization 头的值。
+      OpenAI 组织请求头（`OpenAI-Organization`）的值。
     </ResponseField>
     <ResponseField name="remark" type="string">
       自由备注。
@@ -291,7 +291,7 @@ curl --request PUT \
           密钥索引到状态（`1` 启用、`2` 手动禁用、`3` 自动禁用）的映射；未出现的条目为启用。
         </ResponseField>
         <ResponseField name="multi_key_mode" type="string">
-          轮询策略：`random` 或 `polling`。
+          密钥轮换策略：`random`（随机）或 `polling`（轮询）。
         </ResponseField>
         <ResponseField name="multi_key_polling_index" type="integer">
           `polling` 策略当前使用的索引。

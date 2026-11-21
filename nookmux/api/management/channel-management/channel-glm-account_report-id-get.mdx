@@ -26,7 +26,7 @@ curl --request GET \
 ### Path parameters
 
 <ParamField path="id" type="integer" required>
-Channel id.
+Channel ID.
 </ParamField>
 
 ## Response
@@ -102,4 +102,4 @@ Management endpoints return HTTP `200` even on business failures; always check t
 | Channel not found | `Channel not found` | The channel does not exist or could not be loaded |
 | Balance not implemented | `Not implemented yet` | The channel type is not Zhipu (`type` `26`) |
 | Channel key invalid | `The channel API key is invalid or authentication failed. Please check the key configuration` | The upstream rejected the key |
-| Quota query failed | `Failed to query quota: {{.Error}}` | The upstream request, response parsing, or balance picking failed; `{{.Error}}` carries the underlying error |
+| Quota query failed | `Failed to query quota: {{.Error}}` | The upstream request, response parsing, or balance selection failed; `{{.Error}}` carries the underlying error |

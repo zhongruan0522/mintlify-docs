@@ -4,7 +4,7 @@ description: 写入 DynamicRatioEnabled 配置，全局开启或关闭动态倍�
 api: "PUT /api/dynamic_ratio/enabled"
 ---
 
-通过写入 `DynamicRatioEnabled` 配置来全局开启或关闭动态倍率功能。关闭期间所有规则均被跳过，计费回退到配置的分组倍率；开关状态用户可通过[获取动态倍率状态](/cn/nookmux/api/management/dynamic-ratio/dynamic_ratio-status-get)查看。变更会记录到审计日志。
+通过写入 `DynamicRatioEnabled` 配置来全局开启或关闭动态倍率功能。关闭期间所有规则均被跳过，计费回退到配置的分组倍率；用户可通过[获取动态倍率状态](/cn/nookmux/api/management/dynamic-ratio/dynamic_ratio-status-get)查看开关状态。变更会记录到审计日志。
 
 需要**超级管理员**权限。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
 

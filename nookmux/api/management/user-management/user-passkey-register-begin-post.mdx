@@ -97,9 +97,9 @@ The challenge and the device name are stored in the server-side session, so `POS
 
 | Condition | Description |
 | --- | --- |
-| Passkey login is not enabled by administrator | The passkey feature is disabled in the server settings |
+| Passkey login is not enabled by the administrator | The passkey feature is disabled in the server settings |
 | Not logged in / user disabled | The session cannot be resolved; returned as HTTP `401` |
-| Secure verification required | 2FA is enabled but no valid 2FA step-up verification exists |
+| Security verification required | 2FA is enabled but no valid 2FA step-up verification exists |
 | Passkey limit reached | The user already has the maximum number of passkeys |
 | Unable to create Passkey credential | Building the WebAuthn relying party, generating the ceremony, or saving the session state failed; see server logs |
 | Database error | Counting or loading the existing credentials failed; see server logs |

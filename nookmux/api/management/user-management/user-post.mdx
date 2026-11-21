@@ -45,7 +45,7 @@ Display name, up to 20 characters. Defaults to `username` when omitted.
 </ParamField>
 
 <ParamField path="body.role" type="integer" default="1">
-Role of the new user: `1` common user or `10` admin. Must be strictly lower than the caller's role, so only the root admin can create admin users. The root role cannot be created through this endpoint.
+Role of the new user: `1` regular user or `10` admin. Must be strictly lower than the caller's role, so only the root admin can create admin users. The root role cannot be created through this endpoint.
 </ParamField>
 
 <Note>
@@ -79,8 +79,8 @@ Error description when `success` is `false`; empty otherwise.
 
 | Condition | Description |
 | --- | --- |
-| Secure verification required | HTTP `403` with `code: VERIFICATION_REQUIRED`: the session has no valid verification bound to scope `admin_user_manage` |
+| Security verification required | HTTP `403` with `code: VERIFICATION_REQUIRED`: the session has no valid verification bound to scope `admin_user_manage` |
 | Invalid parameters | The JSON body is malformed, or `username` or `password` is empty |
 | Invalid input | Field constraints are violated (`username` up to 20 characters, `password` 8 to 20 characters, `display_name` up to 20 characters) |
-| Cannot create higher level user | `role` is equal to or higher than the caller's role |
+| Cannot create same- or higher-level user | `role` is equal to or higher than the caller's role |
 | Database error | Inserting the user failed, for example the username already exists |

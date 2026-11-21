@@ -93,7 +93,7 @@ curl --request GET \
       Display name of the account.
     </ResponseField>
     <ResponseField name="role" type="integer" required>
-      Role: `1` common user, `10` admin, `100` root.
+      Role: `1` regular user, `10` admin, `100` root.
     </ResponseField>
     <ResponseField name="status" type="integer" required>
       Account status: `1` enabled.
@@ -118,15 +118,15 @@ curl --request GET \
 
 | Condition | Description |
 | --- | --- |
-| Secure verification required | HTTP `403` with `code: VERIFICATION_REQUIRED`: the session has no valid verification bound to scope `oauth_bind` |
+| Security verification required | HTTP `403` with `code: VERIFICATION_REQUIRED`: the session has no valid verification bound to scope `oauth_bind` |
 | Unknown OAuth provider | `provider` is not registered; HTTP `400` |
 | State parameter is empty or mismatched | `state` missing or not matching the session; HTTP `403` |
-| GitHub login and registration has not been enabled by administrator | GitHub OAuth is not configured/enabled |
+| GitHub login and registration have not been enabled by the administrator | GitHub OAuth is not configured/enabled |
 | Provider error | `error`/`error_description` returned by GitHub; `error_description` is echoed in `message` |
 | Unable to connect to GitHub server | Token exchange or profile fetch could not reach GitHub |
 | Failed to get token from GitHub | Authorization code exchange failed, for example an invalid code |
 | Failed to get user information / GitHub returned empty user info | Fetching the GitHub profile failed |
-| New user registration has been disabled by administrator | No matching account exists and self-registration is disabled |
+| New user registration has been disabled by the administrator | No matching account exists and self-registration is disabled |
 | User has been deleted | The linked account no longer exists |
 | User has been banned | The linked account is not enabled |
 | This GitHub account has already been bound | Another user already uses this GitHub identity |

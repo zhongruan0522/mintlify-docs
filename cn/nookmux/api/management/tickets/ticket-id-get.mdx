@@ -1,10 +1,10 @@
 ---
 title: 获取工单详情
-description: 按 id 获取单张工单及其完整消息时间线，工单所有者与管理员可访问。
+description: 按 ID 获取单张工单及其完整消息时间线，工单所有者与管理员可访问。
 api: "GET /api/ticket/{id}"
 ---
 
-按 id 获取单张工单，包含完整消息时间线。消息按消息 id 升序排列；`message` 条目包含发送者与文本，`status` 条目记录一次状态变更。
+按 ID 获取单张工单，包含完整消息时间线。消息按消息 ID 升序排列；`message` 条目包含发送者与文本，`status` 条目记录一次状态变更。
 
 需要登录（**User** 权限）。只有工单所有者与管理员可以查看该工单。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
 
@@ -24,7 +24,7 @@ curl --request GET \
 ### 路径参数
 
 <ParamField path="id" type="integer" required>
-  工单 id，正整数。
+  工单 ID，正整数。
 </ParamField>
 
 ## 响应
@@ -90,7 +90,7 @@ curl --request GET \
 
   <Expandable title="工单详情结构">
     <ResponseField name="id" type="integer" required>
-      工单 id。
+      工单 ID。
     </ResponseField>
     <ResponseField name="title" type="string" required>
       工单标题。
@@ -111,11 +111,11 @@ curl --request GET \
       工单完成时间的 Unix 时间戳（秒）；未完成时为 `0`。
     </ResponseField>
     <ResponseField name="messages" type="array" required>
-      消息时间线，按消息 id 升序排列。
+      消息时间线，按消息 ID 升序排列。
 
       <Expandable title="消息结构">
         <ResponseField name="id" type="integer" required>
-          消息条目 id。
+          消息条目 ID。
         </ResponseField>
         <ResponseField name="type" type="string" required>
           条目类型：`message` 为会话消息，`status` 为状态变更记录。

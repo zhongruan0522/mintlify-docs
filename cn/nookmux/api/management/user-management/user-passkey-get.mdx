@@ -1,5 +1,5 @@
 ---
-title: 获取Passkey状态
+title: 获取 Passkey 状态
 description: 列出当前用户已绑定的 Passkey（WebAuthn）凭据及单用户绑定上限。
 api: "GET /api/user/passkey"
 ---
@@ -78,7 +78,7 @@ Passkey 凭据记录 ID，用作删除、改名接口的 `{id}` 路径参数。
 注册时填写的设备名；未填写时为空字符串。
 </ResponseField>
   <ResponseField name="attachment" type="string" required>
-WebAuthn 认证器挂载方式，例如 `platform`（设备内置认证器）或 `cross-platform`（安全钥匙、手机等跨平台认证器）。
+WebAuthn 认证器挂载方式，例如 `platform`（设备内置认证器）或 `cross-platform`（安全密钥、手机等跨平台认证器）。
 </ResponseField>
   <ResponseField name="backup_eligible" type="boolean" required>
 该凭据是否支持云同步多设备备份。
@@ -104,7 +104,7 @@ WebAuthn 认证器挂载方式，例如 `platform`（设备内置认证器）或
 </ResponseField>
 
 <Note>
-Passkey 系列接口从服务端会话（session）解析当前用户，请求必须携带登录会话 Cookie（通过 `POST /api/user/login` 获得），仅用 Access Token 鉴权会被拒绝，同时仍需携带 `New-Api-User` 头。会话无法解析（未登录、用户被禁用）时返回 HTTP `401`，而非通常的 HTTP `200` 包装。
+Passkey 系列接口从服务端会话（session）解析当前用户，请求必须携带登录会话 Cookie（通过 `POST /api/user/login` 获得），仅用 Access Token 鉴权会被拒绝，同时仍需携带 `New-Api-User` 请求头。会话无法解析（未登录、用户被禁用）时返回 HTTP `401`，而非通常的 HTTP `200` 包装。
 </Note>
 
 ## 错误说明

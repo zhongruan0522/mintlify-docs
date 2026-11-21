@@ -106,7 +106,7 @@ curl --request GET \
 </ResponseField>
 
 <Note>
-  参数错误使用真实 HTTP 状态码：`key` 不受支持时返回 HTTP `400`。存储的选项值 JSON 解析失败时返回 HTTP `200` 加 `success: false`，`message` 中为解析错误。如需逐条修改这些选项，请使用[更新系统选项](/cn/nookmux/api/management/system-settings/option-put)或 JSON 映射写入接口。
+  参数错误使用真实 HTTP 状态码：`key` 不受支持时返回 HTTP `400`。存储的选项值 JSON 解析失败时返回 HTTP `200` 加 `success: false`，`message` 中为解析错误。如需整体覆盖这些选项，请使用[更新系统选项](/cn/nookmux/api/management/system-settings/option-put)；如需逐条修改，请使用 JSON 映射写入接口（`PUT` 与 `DELETE /api/option/json_map`）。
 </Note>
 
 ## 错误说明
@@ -114,4 +114,4 @@ curl --request GET \
 | 条件 | 说明 |
 | --- | --- |
 | 不支持的 JSON 映射配置项 | HTTP `400`；`key` 不是受支持的 JSON 映射选项键 |
-| `JSON 映射配置解析失败: {Error}` | HTTP `200` 加 `success: false`；存储的选项值不是合法 JSON |
+| `JSON 映射配置解析失败：{Error}` | HTTP `200` 加 `success: false`；存储的选项值不是合法 JSON |

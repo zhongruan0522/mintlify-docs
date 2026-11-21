@@ -31,7 +31,7 @@ curl --request POST \
 ### Path parameters
 
 <ParamField path="id" type="integer" required>
-Channel id.
+Channel ID.
 </ParamField>
 
 ### Body
@@ -41,7 +41,7 @@ Reset type of the card: `FIVE_HOUR` or `WEEK`.
 </ParamField>
 
 <ParamField path="body.recordId" type="integer" required>
-Card record id, taken from the reset card list. Must be a positive integer.
+Card record ID, taken from the reset card list. Must be a positive integer.
 </ParamField>
 
 ## Response
@@ -65,7 +65,7 @@ Whether the reset card was consumed.
 </ResponseField>
 
 <ResponseField name="msg" type="string">
-Present only when the upstream rejects the operation; carries the upstream message verbatim, for example `指定的重置次数不可用，请刷新后重试`. Re-fetch the card list in this case.
+Present only when the upstream rejects the operation; carries the upstream message verbatim, for example `指定的重置次数不可用，请刷新后重试` ("The specified reset count is unavailable; please refresh and try again"). Re-fetch the card list in this case.
 </ResponseField>
 
 <Note>

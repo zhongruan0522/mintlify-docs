@@ -1,10 +1,10 @@
 ---
 title: Get Ticket Detail
-description: Retrieve one ticket by id with its full message timeline; accessible to the ticket owner and administrators.
+description: Retrieve one ticket by ID with its full message timeline; accessible to the ticket owner and administrators.
 api: "GET /api/ticket/{id}"
 ---
 
-Retrieve one ticket by id, including its full message timeline. Messages are ordered by message id ascending; a `message` entry carries the sender and text, a `status` entry records a status transition.
+Retrieve one ticket by ID, including its full message timeline. Messages are ordered by message ID ascending; a `message` entry carries the sender and text, while a `status` entry records a status transition.
 
 Requires a logged-in user (**User** permissions). Only the ticket owner and administrators can read the ticket. See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
 
@@ -24,7 +24,7 @@ curl --request GET \
 ### Path parameters
 
 <ParamField path="id" type="integer" required>
-  Ticket id, a positive integer.
+  Ticket ID, a positive integer.
 </ParamField>
 
 ## Response
@@ -90,7 +90,7 @@ curl --request GET \
 
   <Expandable title="ticket detail structure">
     <ResponseField name="id" type="integer" required>
-      Ticket id.
+      Ticket ID.
     </ResponseField>
     <ResponseField name="title" type="string" required>
       Ticket title.
@@ -111,11 +111,11 @@ curl --request GET \
       Unix timestamp (seconds) at which the ticket was completed; `0` while it is not completed.
     </ResponseField>
     <ResponseField name="messages" type="array" required>
-      Message timeline, ordered by message id ascending.
+      Message timeline, ordered by message ID ascending.
 
       <Expandable title="message structure">
         <ResponseField name="id" type="integer" required>
-          Message entry id.
+          Message entry ID.
         </ResponseField>
         <ResponseField name="type" type="string" required>
           Entry kind: `message` for a conversation message, `status` for a status-change record.
@@ -149,6 +149,6 @@ curl --request GET \
 | Condition | Description |
 | --- | --- |
 | Invalid ticket ID | `id` is not a positive integer |
-| Ticket not found | No ticket with this id exists |
+| Ticket not found | No ticket with this ID exists |
 | No access to this ticket | The caller is neither the ticket owner nor an administrator |
 | Database error, please try again later | Loading the ticket or its messages failed; see server logs |

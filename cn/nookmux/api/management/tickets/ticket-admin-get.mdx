@@ -4,7 +4,7 @@ description: 分页列出全部用户的工单，支持状态过滤与关键字�
 api: "GET /api/ticket/admin"
 ---
 
-分页列出全部用户的工单，按最近更新优先排序。支持按状态过滤，并支持按工单 id 或标题关键字搜索。响应结构与用户工单列表完全一致，仅范围不同。
+分页列出全部用户的工单，按最近更新优先排序。支持按状态过滤，并支持按工单 ID 或标题关键字搜索。响应结构与用户工单列表完全一致，仅范围不同。
 
 需要**管理员（Admin）**权限。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
 
@@ -94,7 +94,7 @@ curl --request GET \
 
   <Expandable title="工单摘要结构">
     <ResponseField name="id" type="integer" required>
-      工单 id。
+      工单 ID。
     </ResponseField>
     <ResponseField name="title" type="string" required>
       工单标题。

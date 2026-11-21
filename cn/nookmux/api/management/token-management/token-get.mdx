@@ -4,7 +4,7 @@ description: 分页列出当前用户的 API 令牌，按最新在前排序，�
 api: "GET /api/token/"
 ---
 
-列出当前用户名下的 API 令牌，按最新在前（`id` 倒序）分页返回。每个令牌的 `key` 均已脱敏；完整密钥仅在创建令牌时返回一次。
+列出当前用户名下的 API 令牌，按最新在前（`id` 倒序）分页返回。每个令牌的 `key` 均已脱敏；如需获取已有令牌的完整密钥，请使用 `POST /api/token/{id}/key` 或 `POST /api/token/batch/keys`。
 
 需要登录（**User** 权限）。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
 
@@ -143,7 +143,7 @@ curl --request GET \
       该令牌可调用的模型名列表，逗号分隔。
     </ResponseField>
     <ResponseField name="model_mapping" type="string" required>
-      令牌级模型重定向的 JSON 对象，例如 `{"gpt-4o": "gpt-4o-2024-08-06"}`。未配置时为 `null`。
+      令牌级模型重定向的 JSON 对象字符串，例如 `{"gpt-4o": "gpt-4o-2024-08-06"}`。未配置时为 `null`。
     </ResponseField>
     <ResponseField name="allow_ips" type="string" required>
       令牌密钥的 IP 白名单，换行分隔。为空或 `null` 表示不限制。

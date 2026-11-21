@@ -4,7 +4,7 @@ description: Create, update, or rename a single entry inside a JSON map system o
 api: "PUT /api/option/json_map"
 ---
 
-Inserts or replaces one entry in a JSON-object-valued system option. The supported key set matches [Get JSON Map Option](/nookmux/api/management/system-settings/option-json_map-get): the MiniMax redirect options and the pricing options. When a non-empty `old_map_key` different from `map_key` is provided, the entry is renamed instead: the old entry must exist, and no entry may already exist under the new key. After the change the whole option is re-serialized, validated, persisted through the option store (database write plus in-memory refresh), and the change is recorded in the admin audit log as an option update.
+Inserts or replaces one entry in a JSON-object-valued system option. The supported key set matches [Get JSON Map Option](/nookmux/api/management/system-settings/option-json_map-get): the MiniMax redirect options and the pricing options. When a non-empty `old_map_key` different from `map_key` is provided, the entry is renamed instead: the old entry must exist, and no entry may already exist under the new key. After the change, the whole option is re-serialized, validated, and persisted through the option store (database write plus in-memory refresh), and the change is recorded in the admin audit log as an option update.
 
 Requires **Root** (super administrator) permissions. See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
 

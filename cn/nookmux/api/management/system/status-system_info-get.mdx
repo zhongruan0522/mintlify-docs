@@ -4,7 +4,7 @@ description: 获取当前 NookMux 实例的构建版本指纹。
 api: "GET /api/status/system_info"
 ---
 
-返回当前 NookMux 实例的构建版本。版本信息属于管理语义，由本端点单独下发，不进入匿名可达的 `/api/status`。
+返回当前 NookMux 实例的构建版本。版本信息仅限管理员访问，由本端点单独下发，不进入匿名可达的 `/api/status`。
 
 需要**管理员（Admin）**权限。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
 

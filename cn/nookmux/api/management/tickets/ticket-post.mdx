@@ -88,7 +88,7 @@ curl --request POST \
 
   <Expandable title="工单详情结构">
     <ResponseField name="id" type="integer" required>
-      工单 id。
+      工单 ID。
     </ResponseField>
     <ResponseField name="title" type="string" required>
       工单标题。
@@ -109,11 +109,11 @@ curl --request POST \
       工单完成时间的 Unix 时间戳（秒）；未完成时为 `0`。
     </ResponseField>
     <ResponseField name="messages" type="array" required>
-      消息时间线，按消息 id 升序排列。
+      消息时间线，按消息 ID 升序排列。
 
       <Expandable title="消息结构">
         <ResponseField name="id" type="integer" required>
-          消息条目 id。
+          消息条目 ID。
         </ResponseField>
         <ResponseField name="type" type="string" required>
           条目类型：`message` 为会话消息，`status` 为状态变更记录。

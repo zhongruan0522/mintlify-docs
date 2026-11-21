@@ -208,7 +208,7 @@ curl --request GET \
 </ResponseField>
 
 <ResponseField name="supported_endpoint" type="object" required>
-  Map of endpoint type name to its relay request info: `path` (relay path, model placeholders such as `{model}` possible) and `method` (HTTP method).
+  Map of endpoint type name to its relay request info: `path` (relay path, which may contain model placeholders such as `{model}`) and `method` (HTTP method).
 </ResponseField>
 
 <ResponseField name="auto_groups" type="array" required>
@@ -226,4 +226,4 @@ curl --request GET \
 | Condition | Description |
 | --- | --- |
 | Module disabled | HTTP `403` when the `pricing` module is switched off in header navigation module settings; `message` is localized via `Accept-Language` (`pricing 已禁用` by default, `pricing is disabled` for English) |
-| Login required | Standard authentication errors (HTTP `401`) when the pricing module is configured to require login and the caller is not authenticated |
+| Login required | Standard authentication errors (HTTP `401`) when the `pricing` module is configured to require login and the caller is not authenticated |

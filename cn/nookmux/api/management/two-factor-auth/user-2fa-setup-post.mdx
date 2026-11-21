@@ -1,5 +1,5 @@
 ---
-title: 设置2FA
+title: 设置 2FA
 description: 为当前登录账号初始化 TOTP 两步验证，返回密钥、二维码 URI 与初始备用码。
 api: "POST /api/user/2fa/setup"
 ---
@@ -30,7 +30,7 @@ curl --request POST \
 ```json 200
 {
   "success": true,
-  "message": "2FA setup initialized. Scan the QR code with an authenticator and enter the code to finish setup",
+  "message": "2FA 设置初始化成功，请使用身份验证器扫描二维码并输入验证码完成设置",
   "data": {
     "secret": "JBSWY3DPEHPK3PXPJBSWY3DPEHPK3PXP",
     "qr_code_data": "otpauth://totp/NookMux:alice (NookMux)?secret=JBSWY3DPEHPK3PXPJBSWY3DPEHPK3PXP&issuer=NookMux&digits=6&period=30",

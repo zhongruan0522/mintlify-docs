@@ -1,6 +1,6 @@
 ---
 title: Embeddings
-description: Create embedding vectors for input text, compatible with the OpenAI Embeddings API, for use in semantic search, clustering, and similarity.
+description: Create embedding vectors for input text, compatible with the OpenAI Embeddings API, for use in semantic search, clustering, and similarity comparison.
 api: "POST /v1/embeddings"
 ---
 
@@ -89,7 +89,7 @@ print(response.data[0].embedding[:8])
 </ParamField>
 
 <Note>
-  `seed`, `temperature`, `top_p`, `frequency_penalty`, and `presence_penalty` are NookMux extension parameters. They only take effect when passed through to OpenAI-compatible channels (channels such as Gemini drop them); whether they are forwarded also depends on the Console → Models → parameter override configuration.
+  `seed`, `temperature`, `top_p`, `frequency_penalty`, and `presence_penalty` are NookMux extension parameters. They only take effect when passed through to some OpenAI-compatible channels (channels such as Gemini drop them); whether they are forwarded also depends on the Console → Models → parameter override configuration.
 </Note>
 
 ## Response

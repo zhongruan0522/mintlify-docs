@@ -88,13 +88,13 @@ curl --request GET \
       中继接受的模型名。
     </ParamField>
     <ParamField path="quota_type" type="integer" required>
-      计费模式：`0` 按倍率计费（通过 `model_ratio` 与 `completion_ratio` 按 token 计费），`1` 按次固定价格（`model_price`）。
+      计费模式：`0` 按倍率计费（通过 `model_ratio` 与 `completion_ratio` 按 Token 计费），`1` 按次固定价格（`model_price`）。
     </ParamField>
     <ParamField path="available" type="boolean" required>
       该模型是否配置了倍率或价格。
     </ParamField>
     <ParamField path="model_ratio" type="number" required>
-      倍率计费下作用于输入（prompt）token 的基础倍率。
+      倍率计费下作用于输入（prompt）Token 的基础倍率。
     </ParamField>
     <ParamField path="model_price" type="number" required>
       按次计费下每次调用的固定价格；其余情况为 `0`。
@@ -103,19 +103,19 @@ curl --request GET \
       预留的归属字段，通常为空。
     </ParamField>
     <ParamField path="completion_ratio" type="number" required>
-      倍率计费下输出（completion）token 相对 `model_ratio` 的倍率。
+      倍率计费下输出（completion）Token 相对 `model_ratio` 的倍率。
     </ParamField>
     <ParamField path="cache_ratio" type="number">
-      缓存命中 token 的读取倍率。仅在该模型显式配置时出现。
+      缓存命中 Token 的读取倍率。仅在该模型显式配置时出现。
     </ParamField>
     <ParamField path="create_cache_ratio" type="number">
-      缓存写入 token 的倍率。仅在该模型显式配置时出现。
+      缓存写入 Token 的倍率。仅在该模型显式配置时出现。
     </ParamField>
     <ParamField path="audio_ratio" type="number">
-      音频输入 token 倍率。仅在该模型显式配置时出现。
+      音频输入 Token 倍率。仅在该模型显式配置时出现。
     </ParamField>
     <ParamField path="audio_completion_ratio" type="number">
-      音频输出 token 倍率。仅在该模型显式配置时出现。
+      音频输出 Token 倍率。仅在该模型显式配置时出现。
     </ParamField>
     <ParamField path="context_pricing" type="object">
       上下文阶梯计价配置。仅当模型存在启用且至少含一个阶梯的阶梯计价规则时出现；此时第一个阶梯的倍率会同时复制到平铺倍率字段中。
@@ -125,7 +125,7 @@ curl --request GET \
           阶梯规则是否启用。
         </ParamField>
         <ParamField path="tiers" type="array" required>
-          按上下文长度排序的阶梯列表。每个阶梯包含 `name`（可选字符串）、`min_tokens`（整数）、`max_tokens`（整数，最高阶梯缺省），以及该阶梯的 `model_ratio`、`completion_ratio`、`cache_ratio`、`create_cache_ratio`、`audio_ratio`、`audio_completion_ratio`（数值）。
+          按上下文长度排序的阶梯列表。每个阶梯包含 `name`（可选字符串）、`min_tokens`（整数）、`max_tokens`（整数，最高阶梯省略），以及该阶梯的 `model_ratio`、`completion_ratio`、`cache_ratio`、`create_cache_ratio`、`audio_ratio`、`audio_completion_ratio`（数值）。
         </ParamField>
       </Expandable>
     </ParamField>
@@ -151,13 +151,13 @@ curl --request GET \
       模型元数据中的最大上下文长度。
     </ParamField>
     <ParamField path="max_output_tokens" type="integer">
-      模型元数据中的最大输出 token 数。
+      模型元数据中的最大输出 Token 数。
     </ParamField>
     <ParamField path="input_modalities" type="array">
-      模型元数据中的支持的输入模态（例如 text、image）。
+      模型元数据中支持的输入模态（例如 text、image）。
     </ParamField>
     <ParamField path="output_modalities" type="array">
-      模型元数据中的支持的输出模态。
+      模型元数据中支持的输出模态。
     </ParamField>
     <ParamField path="capabilities" type="array">
       模型元数据中的能力标签，如工具调用、视觉。
@@ -191,10 +191,10 @@ curl --request GET \
       供应商图标 URL。
     </ParamField>
     <ParamField path="data_retention_days" type="integer">
-      供应商声明的请求数据保留天数。
+      供应商声明的请求数据保留天数；未声明时省略。
     </ParamField>
     <ParamField path="training_opt_out" type="boolean">
-      供应商是否声明不使用请求数据训练。
+      供应商是否不使用请求数据训练；未声明时省略。
     </ParamField>
   </Expandable>
 </ResponseField>
@@ -226,4 +226,4 @@ curl --request GET \
 | 条件 | 说明 |
 | --- | --- |
 | 模块已禁用 | 顶部导航模块设置中关闭 `pricing` 模块时返回 HTTP `403`，`message` 根据 `Accept-Language` 本地化（默认中文为 `pricing 已禁用`，英文为 `pricing is disabled`） |
-| 需要登录 | pricing 模块配置为需要登录且调用者未通过鉴权时，返回标准鉴权错误（HTTP `401`） |
+| 需要登录 | `pricing` 模块配置为需要登录且调用者未通过鉴权时，返回标准鉴权错误（HTTP `401`） |

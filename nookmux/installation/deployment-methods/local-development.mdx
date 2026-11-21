@@ -43,7 +43,7 @@ PORT=3000
 # REDIS_CONN_STRING=redis://:password@localhost:6379
 ```
 
-When connecting KingbaseES locally, keep `sslmode=disable` in the DSN for instances without SSL (the Gokb driver defaults to `require` with no plaintext fallback). For production connection-pool sizing (`SQL_MAX_OPEN_CONNS`) and the `SQL_PREPARE_STMT` recommendation, see the Environment variables page under Installation → Configuration & Maintenance.
+When connecting to KingbaseES locally, keep `sslmode=disable` in the DSN for instances without SSL (the Gokb driver defaults to `require` with no plaintext fallback). For production connection-pool sizing (`SQL_MAX_OPEN_CONNS`) and the `SQL_PREPARE_STMT` recommendation, see the [Environment Variable Configuration Guide](/nookmux/installation/config-maintenance/environment-variables).
 
 <Card type="info" title="Default database">
   SQLite is used when `SQL_DSN` is not set. The default database file is `data/one-api.db`. You can change it with `SQLITE_PATH`.
@@ -125,12 +125,12 @@ NookMux/
 ├─ cmd/server/             # Backend entry point (main.go)
 ├─ internal/app/           # Bootstrap, gin assembly, webdist facade
 ├─ internal/httpapi/       # HTTP boundary: router + middleware + controller (per-resource subpackages)
-├─ internal/store/         # GORM models, migrations, database access (per-resource subpackages)
+├─ internal/store/         # GORM models, migrations, caching, database access (per-resource subpackages)
 ├─ internal/domain/        # Domain services: billing, channel, audit, rankings, ticket, sensitive, group
 ├─ internal/infra/         # Infrastructure: db, redis, cache, email, security, runtime, log, httpclient, media, tokenizer, notify, payment, passkey, custom_voice
 ├─ internal/relay/         # AI protocol translation and vendor adapters
 ├─ internal/config/        # System, operation, model, and ratio settings (formerly setting/)
-├─ internal/common/        # Kernel of business globals and misc utilities (ContextKey registry, SysLog, GetEnvOrDefault, etc.)
+├─ internal/common/        # Core business globals and misc utilities (ContextKey registry, SysLog, GetEnvOrDefault, etc.)
 ├─ internal/i18n/          # Backend response message translations
 ├─ pkg/                    # Reusable dependency-free libraries (jsonx, cachex)
 ├─ Dockerfile              # Image build, requires web/dist/index.html to exist

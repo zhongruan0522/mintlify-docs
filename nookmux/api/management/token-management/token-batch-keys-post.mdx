@@ -30,7 +30,7 @@ curl --request POST \
 ### Body
 
 <ParamField path="body.ids" type="integer[]" required>
-  Ids of the tokens owned by the current user whose full keys should be returned. Must be a non-empty array; only tokens owned by the current user are matched.
+  IDs of the tokens owned by the current user whose full keys should be returned. Must be a non-empty array; only tokens owned by the current user are matched.
 </ParamField>
 
 ## Response
@@ -63,7 +63,7 @@ curl --request POST \
 </ResponseField>
 
 <ResponseField name="data.keys" type="object" required>
-  Map from token id to its full token key (site key prefix, `sk-` by default, plus 48 random characters). Ids are serialized as JSON object keys in string form.
+  Map from token ID to its full token key (site key prefix, `sk-` by default, plus 48 random characters). IDs are serialized as JSON object keys in string form.
 </ResponseField>
 
 <Note>

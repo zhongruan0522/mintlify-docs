@@ -1,5 +1,5 @@
 ---
-title: 开始验证Passkey
+title: 开始验证 Passkey
 description: 为已登录用户发起用于二次安全验证的 WebAuthn 断言流程。
 api: "POST /api/user/passkey/verify/begin"
 ---
@@ -62,7 +62,7 @@ curl --request POST \
 </ResponseField>
 
 <ResponseField name="data.options" type="object" required>
-遵循标准 WebAuthn `PublicKeyCredentialRequestOptions` 结构的断言参数：服务端生成的 `challenge`、依赖方 ID（`rpId`）、覆盖用户已绑定 Passkey 的 `allowCredentials`，以及来自服务端 Passkey 设置的用户验证偏好（`userVerification`）。上例为 condensed 结构示意，协议内部字段以 WebAuthn 标准为准。
+遵循标准 WebAuthn `PublicKeyCredentialRequestOptions` 结构的断言参数：服务端生成的 `challenge`、依赖方 ID（`rpId`）、覆盖用户已绑定 Passkey 的 `allowCredentials`，以及来自服务端 Passkey 设置的用户验证偏好（`userVerification`）。上例为精简结构示意，协议内部字段以 WebAuthn 标准为准。
 </ResponseField>
 
 <Note>

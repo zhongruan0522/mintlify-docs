@@ -5,20 +5,20 @@ description: Interface differences verified against NookMux runtime routes and r
 
 ## Verification Baseline
 
-This page uses the current repository code as the source of truth, and the verification scope is limited to `docs/en/api/`:
+This page uses the current repository code as the source of truth, and the verification scope is limited to `nookmux/api/`:
 
 - Routing: `internal/httpapi/router/api_router.go`, `internal/httpapi/router/relay_router.go`, `internal/httpapi/router/dashboard.go`
 - Request boundaries: `internal/httpapi/controller/` (per-resource subpackages)
 - AI request shapes: `internal/domain/shared/`, `internal/relay/`
 - Management resource shapes: `internal/model/`, `internal/config/`
 
-The current verification starts with **255** runtime method/path entries; after normalization, the original Chinese generated page covers **180** entries. The mechanical set difference is **99 missing** and **24 stale** entries. Dynamic routes such as `/api/oauth/:provider`, `/v1/models/*path`, and `/v1beta/models/*path` cover multiple concrete URLs, so they cannot be judged by string matching alone.
+The current verification starts with **255** runtime method/path entries; after normalization, the original Chinese generated pages cover **180** entries. The mechanical set difference is **99 missing** and **24 stale** entries. Dynamic routes such as `/api/oauth/:provider`, `/v1/models/*path`, and `/v1beta/models/*path` cover multiple concrete URLs, so they cannot be judged by string matching alone.
 
-The generated pages refer to `openapi/generated/**/*.json` and generation scripts that are not present in this repository, so their parameter tables cannot be reconstructed here. This page therefore records the contract confirmed by the current Go code and serves as a project-level override layer for `docs/en/api/`.
+The generated pages refer to `openapi/generated/**/*.json` and generation scripts that are not present in this repository, so their parameter tables cannot be reconstructed here. This page therefore records the contract confirmed by the current Go code and serves as a project-level override layer for `nookmux/api/`.
 
 ## Confirmed Unsupported
 
-The following capabilities are not available in the current project, and the corresponding 22 Chinese API pages have been removed in this round:
+The following capabilities are not available in the current project, and the corresponding 22 API pages have been removed in this round:
 
 - Video jobs: `/v1/videos*`, `/v1/video/generations*`, `/kling/v1/videos*`, `/jimeng/`
 - Creem: `POST /api/creem/webhook`, `POST /api/user/creem/pay`
@@ -28,9 +28,9 @@ The following capabilities are not available in the current project, and the cor
 
 Current OAuth only registers `github` and `linuxdo`. Any other provider that reaches `GET /api/oauth/:provider` still returns "Unknown provider"; that does not make it a supported capability.
 
-## Runtime Routes Missing from the Original Generated Page
+## Runtime Routes Missing from the Original Generated Pages
 
-The following routes are registered in code but had no corresponding contract in the original generated page.
+The following routes are registered in code but had no corresponding contract in the original generated pages.
 
 ### System, Users, and Auth
 
@@ -118,7 +118,7 @@ GET    /api/channel/plan/glm/risk/:id
 
 - Proxy test body: `{ "proxy": "http://host:port" }`; supports `http`, `https`, `socks5`, and `socks5h`.
 - Ollama pull and delete bodies: `channel_id`, `model_name`; streaming pull returns SSE.
-- GLM usage query: `type` (default `model`), `startTime`, `endTime`; time format `YYYY-MM-DD HH:mm:ss`, and the range cannot exceed 31 days.
+- GLM usage query: `type` (default `model`), `startTime`, `endTime`; time format `YYYY-MM-DD HH:mm:ss`, and the range must not exceed 31 days.
 
 ### Token Keys
 
@@ -164,7 +164,7 @@ GET    /api/audit/
 GET    /api/audit/modules
 ```
 
-Common usage-log filters are `p`, `page_size`, `type`, `start_timestamp`, `end_timestamp`, `token_name`, `model_name`, `group`, `request_id`, `upstream_request_id`, `ip`, `ua`, `x_title`, and `http_referer`; admin endpoints also support `username` and `channel`. Normal users cannot use hidden fields as a side channel for filtering.
+Common usage-log filters are `p`, `page_size`, `type`, `start_timestamp`, `end_timestamp`, `token_name`, `model_name`, `group`, `request_id`, `upstream_request_id`, `ip`, `ua`, `x_title`, and `http_referer`; admin endpoints also support `username` and `channel`. Regular users cannot use hidden fields as a side channel for filtering.
 
 Audit-log query parameters are `p`, `page_size` (max 100), `username`, `module`, `action_type`, `start_timestamp`, and `end_timestamp`.
 
@@ -290,4 +290,4 @@ Whether AI extension fields are forwarded still depends on the target channel an
 - Token list and detail endpoints no longer return plaintext keys; reading and resetting keys must use dedicated endpoints.
 - `GET /api/pricing` and `GET /api/rankings` are controlled by the corresponding Header Nav module switches.
 - `POST /api/verify` binds each verification to the requesting user and one `scope` (or no scope); guarded endpoints reject unverified sessions with HTTP `403` and a `code` of `VERIFICATION_REQUIRED`/`VERIFICATION_INVALID`/`VERIFICATION_EXPIRED`.
-- Access tokens grant User-level API only; Admin and Root endpoints reject access-token authentication regardless of the account role.
+- Access tokens grant User-level API access only; Admin and Root endpoints reject access-token authentication regardless of the account role.

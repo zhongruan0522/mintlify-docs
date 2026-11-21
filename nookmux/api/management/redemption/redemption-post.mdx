@@ -43,7 +43,7 @@ curl --request POST \
 </ParamField>
 
 <ParamField path="body.expired_time" type="integer" default="0">
-  Unix timestamp (seconds) after which the codes can no longer be redeemed; `0` means no expiry. When non-zero, it must not be earlier than the current time.
+  Unix timestamp (seconds) after which the codes can no longer be redeemed; `0` means no expiration. When non-zero, it must not be earlier than the current time.
 </ParamField>
 
 <Note>
@@ -79,7 +79,7 @@ Only `name`, `count`, `quota` and `expired_time` are used. The server generates 
 </ResponseField>
 
 <ResponseField name="data" type="array" required>
-  The generated redemption keys, as many entries as `count`. This is the only response that exposes the full keys.
+  The generated redemption keys, as many entries as `count`. List, detail, and update endpoints always mask the key; individual keys can only be revealed again on demand via `GET /api/redemption/{id}/key`.
 </ResponseField>
 
 <Note>
@@ -94,5 +94,5 @@ Management endpoints return HTTP `200` even on business failures; always check t
 | Name length invalid | `name` is empty or longer than 20 characters |
 | Count not positive | `count` is 0 or negative |
 | Count exceeds limit | `count` is greater than 100 |
-| Expire time invalid | `expired_time` is non-zero and earlier than the current time |
+| Invalid expiration time | `expired_time` is non-zero and earlier than the current time |
 | Create failed | The batch insert failed inside the transaction; no code is written, see server logs |
