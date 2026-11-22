@@ -1,10 +1,10 @@
 ---
-title: 重新生成备用码
-description: 校验 TOTP 验证码后，整体替换当前登录账号的两步验证备用码。
+title: 重新生成恢复码
+description: 校验 TOTP 验证码后，整体替换当前登录账号的两步验证恢复码。
 api: "POST /api/user/2fa/backup_codes"
 ---
 
-整体替换当前登录账号的备用码。服务端删除全部现有备用码，重新生成 4 个 `XXXX-XXXX` 格式的新备用码，以哈希形式存储，并在响应中返回明文。请求须携带当前的 6 位 TOTP 验证码；备用码本身不能用于本操作。
+整体替换当前登录账号的恢复码。服务端删除全部现有恢复码，重新生成 4 个 `XXXX-XXXX` 格式的新恢复码，以哈希形式存储，并在响应中返回明文。请求须携带当前的 6 位 TOTP 验证码；恢复码本身不能用于本操作。
 
 需要**用户（User）**权限（任意登录用户）。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
 
@@ -28,7 +28,7 @@ curl --request POST \
 ### 请求体
 
 <ParamField path="body.code" type="string" required>
-验证器应用生成的当前 6 位 TOTP 验证码。本接口只接受 TOTP 验证码；传入备用码会按参数非法处理。
+验证器应用生成的当前 6 位 TOTP 验证码。本接口只接受 TOTP 验证码；传入恢复码会按参数非法处理。
 </ParamField>
 
 ## 响应
@@ -38,7 +38,7 @@ curl --request POST \
 ```json 200
 {
   "success": true,
-  "message": "备用码重新生成成功",
+  "message": "恢复码重新生成成功",
   "data": {
     "backup_codes": ["A1B2-C3D4", "E5F6-G7H8", "J9K0-L1M2", "N3P4-Q5R6"]
   }
@@ -50,7 +50,7 @@ curl --request POST \
 ### 响应字段
 
 <ResponseField name="success" type="boolean" required>
-备用码是否重新生成成功。
+恢复码是否重新生成成功。
 </ResponseField>
 
 <ResponseField name="message" type="string" required>
@@ -58,11 +58,11 @@ curl --request POST \
 </ResponseField>
 
 <ResponseField name="data.backup_codes" type="string[]" required>
-4 个 `XXXX-XXXX` 格式的新备用恢复码。调用成功后原有备用码立即全部失效。
+4 个 `XXXX-XXXX` 格式的新恢复码。调用成功后原有恢复码立即全部失效。
 </ResponseField>
 
 <Note>
-新备用码的明文仅在本响应中出现一次——服务端只保存其哈希——且每个备用码只能使用一次。TOTP 验证失败会计入锁定计数：连续 5 次失败后 2FA 验证将被锁定 300 秒，锁定期内即使验证码正确也会被拒绝。
+新恢复码的明文仅在本响应中出现一次——服务端只保存其哈希——且每个恢复码只能使用一次。TOTP 验证失败会计入锁定计数：连续 5 次失败后 2FA 验证将被锁定 300 秒，锁定期内即使验证码正确也会被拒绝。
 </Note>
 
 ## 错误说明
@@ -72,5 +72,5 @@ curl --request POST \
 | 请求体非法 | JSON 请求体缺失、`code` 为空或不是 6 位数字 |
 | 2FA 未启用 | 该账号没有已启用的 2FA 记录 |
 | 验证码无效 | TOTP 验证码与存储密钥不匹配，或验证已被临时锁定 |
-| 备用码生成或保存失败 | 服务端生成或保存备用码失败，详见服务端日志 |
+| 恢复码生成或保存失败 | 服务端生成或保存恢复码失败，详见服务端日志 |
 | 数据库错误 | 读取、校验或更新 2FA 记录失败，详见服务端日志 |

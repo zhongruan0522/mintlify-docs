@@ -4,7 +4,7 @@ description: Retrieve the Zhipu account funds report and persist the available b
 api: "GET /api/channel/glm/account_report/{id}"
 ---
 
-Retrieve the funds report of the Zhipu account behind a channel: current balance, cumulative recharge, system grants, cumulative spend, available balance, and frozen balance. The channel must be of the Zhipu type (`type` `26`, `ChannelTypeZhipu_v4`); plan channels are not required. Amounts are raw RMB values from the upstream.
+Retrieve the funds report of the Zhipu account behind a channel: current balance, cumulative top-up, system grants, cumulative spend, available balance, and frozen balance. The channel must be of the Zhipu type (`type` `26`, `ChannelTypeZhipu_v4`); plan channels are not required. Amounts are raw RMB values from the upstream.
 
 On success, NookMux also persists the available balance (falling back to the current balance) to the channel record as its balance, in CNY, the same way the balance update endpoint does.
 
@@ -65,7 +65,7 @@ Funds report. Amounts are raw RMB values; every amount may be `null` when the up
     Current balance. May be `null`.
   </ResponseField>
   <ResponseField name="recharge_amount" type="number" required>
-    Cumulative cash recharge. May be `null`.
+    Cumulative cash top-up. May be `null`.
   </ResponseField>
   <ResponseField name="give_amount" type="number" required>
     System grants. May be `null`.

@@ -1,10 +1,10 @@
 ---
 title: Get Custom Voice Tags
-description: List the emotion and tone-word tags accepted in custom voice preview text.
+description: List the emotion and vocal expression tags accepted in custom voice preview text.
 api: "GET /api/custom_voice/tags"
 ---
 
-Returns the emotion and tone-word tags that can be used in custom voice preview text, together with the regular expressions that recognize the tags. Only the source tags (the keys of the administrator-configured redirect maps) are exposed; the upstream tags they map to are never returned, so clients always present the tags users are meant to type.
+Returns the emotion and vocal expression tags that can be used in custom voice preview text, together with the regular expressions that recognize the tags. Only the source tags (the keys of the administrator-configured redirect maps) are exposed; the upstream tags they map to are never returned, so clients always present the tags users are meant to type.
 
 Requires **User** permissions (any logged-in account). See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
 
@@ -52,7 +52,7 @@ curl --request GET \
 </ResponseField>
 
 <ResponseField name="data.enabled" type="boolean" required>
-  Whether the MiniMax TTS enhancement master switch (model redirect, emotion and tone-word handling) is enabled. Tags and patterns are returned regardless of this flag, but they only take effect in preview text when it is `true`.
+  Whether the MiniMax TTS enhancement master switch (model redirect, emotion and vocal expression handling) is enabled. Tags and patterns are returned regardless of this flag, but they only take effect in preview text when it is `true`.
 </ResponseField>
 
 <ResponseField name="data.emotion_pattern" type="string" required>
@@ -60,7 +60,7 @@ curl --request GET \
 </ResponseField>
 
 <ResponseField name="data.tone_word_pattern" type="string" required>
-  Regular expression configured by the administrator that recognizes tone-word tags in text. The default pattern matches parenthesized content such as `(laugh)`.
+  Regular expression configured by the administrator that recognizes vocal expression tags in text. The default pattern matches parenthesized content such as `(laugh)`.
 </ResponseField>
 
 <ResponseField name="data.emotion_tags" type="array">
@@ -68,7 +68,7 @@ curl --request GET \
 </ResponseField>
 
 <ResponseField name="data.tone_word_tags" type="array">
-  Sorted source tone-word tags users can type in preview text (the keys of the tone-word redirect map). `null` when no tone-word tags are configured.
+  Sorted source vocal expression tags users can type in preview text (the keys of the vocal expression redirect map). `null` when no vocal expression tags are configured.
 </ResponseField>
 
 <Note>

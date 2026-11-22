@@ -425,7 +425,7 @@
                     ]
                   },
                   {
-                    "group": "供应商",
+                    "group": "厂商",
                     "pages": [
                       "cn/nookmux/api/management/vendors/vendors-get",
                       "cn/nookmux/api/management/vendors/vendors-id-delete",

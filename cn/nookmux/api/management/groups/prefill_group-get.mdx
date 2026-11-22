@@ -1,12 +1,12 @@
 ---
-title: 获取预填分组
-description: 获取可复用的预填分组列表，可按类别过滤。
+title: 获取预设组合
+description: 获取可复用的预设组合列表，可按类别过滤。
 api: "GET /api/prefill_group/"
 ---
 
-预填分组是可复用的命名集合，用于在控制台下拉框中快速选择，例如一组模型名，可用于快速填充渠道的模型列表。每个分组拥有唯一的 `name`，并用 `type` 标记所属类别。
+预设组合是可复用的命名集合，用于在控制台下拉框中快速选择，例如一组模型名，可用于快速填充渠道的模型列表。每个预设组合拥有唯一的 `name`，并用 `type` 标记所属类别。
 
-返回全部预填分组，按 `updated_time` 降序排列。可选的 `type` 查询参数按类别过滤列表。
+返回全部预设组合，按 `updated_time` 降序排列。可选的 `type` 查询参数按类别过滤列表。
 
 需要**管理员（Admin）**权限。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
 
@@ -26,7 +26,7 @@ curl --request GET \
 ### 查询参数
 
 <ParamField path="query.type" type="string">
-  要返回的分组类别，例如 `model`、`tag` 或 `endpoint`。省略该参数时返回所有类别的分组。
+  要返回的预设组合类别，例如 `model`、`tag` 或 `endpoint`。省略该参数时返回所有类别的预设组合。
 </ParamField>
 
 ## 响应
@@ -72,20 +72,20 @@ curl --request GET \
 </ResponseField>
 
 <ResponseField name="data" type="array" required>
-  按 `updated_time` 降序排列的预填分组列表。
+  按 `updated_time` 降序排列的预设组合列表。
 
-  <Expandable title="预填分组结构">
+  <Expandable title="预设组合结构">
     <ResponseField name="id" type="integer" required>
-      分组 ID。
+      预设组合 ID。
     </ResponseField>
     <ResponseField name="name" type="string" required>
-      未删除分组内唯一的分组名，最长 64 字符；用于在控制台下拉框中展示。
+      未删除预设组合内唯一的名称，最长 64 字符；用于在控制台下拉框中展示。
     </ResponseField>
     <ResponseField name="type" type="string" required>
-      分组类别，例如 `model`、`tag` 或 `endpoint`。
+      预设组合类别，例如 `model`、`tag` 或 `endpoint`。
     </ResponseField>
     <ResponseField name="items" type="array" required>
-      保存分组取值的字符串 JSON 数组，例如模型名列表。创建时未提供 `items` 的分组为 `null`。
+      保存预设组合取值的字符串 JSON 数组，例如模型名列表。创建时未提供 `items` 的预设组合为 `null`。
     </ResponseField>
     <ResponseField name="description" type="string">
       自由备注，最长 255 字符；为空时省略。
@@ -107,4 +107,4 @@ curl --request GET \
 
 | 条件 | 说明 |
 | --- | --- |
-| 数据库错误，请稍后重试 | 读取预填分组失败，详见服务端日志 |
+| 数据库错误，请稍后重试 | 读取预设组合失败，详见服务端日志 |

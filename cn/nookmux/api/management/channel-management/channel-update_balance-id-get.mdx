@@ -69,7 +69,7 @@ curl --request GET \
 </ResponseField>
 
 <Note>
-该响应把 `balance`、`currency` 以及可选的 DeepSeek 明细字段与 `success`/`message` 平铺返回，而不是包裹在 `data` 对象中。余额查询支持 OpenAI 兼容计费端点（OpenAI 与自定义 Base URL）、SiliconFlow、DeepSeek、OpenRouter、Moonshot 与智谱 GLM 渠道；Azure 及其他不支持的类型会返回「未实现」错误。多 Key 渠道因余额无法归属到单个密钥而被直接拒绝。请求由服务端经渠道配置的代理发出。
+该响应把 `balance`、`currency` 以及可选的 DeepSeek 明细字段与 `success`/`message` 平铺返回，而不是包裹在 `data` 对象中。余额查询支持 OpenAI 兼容计费端点（OpenAI 与自定义 Base URL）、硅基流动、DeepSeek、OpenRouter、Moonshot 与智谱 GLM 渠道；Azure 及其他不支持的类型会返回「未实现」错误。多 Key 渠道因余额无法归属到单个密钥而被直接拒绝。请求由服务端经渠道配置的代理发出。
 </Note>
 
 ## 错误说明

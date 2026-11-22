@@ -1,12 +1,12 @@
 ---
-title: 创建供应商
-description: 创建供应商元数据，供模型条目引用。
+title: 创建厂商
+description: 创建厂商元数据，供模型条目引用。
 api: "POST /api/vendors/"
 ---
 
-创建一条供应商元数据。模型条目通过 `vendor_id` 关联供应商，图标、数据保留天数、是否不用于模型训练等字段会展示在面向终端用户的定价页上。
+创建一条厂商元数据。模型条目通过 `vendor_id` 关联厂商，图标、数据保留天数、是否不用于模型训练等字段会展示在面向终端用户的定价页上。
 
-供应商名称必须非空，且在未删除的供应商中唯一。`id`、`created_time`、`updated_time` 由服务端生成；创建成功后在 `data` 中返回完整记录。
+厂商名称必须非空，且在未删除的厂商中唯一。`id`、`created_time`、`updated_time` 由服务端生成；创建成功后在 `data` 中返回完整记录。
 
 需要**管理员（Admin）**权限。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
 
@@ -35,7 +35,7 @@ curl --request POST \
 ### 请求体
 
 <ParamField path="body.name" type="string" required>
-  供应商名称，在未删除的供应商中唯一，最长 128 字符，不得为空。
+  厂商名称，在未删除的厂商中唯一，最长 128 字符，不得为空。
 </ParamField>
 
 <ParamField path="body.description" type="string">
@@ -51,7 +51,7 @@ curl --request POST \
 </ParamField>
 
 <ParamField path="body.training_opt_out" type="boolean">
-  发往该供应商的请求是否默认不用于上游模型训练（展示在定价页）。省略表示不设置。
+  发往该厂商的请求是否默认不用于上游模型训练（展示在定价页）。省略表示不设置。
 </ParamField>
 
 <ParamField path="body.status" type="integer" default="1">
@@ -85,7 +85,7 @@ curl --request POST \
 ### 响应字段
 
 <ResponseField name="success" type="boolean" required>
-  供应商是否创建成功。
+  厂商是否创建成功。
 </ResponseField>
 
 <ResponseField name="message" type="string" required>
@@ -93,14 +93,14 @@ curl --request POST \
 </ResponseField>
 
 <ResponseField name="data" type="object" required>
-  创建成功的供应商记录。
+  创建成功的厂商记录。
 
-  <Expandable title="供应商结构">
+  <Expandable title="厂商结构">
     <ResponseField name="id" type="integer" required>
-      服务端分配的供应商 ID。
+      服务端分配的厂商 ID。
     </ResponseField>
     <ResponseField name="name" type="string" required>
-      供应商名称。
+      厂商名称。
     </ResponseField>
     <ResponseField name="description" type="string">
       自由描述，为空时省略。
@@ -112,7 +112,7 @@ curl --request POST \
       数据保留天数，未设置时省略。
     </ResponseField>
     <ResponseField name="training_opt_out" type="boolean">
-      发往该供应商的请求是否默认不用于上游模型训练，未设置时省略。
+      发往该厂商的请求是否默认不用于上游模型训练，未设置时省略。
     </ResponseField>
     <ResponseField name="status" type="integer" required>
       预留状态字段，`1` 表示启用。
@@ -135,6 +135,6 @@ curl --request POST \
 | 条件 | 说明 |
 | --- | --- |
 | 请求体格式不正确 | JSON 缺失或格式错误 |
-| 供应商名称不能为空 | `name` 为空字符串 |
-| 供应商名称已存在 | 已存在同名且未删除的供应商 |
+| 厂商名称不能为空 | `name` 为空字符串 |
+| 厂商名称已存在 | 已存在同名且未删除的厂商 |
 | 数据库错误，请稍后重试 | 名称重复校验或写入失败，详见服务端日志 |

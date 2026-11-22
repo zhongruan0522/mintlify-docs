@@ -1,10 +1,10 @@
 ---
-title: 删除预填分组
-description: 按 ID 删除一个预填分组。
+title: 删除预设组合
+description: 按 ID 删除一个预设组合。
 api: "DELETE /api/prefill_group/{id}"
 ---
 
-按 ID 删除一个预填分组。
+按 ID 删除一个预设组合。
 
 需要**管理员（Admin）**权限。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
 
@@ -24,7 +24,7 @@ curl --request DELETE \
 ### 路径参数
 
 <ParamField path="id" type="integer" required>
-  要删除的预填分组 ID。
+  要删除的预设组合 ID。
 </ParamField>
 
 ## 响应
@@ -44,7 +44,7 @@ curl --request DELETE \
 ### 响应字段
 
 <ResponseField name="success" type="boolean" required>
-  分组是否删除成功。
+  预设组合是否删除成功。
 </ResponseField>
 
 <ResponseField name="message" type="string" required>
@@ -56,7 +56,7 @@ curl --request DELETE \
 </ResponseField>
 
 <Note>
-管理接口在业务失败时同样返回 HTTP `200`，必须以 `success` 字段判断结果。删除为软删除：记录保留删除时间戳并不再出现在列表结果中，因此其名称可在新建分组时重新使用。删除不存在的 ID 同样返回成功，且不会影响任何记录。
+管理接口在业务失败时同样返回 HTTP `200`，必须以 `success` 字段判断结果。删除为软删除：记录保留删除时间戳并不再出现在列表结果中，因此其名称可在新建预设组合时重新使用。删除不存在的 ID 同样返回成功，且不会影响任何记录。
 </Note>
 
 ## 错误说明
@@ -64,4 +64,4 @@ curl --request DELETE \
 | 条件 | 说明 |
 | --- | --- |
 | 无效的参数 | `id` 不是合法整数 |
-| 数据库错误，请稍后重试 | 删除分组失败，详见服务端日志 |
+| 数据库错误，请稍后重试 | 删除预设组合失败，详见服务端日志 |

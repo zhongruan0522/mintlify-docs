@@ -1,10 +1,10 @@
 ---
 title: 获取所有模型元数据
-description: 分页列出模型元数据记录，附带绑定信息与按供应商统计的模型数量。
+description: 分页列出模型元数据记录，附带绑定信息与按厂商统计的模型数量。
 api: "GET /api/models/"
 ---
 
-分页列出全部模型元数据记录。每条记录都附带绑定信息：服务该模型的已启用渠道、可使用它的用户分组、计费方式、支持的端点类型；规则类记录还附带命中的具体模型名。`vendor_counts` 额外按供应商统计模型数量，统计范围为全部记录，不受分页影响。
+分页列出全部模型元数据记录。每条记录都附带绑定信息：服务该模型的已启用渠道、可使用它的用户分组、计费方式、支持的端点类型；规则类记录还附带命中的具体模型名。`vendor_counts` 额外按厂商统计模型数量，统计范围为全部记录，不受分页影响。
 
 需要**管理员（Admin）**权限。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
 
@@ -125,7 +125,7 @@ curl --request GET \
       逗号分隔的标签。
     </ResponseField>
     <ResponseField name="vendor_id" type="integer">
-      模型所属供应商的 ID；`0` 表示未指定供应商。供应商记录由[供应商接口](/cn/nookmux/api/management/vendors/vendors-get)管理。
+      模型所属厂商的 ID；`0` 表示未指定厂商。厂商记录由[厂商接口](/cn/nookmux/api/management/vendors/vendors-get)管理。
     </ResponseField>
     <ResponseField name="endpoints" type="string">
       支持的端点类型，序列化为 JSON 数组字符串，例如 `"[\"openai\",\"anthropic\"]"`。可取值：`openai`、`openai-response`、`openai-response-compact`、`anthropic`、`gemini`、`jina-rerank`、`image-generation`、`embeddings`。存储值为空时由定价缓存自动填充。
@@ -206,7 +206,7 @@ curl --request GET \
 </ResponseField>
 
 <ResponseField name="data.vendor_counts" type="object" required>
-供应商 ID 到该供应商模型数量的映射，统计范围为全部记录而非当前页。未指定供应商的记录计入 `"0"`。
+厂商 ID 到该厂商模型数量的映射，统计范围为全部记录而非当前页。未指定厂商的记录计入 `"0"`。
 </ResponseField>
 
 <Note>

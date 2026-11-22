@@ -4,7 +4,7 @@ description: 创建一条新的模型元数据记录；模型名在现有记录�
 api: "POST /api/models/"
 ---
 
-创建一条模型元数据记录。记录描述一个模型（或一条命名规则，见 `name_rule`）在控制台中的展示信息：供应商、图标、标签、上下文窗口、模态与支持的端点类型。创建成功后会刷新定价缓存，并写入审计日志。
+创建一条模型元数据记录。记录描述一个模型（或一条命名规则，见 `name_rule`）在控制台中的展示信息：厂商、图标、标签、上下文窗口、模态与支持的端点类型。创建成功后会刷新定价缓存，并写入审计日志。
 
 需要**管理员（Admin）**权限。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
 
@@ -58,7 +58,7 @@ curl --request POST \
 </ParamField>
 
 <ParamField path="body.vendor_id" type="integer">
-模型所属供应商的 ID；`0`（或不传）表示未指定供应商。供应商记录由[供应商接口](/cn/nookmux/api/management/vendors/vendors-get)管理。
+模型所属厂商的 ID；`0`（或不传）表示未指定厂商。厂商记录由[厂商接口](/cn/nookmux/api/management/vendors/vendors-get)管理。
 </ParamField>
 
 <ParamField path="body.endpoints" type="string">

@@ -1,10 +1,10 @@
 ---
-title: 更新供应商
-description: 提交完整供应商对象，全量更新已有供应商元数据。
+title: 更新厂商
+description: 提交完整厂商对象，全量更新已有厂商元数据。
 api: "PUT /api/vendors/"
 ---
 
-更新已有供应商元数据。请求体必须携带供应商 `id`；供应商名称在其余未删除供应商中必须保持唯一。
+更新已有厂商元数据。请求体必须携带厂商 `id`；厂商名称在其余未删除厂商中必须保持唯一。
 
 该接口为全量更新：提交的对象会按原样保存，请求体中省略的可选字段会被写回空值或未设置状态。`updated_time` 由服务端刷新；更新成功后在 `data` 中返回完整记录。
 
@@ -36,11 +36,11 @@ curl --request PUT \
 ### 请求体
 
 <ParamField path="body.id" type="integer" required>
-  待更新供应商的 ID。`id` 为 `0`（或缺失）时请求会被拒绝。
+  待更新厂商的 ID。`id` 为 `0`（或缺失）时请求会被拒绝。
 </ParamField>
 
 <ParamField path="body.name" type="string" required>
-  供应商名称，在其余未删除供应商中唯一，最长 128 字符。
+  厂商名称，在其余未删除厂商中唯一，最长 128 字符。
 </ParamField>
 
 <ParamField path="body.description" type="string">
@@ -56,7 +56,7 @@ curl --request PUT \
 </ParamField>
 
 <ParamField path="body.training_opt_out" type="boolean">
-  发往该供应商的请求是否默认不用于上游模型训练（展示在定价页）。省略表示清除该值。
+  发往该厂商的请求是否默认不用于上游模型训练（展示在定价页）。省略表示清除该值。
 </ParamField>
 
 <ParamField path="body.status" type="integer" default="1">
@@ -90,7 +90,7 @@ curl --request PUT \
 ### 响应字段
 
 <ResponseField name="success" type="boolean" required>
-  供应商是否更新成功。
+  厂商是否更新成功。
 </ResponseField>
 
 <ResponseField name="message" type="string" required>
@@ -98,14 +98,14 @@ curl --request PUT \
 </ResponseField>
 
 <ResponseField name="data" type="object" required>
-  更新后的供应商记录。
+  更新后的厂商记录。
 
-  <Expandable title="供应商结构">
+  <Expandable title="厂商结构">
     <ResponseField name="id" type="integer" required>
-      供应商 ID。
+      厂商 ID。
     </ResponseField>
     <ResponseField name="name" type="string" required>
-      供应商名称。
+      厂商名称。
     </ResponseField>
     <ResponseField name="description" type="string">
       自由描述，为空时省略。
@@ -117,7 +117,7 @@ curl --request PUT \
       数据保留天数，未设置时省略。
     </ResponseField>
     <ResponseField name="training_opt_out" type="boolean">
-      发往该供应商的请求是否默认不用于上游模型训练，未设置时省略。
+      发往该厂商的请求是否默认不用于上游模型训练，未设置时省略。
     </ResponseField>
     <ResponseField name="status" type="integer" required>
       预留状态字段，`1` 表示启用。
@@ -140,6 +140,6 @@ curl --request PUT \
 | 条件 | 说明 |
 | --- | --- |
 | 请求体格式不正确 | JSON 缺失或格式错误 |
-| 缺少供应商 ID | 请求体未携带非零的 `id` |
-| 供应商名称已存在 | 其余未删除供应商中已有同名记录 |
+| 缺少厂商 ID | 请求体未携带非零的 `id` |
+| 厂商名称已存在 | 其余未删除厂商中已有同名记录 |
 | 数据库错误，请稍后重试 | 读取原始记录、名称重复校验或保存失败（含 `id` 不存在的情况），详见服务端日志 |

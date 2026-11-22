@@ -8,7 +8,7 @@ api: "POST /api/verify"
 
 支持三种验证方式：
 
-- `2fa`：提交账户双因素认证的动态口令或备用码。
+- `2fa`：提交账户双因素认证的动态口令或恢复码。
 - `passkey`：先完成 WebAuthn 断言流程 `POST /api/user/passkey/verify/begin` 与 `POST /api/user/passkey/verify/finish`（标准 WebAuthn 结构），该流程会在会话中写入短期有效的就绪标记（60 秒内有效、一次性）；随后以 `method: "passkey"` 调用本端点完成最终确认。
 - `password`：以当前账号密码重新验证。这是未配置 2FA 与 Passkey 账户的回退方式。
 
@@ -56,7 +56,7 @@ curl --request POST \
 </ParamField>
 
 <ParamField path="body.code" type="string">
-验证码，`method` 为 `2fa` 时必填。接受 6 位 TOTP 动态口令或备用码。`passkey` 与 `password` 方式忽略该字段。
+验证码，`method` 为 `2fa` 时必填。接受 6 位 TOTP 动态口令或恢复码。`passkey` 与 `password` 方式忽略该字段。
 </ParamField>
 
 <ParamField path="body.password" type="string">
@@ -130,5 +130,5 @@ curl --request POST \
 | 无效的 Passkey 验证状态 | Passkey 就绪标记存在但无法用于该用户 |
 | 账户未设置密码，无法通过密码验证 | `method` 为 `password` 但账户未设置密码 |
 | 不支持的验证方式：{method} | `method` 不是 `2fa`、`passkey`、`password` |
-| 验证失败，请检查验证码 | 2FA 验证码既不是有效 TOTP 也不是有效备用码，或密码错误 |
+| 验证失败，请检查验证码 | 2FA 验证码既不是有效 TOTP 也不是有效恢复码，或密码错误 |
 | 保存验证状态失败 | 会话保存失败，详见服务端日志 |

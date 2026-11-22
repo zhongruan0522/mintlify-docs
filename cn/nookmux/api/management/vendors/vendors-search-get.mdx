@@ -1,10 +1,10 @@
 ---
-title: 搜索供应商
-description: 按名称关键字分页搜索供应商元数据。
+title: 搜索厂商
+description: 按名称关键字分页搜索厂商元数据。
 api: "GET /api/vendors/search"
 ---
 
-按关键字搜索供应商元数据：关键字对供应商 `name` 做模糊匹配，命中的供应商按 `id` 倒序（最新在前）分页返回。关键字为空时等同于全量列表。
+按关键字搜索厂商元数据：关键字对厂商 `name` 做模糊匹配，命中的厂商按 `id` 倒序（最新在前）分页返回。关键字为空时等同于全量列表。
 
 需要**管理员（Admin）**权限。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
 
@@ -24,7 +24,7 @@ curl --request GET \
 ### 查询参数
 
 <ParamField path="keyword" type="string">
-  搜索关键字，对供应商名称做模糊匹配。可省略，为空时返回全部供应商。
+  搜索关键字，对厂商名称做模糊匹配。可省略，为空时返回全部厂商。
 </ParamField>
 
 <ParamField path="p" type="integer" default="1">
@@ -85,18 +85,18 @@ curl --request GET \
 </ResponseField>
 
 <ResponseField name="data.total" type="integer" required>
-  命中的供应商总数。
+  命中的厂商总数。
 </ResponseField>
 
 <ResponseField name="data.items" type="array" required>
-  当前页的供应商对象数组，按 `id` 倒序返回。
+  当前页的厂商对象数组，按 `id` 倒序返回。
 
-  <Expandable title="供应商结构">
+  <Expandable title="厂商结构">
     <ResponseField name="id" type="integer" required>
-      供应商 ID。
+      厂商 ID。
     </ResponseField>
     <ResponseField name="name" type="string" required>
-      供应商名称，在未删除的供应商中唯一，最长 128 字符。
+      厂商名称，在未删除的厂商中唯一，最长 128 字符。
     </ResponseField>
     <ResponseField name="description" type="string">
       自由描述，为空时省略。
@@ -108,7 +108,7 @@ curl --request GET \
       数据保留天数，展示在定价页（`0` 表示不留存），未设置时省略。
     </ResponseField>
     <ResponseField name="training_opt_out" type="boolean">
-      发往该供应商的请求是否默认不用于上游模型训练（展示在定价页），未设置时省略。
+      发往该厂商的请求是否默认不用于上游模型训练（展示在定价页），未设置时省略。
     </ResponseField>
     <ResponseField name="status" type="integer" required>
       预留状态字段，`1` 表示启用。
@@ -130,4 +130,4 @@ curl --request GET \
 
 | 条件 | 说明 |
 | --- | --- |
-| 数据库错误，请稍后重试 | 搜索供应商或统计总数失败，详见服务端日志 |
+| 数据库错误，请稍后重试 | 搜索厂商或统计总数失败，详见服务端日志 |

@@ -1,10 +1,10 @@
 ---
 title: Get Pricing Information
-description: Fetch per-model pricing, vendor metadata, group ratios and supported endpoints for the model square page.
+description: Fetch per-model pricing, vendor metadata, group ratios and supported endpoints for the Model Hub page.
 api: "GET /api/pricing"
 ---
 
-Returns the model pricing table used by the model square page: every model currently served by enabled channels, its billing ratios or fixed price, vendor metadata, the group ratios visible to the caller, and the mapping of supported endpoint types to relay paths.
+Returns the model pricing table used by the Model Hub page: every model currently served by enabled channels, its billing ratios or fixed price, vendor metadata, the group ratios visible to the caller, and the mapping of supported endpoint types to relay paths.
 
 The endpoint is gated by the header navigation module configuration of the `pricing` module. By default the module is enabled and public: no authentication is required, and the caller's identity is resolved from the login session when one is present. If the module is configured to require login, a valid login is enforced (User permission). See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
 

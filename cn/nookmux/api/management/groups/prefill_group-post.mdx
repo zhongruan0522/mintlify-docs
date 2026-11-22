@@ -1,10 +1,10 @@
 ---
-title: 创建预填分组
-description: 创建一个可复用的预填分组。
+title: 创建预设组合
+description: 创建一个可复用的预设组合。
 api: "POST /api/prefill_group/"
 ---
 
-创建一个预填分组。`name` 必须非空且在未删除分组内唯一，`type` 必须非空。
+创建一个预设组合。`name` 必须非空且在未删除预设组合内唯一，`type` 必须非空。
 
 需要**管理员（Admin）**权限。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
 
@@ -31,15 +31,15 @@ curl --request POST \
 ### 请求体
 
 <ParamField path="body.name" type="string" required>
-  分组名，在未删除分组内唯一，最长 64 字符。用于在控制台下拉框中展示。
+  预设组合名称，在未删除预设组合内唯一，最长 64 字符。用于在控制台下拉框中展示。
 </ParamField>
 
 <ParamField path="body.type" type="string" required>
-  分组类别，例如 `model`、`tag` 或 `endpoint`。服务端仅要求该字段非空。
+  预设组合类别，例如 `model`、`tag` 或 `endpoint`。服务端仅要求该字段非空。
 </ParamField>
 
 <ParamField path="body.items" type="array">
-  保存分组取值的字符串 JSON 数组，例如模型名列表。省略时存为 `null`。
+  保存预设组合取值的字符串 JSON 数组，例如模型名列表。省略时存为 `null`。
 </ParamField>
 
 <ParamField path="body.description" type="string">
@@ -71,7 +71,7 @@ curl --request POST \
 ### 响应字段
 
 <ResponseField name="success" type="boolean" required>
-  分组是否创建成功。
+  预设组合是否创建成功。
 </ResponseField>
 
 <ResponseField name="message" type="string" required>
@@ -79,20 +79,20 @@ curl --request POST \
 </ResponseField>
 
 <ResponseField name="data" type="object" required>
-  创建成功的预填分组。`id`、`created_time`、`updated_time` 由服务端填充；其余字段为请求内容落库后的表示。
+  创建成功的预设组合。`id`、`created_time`、`updated_time` 由服务端填充；其余字段为请求内容落库后的表示。
 
-  <Expandable title="预填分组结构">
+  <Expandable title="预设组合结构">
     <ResponseField name="id" type="integer" required>
-      服务端分配的分组 ID。
+      服务端分配的预设组合 ID。
     </ResponseField>
     <ResponseField name="name" type="string" required>
-      未删除分组内唯一的分组名，最长 64 字符。
+      未删除预设组合内唯一的名称，最长 64 字符。
     </ResponseField>
     <ResponseField name="type" type="string" required>
-      分组类别，例如 `model`、`tag` 或 `endpoint`。
+      预设组合类别，例如 `model`、`tag` 或 `endpoint`。
     </ResponseField>
     <ResponseField name="items" type="array" required>
-      保存分组取值的字符串 JSON 数组；请求省略 `items` 时为 `null`。
+      保存预设组合取值的字符串 JSON 数组；请求省略 `items` 时为 `null`。
     </ResponseField>
     <ResponseField name="description" type="string">
       自由备注；为空时省略。
@@ -107,7 +107,7 @@ curl --request POST \
 </ResponseField>
 
 <Note>
-管理接口在业务失败时同样返回 HTTP `200`，必须以 `success` 字段判断结果。服务端维护字段（`id`、`created_time`、`updated_time`）可在请求中省略。名称唯一性仅针对未删除的分组：分组被删除后，其名称可再次使用。
+管理接口在业务失败时同样返回 HTTP `200`，必须以 `success` 字段判断结果。服务端维护字段（`id`、`created_time`、`updated_time`）可在请求中省略。名称唯一性仅针对未删除的预设组合：预设组合被删除后，其名称可再次使用。
 </Note>
 
 ## 错误说明
@@ -115,6 +115,6 @@ curl --request POST \
 | 条件 | 说明 |
 | --- | --- |
 | 请求体格式不正确 | JSON 请求体缺失或格式错误 |
-| 分组名称和类型不能为空 | `name` 或 `type` 缺失或为空 |
-| 分组名称已存在 | 已存在同名且未删除的分组 |
-| 数据库错误，请稍后重试 | 分组落库失败，详见服务端日志 |
+| 预设组合名称和类型不能为空 | `name` 或 `type` 缺失或为空 |
+| 预设组合名称已存在 | 已存在同名且未删除的预设组合 |
+| 数据库错误，请稍后重试 | 预设组合落库失败，详见服务端日志 |

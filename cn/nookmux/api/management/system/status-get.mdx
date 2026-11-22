@@ -4,7 +4,7 @@ description: 获取登录前前端所需的公开引导配置：品牌信息、�
 api: "GET /api/status"
 ---
 
-返回用于渲染登录前壳层并初始化前端的公开配置：品牌信息、可用登录方式、Turnstile 设置、面板开关、Passkey 参数以及可选的控制台内容（API 信息、公告、FAQ）。该响应对匿名与已登录调用者完全一致；管理员专属配置（侧栏模块结构、构建版本号）刻意不包含在内，由独立的管理端接口下发。
+返回用于渲染登录前壳层并初始化前端的公开配置：品牌信息、可用登录方式、Turnstile 设置、面板开关、Passkey 参数以及可选的控制台内容（API 信息、公告、常见问题）。该响应对匿名与已登录调用者完全一致；管理员专属配置（侧栏模块结构、构建版本号）刻意不包含在内，由独立的管理端接口下发。
 
 该接口为公开接口，无需鉴权。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
 
@@ -181,7 +181,7 @@ curl --request GET \
       数据看板是否启用公告面板。
     </ParamField>
     <ParamField path="faq_enabled" type="boolean" required>
-      数据看板是否启用 FAQ 面板。
+      数据看板是否启用常见问题面板。
     </ParamField>
     <ParamField path="HeaderNavModules" type="string" required>
       配置顶部导航模块的原始 JSON 字符串（如 pricing、rankings 的可见性与登录要求）。未设置时为空字符串。
@@ -262,7 +262,7 @@ curl --request GET \
       </Expandable>
     </ParamField>
     <ParamField path="faq" type="array">
-      FAQ 条目。仅当 `faq_enabled` 为 `true` 时出现。
+      常见问题条目。仅当 `faq_enabled` 为 `true` 时出现。
 
       <Expandable title="faq 条目结构">
         <ParamField path="question" type="string" required>

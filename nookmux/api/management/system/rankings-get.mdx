@@ -1,10 +1,10 @@
 ---
 title: Get Usage Rankings
-description: Fetch the model, vendor and client platform token-usage leaderboard snapshot with history series for a period.
+description: Fetch the model, vendor and agent token-usage leaderboard snapshot with history series for a period.
 api: "GET /api/rankings"
 ---
 
-Returns the usage leaderboard snapshot for a period, computed from the pre-aggregated `quota_data` token usage: models, vendors and client platforms ranked by tokens consumed, the biggest rank movers and droppers versus the previous period, and per-bucket history series for charts.
+Returns the usage leaderboard snapshot for a period, computed from the pre-aggregated `quota_data` token usage: models, vendors and agents ranked by tokens consumed, the biggest rank movers and droppers versus the previous period, and per-bucket history series for charts.
 
 The endpoint is gated by the header navigation module configuration of the `rankings` module. By default the module is enabled and public: no authentication is required, and the caller's identity is resolved from the login session when one is present. If the module is configured to require login, a valid login is enforced (User permission). See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
 
@@ -211,7 +211,7 @@ curl --request GET \
       </Expandable>
     </ResponseField>
     <ResponseField name="platforms" type="array" required>
-      Client platforms (agents) ranked by total tokens, limited to the configured platform count (`rankings_platform_limit`, 10 by default).
+      Agents ranked by total tokens, limited to the configured agent count (`rankings_platform_limit`, 10 by default).
 
       <Expandable title="ranked platform structure">
         <ResponseField name="rank" type="integer" required>
@@ -271,7 +271,7 @@ curl --request GET \
       </Expandable>
     </ResponseField>
     <ResponseField name="platforms_history" type="object" required>
-      Per-bucket token series for the top client platforms, used by the stacked history chart.
+      Per-bucket token series for the top agents, used by the stacked history chart.
 
       <Expandable title="platforms_history structure">
         <ResponseField name="points" type="array" required>

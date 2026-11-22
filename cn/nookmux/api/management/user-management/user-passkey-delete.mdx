@@ -58,7 +58,7 @@ Passkey 是否删除成功。
 <Note>
 调用前需要完成绑定到当前用户、且不超过 5 分钟的二次安全验证：
 
-- 启用 2FA 时，需通过 `2fa` 方式验证（`POST /api/verify`，携带 TOTP 验证码或备用码）。
+- 启用 2FA 时，需通过 `2fa` 方式验证（`POST /api/verify`，携带 TOTP 验证码或恢复码）。
 - 未启用 2FA 时，需至少绑定一个 Passkey，并通过 `passkey` 方式验证：依次完成 `POST /api/user/passkey/verify/begin` 与 `POST /api/user/passkey/verify/finish`，再调用 `POST /api/verify` 并传 `{"method": "passkey"}`。
 
 参见[通用安全验证](/cn/nookmux/api/management/security-verification/verify-post)。与其他 Passkey 接口相同，本接口从服务端会话 Cookie 解析用户，仅用 Access Token 鉴权会被拒绝并返回 HTTP `401`。

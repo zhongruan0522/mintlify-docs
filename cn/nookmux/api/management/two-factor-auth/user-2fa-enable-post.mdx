@@ -4,7 +4,7 @@ description: 提交 TOTP 验证码，激活当前登录账号待生效的两步�
 api: "POST /api/user/2fa/enable"
 ---
 
-激活由[设置 2FA](/cn/nookmux/api/management/two-factor-auth/user-2fa-setup-post)创建的待生效 2FA 记录。请求须携带验证器应用针对设置时返回的密钥生成的当前 6 位 TOTP 验证码。成功后 2FA 记录被标记为已启用，该账号后续登录需要 TOTP 验证码或备用码。
+激活由[设置 2FA](/cn/nookmux/api/management/two-factor-auth/user-2fa-setup-post)创建的待生效 2FA 记录。请求须携带验证器应用针对设置时返回的密钥生成的当前 6 位 TOTP 验证码。成功后 2FA 记录被标记为已启用，该账号后续登录需要 TOTP 验证码或恢复码。
 
 需要**用户（User）**权限（任意登录用户）。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
 
@@ -28,7 +28,7 @@ curl --request POST \
 ### 请求体
 
 <ParamField path="body.code" type="string" required>
-验证器应用生成的当前 6 位 TOTP 验证码。允许包含空格（校验时忽略）。本接口不接受备用码。
+验证器应用生成的当前 6 位 TOTP 验证码。允许包含空格（校验时忽略）。本接口不接受恢复码。
 </ParamField>
 
 ## 响应
@@ -60,7 +60,7 @@ curl --request POST \
 </ResponseField>
 
 <Note>
-本接口直接将验证码与存储的密钥比对，验证失败不计入锁定计数（锁定计数适用于禁用 2FA、重新生成备用码与登录验证）。
+本接口直接将验证码与存储的密钥比对，验证失败不计入锁定计数（锁定计数适用于禁用 2FA、重新生成恢复码与登录验证）。
 </Note>
 
 ## 错误说明

@@ -1,10 +1,10 @@
 ---
-title: 删除供应商
-description: 按 ID 软删除供应商元数据。
+title: 删除厂商
+description: 按 ID 软删除厂商元数据。
 api: "DELETE /api/vendors/{id}"
 ---
 
-删除指定 ID 的供应商元数据。删除为软删除：记录被标记为已删除并从供应商列表中隐藏，其名称此后可复用。
+删除指定 ID 的厂商元数据。删除为软删除：记录被标记为已删除并从厂商列表中隐藏，其名称此后可复用。
 
 需要**管理员（Admin）**权限。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
 
@@ -24,7 +24,7 @@ curl --request DELETE \
 ### 路径参数
 
 <ParamField path="id" type="integer" required>
-  供应商 ID。
+  厂商 ID。
 </ParamField>
 
 ## 响应
@@ -44,7 +44,7 @@ curl --request DELETE \
 ### 响应字段
 
 <ResponseField name="success" type="boolean" required>
-  供应商是否删除成功。
+  厂商是否删除成功。
 </ResponseField>
 
 <ResponseField name="message" type="string" required>
@@ -64,4 +64,4 @@ curl --request DELETE \
 | 条件 | 说明 |
 | --- | --- |
 | 无效的参数 | `id` 不是合法整数 |
-| 数据库错误，请稍后重试 | 删除供应商失败，详见服务端日志 |
+| 数据库错误，请稍后重试 | 删除厂商失败，详见服务端日志 |

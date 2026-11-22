@@ -1,10 +1,10 @@
 ---
 title: 获取 2FA 状态
-description: 查询当前登录账号两步验证的启用与锁定状态，以及剩余备用码数量。
+description: 查询当前登录账号两步验证的启用与锁定状态，以及剩余恢复码数量。
 api: "GET /api/user/2fa/status"
 ---
 
-返回当前登录账号的两步验证状态：是否已启用、验证是否被临时锁定，以及启用状态下的剩余备用码数量。
+返回当前登录账号的两步验证状态：是否已启用、验证是否被临时锁定，以及启用状态下的剩余恢复码数量。
 
 需要**用户（User）**权限（任意登录用户）。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
 
@@ -58,7 +58,7 @@ curl --request GET \
 </ResponseField>
 
 <ResponseField name="data.backup_codes_remaining" type="integer">
-未使用的备用码数量。仅在 2FA 已启用时返回。
+未使用的恢复码数量。仅在 2FA 已启用时返回。
 </ResponseField>
 
 <Note>

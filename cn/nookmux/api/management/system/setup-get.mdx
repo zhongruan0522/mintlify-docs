@@ -4,7 +4,7 @@ description: 获取站点是否已完成初始化、是否已存在 root 账号�
 api: "GET /api/setup"
 ---
 
-返回站点的初始化状态。安装向导在创建首个管理员账号之前使用该接口。系统完成初始化后，`root_init` 与 `database_type` 保持零值，只有 `status` 仍有意义。
+返回站点的初始化状态。初始化向导在创建首个管理员账号之前使用该接口。系统完成初始化后，`root_init` 与 `database_type` 保持零值，只有 `status` 仍有意义。
 
 该接口为公开接口，无需鉴权。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
 

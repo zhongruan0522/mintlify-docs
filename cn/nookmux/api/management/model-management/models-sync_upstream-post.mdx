@@ -4,7 +4,7 @@ description: 从上游元数据仓库为本地缺失的模型创建元数据，�
 api: "POST /api/models/sync_upstream"
 ---
 
-从上游元数据仓库同步模型元数据。默认只为本地缺失的模型创建记录（见[获取缺失模型](/cn/nookmux/api/management/model-management/models-missing-get)），且仅当上游目录也收录了该模型时才会创建。可选的 `overwrite` 列表用上游值覆盖更新已有记录的指定字段。创建模型引用的供应商会按需创建，本次同步会写入审计日志。
+从上游元数据仓库同步模型元数据。默认只为本地缺失的模型创建记录（见[获取缺失模型](/cn/nookmux/api/management/model-management/models-missing-get)），且仅当上游目录也收录了该模型时才会创建。可选的 `overwrite` 列表用上游值覆盖更新已有记录的指定字段。创建模型引用的厂商会按需创建，本次同步会写入审计日志。
 
 需要**管理员（Admin）**权限。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
 
@@ -88,7 +88,7 @@ curl --request POST \
 </ResponseField>
 
 <ResponseField name="data.created_vendors" type="integer" required>
-解析同步模型的供应商时创建的供应商记录数量。
+解析同步模型的厂商时创建的厂商记录数量。
 </ResponseField>
 
 <ResponseField name="data.updated_models" type="integer" required>
@@ -118,7 +118,7 @@ curl --request POST \
       实际拉取模型目录的上游 URL。
     </ResponseField>
     <ResponseField name="vendors_url" type="string">
-      实际拉取供应商目录的上游 URL。
+      实际拉取厂商目录的上游 URL。
     </ResponseField>
   </Expandable>
 </ResponseField>

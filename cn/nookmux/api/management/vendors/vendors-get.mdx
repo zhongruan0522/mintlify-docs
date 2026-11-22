@@ -1,12 +1,12 @@
 ---
-title: 获取所有供应商
-description: 分页获取全部供应商元数据列表。
+title: 获取所有厂商
+description: 分页获取全部厂商元数据列表。
 api: "GET /api/vendors/"
 ---
 
-供应商元数据用于描述上游模型厂商：模型条目通过 `vendor_id` 关联供应商，图标、数据保留天数、是否不用于模型训练等字段会展示在面向终端用户的定价页上。
+厂商元数据用于描述上游模型厂商：模型条目通过 `vendor_id` 关联厂商，图标、数据保留天数、是否不用于模型训练等字段会展示在面向终端用户的定价页上。
 
-分页返回全部供应商列表。
+分页返回全部厂商列表。
 
 需要**管理员（Admin）**权限。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
 
@@ -91,18 +91,18 @@ curl --request GET \
 </ResponseField>
 
 <ResponseField name="data.total" type="integer" required>
-  供应商总数。
+  厂商总数。
 </ResponseField>
 
 <ResponseField name="data.items" type="array" required>
-  当前页的供应商对象数组。
+  当前页的厂商对象数组。
 
-  <Expandable title="供应商结构">
+  <Expandable title="厂商结构">
     <ResponseField name="id" type="integer" required>
-      供应商 ID。
+      厂商 ID。
     </ResponseField>
     <ResponseField name="name" type="string" required>
-      供应商名称，在未删除的供应商中唯一，最长 128 字符。
+      厂商名称，在未删除的厂商中唯一，最长 128 字符。
     </ResponseField>
     <ResponseField name="description" type="string">
       自由描述，为空时省略。
@@ -114,7 +114,7 @@ curl --request GET \
       数据保留天数，展示在定价页（`0` 表示不留存），未设置时省略。
     </ResponseField>
     <ResponseField name="training_opt_out" type="boolean">
-      发往该供应商的请求是否默认不用于上游模型训练（展示在定价页），未设置时省略。
+      发往该厂商的请求是否默认不用于上游模型训练（展示在定价页），未设置时省略。
     </ResponseField>
     <ResponseField name="status" type="integer" required>
       预留状态字段，`1` 表示启用。
@@ -136,4 +136,4 @@ curl --request GET \
 
 | 条件 | 说明 |
 | --- | --- |
-| 数据库错误，请稍后重试 | 读取供应商列表或统计总数失败，详见服务端日志 |
+| 数据库错误，请稍后重试 | 读取厂商列表或统计总数失败，详见服务端日志 |
