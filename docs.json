@@ -307,6 +307,7 @@
                   {
                     "group": "系统设置",
                     "pages": [
+                      "cn/nookmux/api/management/system-settings/option-builtin_model_pricing-get",
                       "cn/nookmux/api/management/system-settings/option-channel_affinity_cache-delete",
                       "cn/nookmux/api/management/system-settings/option-channel_affinity_cache-get",
                       "cn/nookmux/api/management/system-settings/option-get",
@@ -849,6 +850,7 @@
                   {
                     "group": "System Settings",
                     "pages": [
+                      "nookmux/api/management/system-settings/option-builtin_model_pricing-get",
                       "nookmux/api/management/system-settings/option-channel_affinity_cache-delete",
                       "nookmux/api/management/system-settings/option-channel_affinity_cache-get",
                       "nookmux/api/management/system-settings/option-get",

@@ -67,6 +67,7 @@ DELETE /api/option/json_array
 GET    /api/option/channel_affinity_cache
 DELETE /api/option/channel_affinity_cache
 POST   /api/option/reset_tool_billing_rules
+GET    /api/option/builtin_model_pricing
 ```
 
 - `option/value`: the `key` query parameter is required, and sensitive configuration cannot be read.
@@ -74,6 +75,7 @@ POST   /api/option/reset_tool_billing_rules
 - JSON Map write body: `key`, `map_key`, `old_map_key`, `value`; delete body: `key`, `map_key`.
 - `option/json_array` keeps only legacy read compatibility for `minimax.voice_whitelist`; `PUT` and `DELETE` explicitly return "migrated to voice management" and can no longer be used as successful write APIs.
 - Clearing the affinity cache requires `all=true` or a `rule_name`.
+- `option/builtin_model_pricing`: the `model` query parameter is required; returns the model's raw entry in the built-in pricing table, with `available: false` when it has no billable entry.
 
 ### Database Migration and Performance
 

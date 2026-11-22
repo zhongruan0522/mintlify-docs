@@ -1,0 +1,174 @@
+---
+title: 获取内置模型定价
+description: 返回模型在随版本发布的内置定价表中的原始条目。
+api: "GET /api/option/builtin_model_pricing"
+---
+
+返回模型在内置定价表（随版本发布的默认价格与倍率）中的原始条目：按次价格、输入/补全/缓存读写/音频倍率以及上下文阶梯定价配置。控制台模型定价可视化编辑器的「导入内置价格」操作基于此接口。
+
+模型名匹配规则与运行时计费取价一致，因此 `gemini-2.5-pro-thinking-*`、`gpt-4o-gizmo-*` 等内置通配条目覆盖的模型名会命中对应条目。本接口只读，不写入审计日志。
+
+需要**超级管理员（Root）**权限。管理接口的鉴权方式参见[身份认证](/cn/nookmux/api/management/auth)。
+
+## 请求
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url 'https://your-nookmux-domain/api/option/builtin_model_pricing?model=claude-sonnet-4.5' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1'
+```
+
+</RequestExample>
+
+### 查询参数
+
+<ParamField path="model" type="string" required>
+  要查询的模型名，例如 `claude-sonnet-4.5`。首尾空白会被去除，去除后的值原样回显在 `model_name` 中。
+</ParamField>
+
+## 响应
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": {
+    "model_name": "claude-sonnet-4.5",
+    "available": true,
+    "model_ratio": 1.5,
+    "completion_ratio": 5,
+    "cache_ratio": 0.1,
+    "create_cache_ratio": 1.25,
+    "context_pricing": {
+      "enabled": true,
+      "tiers": [
+        {
+          "name": "base",
+          "min_tokens": 0,
+          "max_tokens": 200000,
+          "model_ratio": 1.5,
+          "completion_ratio": 5,
+          "cache_ratio": 0.1,
+          "create_cache_ratio": 1.25,
+          "audio_ratio": 1,
+          "audio_completion_ratio": 1
+        },
+        {
+          "name": "tier_1",
+          "min_tokens": 200000,
+          "max_tokens": 1000000,
+          "model_ratio": 3,
+          "completion_ratio": 3.75,
+          "cache_ratio": 0.1,
+          "create_cache_ratio": 1.25,
+          "audio_ratio": 1,
+          "audio_completion_ratio": 1
+        }
+      ]
+    }
+  }
+}
+```
+
+</ResponseExample>
+
+### 响应字段
+
+<ResponseField name="success" type="boolean" required>
+  查询是否完成。
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  `success` 为 `false` 时的错误描述；成功时为空字符串。
+</ResponseField>
+
+<ResponseField name="data" type="object" required>
+  模型在内置定价表中的条目。
+
+  <Expandable title="data 结构">
+    <ResponseField name="model_name" type="string" required>
+      去除首尾空白后的 `model` 查询值。
+    </ResponseField>
+    <ResponseField name="available" type="boolean" required>
+      内置定价表是否有该模型的可计费条目：按次价格、输入倍率，或已启用且至少含一个档位的上下文阶梯定价。为 `false` 时 `data` 只含 `model_name` 与 `available`。
+    </ResponseField>
+    <ResponseField name="model_price" type="number">
+      可选。按次计费的每次调用固定价格；仅在内置定价表有该模型的价格条目时出现，例如 `gpt-4o-mini-tts` 为 `0.3`。
+    </ResponseField>
+    <ResponseField name="model_ratio" type="number">
+      可选。输入 Token 倍率；仅在内置定价表有该模型的倍率条目时出现。
+    </ResponseField>
+    <ResponseField name="completion_ratio" type="number">
+      可选。输出（补全）Token 相对 `model_ratio` 的倍率；仅在内置定价表有该模型的条目时出现。
+    </ResponseField>
+    <ResponseField name="cache_ratio" type="number">
+      可选。缓存命中 Token 的读取倍率；仅在内置定价表有该模型原始模型名的条目时出现。
+    </ResponseField>
+    <ResponseField name="create_cache_ratio" type="number">
+      可选。缓存写入 Token 的倍率；仅在内置定价表有该模型原始模型名的条目时出现。
+    </ResponseField>
+    <ResponseField name="audio_ratio" type="number">
+      可选。音频输入 Token 倍率；仅在内置定价表有该模型的条目时出现。
+    </ResponseField>
+    <ResponseField name="audio_completion_ratio" type="number">
+      可选。音频输出 Token 倍率；仅在内置定价表有该模型的条目时出现。
+    </ResponseField>
+    <ResponseField name="context_pricing" type="object">
+      可选。上下文阶梯定价配置；只要内置定价表有该模型的配置就会出现，与是否启用无关。
+
+      <Expandable title="context_pricing 结构">
+        <ResponseField name="enabled" type="boolean" required>
+          阶梯计费规则是否启用。
+        </ResponseField>
+        <ResponseField name="tiers" type="array" required>
+          按上下文长度排序的档位列表。
+
+          <Expandable title="档位结构">
+            <ResponseField name="name" type="string">
+              可选的档位名称，例如 `base`。
+            </ResponseField>
+            <ResponseField name="min_tokens" type="integer" required>
+              该档位上下文长度的下界。
+            </ResponseField>
+            <ResponseField name="max_tokens" type="integer">
+              可选。该档位上下文长度的上界；最高档位不出现。
+            </ResponseField>
+            <ResponseField name="model_ratio" type="number" required>
+              该档位的输入 Token 倍率。
+            </ResponseField>
+            <ResponseField name="completion_ratio" type="number" required>
+              该档位的输出（补全）Token 相对其 `model_ratio` 的倍率。
+            </ResponseField>
+            <ResponseField name="cache_ratio" type="number" required>
+              该档位的缓存命中 Token 读取倍率。
+            </ResponseField>
+            <ResponseField name="create_cache_ratio" type="number" required>
+              该档位的缓存写入 Token 倍率。
+            </ResponseField>
+            <ResponseField name="audio_ratio" type="number" required>
+              该档位的音频输入 Token 倍率。
+            </ResponseField>
+            <ResponseField name="audio_completion_ratio" type="number" required>
+              该档位的音频输出 Token 倍率。
+            </ResponseField>
+          </Expandable>
+        </ResponseField>
+      </Expandable>
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<Note>
+  管理接口在业务失败时同样返回 HTTP `200`，必须以 `success` 字段判断结果。模型没有可计费的内置条目不属于错误：接口返回 `success: true`，`data` 只含 `model_name` 与 `available: false`。按次价格、各倍率与上下文阶梯定价按与运行时计费相同的归一化名称查找：`gemini-2.5-flash-lite*`、`gemini-2.5-flash*`、`gemini-2.5-pro*` 且含 `-thinking-` 的名称映射到对应的 `*-thinking-*` 条目，`gpt-4-gizmo*` / `gpt-4o-gizmo*` 映射到 `gpt-4-gizmo-*` / `gpt-4o-gizmo-*`；`cache_ratio` 与 `create_cache_ratio` 则按原始模型名查找。
+</Note>
+
+## 错误说明
+
+| 条件 | 说明 |
+| --- | --- |
+| `model` 缺失或全为空白 | 返回 `模型名称不能为空`，HTTP `200` 且 `success: false` |

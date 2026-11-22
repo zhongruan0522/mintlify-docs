@@ -73,6 +73,7 @@ DELETE /api/option/json_array
 GET    /api/option/channel_affinity_cache
 DELETE /api/option/channel_affinity_cache
 POST   /api/option/reset_tool_billing_rules
+GET    /api/option/builtin_model_pricing
 ```
 
 - `option/value`：query `key` 必填，敏感配置禁止读取。
@@ -82,6 +83,7 @@ POST   /api/option/reset_tool_billing_rules
 - `option/json_array` 仅保留旧 `minimax.voice_whitelist` 的兼容读取；PUT/DELETE
   会明确返回“已迁移到音色管理”，不能再作为成功写入接口使用。
 - 清理亲和缓存需 query `all=true`，或提供 `rule_name`。
+- `option/builtin_model_pricing`：query `model` 必填；返回模型在内置定价表中的原始条目，没有可计费条目时 `available` 为 `false`。
 
 ### 数据库迁移与性能
 

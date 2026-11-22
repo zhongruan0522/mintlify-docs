@@ -31,4 +31,6 @@ Actual billing may also be affected by cache pricing, audio tokens, context spli
 
 If a model has no price or ratio configured, commercial use may return a "price not configured" error. Administrators should fill in the model configuration under Model Pricing.
 
+When filling in a model, select it in the visual editor of the **Model prices** tab on the Model Pricing page and click **Import built-in price** next to the model name in the **Price settings** card: the model's original entry in the built-in pricing table published with the release (per-call price, ratios, and context-tiered pricing) fills the form and replaces the model's existing entries, the billing type is selected automatically, and **Save model prices** applies it. If the model has no built-in price, the editor says so and leaves the form unchanged.
+
 Related implementation: `internal/common/constants.go`, `internal/relay/helper/price.go`, `internal/domain/billing/quota.go`.

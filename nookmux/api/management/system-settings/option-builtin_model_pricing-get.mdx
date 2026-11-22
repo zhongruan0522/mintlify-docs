@@ -1,0 +1,174 @@
+---
+title: Get Built-in Model Pricing
+description: Return a model's original entry in the built-in pricing table that ships with the release.
+api: "GET /api/option/builtin_model_pricing"
+---
+
+Returns a model's raw entry in the built-in pricing table (the default prices and ratios published with each release): per-call price, input, completion, cache and audio ratios, and the context-tiered pricing rule. The console's model pricing visual editor uses this endpoint for its **Import built-in price** action.
+
+Model-name matching mirrors runtime billing, so names covered by built-in wildcard entries (such as `gemini-2.5-pro-thinking-*` or `gpt-4o-gizmo-*`) resolve to those entries. The endpoint is read-only and writes no audit log entry.
+
+Requires **Root** (super administrator) permissions. See [Authentication](/nookmux/api/management/auth) for how to authenticate management API requests.
+
+## Request
+
+<RequestExample>
+
+```bash cURL
+curl --request GET \
+  --url 'https://your-nookmux-domain/api/option/builtin_model_pricing?model=claude-sonnet-4.5' \
+  --header 'Authorization: Bearer {access_token}' \
+  --header 'New-Api-User: 1'
+```
+
+</RequestExample>
+
+### Query parameters
+
+<ParamField path="model" type="string" required>
+  Model name to look up, for example `claude-sonnet-4.5`. Leading and trailing whitespace is trimmed, and the trimmed value is echoed as `model_name`.
+</ParamField>
+
+## Response
+
+<ResponseExample>
+
+```json 200
+{
+  "success": true,
+  "message": "",
+  "data": {
+    "model_name": "claude-sonnet-4.5",
+    "available": true,
+    "model_ratio": 1.5,
+    "completion_ratio": 5,
+    "cache_ratio": 0.1,
+    "create_cache_ratio": 1.25,
+    "context_pricing": {
+      "enabled": true,
+      "tiers": [
+        {
+          "name": "base",
+          "min_tokens": 0,
+          "max_tokens": 200000,
+          "model_ratio": 1.5,
+          "completion_ratio": 5,
+          "cache_ratio": 0.1,
+          "create_cache_ratio": 1.25,
+          "audio_ratio": 1,
+          "audio_completion_ratio": 1
+        },
+        {
+          "name": "tier_1",
+          "min_tokens": 200000,
+          "max_tokens": 1000000,
+          "model_ratio": 3,
+          "completion_ratio": 3.75,
+          "cache_ratio": 0.1,
+          "create_cache_ratio": 1.25,
+          "audio_ratio": 1,
+          "audio_completion_ratio": 1
+        }
+      ]
+    }
+  }
+}
+```
+
+</ResponseExample>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+  Whether the lookup completed.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  Error description when `success` is `false`; empty otherwise.
+</ResponseField>
+
+<ResponseField name="data" type="object" required>
+  The model's entry in the built-in pricing table.
+
+  <Expandable title="data structure">
+    <ResponseField name="model_name" type="string" required>
+      The trimmed `model` query value.
+    </ResponseField>
+    <ResponseField name="available" type="boolean" required>
+      Whether the built-in pricing table has a billable entry for the model: a per-call price, an input ratio, or an enabled context-tiered rule with at least one tier. When `false`, `data` contains only `model_name` and `available`.
+    </ResponseField>
+    <ResponseField name="model_price" type="number">
+      Optional. Fixed price per call for per-call billing; present only when the built-in table has a price entry for the model, for example `0.3` for `gpt-4o-mini-tts`.
+    </ResponseField>
+    <ResponseField name="model_ratio" type="number">
+      Optional. Input token ratio; present only when the built-in table has a ratio entry for the model.
+    </ResponseField>
+    <ResponseField name="completion_ratio" type="number">
+      Optional. Output (completion) token ratio relative to `model_ratio`; present only when the built-in table has an entry for the model.
+    </ResponseField>
+    <ResponseField name="cache_ratio" type="number">
+      Optional. Cached-token read ratio; present only when the built-in table has an entry for the raw model name.
+    </ResponseField>
+    <ResponseField name="create_cache_ratio" type="number">
+      Optional. Cache-write token ratio; present only when the built-in table has an entry for the raw model name.
+    </ResponseField>
+    <ResponseField name="audio_ratio" type="number">
+      Optional. Audio input token ratio; present only when the built-in table has an entry for the model.
+    </ResponseField>
+    <ResponseField name="audio_completion_ratio" type="number">
+      Optional. Audio output token ratio; present only when the built-in table has an entry for the model.
+    </ResponseField>
+    <ResponseField name="context_pricing" type="object">
+      Optional. Context-tiered pricing rule; present whenever the built-in table has a rule for the model, whether or not it is enabled.
+
+      <Expandable title="context_pricing structure">
+        <ResponseField name="enabled" type="boolean" required>
+          Whether the tiered rule is enabled.
+        </ResponseField>
+        <ResponseField name="tiers" type="array" required>
+          Tier list ordered by context length.
+
+          <Expandable title="tier structure">
+            <ResponseField name="name" type="string">
+              Optional tier name, for example `base`.
+            </ResponseField>
+            <ResponseField name="min_tokens" type="integer" required>
+              Lower bound of the tier's context length.
+            </ResponseField>
+            <ResponseField name="max_tokens" type="integer">
+              Optional upper bound of the tier's context length; absent for the top tier.
+            </ResponseField>
+            <ResponseField name="model_ratio" type="number" required>
+              Input token ratio of the tier.
+            </ResponseField>
+            <ResponseField name="completion_ratio" type="number" required>
+              Output (completion) token ratio of the tier relative to its `model_ratio`.
+            </ResponseField>
+            <ResponseField name="cache_ratio" type="number" required>
+              Cached-token read ratio of the tier.
+            </ResponseField>
+            <ResponseField name="create_cache_ratio" type="number" required>
+              Cache-write token ratio of the tier.
+            </ResponseField>
+            <ResponseField name="audio_ratio" type="number" required>
+              Audio input token ratio of the tier.
+            </ResponseField>
+            <ResponseField name="audio_completion_ratio" type="number" required>
+              Audio output token ratio of the tier.
+            </ResponseField>
+          </Expandable>
+        </ResponseField>
+      </Expandable>
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<Note>
+  Management endpoints return HTTP `200` even on business failures; always check the `success` field. A model without a billable built-in entry is not an error: the response is `success: true` with `data` containing only `model_name` and `available: false`. Per-call price, ratios, and context-tiered pricing are looked up by the name normalized the same way as runtime billing: `gemini-2.5-flash-lite*`, `gemini-2.5-flash*`, and `gemini-2.5-pro*` names containing `-thinking-` map to the corresponding `*-thinking-*` entry, and `gpt-4-gizmo*` / `gpt-4o-gizmo*` map to `gpt-4-gizmo-*` / `gpt-4o-gizmo-*`; `cache_ratio` and `create_cache_ratio` are looked up by the raw model name instead.
+</Note>
+
+## Error messages
+
+| Condition | Description |
+| --- | --- |
+| `model` missing or blank | `Model name cannot be empty`, returned as HTTP `200` with `success: false` |
