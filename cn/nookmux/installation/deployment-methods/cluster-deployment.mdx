@@ -222,6 +222,11 @@ healthcheck:
 - 确保所有节点使用相同的 `SESSION_SECRET`
 - 验证 Redis 配置正确且可访问
 - 检查负载均衡器的会话保持策略
+### 控制台刷新后返回 HTTP 429
+
+- 按 IP 计数的 Web 限流（`GLOBAL_WEB_RATE_LIMIT`，默认 180 秒内 60 次）只统计 SPA 页面请求与未匹配路径；入口脚本、懒加载分块等前端构建产物不计入，且在 `GLOBAL_STATIC_RATE_LIMIT_ENABLE=true` 之前不受限制
+- 若所有客户端都显示为同一 IP（例如负载均衡器地址），全体用户将共享同一份额度：请把负载均衡器 / CDN 加入 `TRUSTED_PROXIES`，以使用真实客户端 IP
+- 配置了 `FRONTEND_BASE_URL` 的从节点只重定向非 API 请求，不执行 Web / 静态限流；限流由实际提供前端页面的实例执行
 
 ## 相关文档
 

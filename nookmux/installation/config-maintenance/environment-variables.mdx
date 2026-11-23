@@ -86,8 +86,11 @@ This document lists common NookMux environment variables and their defaults. The
 | `GLOBAL_API_RATE_LIMIT` | Global API rate limit count per IP | `180` | - |
 | `GLOBAL_API_RATE_LIMIT_DURATION` | Global API rate limit window (seconds) | `180` | - |
 | `GLOBAL_WEB_RATE_LIMIT_ENABLE` | Global Web rate limit switch | `true` | - |
-| `GLOBAL_WEB_RATE_LIMIT` | Global Web rate limit count per IP | `60` | - |
+| `GLOBAL_WEB_RATE_LIMIT` | Global Web rate limit count per IP (SPA pages and unmatched paths; frontend build files are counted separately by `GLOBAL_STATIC_RATE_LIMIT_*`) | `60` | - |
 | `GLOBAL_WEB_RATE_LIMIT_DURATION` | Global Web rate limit window (seconds) | `180` | - |
+| `GLOBAL_STATIC_RATE_LIMIT_ENABLE` | Frontend build file rate limit switch (entry scripts, lazy chunks and other static files) | `false` | `GLOBAL_STATIC_RATE_LIMIT_ENABLE=true` |
+| `GLOBAL_STATIC_RATE_LIMIT` | Frontend build file rate limit count per IP | `1000` | - |
+| `GLOBAL_STATIC_RATE_LIMIT_DURATION` | Frontend build file rate limit window (seconds) | `180` | - |
 | `CRITICAL_RATE_LIMIT_ENABLE` | Critical operation rate limit switch | `true` | - |
 | `CRITICAL_RATE_LIMIT` | Critical operation rate limit count | `20` | - |
 | `CRITICAL_RATE_LIMIT_DURATION` | Critical operation rate limit window (seconds) | `1200` | - |
@@ -112,6 +115,10 @@ This document lists common NookMux environment variables and their defaults. The
 
 <Card type="warning" title="RELAY_TIMEOUT warning">
   Be careful when setting `RELAY_TIMEOUT`: a too-short timeout can let the upstream API finish and bill successfully while the local side times out before billing completes, causing billing desynchronization. Keep the default `0` unless you know exactly why you are changing it.
+</Card>
+
+<Card type="info" title="Web page limit vs. frontend build file limit">
+  The global Web limit (`GLOBAL_WEB_RATE_LIMIT`) counts only SPA page requests and unmatched paths. Frontend build files in the embedded `dist` (entry scripts, lazy-loaded chunks and other static files) do not consume this quota and are rate limited only when `GLOBAL_STATIC_RATE_LIMIT_ENABLE=true`, so they are unlimited by default. Both limiters count per client IP resolved through `TRUSTED_PROXIES`. When a global API / Web / static / critical-operation / search limiter rejects a request, the response is HTTP `429` with a `Retry-After` header set to the full window length in seconds (a conservative upper bound, not the exact remaining time).
 </Card>
 
 ## Channel Management Configuration

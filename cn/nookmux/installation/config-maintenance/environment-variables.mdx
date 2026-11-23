@@ -86,8 +86,11 @@ title: 环境变量配置指南
 | `GLOBAL_API_RATE_LIMIT` | 全局 API 速率限制次数（单 IP） | `180` | - |
 | `GLOBAL_API_RATE_LIMIT_DURATION` | 全局 API 速率限制时间窗口（秒） | `180` | - |
 | `GLOBAL_WEB_RATE_LIMIT_ENABLE` | 全局 Web 速率限制开关 | `true` | - |
-| `GLOBAL_WEB_RATE_LIMIT` | 全局 Web 速率限制次数（单 IP） | `60` | - |
+| `GLOBAL_WEB_RATE_LIMIT` | 全局 Web 速率限制次数（单 IP，仅计 SPA 页面与未匹配路径，不含前端构建产物） | `60` | - |
 | `GLOBAL_WEB_RATE_LIMIT_DURATION` | 全局 Web 速率限制时间窗口（秒） | `180` | - |
+| `GLOBAL_STATIC_RATE_LIMIT_ENABLE` | 前端构建产物速率限制开关（入口脚本、懒加载分块等静态文件） | `false` | `GLOBAL_STATIC_RATE_LIMIT_ENABLE=true` |
+| `GLOBAL_STATIC_RATE_LIMIT` | 前端构建产物速率限制次数（单 IP） | `1000` | - |
+| `GLOBAL_STATIC_RATE_LIMIT_DURATION` | 前端构建产物速率限制时间窗口（秒） | `180` | - |
 | `CRITICAL_RATE_LIMIT_ENABLE` | 关键操作速率限制开关 | `true` | - |
 | `CRITICAL_RATE_LIMIT` | 关键操作速率限制次数 | `20` | - |
 | `CRITICAL_RATE_LIMIT_DURATION` | 关键操作速率限制时间窗口（秒） | `1200` | - |
@@ -112,6 +115,10 @@ title: 环境变量配置指南
 
 <Card type="warning" title="RELAY_TIMEOUT 设置警告">
   设置 `RELAY_TIMEOUT` 时请谨慎：过短的超时可能导致上游 API 已完成请求并计费，但本地因超时未完成计费，造成计费不同步。建议保持默认 `0`，除非您知道自己在做什么。
+</Card>
+
+<Card type="info" title="页面限流与前端构建产物限流">
+  全局 Web 限流（`GLOBAL_WEB_RATE_LIMIT`）只统计 SPA 页面请求与未匹配路径。内嵌 `dist` 中的前端构建产物（入口脚本、懒加载分块等静态文件）不占用该额度，仅在 `GLOBAL_STATIC_RATE_LIMIT_ENABLE=true` 时受独立限流器约束，默认不限流。两类限流均按经 `TRUSTED_PROXIES` 解析出的客户端 IP 计数。全局 API / Web / 静态 / 关键操作 / 搜索限流器拒绝请求时返回 HTTP `429`，并附带 `Retry-After` 响应头，取完整窗口秒数（保守上界，而非精确剩余时间）。
 </Card>
 
 ## 渠道管理配置
