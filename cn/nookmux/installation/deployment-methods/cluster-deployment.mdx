@@ -228,6 +228,11 @@ healthcheck:
 - 若所有客户端都显示为同一 IP（例如负载均衡器地址），全体用户将共享同一份额度：请把负载均衡器 / CDN 加入 `TRUSTED_PROXIES`，以使用真实客户端 IP
 - 配置了 `FRONTEND_BASE_URL` 的从节点只重定向非 API 请求，不执行 Web / 静态限流；限流由实际提供前端页面的实例执行
 
+### 更新后旧标签页进入新页面报错
+
+- 滚动更新期间新旧实例并存，更新前打开的控制台页在进入没打开过的页面时，可能向新实例请求已被删除的旧分块（`/static/*`）
+- 服务端对不存在的构建产物返回不可缓存的 JSON 404（`Cache-Control: no-store`），不会把首页 HTML 当作脚本返回；前端据此在同一标签页内自动刷新一次拉取新版本，再次失败则停留在错误页，需手动刷新
+
 ## 相关文档
 
 - [环境变量配置指南](/cn/nookmux/installation/config-maintenance/environment-variables) - 包含多节点部署的所有相关环境变量

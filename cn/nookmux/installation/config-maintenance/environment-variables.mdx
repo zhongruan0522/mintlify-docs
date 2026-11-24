@@ -97,6 +97,9 @@ title: 环境变量配置指南
 | `SEARCH_RATE_LIMIT_ENABLE` | 搜索接口速率限制开关 | `true` | - |
 | `SEARCH_RATE_LIMIT` | 搜索接口速率限制次数（单 IP） | `10` | - |
 | `SEARCH_RATE_LIMIT_DURATION` | 搜索接口速率限制时间窗口（秒） | `60` | - |
+| `API_KEY_QUERY_RATE_LIMIT_ENABLE` | API Key 匿名查询速率限制开关（凭 API Key 查询用量与日志的接口，与关键操作限流分开计数） | `true` | - |
+| `API_KEY_QUERY_RATE_LIMIT` | API Key 匿名查询速率限制次数（单 IP） | `60` | - |
+| `API_KEY_QUERY_RATE_LIMIT_DURATION` | API Key 匿名查询速率限制时间窗口（秒） | `180` | - |
 | `RELAY_TIMEOUT` | 中继请求超时时间（秒），`0` 表示不限制 | `0` | `RELAY_TIMEOUT=60` |
 | `RELAY_MAX_IDLE_CONNS` | 中继 HTTP 客户端最大空闲连接数 | `200` | - |
 | `RELAY_MAX_IDLE_CONNS_PER_HOST` | 中继 HTTP 客户端每 Host 最大空闲连接数 | `32` | - |
@@ -118,7 +121,11 @@ title: 环境变量配置指南
 </Card>
 
 <Card type="info" title="页面限流与前端构建产物限流">
-  全局 Web 限流（`GLOBAL_WEB_RATE_LIMIT`）只统计 SPA 页面请求与未匹配路径。内嵌 `dist` 中的前端构建产物（入口脚本、懒加载分块等静态文件）不占用该额度，仅在 `GLOBAL_STATIC_RATE_LIMIT_ENABLE=true` 时受独立限流器约束，默认不限流。两类限流均按经 `TRUSTED_PROXIES` 解析出的客户端 IP 计数。全局 API / Web / 静态 / 关键操作 / 搜索限流器拒绝请求时返回 HTTP `429`，并附带 `Retry-After` 响应头，取完整窗口秒数（保守上界，而非精确剩余时间）。
+  全局 Web 限流（`GLOBAL_WEB_RATE_LIMIT`）只统计 SPA 页面请求与未匹配路径。内嵌 `dist` 中的前端构建产物（入口脚本、懒加载分块等静态文件）不占用该额度，仅在 `GLOBAL_STATIC_RATE_LIMIT_ENABLE=true` 时受独立限流器约束，默认不限流。两类限流均按经 `TRUSTED_PROXIES` 解析出的客户端 IP 计数。全局 API / Web / 静态 / 关键操作 / API Key 匿名查询 / 搜索限流器拒绝请求时返回 HTTP `429`，并附带 `Retry-After` 响应头，取完整窗口秒数（保守上界，而非精确剩余时间）。
+</Card>
+
+<Card type="info" title="API Key 匿名查询限流">
+  凭 API Key 匿名查询用量与日志的接口（`GET /api/usage/token/`、`GET /api/log/token*`）按经 `TRUSTED_PROXIES` 解析出的客户端 IP 计入独立的限流器（`API_KEY_QUERY_RATE_LIMIT`，默认 180 秒 60 次），不占用登录、注册等关键操作限流的额度，在密钥用量查询页连续查询不会连带把登录拒掉。超过额度时返回 HTTP `429` 并附带 `Retry-After` 响应头。
 </Card>
 
 ## 渠道管理配置

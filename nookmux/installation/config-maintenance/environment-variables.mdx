@@ -97,6 +97,9 @@ This document lists common NookMux environment variables and their defaults. The
 | `SEARCH_RATE_LIMIT_ENABLE` | Search API rate limit switch | `true` | - |
 | `SEARCH_RATE_LIMIT` | Search API rate limit count per IP | `10` | - |
 | `SEARCH_RATE_LIMIT_DURATION` | Search API rate limit window (seconds) | `60` | - |
+| `API_KEY_QUERY_RATE_LIMIT_ENABLE` | API key anonymous query rate limit switch (endpoints that query usage and logs with an API key; counted separately from the critical-operation limit) | `true` | - |
+| `API_KEY_QUERY_RATE_LIMIT` | API key anonymous query rate limit count per IP | `60` | - |
+| `API_KEY_QUERY_RATE_LIMIT_DURATION` | API key anonymous query rate limit window (seconds) | `180` | - |
 | `RELAY_TIMEOUT` | Relay request timeout (seconds); `0` means no limit | `0` | `RELAY_TIMEOUT=60` |
 | `RELAY_MAX_IDLE_CONNS` | Maximum idle connections for the relay HTTP client | `200` | - |
 | `RELAY_MAX_IDLE_CONNS_PER_HOST` | Maximum idle connections per host for the relay HTTP client | `32` | - |
@@ -118,7 +121,11 @@ This document lists common NookMux environment variables and their defaults. The
 </Card>
 
 <Card type="info" title="Web page limit vs. frontend build file limit">
-  The global Web limit (`GLOBAL_WEB_RATE_LIMIT`) counts only SPA page requests and unmatched paths. Frontend build files in the embedded `dist` (entry scripts, lazy-loaded chunks and other static files) do not consume this quota and are rate limited only when `GLOBAL_STATIC_RATE_LIMIT_ENABLE=true`, so they are unlimited by default. Both limiters count per client IP resolved through `TRUSTED_PROXIES`. When a global API / Web / static / critical-operation / search limiter rejects a request, the response is HTTP `429` with a `Retry-After` header set to the full window length in seconds (a conservative upper bound, not the exact remaining time).
+  The global Web limit (`GLOBAL_WEB_RATE_LIMIT`) counts only SPA page requests and unmatched paths. Frontend build files in the embedded `dist` (entry scripts, lazy-loaded chunks and other static files) do not consume this quota and are rate limited only when `GLOBAL_STATIC_RATE_LIMIT_ENABLE=true`, so they are unlimited by default. Both limiters count per client IP resolved through `TRUSTED_PROXIES`. When a global API / Web / static / critical-operation / API key anonymous query / search limiter rejects a request, the response is HTTP `429` with a `Retry-After` header set to the full window length in seconds (a conservative upper bound, not the exact remaining time).
+</Card>
+
+<Card type="info" title="API key anonymous query rate limit">
+  The endpoints that query usage and logs anonymously with an API key (`GET /api/usage/token/`, `GET /api/log/token*`) are counted per client IP resolved through `TRUSTED_PROXIES` by a dedicated limiter (`API_KEY_QUERY_RATE_LIMIT`, 60 requests per 180 seconds by default). They do not consume the critical-operation quota shared by login and registration, so repeated lookups on the key usage query page never lock out login. Exceeding the limit returns HTTP `429` with a `Retry-After` header.
 </Card>
 
 ## Channel Management Configuration

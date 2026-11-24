@@ -9,7 +9,7 @@ Return the usage-log detail dialog field visibility for the token key presented 
 This endpoint is authenticated by the token key itself — the `Authorization` header must carry the token key (for example `sk-xxxx`), not a management access token. The token is resolved by the read-only token authentication middleware, which only checks that the key exists: disabled, expired or exhausted tokens are still accepted; banned users are rejected. See [Authentication](/nookmux/api/management/auth) for the general authentication model of the management API.
 
 <Note>
-This route is protected by the strict critical rate limit and allows cross-origin requests (CORS). Visibility is always evaluated with the regular-user role, even when the token belongs to an administrator, because the token authentication middleware does not carry a role.
+This route is protected per client IP by the dedicated API key anonymous query rate limit (`API_KEY_QUERY_RATE_LIMIT`, 60 requests per 180 seconds by default), separate from the critical-operation limit, and allows cross-origin requests (CORS). Visibility is always evaluated with the regular-user role, even when the token belongs to an administrator, because the token authentication middleware does not carry a role.
 </Note>
 
 ## Request
@@ -81,5 +81,6 @@ Management endpoints return HTTP `200` even on business failures; authentication
 | No Authorization header | `401` | The `Authorization` header is missing |
 | Invalid token | `401` | The key does not match any token |
 | User has been banned | `403` | The token owner is disabled |
+| Anonymous query rate limit exceeded | `429` | More than `API_KEY_QUERY_RATE_LIMIT` requests from the same IP within `API_KEY_QUERY_RATE_LIMIT_DURATION` seconds; the response carries `Retry-After` |
 | Database error, please try again later | `500` | Loading the token owner's user cache failed |
 | Failed to parse usage log field configuration | `200` | The console usage-log field visibility setting is malformed; see server logs |

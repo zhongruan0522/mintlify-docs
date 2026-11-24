@@ -9,7 +9,7 @@ Return the quota mode, consumption and reset schedule of the API token whose key
 The token is resolved by the read-only token authentication middleware. See [Authentication](/nookmux/api/management/auth) for the general authentication model of the management API.
 
 <Note>
-This route is protected by the strict critical rate limit. Unlike the other management endpoints, the success envelope uses `code` instead of `success`, and authentication failures return HTTP `401` / `403` instead of `200`.
+This route is rate limited per client IP by the dedicated API key anonymous query limiter (`API_KEY_QUERY_RATE_LIMIT`, 60 requests per 180 seconds by default; exceeding it returns HTTP `429` with a `Retry-After` header) and does not consume the critical-operation quota shared by login and registration. Unlike the other management endpoints, the success envelope uses `code` instead of `success`, and authentication failures return HTTP `401` / `403` instead of `200`.
 </Note>
 
 ## Request
@@ -182,5 +182,6 @@ Window and cycle reset times are computed from the server-side anchors (windows 
 | Invalid Bearer token | `401` | The header is not in `Bearer <key>` form |
 | Invalid token | `401` | The key does not match any token |
 | User banned | `403` | The token owner is disabled |
+| Anonymous query rate limit exceeded | `429` | More than `API_KEY_QUERY_RATE_LIMIT` requests from the same IP within `API_KEY_QUERY_RATE_LIMIT_DURATION` seconds; the response carries `Retry-After` |
 | Failed to get token info | `200` | Reloading the token for window/cycle modes failed; returned as `success: false` |
 | Database error | `500` | Loading the token owner's user cache failed |

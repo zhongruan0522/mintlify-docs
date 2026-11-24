@@ -96,7 +96,7 @@ make build-backend
 - Make one `/v1` API call with an existing token to confirm the relay path is working.
 - Verify database migrations completed, especially after a major version jump.
 - Expect existing browser sessions to be invalidated once after the update: the credential re-validation column (`auth_version`) is added automatically by AutoMigrate (no manual migration step), and sessions issued by the older version receive HTTP `401` on their first request until the user logs in again.
-- An already-open console tab may fail to load a replaced route chunk when navigating after the upgrade; the error page then reloads the tab once to fetch the new build. If the failure repeats in the same tab, the error page stays and a manual reload is needed.
+- An already-open console tab may fail to load a replaced route chunk when navigating after the upgrade; the tab then reloads once to fetch the new build without showing the error page first. If the failure repeats in the same tab, the error page stays and a manual reload is needed.
 
 ## Rollback
 

@@ -9,7 +9,7 @@ api: "GET /api/usage/token/"
 令牌由只读令牌鉴权中间件解析。管理接口的通用鉴权模型参见[身份认证](/cn/nookmux/api/management/auth)。
 
 <Note>
-该路由挂载了严格限流（CriticalRateLimit）。与其他管理接口不同：成功响应的外层字段是 `code` 而不是 `success`，鉴权失败返回 HTTP `401` / `403` 而不是 `200`。
+该路由按客户端 IP 受独立的 API Key 匿名查询限流（`API_KEY_QUERY_RATE_LIMIT`，默认 180 秒 60 次，超限返回 HTTP `429` 并附带 `Retry-After`），不占用登录、注册等关键操作限流的额度。与其他管理接口不同：成功响应的外层字段是 `code` 而不是 `success`，鉴权失败返回 HTTP `401` / `403` 而不是 `200`。
 </Note>
 
 ## 请求
@@ -182,5 +182,6 @@ curl --request GET \
 | 无效的 Bearer 令牌 | `401` | 请求头不是 `Bearer <key>` 格式 |
 | 无效令牌 | `401` | 密钥未匹配到任何令牌 |
 | 用户被封禁 | `403` | 令牌所属用户已被禁用 |
+| 触发匿名查询限流 | `429` | 同一 IP 在 `API_KEY_QUERY_RATE_LIMIT_DURATION` 秒内超过 `API_KEY_QUERY_RATE_LIMIT` 次；响应附带 `Retry-After` |
 | 获取令牌信息失败 | `200` | 时段/周期模式下的令牌重载失败；以 `success: false` 返回 |
 | 数据库错误 | `500` | 加载令牌所属用户缓存失败 |

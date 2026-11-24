@@ -228,6 +228,11 @@ For large-scale clusters, consider a centralized log management system or a sepa
 - When every client appears as the same IP (for example the load balancer's address), all users share one quota: add the load balancer or CDN to `TRUSTED_PROXIES` so the real client IP is used.
 - Slave nodes configured with `FRONTEND_BASE_URL` only redirect non-API requests and do not apply the Web or static limiters; the limit is enforced by the instance that serves the frontend pages.
 
+### Old Tabs Fail After a Rolling Update
+
+- While old and new instances coexist during a rolling update, a console tab opened before the update may request a removed chunk (`/static/*`) from a new instance when it enters a page it has not opened yet
+- The server answers a missing build file with a non-cacheable JSON 404 (`Cache-Control: no-store`) instead of returning the index page HTML as the script; the frontend then reloads the tab once to pick up the new build. If the failure repeats, the error page stays and a manual reload is needed
+
 ## Related Documentation
 
 - [Environment Variables Configuration Guide](/nookmux/installation/config-maintenance/environment-variables) - Contains all environment variables relevant to multi-node deployment
