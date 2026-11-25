@@ -126,17 +126,17 @@ curl --request GET \
           Whether the tiered rule is enabled.
         </ResponseField>
         <ResponseField name="tiers" type="array" required>
-          Tier list ordered by context length.
+          Tier list ordered by ascending context length. The number of tiers is not fixed: built-in rules currently carry two to four tiers, so read the whole list rather than assuming two.
 
           <Expandable title="tier structure">
             <ResponseField name="name" type="string">
-              Optional tier name, for example `base`.
+              Optional tier name. Built-in tiers are named `base` for the first tier and `tier_1`, `tier_2`, `tier_3` for the following tiers in ascending order.
             </ResponseField>
             <ResponseField name="min_tokens" type="integer" required>
-              Lower bound of the tier's context length.
+              Inclusive lower bound of the tier's context length.
             </ResponseField>
             <ResponseField name="max_tokens" type="integer">
-              Optional upper bound of the tier's context length; absent for the top tier.
+              Optional exclusive upper bound of the tier's context length; a tier without it has no upper bound. Every tier in the current built-in table carries it, and the last tier's upper bound is `1000000`.
             </ResponseField>
             <ResponseField name="model_ratio" type="number" required>
               Input token ratio of the tier.

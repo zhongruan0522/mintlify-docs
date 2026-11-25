@@ -125,7 +125,7 @@ curl --request GET \
           阶梯计费规则是否启用。
         </ParamField>
         <ParamField path="tiers" type="array" required>
-          按上下文长度排序的档位列表。每个档位包含 `name`（可选字符串）、`min_tokens`（整数）、`max_tokens`（整数，最高档位省略），以及该档位的 `model_ratio`、`completion_ratio`、`cache_ratio`、`create_cache_ratio`、`audio_ratio`、`audio_completion_ratio`（数值）。
+          按上下文长度升序排列的档位列表，档位数量不固定。每个档位包含 `name`（可选字符串）、`min_tokens`（整数）、`max_tokens`（整数，仅不设上界的档位省略），以及该档位的 `model_ratio`、`completion_ratio`、`cache_ratio`、`create_cache_ratio`、`audio_ratio`、`audio_completion_ratio`（数值）。
         </ParamField>
       </Expandable>
     </ParamField>

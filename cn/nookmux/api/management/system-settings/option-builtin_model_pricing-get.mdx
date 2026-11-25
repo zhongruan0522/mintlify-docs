@@ -126,17 +126,17 @@ curl --request GET \
           阶梯计费规则是否启用。
         </ResponseField>
         <ResponseField name="tiers" type="array" required>
-          按上下文长度排序的档位列表。
+          按上下文长度升序排列的档位列表。档位数量不固定：内置规则当前为两到四档，必须遍历整个列表，不能假定只有两档。
 
           <Expandable title="档位结构">
             <ResponseField name="name" type="string">
-              可选的档位名称，例如 `base`。
+              可选的档位名称。内置档位的第一档命名为 `base`，其后按升序依次为 `tier_1`、`tier_2`、`tier_3`。
             </ResponseField>
             <ResponseField name="min_tokens" type="integer" required>
-              该档位上下文长度的下界。
+              该档位上下文长度的下界（含）。
             </ResponseField>
             <ResponseField name="max_tokens" type="integer">
-              可选。该档位上下文长度的上界；最高档位不出现。
+              可选。该档位上下文长度的上界（不含）；没有该字段的档位不设上界。当前内置表的每个档位都带该字段，末档上界为 `1000000`。
             </ResponseField>
             <ResponseField name="model_ratio" type="number" required>
               该档位的输入 Token 倍率。
