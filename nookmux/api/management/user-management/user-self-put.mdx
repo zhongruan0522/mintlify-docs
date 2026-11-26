@@ -70,7 +70,7 @@ Error description when `success` is `false`; empty otherwise.
 </ResponseField>
 
 <Note>
-Only the fields above are written; other fields of the bound user structure are subject to the same length validation but are ignored. Empty fields are not written to the database, so omitted fields keep their current values. Role, quota, group, and remark are managed through the admin user endpoints. Security-sensitive caches for the user are invalidated after a successful update.
+Only the fields above are written; other fields of the bound user structure are subject to the same length validation but are ignored. Empty fields are not written to the database, so omitted fields keep their current values. Role, quota, group, and remark are managed through the admin user endpoints. When a new password is provided, a successful update bumps the account's credential version and invalidates every existing session, including those in other browsers and devices; subsequent requests return HTTP `401` and the user must log in again. Changing only the username or display name does not affect sessions. Security-sensitive caches for the user are invalidated after a successful update.
 </Note>
 
 ## Error messages

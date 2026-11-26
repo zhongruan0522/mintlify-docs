@@ -2,15 +2,24 @@
 title: Profile
 ---
 
-The `/profile` page is used to manage account information, security settings, and notification preferences.
+The `/profile` page is used to view account information and configure notification settings. Sign-in methods, Passkeys, two-factor authentication, access tokens, and other security features are on the Security & Access page (`/profile/security`). Both pages are reachable from the **Personal** section of the sidebar and from the avatar menu in the top-right corner. The interface language is switched with the language switcher in the header and only applies to the current browser.
 
-Main areas:
+Main areas of the profile page:
 
-- **Profile Info**: view account basics, balance, usage, and more.
-- **Account Bindings**: bind enabled email, WeChat, GitHub, Discord, OIDC, Telegram, LinuxDo, or custom OAuth accounts.
-- **Security Settings**: change your password, manage access tokens, two-factor authentication, and Passkeys, or delete your account. Sensitive operations such as deleting your account, generating access tokens, binding an email, and enabling 2FA first prompt a step-up verification dialog (`POST /api/verify`), requiring security verification via 2FA, Passkey, or password.
-- **Notification Settings**: configure balance alert thresholds and notification channels. Supported channels currently include `email`, `webhook`, `bark`, and `gotify`.
-- **Check-in Calendar**: if enabled by the administrator, view check-in status and rewards.
-- **Language Preference**: switch the current frontend language.
+- **Account Overview**: view your avatar, display name, role, username, email, and group, along with three metrics: current balance, total usage, and API requests.
+- **Notification Settings**: choose one notification method (`email`, `webhook`, `bark`, or `gotify`), fill in the fields required by that method, and set the quota warning threshold. Click **Save Changes** in the page header to apply.
+- **Daily Check-in**: if the administrator enables check-in, a check-in panel appears at the bottom of the page for checking in and viewing the monthly calendar, total check-ins, and rewards.
+
+Main areas of the Security & Access page:
+
+- **Sign-in & Authentication**: change your password; bind the email, GitHub, or LinuxDO accounts enabled on the site. Each method is a panel of equal width, three per row on wide screens, wrapping onto new rows as methods are added.
+- **Passkey Login**: register, rename, and remove Passkeys.
+- **Two-Factor Authentication**: enable or disable 2FA and regenerate backup codes.
+- **Access Tokens**: generate and manage your API access token.
+- **Delete Account**: at the bottom of the page, with a high-risk warning above it.
+
+Sensitive operations such as deleting your account, generating access tokens, binding an email, and enabling 2FA first prompt a step-up verification dialog (`POST /api/verify`), requiring security verification via 2FA, Passkey, or password.
+
+After you change your password, disable 2FA, or regenerate backup codes, the server invalidates every session of the account, including those in other browsers and devices: the page explains why and returns you to the sign-in page, and you land back on the page you were on after signing in again. When regenerating backup codes, the new codes are shown first and the sign-in page comes only after you close the dialog.
 
 Available bindings and security features depend on what administrators enable in **System Settings → Authentication**.

@@ -62,7 +62,7 @@ The 4 new backup recovery codes in `XXXX-XXXX` format. All previous backup codes
 </ResponseField>
 
 <Note>
-The new codes are returned in plain text only once — the server keeps only their hashes — and each can be used exactly once. Failed TOTP verifications are counted: after 5 consecutive wrong codes, 2FA verification is locked for 300 seconds and even correct codes are rejected until the lock expires.
+The new codes are returned in plain text only once — the server keeps only their hashes — and each can be used exactly once. Failed TOTP verifications are counted: after 5 consecutive wrong codes, 2FA verification is locked for 300 seconds and even correct codes are rejected until the lock expires. A successful call bumps the account's credential version and invalidates every existing session, including those in other browsers and devices; subsequent requests return HTTP `401` and the user must log in again, so save the new backup codes from this response before redirecting to the sign-in page.
 </Note>
 
 ## Error messages

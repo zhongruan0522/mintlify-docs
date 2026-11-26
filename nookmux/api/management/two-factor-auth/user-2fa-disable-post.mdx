@@ -60,7 +60,7 @@ Always `null`; this endpoint returns no data payload.
 </ResponseField>
 
 <Note>
-Disabling permanently deletes the 2FA record and every remaining backup code; to use 2FA again, repeat setup and enable. Failed verifications are counted: after 5 consecutive wrong codes, 2FA verification is locked for 300 seconds and even correct codes are rejected until the lock expires.
+Disabling permanently deletes the 2FA record and every remaining backup code; to use 2FA again, repeat setup and enable. Failed verifications are counted: after 5 consecutive wrong codes, 2FA verification is locked for 300 seconds and even correct codes are rejected until the lock expires. Once 2FA is disabled, the account's credential version is bumped and every existing session, including those in other browsers and devices, is invalidated; subsequent requests return HTTP `401` and the user must log in again.
 </Note>
 
 ## Error messages
