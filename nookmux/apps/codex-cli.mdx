@@ -7,51 +7,42 @@ title: OpenAI Codex CLI
 
   - Official Homepage: [https://chatgpt.com/codex](https://chatgpt.com/codex)
   - Project Homepage: [https://github.com/openai/codex](https://github.com/openai/codex)
-  - Config Reference: [Codex Config Reference](https://developers.openai.com/codex/config-reference)
+  - Config Reference: [https://learn.chatgpt.com/docs/config-file/config-reference](https://learn.chatgpt.com/docs/config-file/config-reference)
+  - Gateway Guide: [Connect to a gateway](https://learn.chatgpt.com/codex/enterprise/connect-to-a-gateway)
 </Card>
 
 ## Install
 
-Codex CLI requires Node.js 22 or later. Install it according to the [official docs](https://github.com/openai/codex):
+macOS / Linux:
 
 ```bash
-npm install -g @openai/codex
+curl -fsSL https://chatgpt.com/codex/install.sh | sh
+```
 
+Windows (PowerShell):
+
+```powershell
+powershell -ExecutionPolicy ByPass -c "irm https://chatgpt.com/codex/install.ps1 | iex"
+```
+
+You can also install it with a package manager: `npm install -g @openai/codex` or `brew install --cask codex`.
+
+```bash
 # Verify installation
 codex --version
 ```
 
-Windows users should run it in WSL2; macOS/Linux users can run it directly in the terminal.
+Codex CLI runs natively on Windows (Windows 11 recommended) and also works in WSL2. On macOS / Linux, run it directly in the terminal.
 
 ## Connect to NookMux
 
-NookMux provides an OpenAI Responses-compatible interface. Codex CLI connects through the user-level `~/.codex/config.toml` file (on Windows WSL, use the WSL-side `~/.codex/config.toml`).
+NookMux provides an OpenAI Responses-compatible endpoint. Codex CLI connects through the user-level `~/.codex/config.toml` file. Pick one of the two options below. Provider settings only take effect in the user-level file; the same keys in a project-level `.codex/config.toml` are ignored.
 
-<Card type="warning" title="Config Location">
-  `openai_base_url`, `model_provider`, `model_providers`, and similar provider settings only take effect in the user-level `~/.codex/config.toml`. Project-level `.codex/config.toml` files ignore these keys.
-</Card>
-
-### Option 1: Override the Built-in OpenAI Provider Base URL
+### Option 1: Custom Model Provider
 
 ```toml
 # ~/.codex/config.toml
-model = "gpt-5.6" # replace with the model configured in your NookMux channel
-model_provider = "openai"
-openai_base_url = "https://your-domain.com/v1"
-```
-
-Then set the API key environment variable and start Codex:
-
-```bash
-export OPENAI_API_KEY=sk-your-nookmux-token
-codex
-```
-
-### Option 2: Custom Model Provider
-
-```toml
-# ~/.codex/config.toml
-model = "gpt-5.6" # replace with the model configured in your NookMux channel
+model = "gpt-5.6"
 model_provider = "nookmux"
 
 [model_providers.nookmux]
@@ -59,53 +50,84 @@ name = "NookMux"
 base_url = "https://your-domain.com/v1"
 env_key = "NOOKMUX_API_KEY"
 wire_api = "responses"
+requires_openai_auth = false
 ```
+
+Replace `model` with a model configured in your NookMux channel. With this option the key comes from the environment variable named by `env_key`, so there is no need to run `codex login`.
+
+macOS / Linux:
 
 ```bash
 export NOOKMUX_API_KEY=sk-your-nookmux-token
 codex
 ```
 
-### Get the Secret from NookMux
+Windows (PowerShell):
 
-1. Create or select a token on the console's "Keys" page.
-2. Copy the full secret, which starts with the site key prefix (default `sk-`).
-3. Make sure the channel is configured with the model Codex will use, such as a `gpt-5.*` series model, and that the model name matches the `model` setting.
+```powershell
+$env:NOOKMUX_API_KEY = "sk-your-nookmux-token"
+codex
+```
+
+### Option 2: Override the Built-in OpenAI Provider URL
+
+```toml
+# ~/.codex/config.toml
+model = "gpt-5.6"
+openai_base_url = "https://your-domain.com/v1"
+```
+
+The built-in OpenAI provider reads the key from your login credentials, so sign in once with your NookMux token. Export the token as an environment variable first and pass it to Codex through standard input, which keeps it out of your command history:
+
+macOS / Linux:
+
+```bash
+export OPENAI_API_KEY=sk-your-nookmux-token
+printenv OPENAI_API_KEY | codex login --with-api-key
+codex
+```
+
+Windows (PowerShell):
+
+```powershell
+$env:OPENAI_API_KEY = "sk-your-nookmux-token"
+$env:OPENAI_API_KEY | codex login --with-api-key
+codex
+```
+
+### Get the Token from NookMux
+
+1. Create or select a token on the console's "Keys" page and copy the full secret (it starts with the site key prefix, default `sk-`).
+2. Make sure the channel is configured with the model you want to use, and that its name matches `model` in the config file.
 
 ## Usage
 
 ```bash
-# Start directly
-codex
-
-# Use in a specific project
 cd /path/to/your/project
 codex
 ```
 
-After launch, use `/model` to switch models.
-
-<Info>
-  After setting a custom base URL, all models, including official preset model names, are routed through NookMux instead of consuming your official account quota.
-</Info>
+After launch, use `/status` to see the active provider and model, and `/model` to switch models. You can also type `/config`, go to **Sessions** → **Model providers** to switch providers, or pick **Create a custom provider or gateway** to add a new one.
 
 ## Common Issues
 
 ### 401 / Invalid Token
 
-- Make sure the environment variable contains the full NookMux token starting with the site key prefix (default `sk-`).
-- Make sure the variable name referenced by `env_key` has been exported.
+- Make sure the token is the full NookMux token starting with the site key prefix (default `sk-`).
+- Option 1: make sure the variable named by `env_key` is exported in the terminal that starts Codex.
+- Option 2: run `codex login --with-api-key` again to store the new key.
 
-### Requests Still Go to api.openai.com
+### The Configuration Does Not Take Effect
 
-- `openai_base_url` must be a top-level key in `config.toml`; do not place it under `[model_providers.openai]` (the built-in provider ID cannot be overridden) or under `[model_provider_config]`.
-- The older `OPENAI_BASE_URL` environment variable used by previous versions has been removed upstream. Use the `openai_base_url` config key instead.
+- Top-level keys such as `model_provider`, `openai_base_url`, and `model` must come before the first `[xxx]` table; otherwise they belong to that table.
+- A custom provider ID must not match the built-in IDs `openai`, `ollama`, `lmstudio`, `amazon-bedrock`, `amazon-bedrock-runtime`, or `gcp`.
+- The `OPENAI_BASE_URL` environment variable from older versions has been removed. Use the `openai_base_url` config key instead.
+- Restart Codex after changing the config.
+
+### Model metadata not found
+
+`Model metadata for ... not found. Defaulting to fallback metadata` is only a warning: the model name is not in Codex's built-in catalog, and the request is still sent to NookMux.
 
 ### npm Permission Errors
 
-```bash
-sudo npm install -g @openai/codex
-# or
-npm config set prefix ~/.npm-global
-export PATH=~/.npm-global/bin:$PATH
-```
+Use the standalone install script shown above, or install with Homebrew: `brew install --cask codex`.

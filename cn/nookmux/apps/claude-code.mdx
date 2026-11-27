@@ -6,19 +6,32 @@ title: Claude Code
   Claude Code 是 Anthropic 官方的命令行编码助手，可直接在终端中搜索代码库、编辑文件和运行命令。
 
   - 官方主页：[https://www.anthropic.com/claude-code](https://www.anthropic.com/claude-code)
-  - 网关接入官方文档：[Connect Claude Code to an LLM gateway](https://docs.anthropic.com/en/docs/claude-code/llm-gateway-connect)
+  - 安装文档：[https://code.claude.com/docs/en/setup](https://code.claude.com/docs/en/setup)
+  - 网关接入文档：[Connect Claude Code to an LLM gateway](https://code.claude.com/docs/en/llm-gateway-connect)
 </Card>
 
 ## 安装
 
+macOS / Linux：
+
 ```bash
 curl -fsSL https://claude.ai/install.sh | bash
+```
 
+Windows（PowerShell）：
+
+```powershell
+irm https://claude.ai/install.ps1 | iex
+```
+
+也可以用包管理器安装：`brew install --cask claude-code`、`winget install Anthropic.ClaudeCode` 或 `npm install -g @anthropic-ai/claude-code@latest`。
+
+```bash
 # 验证
 claude --version
 ```
 
-Windows 建议在 WSL2 或 Git Bash 环境中安装使用。
+Windows 可以原生运行（建议同时安装 Git for Windows），也可以在 WSL 中使用。
 
 ## 接入 NookMux
 
@@ -29,7 +42,16 @@ Claude Code 通过环境变量指向网关。NookMux 提供 Anthropic Messages �
 | `ANTHROPIC_BASE_URL` | NookMux 站点根地址，例如 `https://your-domain.com`（不要带 `/v1/messages`） |
 | `ANTHROPIC_AUTH_TOKEN` | NookMux 令牌（以 API Key 前缀开头，默认 `sk-`） |
 
-### macOS / Linux
+NookMux 的 Anthropic 兼容入口同时支持下面两种认证头，对应 Claude Code 的两种凭据变量，任选其一即可：
+
+| 环境变量 | 请求头 |
+| --- | --- |
+| `ANTHROPIC_AUTH_TOKEN` | `Authorization: Bearer <令牌>` |
+| `ANTHROPIC_API_KEY` | `x-api-key: <令牌>` |
+
+设置 `ANTHROPIC_BASE_URL` 后，所有模型请求都会发往 NookMux，按 NookMux 令牌计费，不再消耗官方账号额度。
+
+macOS / Linux：
 
 ```bash
 export ANTHROPIC_BASE_URL=https://your-domain.com
@@ -39,7 +61,7 @@ claude
 
 要持久化，把这两行加入 `~/.zshrc` 或 `~/.bashrc` 后 `source` 生效。
 
-### Windows PowerShell
+Windows（PowerShell）：
 
 ```powershell
 $env:ANTHROPIC_BASE_URL = "https://your-domain.com"
@@ -47,7 +69,9 @@ $env:ANTHROPIC_AUTH_TOKEN = "sk-your-nookmux-token"
 claude
 ```
 
-要持久化，可写入用户级设置文件 `%USERPROFILE%\.claude\settings.json`：
+### 写入设置文件
+
+也可以把变量写进用户级设置文件 `~/.claude/settings.json`（Windows 为 `%USERPROFILE%\.claude\settings.json`）的 `env` 块：
 
 ```json
 {
@@ -58,20 +82,20 @@ claude
 }
 ```
 
-<Card type="warning" title="不要把密钥提交进仓库">
-  如需项目级 `.claude/settings.local.json`，请先将其加入 `.gitignore`，避免令牌泄露。
+设置文件 `env` 块里的值优先于终端中导出的同名变量。
+
+<Card type="warning" title="不要把令牌提交进仓库">
+  令牌只放在终端环境变量、用户级 `~/.claude/settings.json`，或已加入 `.gitignore` 的 `.claude/settings.local.json` 里，不要写进会随仓库提交的 `.claude/settings.json`。
 </Card>
 
 ### 在 NookMux 侧获得密钥
 
-1. 在控制台「API Key」页面创建或选择令牌，复制完整密钥。密钥以 API Key 前缀开头（默认 `sk-`，管理员可在 系统设置 → 站点与品牌 → 系统信息 中自定义）。
-2. 确认渠道中已配置 `claude-*` 系列模型。
-
-NookMux 的 Anthropic 兼容入口支持两种认证头：`Authorization: Bearer <token>`（对应 `ANTHROPIC_AUTH_TOKEN`）和 `x-api-key: <token>`（对应 `ANTHROPIC_API_KEY`）。推荐使用 `ANTHROPIC_AUTH_TOKEN`。
+1. 在控制台「密钥」页面创建或选择令牌，复制完整密钥。密钥以 API Key 前缀开头（默认 `sk-`）。
+2. 确认渠道中已配置要使用的 `claude-*` 系列模型。
 
 ## 验证连接
 
-启动前可直接向网关发一条最小请求确认配置正确：
+启动前可以直接向网关发一条最小请求确认配置正确：
 
 ```bash
 curl -X POST "$ANTHROPIC_BASE_URL/v1/messages" \
@@ -81,7 +105,7 @@ curl -X POST "$ANTHROPIC_BASE_URL/v1/messages" \
   -d '{"model": "claude-sonnet-4-6", "max_tokens": 1, "messages": [{"role": "user", "content": "."}]}'
 ```
 
-返回以 `{"id":"msg_` 开头的 JSON 即说明地址和密钥可用。随后运行 `claude`，用 `/status` 检查 `Anthropic base URL` 是否指向您的 NookMux 站点。
+返回以 `{"id":"msg_` 开头的 JSON 即说明地址和密钥可用。随后运行 `claude`，用 `/status` 打开状态页签：设置了网关地址时会多出 `Anthropic base URL` 一行，确认它指向您的 NookMux 站点。
 
 ## 开始使用
 
@@ -90,25 +114,54 @@ cd /path/to/your/project
 claude
 ```
 
-启动后可用 `/model` 选择模型。
+## 选择模型
+
+Claude Code 把模型名原样发给网关，所以既可以在 `/model` 里选预设的 Claude 型号，也可以直接指定 NookMux 渠道里的任意模型：
+
+```bash
+# 会话内切换
+/model glm-5.4
+
+# 启动时指定
+claude --model claude-sonnet-4-6
+
+# 用环境变量设为默认
+export ANTHROPIC_MODEL=glm-5.4
+```
+
+预设项（如 Sonnet、Opus）会解析成具体的 Claude 型号名发给 NookMux，使用前确认渠道中已配置对应模型。
 
 <Info>
-  设置 `ANTHROPIC_BASE_URL` 后，所有模型（包括官方预设模型名）都会经由 NookMux 转发，不再使用官方账号额度。
+  <b>让 `/model` 列表显示 NookMux 的模型</b>
+  Claude Code 支持从网关拉取模型列表，默认关闭。设置环境变量 `CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY=1` 后，Claude Code 启动时会请求 NookMux 的 `/v1/models`，把返回结果中 ID 含 `claude` 或 `anthropic` 的模型加入 `/model` 列表。
 </Info>
+
+`ANTHROPIC_BASE_URL` 只决定请求发到哪里，回答的仍是你选中的那个模型。
 
 ## 常见问题
 
 ### 401 / 无效令牌
 
 - 确认使用的是以 API Key 前缀开头（默认 `sk-`）的完整 NookMux 令牌。
-- 若同时残留了 claude.ai 登录态或同时设置了 `ANTHROPIC_API_KEY` 与 `ANTHROPIC_AUTH_TOKEN`，可能产生凭据冲突，可运行 `/logout` 清理后重试。
+- 出现「auth may not work as expected」提示时，说明还有别的凭据在生效（例如残留的 claude.ai 登录态）。运行 `/logout` 清理登录态，或取消不需要的凭据变量后重试。
 
-### 环境变量不生效
+### curl 能通，Claude Code 仍要求登录
 
-- 确认修改的是当前 shell 使用的配置文件（`.bashrc` / `.zshrc` / PowerShell `$PROFILE`）。
-- 重启终端或执行 `source ~/.zshrc`。
-- 验证：`echo $ANTHROPIC_BASE_URL`。
+- 变量只写在项目级设置文件里时，要到首次运行向导结束后才生效。把变量改放到用户级 `~/.claude/settings.json` 或终端环境变量里。
+- 使用 `ANTHROPIC_API_KEY` 时，交互模式下需要确认一次使用该密钥；之前拒绝过的话，在 `/config` 里重新打开 `Use custom API key`。
 
-### 会话被网关 400 拒绝
+### 请求被网关或上游以 400 拒绝
 
-部分上游对 Claude Code 发送的预发布字段不完全兼容，可在 NookMux 渠道/模型映射侧确认上游支持 Anthropic Messages 协议后再重试。
+Claude Code 会带上一些预发布参数，个别上游不接受。按报错里的内容处理：
+
+| 报错内容 | 处理 |
+| --- | --- |
+| `context_management` 或 `Extra inputs are not permitted` | 设置 `CLAUDE_CODE_DISABLE_EXPERIMENTAL_BETAS=1` |
+| `thinking` 或 `adaptive` | 一般会自动重试，仍失败时设置 `CLAUDE_CODE_DISABLE_ADAPTIVE_THINKING=1` |
+| 上下文超出模型上限 | 用 `/compact` 压缩上下文，或用 `CLAUDE_CODE_AUTO_COMPACT_WINDOW` 调低自动压缩窗口 |
+| 返回 403 且内容是 HTML 页面 | 请求被站点的 WAF 拦截，检查防火墙对请求体的规则 |
+| 证书错误 | 自签证书站点用 `NODE_EXTRA_CA_CERTS` 指向证书文件 |
+
+### 功能可用性
+
+使用网关凭据时，Remote Control 与语音听写功能不可用。

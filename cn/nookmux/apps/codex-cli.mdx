@@ -7,51 +7,42 @@ title: OpenAI Codex CLI
 
   - 官方主页：[https://chatgpt.com/codex](https://chatgpt.com/codex)
   - 项目主页：[https://github.com/openai/codex](https://github.com/openai/codex)
-  - 配置参考：[Codex Config Reference](https://developers.openai.com/codex/config-reference)
+  - 配置参考：[https://learn.chatgpt.com/docs/config-file/config-reference](https://learn.chatgpt.com/docs/config-file/config-reference)
+  - 网关接入文档：[Connect to a gateway](https://learn.chatgpt.com/codex/enterprise/connect-to-a-gateway)
 </Card>
 
 ## 安装
 
-Codex CLI 需要 Node.js 22 及以上环境，安装方式以 [官方文档](https://github.com/openai/codex) 为准：
+macOS / Linux：
 
 ```bash
-npm install -g @openai/codex
+curl -fsSL https://chatgpt.com/codex/install.sh | sh
+```
 
+Windows（PowerShell）：
+
+```powershell
+powershell -ExecutionPolicy ByPass -c "irm https://chatgpt.com/codex/install.ps1 | iex"
+```
+
+也可以用包管理器安装：`npm install -g @openai/codex` 或 `brew install --cask codex`。
+
+```bash
 # 验证安装
 codex --version
 ```
 
-Windows 用户建议在 WSL2 中运行；macOS/Linux 直接在终端运行即可。
+Windows 可以原生运行（推荐 Windows 11），也可以在 WSL2 中使用；macOS / Linux 直接在终端运行即可。
 
 ## 接入 NookMux
 
-NookMux 提供 OpenAI Responses 兼容接口，Codex CLI 通过修改用户级配置文件 `~/.codex/config.toml` 接入（Windows WSL 下为 WSL 内的 `~/.codex/config.toml`）。
+NookMux 提供 OpenAI Responses 兼容接口。Codex CLI 通过用户级配置文件 `~/.codex/config.toml` 接入，下面两种方式任选其一。提供商相关的配置只在用户级文件中生效，项目级 `.codex/config.toml` 里的同名键会被忽略。
 
-<Card type="warning" title="配置位置">
-  `openai_base_url`、`model_provider`、`model_providers` 等提供商配置只在用户级 `~/.codex/config.toml` 中生效，项目级 `.codex/config.toml` 会忽略这些键。
-</Card>
-
-### 方式一：覆盖内置 OpenAI 提供商的 base URL
+### 方式一：自定义模型提供商
 
 ```toml
 # ~/.codex/config.toml
-model = "gpt-5.6" # 换成你在 NookMux 渠道中配置的模型
-model_provider = "openai"
-openai_base_url = "https://your-domain.com/v1"
-```
-
-然后设置 API Key 环境变量并启动：
-
-```bash
-export OPENAI_API_KEY=sk-your-nookmux-token
-codex
-```
-
-### 方式二：自定义模型提供商
-
-```toml
-# ~/.codex/config.toml
-model = "gpt-5.6" # 换成你在 NookMux 渠道中配置的模型
+model = "gpt-5.6"
 model_provider = "nookmux"
 
 [model_providers.nookmux]
@@ -59,53 +50,84 @@ name = "NookMux"
 base_url = "https://your-domain.com/v1"
 env_key = "NOOKMUX_API_KEY"
 wire_api = "responses"
+requires_openai_auth = false
 ```
+
+把 `model` 换成你在 NookMux 渠道中配置的模型。这种方式的密钥取自 `env_key` 指向的环境变量，不需要执行 `codex login`。
+
+macOS / Linux：
 
 ```bash
 export NOOKMUX_API_KEY=sk-your-nookmux-token
 codex
 ```
 
+Windows（PowerShell）：
+
+```powershell
+$env:NOOKMUX_API_KEY = "sk-your-nookmux-token"
+codex
+```
+
+### 方式二：覆盖内置 OpenAI 提供商的地址
+
+```toml
+# ~/.codex/config.toml
+model = "gpt-5.6"
+openai_base_url = "https://your-domain.com/v1"
+```
+
+内置的 OpenAI 提供商从登录凭据里读取密钥，用 NookMux 令牌登录一次即可。先把令牌导出为环境变量，再通过标准输入交给 Codex，避免留在命令历史里：
+
+macOS / Linux：
+
+```bash
+export OPENAI_API_KEY=sk-your-nookmux-token
+printenv OPENAI_API_KEY | codex login --with-api-key
+codex
+```
+
+Windows（PowerShell）：
+
+```powershell
+$env:OPENAI_API_KEY = "sk-your-nookmux-token"
+$env:OPENAI_API_KEY | codex login --with-api-key
+codex
+```
+
 ### 在 NookMux 侧获得密钥
 
-1. 在控制台「API Key」页面创建或选择令牌。
-2. 复制完整密钥（以 API Key 前缀开头，默认 `sk-`）。
-3. 确认渠道中已配置 Codex 要使用的模型（如 `gpt-5.*` 系列），且模型名与配置文件中的 `model` 一致。
+1. 在控制台「密钥」页面创建或选择令牌，复制完整密钥（以 API Key 前缀开头，默认 `sk-`）。
+2. 确认渠道中已配置要使用的模型，且模型名与配置文件里的 `model` 一致。
 
 ## 开始使用
 
 ```bash
-# 直接启动
-codex
-
-# 在特定项目中使用
 cd /path/to/your/project
 codex
 ```
 
-启动后可以用 `/model` 命令切换模型。
-
-<Info>
-  接入自定义 base URL 后，所有模型（包括官方预设模型名）都会经由 NookMux 转发，不再消耗官方账号额度。
-</Info>
+启动后用 `/status` 查看当前使用的提供商和模型，用 `/model` 切换模型。也可以输入 `/config`，在 **Sessions** → **Model providers** 里切换提供商，或选择 **Create a custom provider or gateway** 新建一个。
 
 ## 常见问题
 
-### 提示 401 / 无效令牌
+### 401 / 无效令牌
 
-- 确认环境变量中的密钥是以 API Key 前缀开头（默认 `sk-`）的完整 NookMux 令牌。
-- 确认 `env_key` 指向的变量名已导出。
+- 确认使用的是以 API Key 前缀开头（默认 `sk-`）的完整 NookMux 令牌。
+- 方式一：确认 `env_key` 指向的变量已在启动 Codex 的终端里导出。
+- 方式二：重新执行 `codex login --with-api-key` 写入新的密钥。
 
-### 请求仍发往 api.openai.com
+### 配置没有生效
 
-- `openai_base_url` 必须是 `config.toml` 的顶层键，不要写成 `[model_providers.openai]`（内置提供商 ID 不可覆盖）或 `[model_provider_config]` 下的子键。
-- 旧版本支持的 `OPENAI_BASE_URL` 环境变量已被官方移除，请使用 `openai_base_url` 配置键。
+- `model_provider`、`openai_base_url`、`model` 等顶层键必须写在第一个 `[xxx]` 表之前，否则会被归到那个表下面。
+- 自定义提供商的 ID 不能与内置的 `openai`、`ollama`、`lmstudio`、`amazon-bedrock`、`amazon-bedrock-runtime`、`gcp` 重名。
+- 旧版本的 `OPENAI_BASE_URL` 环境变量已被移除，请改用 `openai_base_url` 配置键。
+- 修改配置后重启 Codex。
+
+### 提示 Model metadata not found
+
+`Model metadata for ... not found. Defaulting to fallback metadata` 只是告警：Codex 的内置模型目录里没有这个模型名，请求仍会正常发给 NookMux。
 
 ### npm 权限错误
 
-```bash
-sudo npm install -g @openai/codex
-# 或
-npm config set prefix ~/.npm-global
-export PATH=~/.npm-global/bin:$PATH
-```
+改用上面的独立安装脚本，或用 Homebrew 安装：`brew install --cask codex`。

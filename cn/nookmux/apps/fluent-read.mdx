@@ -6,7 +6,8 @@ title: 流畅阅读 (FluentRead) - 开源翻译插件
   流畅阅读（FluentRead）是一款开源浏览器翻译插件，致力于提供母语般的阅读体验，支持包括 OpenAI 兼容接口在内的多种翻译引擎。
 </Info>
 
-- 项目地址：[https://github.com/Bistutu/FluentRead](https://github.com/Bistutu/FluentRead)
+- 项目地址：[https://github.com/FluentRead/FluentRead](https://github.com/FluentRead/FluentRead)
+- 官方文档：[https://read.thinkstu.com/guide/](https://read.thinkstu.com/guide/)
 
 ## 核心特性
 
@@ -25,15 +26,24 @@ title: 流畅阅读 (FluentRead) - 开源翻译插件
 
 ## 配置方法
 
-在流畅阅读的翻译服务设置中选择 OpenAI 兼容（大模型）类型，并填写：
+流畅阅读的「自定义服务 → 兼容接口」使用 OpenAI Chat Completions 协议，可以直接接入 NookMux；内置的「New API」服务也可以使用。
 
-| 配置项 | 内容 |
-| --- | --- |
-| 翻译服务 | OpenAI / 自定义 OpenAI 接口 |
-| API 地址 | NookMux 站点地址（按插件要求填写，通常不需要带 `/v1`，若请求失败可尝试追加 `/v1`） |
-| API Key | NookMux 令牌（以 API Key 前缀开头，默认 `sk-`） |
-| 模型 | 填写渠道中已配置的模型名称 |
+### 配置步骤
 
-<Card type="warning" title="请以插件实际字段为准">
-  不同版本的流畅阅读设置界面和字段名可能不同。核心原则是：接口地址指向您的 NookMux 站点，令牌使用 NookMux 密钥，模型名与渠道一致。若翻译无响应，请先确认模型本身在 NookMux 中可正常调用。
-</Card>
+1. 在 NookMux 控制台「密钥」页面创建令牌并复制 API Key（以 API Key 前缀开头，默认 `sk-`）。
+2. 打开插件「设置」→「翻译服务」，点击「自定义服务」，在弹出的窗口中选择「兼容接口」。
+3. 填写：
+
+   | 配置项 | 内容 |
+   | --- | --- |
+   | 服务名称 | 自定义，例如 `NookMux` |
+   | 接口地址 | `https://your-domain.com/v1`；也可以填站点根地址 `https://your-domain.com`，插件会自动补成 `/v1/chat/completions` |
+   | API Key | NookMux 令牌 |
+   | 首个模型 | 渠道中已配置的模型名称，需支持 Chat Completions |
+
+4. 点击「保存服务」。
+5. 在该服务的配置面板点击「检查连接」，通过后点击「设为默认翻译服务」。
+
+也可以直接使用内置的「New API」服务：「NewAPI接口」填 `https://your-domain.com`，再填写 API Key 和模型。
+
+更多用法请参考官方文档：[选择翻译服务](https://read.thinkstu.com/config/translation-engines)。

@@ -6,19 +6,32 @@ title: Claude Code
   Claude Code is Anthropic's official command-line coding assistant. It can search codebases, edit files, and run commands directly in the terminal.
 
   - Official Homepage: [https://www.anthropic.com/claude-code](https://www.anthropic.com/claude-code)
-  - Gateway Docs: [Connect Claude Code to an LLM gateway](https://docs.anthropic.com/en/docs/claude-code/llm-gateway-connect)
+  - Installation: [https://code.claude.com/docs/en/setup](https://code.claude.com/docs/en/setup)
+  - LLM Gateway Guide: [Connect Claude Code to an LLM gateway](https://code.claude.com/docs/en/llm-gateway-connect)
 </Card>
 
 ## Install
 
+macOS / Linux:
+
 ```bash
 curl -fsSL https://claude.ai/install.sh | bash
+```
 
+Windows (PowerShell):
+
+```powershell
+irm https://claude.ai/install.ps1 | iex
+```
+
+You can also install it with a package manager: `brew install --cask claude-code`, `winget install Anthropic.ClaudeCode`, or `npm install -g @anthropic-ai/claude-code@latest`.
+
+```bash
 # Verify
 claude --version
 ```
 
-Windows users should install and run it in WSL2 or Git Bash.
+Claude Code runs natively on Windows (install Git for Windows as well) and also works inside WSL.
 
 ## Connect to NookMux
 
@@ -29,7 +42,16 @@ Claude Code uses environment variables to point at the gateway. NookMux provides
 | `ANTHROPIC_BASE_URL` | NookMux site root, for example `https://your-domain.com` (do not include `/v1/messages`) |
 | `ANTHROPIC_AUTH_TOKEN` | NookMux token (starts with the site key prefix, default `sk-`) |
 
-### macOS / Linux
+NookMux's Anthropic-compatible endpoint accepts both authentication headers below. They correspond to Claude Code's two credential variables; use either one:
+
+| Environment Variable | Header Sent |
+| --- | --- |
+| `ANTHROPIC_AUTH_TOKEN` | `Authorization: Bearer <token>` |
+| `ANTHROPIC_API_KEY` | `x-api-key: <token>` |
+
+Once `ANTHROPIC_BASE_URL` is set, every model request goes to NookMux and is billed against your NookMux token instead of your Anthropic account quota.
+
+macOS / Linux:
 
 ```bash
 export ANTHROPIC_BASE_URL=https://your-domain.com
@@ -39,7 +61,7 @@ claude
 
 To make it persistent, add the two lines to `~/.zshrc` or `~/.bashrc`, then `source` the file.
 
-### Windows PowerShell
+Windows (PowerShell):
 
 ```powershell
 $env:ANTHROPIC_BASE_URL = "https://your-domain.com"
@@ -47,7 +69,9 @@ $env:ANTHROPIC_AUTH_TOKEN = "sk-your-nookmux-token"
 claude
 ```
 
-To persist it, write the settings to `%USERPROFILE%\.claude\settings.json`:
+### Store the Variables in the Settings File
+
+You can also put the variables in the `env` block of the user-level settings file `~/.claude/settings.json` (`%USERPROFILE%\.claude\settings.json` on Windows):
 
 ```json
 {
@@ -58,16 +82,16 @@ To persist it, write the settings to `%USERPROFILE%\.claude\settings.json`:
 }
 ```
 
-<Card type="warning" title="Do not commit secrets to the repository">
-  If you need a project-level `.claude/settings.local.json`, add it to `.gitignore` first to avoid leaking the token.
+Values in the `env` block take precedence over variables exported in the terminal.
+
+<Card type="warning" title="Do not commit the token to a repository">
+  Keep the token in your terminal environment, in the user-level `~/.claude/settings.json`, or in a `.claude/settings.local.json` that is listed in `.gitignore`. Do not put it in a `.claude/settings.json` that gets committed with the repository.
 </Card>
 
-### Get the Secret from NookMux
+### Get the Token from NookMux
 
-1. Create or select a token on the console's "Keys" page and copy the full secret. It starts with the site key prefix (default `sk-`; admins can customize it under System Settings → Site & Branding → System Information).
-2. Make sure the channel already has `claude-*` models configured.
-
-NookMux's Anthropic-compatible endpoint supports both authentication headers: `Authorization: Bearer <token>` (for `ANTHROPIC_AUTH_TOKEN`) and `x-api-key: <token>` (for `ANTHROPIC_API_KEY`). `ANTHROPIC_AUTH_TOKEN` is recommended.
+1. Create or select a token on the console's "Keys" page and copy the full secret. It starts with the site key prefix (default `sk-`).
+2. Make sure the channel already has the `claude-*` models you want to use.
 
 ## Verify the Connection
 
@@ -81,7 +105,7 @@ curl -X POST "$ANTHROPIC_BASE_URL/v1/messages" \
   -d '{"model": "claude-sonnet-4-6", "max_tokens": 1, "messages": [{"role": "user", "content": "."}]}'
 ```
 
-If the response starts with `{"id":"msg_`, the address and token are valid. Then run `claude` and use `/status` to confirm that `Anthropic base URL` points to your NookMux site.
+If the response starts with `{"id":"msg_`, the address and token are valid. Then run `claude` and open the **Status** tab of `/status`. When a gateway address is set, the tab includes an `Anthropic base URL` row; confirm that it points to your NookMux site.
 
 ## Usage
 
@@ -90,25 +114,54 @@ cd /path/to/your/project
 claude
 ```
 
-After launch, use `/model` to select a model.
+## Choose a Model
+
+Claude Code sends the model name to the gateway as is, so you can pick a preset Claude model in `/model` or use any model configured in the NookMux channel:
+
+```bash
+# Switch inside a session
+/model glm-5.4
+
+# Pick a model at startup
+claude --model claude-sonnet-4-6
+
+# Set the default with an environment variable
+export ANTHROPIC_MODEL=glm-5.4
+```
+
+Presets such as Sonnet and Opus resolve to concrete Claude model names before they are sent to NookMux, so make sure those models exist in the channel.
 
 <Info>
-  After setting `ANTHROPIC_BASE_URL`, all models, including official preset model names, are routed through NookMux instead of consuming your official account quota.
+  <b>Show NookMux models in /model</b>
+  Claude Code can fetch the model list from a gateway, but this is off by default. Set the environment variable `CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY=1`, and Claude Code requests NookMux's `/v1/models` at startup and adds every returned model whose ID contains `claude` or `anthropic` to the `/model` picker.
 </Info>
+
+`ANTHROPIC_BASE_URL` only changes where requests are sent; the model you choose is still the one that answers.
 
 ## Common Issues
 
 ### 401 / Invalid Token
 
 - Make sure the token is the full NookMux token starting with the site key prefix (default `sk-`).
-- If you still have a claude.ai login session or both `ANTHROPIC_API_KEY` and `ANTHROPIC_AUTH_TOKEN` set, the credentials may conflict. Run `/logout` to clear the session and try again.
+- If Claude Code warns that auth may not work as expected, another credential is still active, such as a leftover claude.ai login. Run `/logout` to clear the login, or unset the credential variables you do not need, then try again.
 
-### Environment Variables Do Not Take Effect
+### curl works but Claude Code still asks you to log in
 
-- Make sure you edited the right shell config file (`.bashrc`, `.zshrc`, or PowerShell `$PROFILE`).
-- Restart the terminal or run `source ~/.zshrc`.
-- Verify with `echo $ANTHROPIC_BASE_URL`.
+- Variables that live only in a project-level settings file take effect after the first-run wizard. Move them to the user-level `~/.claude/settings.json` or to your terminal environment.
+- With `ANTHROPIC_API_KEY`, interactive mode asks you once to confirm that the key should be used. If you declined earlier, turn `Use custom API key` back on in `/config`.
 
-### The Gateway Rejects the Session with 400
+### Requests rejected with 400
 
-- Some upstreams are not fully compatible with the pre-release fields sent by Claude Code. Confirm that the upstream supports the Anthropic Messages protocol in the NookMux channel/model mapping, then try again.
+Claude Code sends a few pre-release parameters that some upstreams reject. Handle them by the error text:
+
+| Error | Fix |
+| --- | --- |
+| `context_management` or `Extra inputs are not permitted` | Set `CLAUDE_CODE_DISABLE_EXPERIMENTAL_BETAS=1` |
+| `thinking` or `adaptive` | Claude Code usually retries automatically; if it keeps failing, set `CLAUDE_CODE_DISABLE_ADAPTIVE_THINKING=1` |
+| Context window exceeded | Run `/compact`, or lower the auto-compact window with `CLAUDE_CODE_AUTO_COMPACT_WINDOW` |
+| 403 with an HTML body | A WAF on the site is inspecting request bodies; check its firewall rules |
+| Certificate errors | Point `NODE_EXTRA_CA_CERTS` to your CA certificate file |
+
+### Feature availability
+
+With gateway credentials, Remote Control and voice dictation are unavailable.

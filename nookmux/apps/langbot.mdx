@@ -8,43 +8,29 @@ title: LangBot - Instant Messaging Bot Development Platform
 
 - Official Website: [https://langbot.app/](https://langbot.app/)
 - Download: [https://github.com/langbot-app/LangBot/releases](https://github.com/langbot-app/LangBot/releases)
-- Official Documentation: [https://docs.langbot.app/en/README.html](https://docs.langbot.app/en/README.html)
-- GitHub Repository: [https://github.com/langbot-app/LangBot](https://github.com/langbot-app/LangBot)
+- Official Documentation: [https://docs.langbot.app/](https://docs.langbot.app/)
+- LangBot x New API Guide (Chinese): [https://langbot.app/docs/zh/workshop/newapi-integration/](https://langbot.app/docs/zh/workshop/newapi-integration/)
 
 ## Connect to NookMux
 
-LangBot supports connecting to locally deployed NookMux or any OpenAI-compatible NookMux service.
+LangBot works with a locally deployed or an online NookMux. It ships with a preset provider type named New API, which calls NookMux through the OpenAI-compatible interface.
 
-### Usage
+### Add a Chat Model
 
-1. Obtain an API key from NookMux.
-   ![Get API key](/assets/nookmux/langbot/get_api_key.png)
+1. Create a token on the NookMux console's "Keys" page and copy it (it starts with the site key prefix, default `sk-`). The NookMux endpoint is the site address + `/v1`: `http://127.0.0.1:3000/v1` for a local deployment, or `https://your-domain.com/v1` online. When LangBot runs in Docker, `127.0.0.1` points to the container itself, so use the host IP or an address reachable from the container network. For container networking, see the official guide [Network Configuration Details](https://langbot.app/docs/en/workshop/network-details/).
+2. Open the LangBot WebUI, click the account menu in the top-right corner, and go to "System Settings" → "Model Configuration".
+3. Click "Add Provider": set "Provider Name" to `NookMux`, choose `New API` under relay platforms as the "Provider Type", enter the endpoint from step 1 as the "Request URL", paste the NookMux token as the "API Key", and save.
+4. On the provider card, click "Scan Models", tick the models you want, and click "Add Selected Models". You can also click "Add" → "Manual Add" and enter the model name (the model ID in NookMux) in the chat model form, with capabilities such as vision and function calling set as needed.
+5. In the sidebar, open the processors page, select the pipeline to use, and on the "AI Capabilities" page keep the runner as "Built-in Agent" and pick the model you just added, then save.
+6. In the debug panel of the pipeline page, choose a private or group chat and send a message to verify. You can also chat with a bot bound to the pipeline.
 
-   If NookMux is deployed locally, configure the API address yourself (see [Container Network Connection](https://docs.langbot.app/en/workshop/network-details.html)). If you are using a third-party NookMux service, you can copy the address from the page. Note that `/v1` must be appended to the address.
+### Use a NookMux Embedding Model for the Knowledge Base
 
-2. Add a model in LangBot, select NookMux as the provider, and fill in the corresponding API key and API address.
-   ![Add NookMux model](/assets/nookmux/langbot/add_newapi_model.png)
+LangBot knowledge bases can use embedding models provided by NookMux.
 
-3. Select the model to use in the pipeline.
+1. In "System Settings" → "Model Configuration", click "Add" → "Add Embedding Model" on the NookMux provider card, enter the embedding model ID from NookMux as the model name, and save.
+2. Open the knowledge bases page in the sidebar and click "Create Knowledge Base": enter a name, choose a RAG engine (provided by an installed plugin), select the embedding model you just added in the engine's configuration form, set options such as chunk size, and click "Create".
+3. If the RAG engine supports document upload, open the "Documents" page of the knowledge base, upload your documents, and wait for indexing to finish.
+4. Back on the "AI Capabilities" page of the pipeline, keep "Built-in Agent" as the runner and select the knowledge base you just created.
 
-   ![Choose model](/assets/nookmux/langbot/select_model.png)
-
-4. Use it in conversation debugging or by chatting with a bot bound to the pipeline.
-
-   ![Chat](/assets/nookmux/langbot/debug_chat.png)
-
-   ![WeChat chat](/assets/nookmux/langbot/wechat.png)
-
-   For deployment and bot configuration, see [Deploying Bots](https://docs.langbot.app/en/deploy/platforms/readme.html).
-
-### Using LangBot Knowledge Base
-
-LangBot supports using NookMux embedding models as vector models for the knowledge base.
-
-1. Add an embedding model in LangBot and select NookMux as the provider.
-   ![Add embedding model](/assets/nookmux/langbot/add_embedding_model.png)
-
-2. Select the embedding model when creating a new knowledge base.
-   ![Use embedding model](/assets/nookmux/langbot/use_embedding_model.png)
-
-For more usage instructions, see the [LangBot official documentation](https://docs.langbot.app/en/README.html).
+You can now use the knowledge base in the debug chat or with a bot bound to the pipeline. For more details, see the [LangBot official documentation](https://docs.langbot.app/).

@@ -1,0 +1,35 @@
+---
+title: WorkBuddy - AI Agent 办公工作台
+---
+
+<Info>
+  WorkBuddy AI 是腾讯推出的全场景职场 AI 智能体桌面工作台（Windows / Mac）。用一句话描述需求，它就能自主规划并执行任务，交付文档、表格、PPT 等结果。自定义模型支持通过界面接入 OpenAI 兼容的模型服务。
+</Info>
+
+- 官方网站（国际版）：[https://www.workbuddy.ai](https://www.workbuddy.ai)
+- 官方网站（国内版）：[https://www.workbuddy.cn](https://www.workbuddy.cn)
+- 官方文档「模型配置」：[https://www.workbuddy.ai/docs/zh/workbuddy/From-Beginner-to-Expert-Guide/Function-Description/Model-Configuration](https://www.workbuddy.ai/docs/zh/workbuddy/From-Beginner-to-Expert-Guide/Function-Description/Model-Configuration)
+
+## 接入 NookMux
+
+WorkBuddy 的自定义模型使用 OpenAI 兼容的 Chat Completions API，NookMux 的 OpenAI 兼容接口可以直接接入。
+
+### 参数填写
+
+| 配置项 | 填写内容 |
+| --- | --- |
+| 接口地址 | NookMux 站点地址 + `/v1`，例如 `https://your-domain.com/v1` |
+| API Key | NookMux 令牌（以 API Key 前缀开头，默认 `sk-`），在「密钥」页面创建并复制 |
+| 模型名称 | 接口接受的模型 ID，与 NookMux 渠道中配置的模型名一致 |
+
+### 配置步骤
+
+1. 在 NookMux 控制台「密钥」页面创建令牌并复制。
+2. 打开 WorkBuddy 桌面端，进入 **头像 > 系统设置 > 模型**。
+3. 提供商选择 **自定义 / Custom**，填写上表中的接口地址、API Key 和模型名称。
+4. 按模型实际能力设置「工具调用」「图片输入」等选项，保存。
+5. 点击「测试连接」，通过后在对话的模型选择器中选择这个自定义模型。
+
+「自定义协议」开关保持关闭即可：关闭时 WorkBuddy 会把接口地址规范化为以 `/chat/completions` 结尾，填 `https://your-domain.com/v1` 或完整的 `https://your-domain.com/v1/chat/completions` 都可以。
+
+配置保存在 `~/.workbuddy-ai/models.json`（Windows 为 `%USERPROFILE%\.workbuddy-ai\models.json`），日常管理直接在界面上完成即可。

@@ -1,30 +1,35 @@
 ---
-title: CC Switch - Claude Code / Codex Provider Switcher
+title: CC Switch - Provider Switcher for AI Coding Tools
 ---
 
 <Info>
-  CC Switch is an open-source provider management and switching tool for Claude Code and Codex CLI. The NookMux console's "Keys" page includes a one-click CC Switch import option that can automatically write the current token and site address into CC Switch.
+  CC Switch is an open-source desktop app that manages API providers for AI coding tools such as Claude Code, Claude Desktop, Codex, Gemini CLI, and OpenCode, so you can switch providers without editing config files by hand. The NookMux console's "Keys" page includes a one-click CC Switch import option that writes the current token and site address straight into CC Switch.
 </Info>
 
+- Official Website: [https://ccswitch.io](https://ccswitch.io)
 - GitHub Repository: [https://github.com/farion1231/cc-switch](https://github.com/farion1231/cc-switch)
+- Deep Link Protocol: [https://github.com/farion1231/cc-switch/blob/main/docs/user-manual/en/5-faq/5.3-deeplink.md](https://github.com/farion1231/cc-switch/blob/main/docs/user-manual/en/5-faq/5.3-deeplink.md)
 
 ## One-Click Import from NookMux
 
 1. Make sure CC Switch is installed locally and has been launched at least once so it can register the `ccswitch://` protocol.
 2. On the NookMux console's "Keys" page, find the token you want to use, open the row actions menu, and click **CC Switch**.
 3. In the dialog, choose the app type (Claude / Codex / Gemini), enter a config name, and select a primary model. For Claude, you can also fill in Haiku / Sonnet / Opus models as needed.
-4. Click **Open CC Switch**. The browser will launch CC Switch and auto-fill:
+4. Click **Open CC Switch**. The browser launches CC Switch, which shows an import confirmation dialog pre-filled with:
 
-| Field | Value |
-| --- | --- |
-| endpoint | Site root URL for Claude/Gemini; site URL + `/v1` for Codex |
-| apiKey | Full token for the selected key, starting with the site key prefix (default `sk-`) |
-| model fields | The selected primary model and optional models |
+   | Field | Value |
+   | --- | --- |
+   | endpoint | Site root URL for Claude / Gemini; site URL + `/v1` for Codex |
+   | apiKey | Full token for the selected key, starting with the site key prefix (default `sk-`) |
+   | model | The selected primary model; Claude also carries haikuModel / sonnetModel / opusModel |
 
-5. Confirm and save in CC Switch to finish the import.
+5. Review the details and confirm the import. The switch in the dialog decides whether the provider is activated right away.
+6. The provider takes effect once it is enabled or switched to in CC Switch: Claude Code needs no restart; restart the terminal or the CLI for Codex and Gemini CLI.
+
+The one-click import uses CC Switch's deep link protocol: `ccswitch://v1/import?resource=provider&app=...`.
 
 ## Notes
 
-- The one-click import resolves the token's full secret before handing it to CC Switch, so no manual copying is needed.
+- The deep link carries the token's full secret. Open it only on a trusted device and do not forward it.
 - If the browser does not open CC Switch, make sure the client is installed and external app launches are allowed.
 - You can also add providers manually in CC Switch: use the site root URL for Claude, `https://your-domain.com/v1` for Codex, and the NookMux token as the key.

@@ -3,7 +3,6 @@ title: AI 应用
 description: 支持的 AI 应用和集成方案
 ---
 
-
 ## 概述
 
 NookMux 对外提供 OpenAI、Claude、Gemini 等多种兼容 API，可直接接入大量主流 AI 应用和工具。以下是常用应用的接入指南。
@@ -17,20 +16,32 @@ NookMux 对外提供 OpenAI、Claude、Gemini 等多种兼容 API，可直接接
   <Card icon="cherry" title="Cherry Studio" href="/cn/nookmux/apps/cherry-studio">
     功能强大的桌面 AI 客户端，支持多模型对话。
   </Card>
+  <Card icon="smartphone" title="RikkaHub" href="/cn/nookmux/apps/rikkahub">
+    开源的 Android AI 聊天客户端，支持任意 OpenAI 兼容服务。
+  </Card>
   <Card icon="terminal" title="Claude Code" href="/cn/nookmux/apps/claude-code">
     Anthropic 官方命令行编码助手，通过 Anthropic 兼容接口接入。
   </Card>
-  <Card icon="terminal" title="Codex CLI" href="/cn/nookmux/apps/codex-cli">
+  <Card icon="square-terminal" title="Codex CLI" href="/cn/nookmux/apps/codex-cli">
     OpenAI 官方命令行编码代理，通过 OpenAI Responses 兼容接口接入。
   </Card>
-  <Card icon="terminal" title="Factory Droid CLI" href="/cn/nookmux/apps/factory-droid-cli">
+  <Card icon="code-xml" title="OpenCode" href="/cn/nookmux/apps/opencode">
+    开源的编码 Agent，提供终端、桌面与 Web 界面，可接入自定义模型服务。
+  </Card>
+  <Card icon="square-code" title="CodeBuddy Code" href="/cn/nookmux/apps/codebuddy">
+    腾讯云代码助手的命令行编程助手，通过 models.json 接入自定义模型。
+  </Card>
+  <Card icon="bot-message-square" title="Factory Droid CLI" href="/cn/nookmux/apps/factory-droid-cli">
     Factory AI 的命令行 AI 代理，通过 BYOK 自定义模型接入。
   </Card>
+  <Card icon="briefcase" title="WorkBuddy" href="/cn/nookmux/apps/workbuddy">
+    腾讯推出的 AI 智能体桌面工作台，可在界面中添加自定义模型。
+  </Card>
   <Card icon="book-open" title="Fluent Read" href="/cn/nookmux/apps/fluent-read">
-    AI 驱动的浏览器翻译插件。
+    开源浏览器翻译插件，支持 OpenAI 兼容接口。
   </Card>
   <Card icon="message-circle" title="LangBot" href="/cn/nookmux/apps/langbot">
-    基于大语言模型的聊天机器人框架。
+    开源的即时通信机器人开发平台，支持知识库与 Agent。
   </Card>
   <Card icon="languages" title="LunaTranslator" href="/cn/nookmux/apps/luna-translator">
     游戏和文档的实时翻译工具。
@@ -39,7 +50,7 @@ NookMux 对外提供 OpenAI、Claude、Gemini 等多种兼容 API，可直接接
     开源的一站式 Agent 聊天机器人平台。
   </Card>
   <Card icon="arrow-left-right" title="CC Switch" href="/cn/nookmux/apps/cc-switch">
-    Claude Code / Codex CLI 供应商切换工具，支持从 NookMux 令牌页一键导入。
+    AI 编程工具的供应商切换工具，支持从 NookMux 的「密钥」页面一键导入。
   </Card>
 </Columns>
 
@@ -47,8 +58,8 @@ NookMux 对外提供 OpenAI、Claude、Gemini 等多种兼容 API，可直接接
 
 大多数应用只需要配置以下信息即可连接 NookMux：
 
-1. **API 地址**：您的 NookMux 服务地址。OpenAI 兼容接口地址通常为 `https://your-domain/v1`；Claude 兼容接口为站点根地址（网关自动处理 `/v1/messages`）；Gemini 兼容接口见具体应用文档。
-2. **API Key**：在 NookMux 控制台「API Key」页面创建并复制的令牌，以 API Key 前缀开头（默认 `sk-`，管理员可在 系统设置 → 站点与品牌 → 系统信息 中自定义）。
+1. **API 地址**：您的 NookMux 服务地址。三种兼容接口的基础地址不同，各应用拼接路径的方式也不同，具体填法以各应用页面的说明为准：OpenAI 兼容接口为 `https://your-domain.com/v1`；Claude 兼容接口的完整地址是 `https://your-domain.com/v1/messages`（例如 Claude Code 的 `ANTHROPIC_BASE_URL` 只填站点根地址）；Gemini 兼容接口为 `https://your-domain.com/v1beta`。
+2. **API Key**：在 NookMux 控制台「密钥」页面创建并复制的令牌，以 API Key 前缀开头（默认 `sk-`，管理员可在「系统设置」→「站点与品牌」→「系统信息」中自定义）。
 3. **模型名称**：选择渠道中已配置的模型。
 
 具体配置步骤请参考各应用的详细文档。

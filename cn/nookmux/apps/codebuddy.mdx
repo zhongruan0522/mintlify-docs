@@ -1,0 +1,117 @@
+---
+title: CodeBuddy Code - 腾讯云代码助手命令行工具
+---
+
+<Card type="info" title="项目介绍">
+  CodeBuddy Code 是腾讯云代码助手（CodeBuddy）的命令行编程助手，可在终端中用自然语言完成读写代码、运行命令、Git 操作等任务，并可通过 `models.json` 接入自定义的 OpenAI 兼容模型。
+
+  - 官方主页（国内站）：[https://copilot.tencent.com/cli](https://copilot.tencent.com/cli)
+  - 官方主页（国际站）：[https://www.codebuddy.ai/cli](https://www.codebuddy.ai/cli)
+  - 官方文档：[https://www.codebuddy.ai/docs/zh/cli/overview](https://www.codebuddy.ai/docs/zh/cli/overview)
+  - models.json 配置指南：[https://www.codebuddy.ai/docs/zh/cli/models](https://www.codebuddy.ai/docs/zh/cli/models)
+</Card>
+
+## 安装
+
+需要 Node.js 18.20 及以上：
+
+```bash
+npm install -g @tencent-ai/codebuddy-code
+```
+
+macOS / Linux 也可以用 Homebrew：
+
+```bash
+brew install Tencent-CodeBuddy/tap/codebuddy-code
+```
+
+```bash
+# 验证安装
+codebuddy --version
+```
+
+## 接入 NookMux
+
+CodeBuddy Code 通过 `~/.codebuddy/models.json`（Windows 为 `%USERPROFILE%\.codebuddy\models.json`）配置自定义模型，目前支持 OpenAI 接口格式。在 `models` 数组中添加指向 NookMux 的模型：
+
+```json
+{
+  "models": [
+    {
+      "id": "gpt-5.6",
+      "name": "NookMux GPT",
+      "vendor": "NookMux",
+      "apiKey": "${NOOKMUX_API_KEY}",
+      "url": "https://your-domain.com/v1/chat/completions",
+      "supportsToolCall": true
+    }
+  ]
+}
+```
+
+| 字段 | 说明 |
+| --- | --- |
+| `id` | 模型 ID，用 `/model` 选择的就是它，需与 NookMux 渠道中的模型名一致 |
+| `name` | 模型列表中显示的名称 |
+| `url` | 必须是完整的接口地址，以 `/chat/completions` 结尾，即 NookMux 站点地址 + `/v1/chat/completions` |
+| `apiKey` | 支持 `${VAR_NAME}` 引用环境变量；环境变量不存在时会保留占位符，导致调用失败 |
+| `supportsToolCall` | 模型支持工具调用时设为 `true` |
+
+需要走 Responses API 的模型，加上 `"api": "openai-responses"`，此时 `url` 填 base URL（`https://your-domain.com/v1`）。
+
+<Card type="warning" title="不要用 CODEBUDDY_BASE_URL 接入第三方模型">
+  `CODEBUDDY_BASE_URL` 只覆盖 CodeBuddy 自身 Chat 协议的接入地址，不会按厂商做协议兼容。接入 NookMux 这类第三方模型请写在 `models.json` 里。
+</Card>
+
+## 使用
+
+1. 在 NookMux 控制台「密钥」页面创建令牌并复制完整密钥（以 API Key 前缀开头，默认 `sk-`）。
+2. 导出环境变量：
+
+   ```bash
+   export NOOKMUX_API_KEY=sk-your-nookmux-token
+   ```
+
+3. 启动 CodeBuddy Code：
+
+   ```bash
+   cd /path/to/your/project
+   codebuddy
+   ```
+
+   首次使用需要按提示完成登录，可选国内站（Chinese Site）、国际站（International Site）等登录方式。
+
+4. 输入 `/model` 并回车，在模型列表中选择刚添加的模型。也可以在启动时直接指定：
+
+   ```bash
+   codebuddy --model gpt-5.6
+   ```
+
+`models.json` 支持热重载，修改后无需重启。
+
+## 在 CodeBuddy IDE 插件中使用
+
+CodeBuddy IDE 插件可以在界面上添加 OpenAI 兼容的自定义模型：
+
+1. 启动 CodeBuddy IDE，点击对话面板下方的模型选择框，再点击「配置自定义模型」。
+2. 在添加模型页面把「供应商」设为 **Custom**。
+3. 填写以下配置并点击「保存」：
+
+   | 配置项 | 内容 |
+   | --- | --- |
+   | Base URL | `https://your-domain.com/v1/chat/completions` |
+   | API Key | NookMux 令牌 |
+   | 模型名称 | NookMux 渠道中的模型名 |
+
+4. 返回对话面板，打开模型选择框，在 **Custom Models** 中选择刚添加的模型。
+
+## 常见问题
+
+### 配置未生效
+
+- 检查 `models.json` 的 JSON 格式和文件路径。
+- 确认 `apiKey` 引用的环境变量已在启动 CodeBuddy 的终端里导出。
+
+### 模型没有出现在列表中
+
+- 确认 `id` 等必填字段完整；配置了 `availableModels` 时，只有其中列出的模型会显示。

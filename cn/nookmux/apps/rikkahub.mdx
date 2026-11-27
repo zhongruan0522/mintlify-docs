@@ -1,0 +1,39 @@
+---
+title: RikkaHub - Android AI 聊天客户端
+---
+
+<Card type="info" title="项目介绍">
+  RikkaHub 是一款开源的 Android AI 聊天助手（AGPL-3.0），基于 Kotlin 与 Jetpack Compose 构建，可以在同一个界面里使用 OpenAI、Google Gemini、Anthropic Claude 以及任意 OpenAI 兼容的服务，并支持 MCP、智能体等功能。
+
+  - 项目地址：[https://github.com/rikkahub/rikkahub](https://github.com/rikkahub/rikkahub)
+  - 官方文档：[https://docs.rikka-ai.com](https://docs.rikka-ai.com)
+</Card>
+
+## 安装
+
+在 Android 手机上从 [Google Play](https://play.google.com/store/apps/details?id=me.rerere.rikkahub) 安装，或到 [GitHub Releases](https://github.com/rikkahub/rikkahub/releases) 下载 APK 安装。
+
+## 接入 NookMux
+
+RikkaHub 的 OpenAI 提供商类型可以用于任何 OpenAI 兼容服务。实际请求地址是「API Base Url」加上「API 路径」，默认路径为 `/chat/completions`，所以「API Base Url」要填到 `/v1`。
+
+| 配置项 | 填写内容 |
+| --- | --- |
+| 提供商类型 | OpenAI |
+| API Key | NookMux 令牌（以 API Key 前缀开头，默认 `sk-`），在「密钥」页面创建并复制 |
+| API Base Url | `https://your-domain.com/v1`（NookMux 站点地址 + `/v1`） |
+| API 路径 | 保持默认 `/chat/completions` |
+| 模型 | 「模型ID」填 NookMux 渠道中已配置的模型名 |
+
+### 配置步骤
+
+1. 在 NookMux 控制台「密钥」页面创建令牌并复制 API Key。
+2. 打开 RikkaHub，进入「设置」→「提供商」，点「添加提供商」，类型选择 OpenAI。
+3. 「API Key」粘贴 NookMux 令牌，「API Base Url」改为 `https://your-domain.com/v1`。
+4. 点「添加模型」，「模型ID」填 NookMux 中的模型名；也可以从「可用模型」列表里直接勾选。
+5. 点「保存」，再点「测试连接」确认可用。
+6. 回到「设置」→「默认模型和提示词」，把「聊天模型」设为刚添加的模型，回到对话即可使用。
+
+<Info>
+  NookMux 也支持 Responses API。需要使用时，在该提供商的设置里打开「Response API」，此时请求地址为 `https://your-domain.com/v1/responses`。
+</Info>

@@ -1,0 +1,117 @@
+---
+title: CodeBuddy Code - Tencent Cloud Code Assistant CLI
+---
+
+<Card type="info" title="Project Introduction">
+  CodeBuddy Code is the command-line coding assistant of Tencent Cloud Code Assistant (CodeBuddy). It reads and edits code, runs commands, and handles Git operations from the terminal in natural language, and it connects to custom OpenAI-compatible models through `models.json`.
+
+  - Official Homepage (China): [https://copilot.tencent.com/cli](https://copilot.tencent.com/cli)
+  - Official Homepage (International): [https://www.codebuddy.ai/cli](https://www.codebuddy.ai/cli)
+  - Official Documentation: [https://www.codebuddy.ai/docs/cli/overview](https://www.codebuddy.ai/docs/cli/overview)
+  - models.json Guide: [https://www.codebuddy.ai/docs/cli/models](https://www.codebuddy.ai/docs/cli/models)
+</Card>
+
+## Install
+
+Requires Node.js 18.20 or later:
+
+```bash
+npm install -g @tencent-ai/codebuddy-code
+```
+
+Homebrew on macOS / Linux:
+
+```bash
+brew install Tencent-CodeBuddy/tap/codebuddy-code
+```
+
+```bash
+# Verify the installation
+codebuddy --version
+```
+
+## Connect to NookMux
+
+CodeBuddy Code configures custom models in `~/.codebuddy/models.json` (`%USERPROFILE%\.codebuddy\models.json` on Windows) and currently supports the OpenAI API format. Add a model that points to NookMux in the `models` array:
+
+```json
+{
+  "models": [
+    {
+      "id": "gpt-5.6",
+      "name": "NookMux GPT",
+      "vendor": "NookMux",
+      "apiKey": "${NOOKMUX_API_KEY}",
+      "url": "https://your-domain.com/v1/chat/completions",
+      "supportsToolCall": true
+    }
+  ]
+}
+```
+
+| Field | Description |
+| --- | --- |
+| `id` | The model ID shown in `/model`. It must match the model name configured in the NookMux channel |
+| `name` | Display name in the model list |
+| `url` | Must be the full endpoint URL ending with `/chat/completions`, i.e. NookMux site address + `/v1/chat/completions` |
+| `apiKey` | Supports `${VAR_NAME}` references to environment variables. If the variable is missing, the placeholder stays in place and API calls fail |
+| `supportsToolCall` | Set to `true` when the model supports tool calling |
+
+For models that use the Responses API, add `"api": "openai-responses"` and set `url` to the base URL (`https://your-domain.com/v1`).
+
+<Card type="warning" title="Do not use CODEBUDDY_BASE_URL for third-party models">
+  `CODEBUDDY_BASE_URL` only overrides the endpoint of CodeBuddy's own Chat protocol and does not adapt it to other vendors. Put third-party models such as NookMux in `models.json`.
+</Card>
+
+## Usage
+
+1. Create a token on the NookMux console's "Keys" page and copy the full secret (it starts with the site key prefix, default `sk-`).
+2. Export the environment variable:
+
+   ```bash
+   export NOOKMUX_API_KEY=sk-your-nookmux-token
+   ```
+
+3. Start CodeBuddy Code:
+
+   ```bash
+   cd /path/to/your/project
+   codebuddy
+   ```
+
+   The first run walks you through sign-in. Choose the Chinese Site, International Site, or another sign-in option as prompted.
+
+4. Type `/model` and press Enter, then pick the model you just added from the list. You can also pick it at startup:
+
+   ```bash
+   codebuddy --model gpt-5.6
+   ```
+
+`models.json` hot-reloads, so no restart is needed after edits.
+
+## Use It in the CodeBuddy IDE Plugin
+
+The CodeBuddy IDE plugin can add OpenAI-compatible custom models from its UI:
+
+1. Start CodeBuddy IDE, click the model selector below the chat panel, and then click "Configure Custom Models".
+2. On the add-model page, set the provider to **Custom**.
+3. Fill in the following and click "Save":
+
+   | Item | Value |
+   | --- | --- |
+   | Base URL | `https://your-domain.com/v1/chat/completions` |
+   | API Key | NookMux token |
+   | Model name | A model name configured in the NookMux channel |
+
+4. Return to the chat panel, open the model selector, and pick the model under **Custom Models**.
+
+## Common Issues
+
+### The Configuration Does Not Take Effect
+
+- Check that `models.json` is valid JSON and located in the right path.
+- Make sure the environment variable referenced by `apiKey` is exported in the terminal that starts CodeBuddy.
+
+### The Model Is Missing from the List
+
+- Make sure required fields such as `id` are complete. When `availableModels` is set, only the models listed there are shown.

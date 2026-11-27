@@ -3,12 +3,14 @@ title: AionUi - Free, Open-Source Desktop Office Agent
 ---
 
 <Info>
-  AionUi is a free, local, open-source Cowork client that supports Gemini CLI, Claude Code, Codex, OpenCode, Qwen Code, Goose CLI, Auggie, and more. It provides a complete GUI and WebUI remote access.
+  AionUi is a free, local, open-source Cowork client that supports Gemini CLI, Claude Code, Codex, OpenCode, Qwen Code, Goose, Augment Code, and more. It provides a complete GUI and WebUI remote access.
 </Info>
 
 - Official Website: [https://www.aionui.com](https://www.aionui.com)
+- Download: [https://www.aionui.com/en/download](https://www.aionui.com/en/download)
 - GitHub Repository: [https://github.com/iOfficeAI/AionUi](https://github.com/iOfficeAI/AionUi)
-- Download: [https://github.com/iOfficeAI/AionUi/releases](https://github.com/iOfficeAI/AionUi/releases)
+- Model Configuration Guide: [https://github.com/iOfficeAI/AionUi/wiki/LLM-Configuration](https://github.com/iOfficeAI/AionUi/wiki/LLM-Configuration)
+- FAQ: [https://github.com/iOfficeAI/AionUi/wiki/FAQ](https://github.com/iOfficeAI/AionUi/wiki/FAQ)
 
 ## Core Features
 
@@ -25,21 +27,25 @@ AionUi connects to NookMux through an OpenAI-compatible interface.
 
 ### Parameters
 
-- Provider Type: OpenAI / OpenAI-compatible
-- API Key: NookMux token (starts with the site key prefix, default `sk-`)
-- API Address: NookMux site address + `/v1`, for example `https://your-domain.com/v1`
+| Item | Value |
+| --- | --- |
+| Model platform | New API (or "Custom") |
+| API endpoint | `https://your-domain.com/v1` (include `/v1`; AionUi appends `/chat/completions` to it) |
+| API Key | NookMux token (starts with the site key prefix, default `sk-`), created and copied from the "Keys" page |
+| Model name | The model ID configured in the NookMux channel |
+| Request protocol | OpenAI (shown only for the New API platform) |
 
 ### Configuration Steps
 
-1. Create a token on the NookMux console's "Keys" page and copy it.
-2. Open AionUi settings, go to "Model Configuration", and click "Add Model".
-3. Choose the OpenAI / OpenAI-compatible provider type.
-4. Fill in the API address and API key.
-5. Add a model: pick or enter the model name so it matches the name configured in NookMux, then choose the appropriate request protocol.
-6. Return to the chat page and start a conversation with the configured model.
+1. **Open the model settings**: Go to "Settings" → "Models" and click "Add Model".
+2. **Choose the model platform**: Select "New API" (or "Custom").
+3. **Fill in the API information**: Enter `https://your-domain.com/v1` as the API endpoint, paste the NookMux token as the API Key, and leave "Full URL" turned off.
+4. **Add a model**: Click the search icon next to the model name field to fetch the model list, or enter model names directly (multiple are allowed).
+5. **Request protocol**: With the New API platform, set the request protocol to "OpenAI". Model names starting with `claude` or `gemini` are auto-detected as other protocols, so change them back manually.
+6. **Start using**: After saving, click the health check icon on the model row to confirm connectivity. Custom models are currently available only to the Aion CLI agent; other agents use their own built-in models.
 
 ## Related Links
 
 - [GitHub Repository](https://github.com/iOfficeAI/AionUi)
-- [Complete Usage Guide](https://github.com/iOfficeAI/AionUi#-detailed-usage-guide)
-- [FAQ](https://github.com/iOfficeAI/AionUi#-support--help)
+- [Model Configuration Guide](https://github.com/iOfficeAI/AionUi/wiki/LLM-Configuration)
+- [FAQ](https://github.com/iOfficeAI/AionUi/wiki/FAQ)

@@ -6,7 +6,8 @@ title: Factory Droid CLI
   Droid CLI is a command-line AI software engineering agent developed by Factory AI. It supports custom model gateways through BYOK (Bring Your Own Key).
 
   - Official Homepage: [https://factory.ai/product/cli](https://factory.ai/product/cli)
-  - Official BYOK Docs: [https://docs.factory.ai/cli/byok/overview](https://docs.factory.ai/cli/byok/overview)
+  - Official BYOK Docs: [https://docs.factory.com/model-independence/byok](https://docs.factory.com/model-independence/byok)
+  - CLI Reference: [https://docs.factory.com/droid-cli/cli-reference](https://docs.factory.com/droid-cli/cli-reference)
 </Card>
 
 ## Install
@@ -23,11 +24,22 @@ Windows (PowerShell):
 irm https://app.factory.ai/cli/windows | iex
 ```
 
-After installation, follow the prompts to add the executable directory to your PATH. Droid CLI requires logging in to the official account (free) before use.
+npm (requires Node.js 20 or later):
+
+```bash
+npm install -g droid
+```
+
+```bash
+# Verify the installation
+droid --version
+```
+
+The macOS / Linux script installs `droid` to `~/.local/bin`; follow the prompt to add that directory to your PATH. Linux needs `xdg-utils` installed. The Windows script installs `droid.exe` to `%USERPROFILE%\bin` and adds it to the user PATH automatically. The first time you start `droid`, sign in through your browser with a Factory account (free) if prompted.
 
 ## Connect to NookMux
 
-Droid CLI configures custom models through the `customModels` array in `~/.factory/settings.json`. NookMux provides an OpenAI-compatible interface:
+Droid CLI configures custom models through the `customModels` array in `~/.factory/settings.json` (`%USERPROFILE%\.factory\settings.json` on Windows). NookMux provides an OpenAI-compatible interface:
 
 ```json
 {
@@ -44,13 +56,20 @@ Droid CLI configures custom models through the `customModels` array in `~/.facto
 }
 ```
 
-- `model`: Must match the model name configured in the NookMux channel.
-- `baseUrl`: NookMux site address + `/v1`.
-- `apiKey`: Supports `${VAR_NAME}` syntax to reference an environment variable, for example `export NOOKMUX_API_KEY=sk-your-nookmux-token` first; you can also write the token directly, but mind file permissions.
-- `provider`:
-  - `generic-chat-completion-api`: OpenAI Chat Completions-compatible (works for most cases).
-  - `openai`: OpenAI Responses API (for newer models such as `gpt-5` / `gpt-5-codex`).
-  - `anthropic`: Anthropic Messages API. In this case, set `baseUrl` to the NookMux site root and use a `claude-*` model.
+| Field | Description |
+| --- | --- |
+| `model` | Required. Must match the model name configured in the NookMux channel |
+| `provider` | Required. The API protocol; see the values below |
+| `baseUrl` | Required. NookMux site address + `/v1`; use the site root when `provider` is `anthropic` |
+| `displayName` | Name shown in the `/model` list |
+| `apiKey` | Supports `${VAR_NAME}` syntax to reference an environment variable |
+| `maxOutputTokens` / `maxContextLimit` | Optional. Maximum output tokens and the model's context window (input tokens); set them to the model's real limits |
+
+Values for `provider`:
+
+- `generic-chat-completion-api`: OpenAI Chat Completions-compatible (works for most cases).
+- `openai`: OpenAI Responses API.
+- `anthropic`: Anthropic Messages API. Set `baseUrl` to the NookMux site root and use a `claude-*` model.
 
 Anthropic model example:
 
@@ -85,14 +104,14 @@ Anthropic model example:
    droid
    ```
 
-4. Use the `/model` command to pick the configured model from the "Custom models" group.
+4. Use the `/model` command to pick the configured model from the "Custom Models" group. You can also add and manage custom models under Custom models in `/settings`.
 
 ## Common Issues
 
 ### The Model Does Not Appear in the Selector
 
 - Check that `~/.factory/settings.json` is valid JSON.
-- Make sure the required fields `model`, `baseUrl`, and `provider` are complete.
+- Make sure the required fields `model`, `provider`, and `baseUrl` are complete.
 
 ### Authentication Failed
 
@@ -101,6 +120,10 @@ Anthropic model example:
 
 ### PowerShell Execution Policy Restriction
 
+Download the script and bypass the execution policy for that one run:
+
 ```powershell
-Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+curl.exe -fsSL https://app.factory.ai/cli/windows -o install.ps1
+powershell -ExecutionPolicy Bypass -File install.ps1
+del install.ps1
 ```

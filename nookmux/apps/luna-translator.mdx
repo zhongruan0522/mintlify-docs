@@ -3,11 +3,12 @@ title: LunaTranslator - Open-source GalGame Translator
 ---
 
 <Info>
-  LunaTranslator is an open-source and free visual novel (GalGame) translator that supports HOOK text extraction, OCR, offline translation, and large-model translation. It can connect to OpenAI-compatible services through the "Large Model General Interface".
+  LunaTranslator is an open-source and free visual novel (GalGame) translator that supports HOOK text extraction, OCR, offline translation, and large-model translation. It can connect to OpenAI-compatible services through the "General Large Model Interface".
 </Info>
 
 - GitHub Repository: [https://github.com/HIllya51/LunaTranslator](https://github.com/HIllya51/LunaTranslator)
-- Project Documentation: [https://docs.lunatranslator.org/en/README.html](https://docs.lunatranslator.org/en/README.html)
+- Project Documentation: [Download & FAQ](https://docs.lunatranslator.org/en/README.html)
+- Large Model Translation Interface: [https://docs.lunatranslator.org/en/guochandamoxing.html](https://docs.lunatranslator.org/en/guochandamoxing.html)
 
 ## Supported Features
 
@@ -20,25 +21,24 @@ title: LunaTranslator - Open-source GalGame Translator
 
 ## Installation
 
-Download and install it from [LunaTranslator Documentation - Download & Launch & Update](https://docs.lunatranslator.org/en/README.html).
+Download and install it from the [LunaTranslator documentation - Download & FAQ](https://docs.lunatranslator.org/en/README.html).
 
 ## Connect to NookMux in LunaTranslator
 
-LunaTranslator's "Large Model General Interface" uses the OpenAI-compatible protocol and can point directly to NookMux.
+LunaTranslator's "General Large Model Interface" uses the OpenAI-compatible protocol and can point directly to NookMux.
 
 ### Configuration Steps
 
-1. Create a token on the NookMux console's "Keys" page and copy the API Key.
-2. Open LunaTranslator -> `Settings` -> `Translation Settings` -> `Large Models`, then choose Add.
-3. Copy the **Large Model General Interface** template and add a new interface.
-4. In the new interface, fill in:
+1. Create a token on the NookMux console's "Keys" page and copy the API Key (it starts with the site key prefix, default `sk-`).
+2. Open LunaTranslator → **Settings** → **Translation Settings**. In the large model interface area, click the "+" button above the list and choose the "General Large Model Interface", then name the new interface in the pop-up window.
+3. Activate the copied interface, click its settings button, and fill in:
 
-| Item | Value |
-| --- | --- |
-| API Address | NookMux site address + `/v1`, for example `https://your-domain.com/v1` |
-| API Key | NookMux token (starts with the site key prefix, default `sk-`) |
-| Model | Click the refresh button next to the model dropdown to fetch the model list, or enter the model name manually |
+   | Item | Value |
+   | --- | --- |
+   | API endpoint | NookMux site address + `/v1`, for example `https://your-domain.com/v1`; the app requests `<address>/chat/completions` automatically |
+   | API Key | NookMux token |
+   | Model | Click the refresh button next to the `Model` dropdown to fetch the model list, or enter the model name manually |
 
-5. Turn on the switch next to the interface to enable it.
+4. Click "OK" to save.
 
-For more usage details, see the official LunaTranslator documentation: [LunaTranslator Documentation - Large Model Translation Interface](https://docs.lunatranslator.org/en/guochandamoxing.html).
+Turn on the switch next to the interface to enable it. For more usage details, see the official LunaTranslator documentation: [Large Model Translation Interface](https://docs.lunatranslator.org/en/guochandamoxing.html).

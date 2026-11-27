@@ -8,11 +8,12 @@ title: AstrBot - Agent Chatbot
 
 - Official Website: [https://astrbot.app](https://astrbot.app)
 - Official Documentation: [https://docs.astrbot.app](https://docs.astrbot.app)
+- Connecting Model Providers: [https://docs.astrbot.app/providers/start.html](https://docs.astrbot.app/providers/start.html)
 - Project Homepage: [https://github.com/astrbotdevs/astrbot](https://github.com/astrbotdevs/astrbot)
 
 ## Integration
 
-AstrBot connects to NookMux through an OpenAI-compatible interface and supports both Chat Completions and Responses APIs.
+AstrBot connects to NookMux through the OpenAI-compatible Chat Completions interface.
 
 ### Configuration Steps
 
@@ -20,17 +21,20 @@ AstrBot connects to NookMux through an OpenAI-compatible interface and supports 
 
 After registering and logging in to NookMux, open the console's "Keys" page, create a token, and copy the generated API Key (it starts with the site key prefix, default `sk-`).
 
-#### Configure the Service Provider in AstrBot
+#### Add a Model Provider in AstrBot
 
-1. Open the AstrBot admin panel, go to "Model Providers", and click "Add Model Provider".
-2. Choose the "OpenAI" provider type.
-3. Set the API Base URL to the NookMux endpoint:
-   - Local deployment: `http://localhost:3000/v1`
+1. Open the AstrBot admin panel, go to the "Chat Completion" tab of the model providers page, and click "Add".
+2. Choose `OpenAI Compatible` from the template list.
+3. Fill in the provider name, "API Key" (the NookMux token), and "Base URL" (called API Base URL in the official docs):
+   - AstrBot and NookMux on the same machine, neither in a container: `http://localhost:3000/v1`
    - Online deployment: `https://your-domain.com/v1`
-4. Fill in the API Key field and click Save.
 
-#### Apply the Provider
+   When AstrBot runs in Docker, `localhost` points to the container itself, so use the host address instead: `http://host.docker.internal:3000/v1` on Docker Desktop (Mac / Windows), or `http://<docker0 gateway IP>:3000/v1` on Linux (`172.17.0.1` by default). See the official [Docker deployment docs](https://docs.astrbot.app/deploy/astrbot/docker.html).
 
-Go to "Configuration File", find the model section, set "Default Chat Model" to the provider you just created, and save.
+4. Click "Save and Fetch Models", find the model you want in the available models list, click `+` next to it, and make sure the model is enabled. If the model list cannot be fetched, click "Save Configuration" first, then click "Custom Model" and enter the model ID manually. Use "Test Model" next to a model to check connectivity.
+
+#### Set the Chat Model
+
+Go to "Config", select the config to use, set "Chat Model" under "AI" → "Model" to the model you just added, and click "Save Configuration" in the bottom-right corner.
 
 AstrBot will then call the AI models configured in NookMux.

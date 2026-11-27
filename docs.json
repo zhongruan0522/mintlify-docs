@@ -8,6 +8,9 @@
     "dark": "#15803D"
   },
   "favicon": "/favicon.svg",
+  "icons": {
+    "library": "lucide"
+  },
   "navigation": {
     "languages": [
       {
@@ -541,15 +544,19 @@
             "pages": [
               "cn/nookmux/apps/index",
               "cn/nookmux/apps/aionui",
+              "cn/nookmux/apps/astrbot",
+              "cn/nookmux/apps/cc-switch",
               "cn/nookmux/apps/cherry-studio",
               "cn/nookmux/apps/claude-code",
+              "cn/nookmux/apps/codebuddy",
               "cn/nookmux/apps/codex-cli",
               "cn/nookmux/apps/factory-droid-cli",
               "cn/nookmux/apps/fluent-read",
               "cn/nookmux/apps/langbot",
               "cn/nookmux/apps/luna-translator",
-              "cn/nookmux/apps/astrbot",
-              "cn/nookmux/apps/cc-switch"
+              "cn/nookmux/apps/opencode",
+              "cn/nookmux/apps/rikkahub",
+              "cn/nookmux/apps/workbuddy"
             ]
           }
         ]
@@ -1084,15 +1091,19 @@
             "pages": [
               "nookmux/apps/index",
               "nookmux/apps/aionui",
+              "nookmux/apps/astrbot",
+              "nookmux/apps/cc-switch",
               "nookmux/apps/cherry-studio",
               "nookmux/apps/claude-code",
+              "nookmux/apps/codebuddy",
               "nookmux/apps/codex-cli",
               "nookmux/apps/factory-droid-cli",
               "nookmux/apps/fluent-read",
               "nookmux/apps/langbot",
               "nookmux/apps/luna-translator",
-              "nookmux/apps/astrbot",
-              "nookmux/apps/cc-switch"
+              "nookmux/apps/opencode",
+              "nookmux/apps/rikkahub",
+              "nookmux/apps/workbuddy"
             ]
           }
         ]

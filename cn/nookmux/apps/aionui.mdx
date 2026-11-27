@@ -3,12 +3,14 @@ title: AionUi - 免费开源的桌面办公 Agent
 ---
 
 <Info>
-  AionUi 是一款免费、本地、开源的 Cowork 客户端，支持 Gemini CLI、Claude Code、Codex、OpenCode、Qwen Code、Goose CLI、Auggie 等多种 AI 代理，提供完整的 GUI 界面和 WebUI 远程访问功能。
+  AionUi 是一款免费、本地、开源的 Cowork 客户端，支持 Gemini CLI、Claude Code、Codex、OpenCode、Qwen Code、Goose、Augment Code 等多种 AI 代理，提供完整的 GUI 界面和 WebUI 远程访问功能。
 </Info>
 
 - 官网地址：[https://www.aionui.com](https://www.aionui.com)
+- 下载地址：[https://www.aionui.com/download](https://www.aionui.com/download)
 - GitHub 仓库：[https://github.com/iOfficeAI/AionUi](https://github.com/iOfficeAI/AionUi)
-- 下载地址：[https://github.com/iOfficeAI/AionUi/releases](https://github.com/iOfficeAI/AionUi/releases)
+- 模型配置指南：[https://github.com/iOfficeAI/AionUi/wiki/LLM-Configuration-Chinese](https://github.com/iOfficeAI/AionUi/wiki/LLM-Configuration-Chinese)
+- FAQ 常见问题：[https://github.com/iOfficeAI/AionUi/wiki/FAQ-Chinese](https://github.com/iOfficeAI/AionUi/wiki/FAQ-Chinese)
 
 ## 核心特性
 
@@ -25,23 +27,25 @@ AionUi 通过 OpenAI 兼容接口接入 NookMux。
 
 ### 参数填写
 
-- 提供商类型：OpenAI / OpenAI 兼容
-- API Key：NookMux 令牌（以 API Key 前缀开头，默认 `sk-`）
-- API 地址：NookMux 站点地址 + `/v1`，例如 `https://your-domain.com/v1`
+| 配置项 | 填写内容 |
+| --- | --- |
+| 模型平台 | New API（或「自定义」） |
+| API 请求地址 | `https://your-domain.com/v1`（需带 `/v1`，AionUi 会在其后拼接 `/chat/completions`） |
+| API Key | NookMux 令牌（以 API Key 前缀开头，默认 `sk-`），在「密钥」页面创建并复制 |
+| 模型名称 | 与 NookMux 渠道中配置的一致的模型 ID |
+| 请求协议 | OpenAI（仅 New API 平台显示） |
 
 ### 配置步骤
 
-1. **获取 API Key**：在 NookMux 控制台「API Key」页面创建令牌并复制。
-2. **打开 AionUi 设置**：进入设置页面的「模型配置」Tab，点击「添加模型」。
-3. **添加提供商**：选择 OpenAI / OpenAI 兼容类型。
-4. **配置 API 信息**：
-   - API 地址填写 `https://your-domain.com/v1`
-   - API 密钥粘贴 NookMux 令牌
-5. **添加模型**：下拉选择或手动输入模型名称，模型名称需与 NookMux 渠道中配置的一致，并选择合适的请求协议。
-6. **开始使用**：返回聊天页面，选择已配置的模型开始对话。
+1. **打开模型设置**：进入「设置」→「模型」，点击「添加模型」。
+2. **选择模型平台**：选「New API」（或「自定义」）。
+3. **配置 API 信息**：「API 请求地址」填 `https://your-domain.com/v1`，「API Key」粘贴 NookMux 令牌，「完整 URL」保持关闭。
+4. **添加模型**：在「模型名称」里点搜索图标拉取模型列表，或直接输入模型名称（可多选）。
+5. **请求协议**：模型平台为 New API 时，把「请求协议」设为「OpenAI」。以 `claude`、`gemini` 开头的模型名会被自动判为其他协议，需要手动改回。
+6. **开始使用**：保存后，点击该模型行的「健康检测」图标确认连通。自定义模型目前仅 Aion CLI 代理可用，其他 Agent 使用各自内置的模型。
 
 ## 相关链接
 
 - [GitHub 仓库](https://github.com/iOfficeAI/AionUi)
-- [完整使用指南](https://github.com/iOfficeAI/AionUi#-detailed-usage-guide)
-- [FAQ 常见问题](https://github.com/iOfficeAI/AionUi#-support--help)
+- [模型配置指南](https://github.com/iOfficeAI/AionUi/wiki/LLM-Configuration-Chinese)
+- [FAQ 常见问题](https://github.com/iOfficeAI/AionUi/wiki/FAQ-Chinese)

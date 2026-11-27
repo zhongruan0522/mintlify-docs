@@ -1,0 +1,39 @@
+---
+title: RikkaHub - Android AI Chat Client
+---
+
+<Card type="info" title="Project Introduction">
+  RikkaHub is an open-source Android AI chat assistant (AGPL-3.0) built with Kotlin and Jetpack Compose. It brings OpenAI, Google Gemini, Anthropic Claude, and any OpenAI-compatible service into one interface, with support for MCP, agents, and more.
+
+  - GitHub Repository: [https://github.com/rikkahub/rikkahub](https://github.com/rikkahub/rikkahub)
+  - Official Documentation: [https://docs.rikka-ai.com](https://docs.rikka-ai.com)
+</Card>
+
+## Install
+
+Install RikkaHub from [Google Play](https://play.google.com/store/apps/details?id=me.rerere.rikkahub) on your Android phone, or download the APK from [GitHub Releases](https://github.com/rikkahub/rikkahub/releases).
+
+## Connect to NookMux
+
+RikkaHub's OpenAI provider type works with any OpenAI-compatible service. Requests go to **API Base Url** plus **API Path**, and the default path is `/chat/completions`, so set **API Base Url** up to `/v1`.
+
+| Item | Value |
+| --- | --- |
+| Provider type | OpenAI |
+| API Key | NookMux token (starts with the site key prefix, default `sk-`), created and copied from the "Keys" page |
+| API Base Url | `https://your-domain.com/v1` (NookMux site address + `/v1`) |
+| API Path | Keep the default `/chat/completions` |
+| Model | Set **Model ID** to a model name configured in the NookMux channel |
+
+### Configuration Steps
+
+1. Create a token on the NookMux console's "Keys" page and copy the API Key.
+2. Open RikkaHub, go to **Settings → Providers**, tap **Add Provider**, and choose OpenAI.
+3. Paste the NookMux token into **API Key** and change **API Base Url** to `https://your-domain.com/v1`.
+4. Tap **Add Model** and enter the model name from NookMux as the **Model ID**. You can also tick models in the **Available Models** list.
+5. Tap **Save**, then tap **Test Connection** to confirm that it works.
+6. Go back to **Settings → Default Model and Prompt**, set **Chat Model** to the model you just added, and return to the chat.
+
+<Info>
+  NookMux also supports the Responses API. To use it, turn on **Response API** in the provider's settings; requests then go to `https://your-domain.com/v1/responses`.
+</Info>

@@ -6,7 +6,8 @@ title: Fluent Read (FluentRead) - Open Source Translation Plugin
   Fluent Read (FluentRead) is an open-source browser translation extension dedicated to providing a native-like reading experience, with support for multiple translation engines including OpenAI-compatible interfaces.
 </Info>
 
-- GitHub Repository: [https://github.com/Bistutu/FluentRead](https://github.com/Bistutu/FluentRead)
+- GitHub Repository: [https://github.com/FluentRead/FluentRead](https://github.com/FluentRead/FluentRead)
+- Official Documentation (Chinese): [https://read.thinkstu.com/guide/](https://read.thinkstu.com/guide/)
 
 ## Core Features
 
@@ -25,15 +26,24 @@ title: Fluent Read (FluentRead) - Open Source Translation Plugin
 
 ## Configuration
 
-In Fluent Read's translation service settings, choose the OpenAI-compatible (large model) type and fill in:
+The custom "compatible interface" service in Fluent Read speaks the OpenAI Chat Completions protocol, so it can connect to NookMux directly. The built-in "New API" service works as well.
 
-| Item | Value |
-| --- | --- |
-| Translation Service | OpenAI / custom OpenAI interface |
-| API Address | NookMux site address (follow the plugin's field requirements; `/v1` is usually not needed, but if requests fail, try adding `/v1`) |
-| API Key | NookMux token (starts with the site key prefix, default `sk-`) |
-| Model | The model name configured in the channel |
+### Configuration Steps
 
-<Card type="warning" title="Use the plugin's actual field names">
-  Fluent Read's settings UI and field names can vary by version. The key idea is the same: point the API address at your NookMux site, use the NookMux token, and make sure the model name matches the channel. If translation does not respond, first confirm that the model works in NookMux.
-</Card>
+1. Create a token on the NookMux console's "Keys" page and copy the API Key (it starts with the site key prefix, default `sk-`).
+2. Open the extension's **Settings → Translation Services**, click **Custom Service** (自定义服务), and choose the compatible interface type (兼容接口).
+3. Fill in:
+
+   | Item | Value |
+   | --- | --- |
+   | Service name | Any name, for example `NookMux` |
+   | Endpoint URL | `https://your-domain.com/v1`; the site root `https://your-domain.com` also works, since the extension completes it to `/v1/chat/completions` |
+   | API Key | NookMux token |
+   | First model | A model name configured in the channel; it must support Chat Completions |
+
+4. Click **Save Service** (保存服务).
+5. In the service's configuration panel, click **Check Connection** (检查连接), then **Set as default translation service** (设为默认翻译服务).
+
+You can also use the built-in "New API" service: enter `https://your-domain.com` as the New API endpoint, then fill in the API Key and model.
+
+For more details, see the official docs: [Choosing a translation service](https://read.thinkstu.com/config/translation-engines) (Chinese).

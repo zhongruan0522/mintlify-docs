@@ -1,0 +1,107 @@
+---
+title: OpenCode - Open-Source Coding Agent
+---
+
+<Info>
+  OpenCode is an open-source coding agent available as a terminal interface, desktop app, and web app. It ships with a catalog of model providers and also accepts custom model services through its config file.
+</Info>
+
+- Official Website: [https://opencode.ai](https://opencode.ai)
+- Official Documentation: [https://opencode.ai/docs](https://opencode.ai/docs)
+- GitHub Repository: [https://github.com/anomalyco/opencode](https://github.com/anomalyco/opencode)
+- Providers: [https://opencode.ai/docs/providers](https://opencode.ai/docs/providers)
+
+## Install
+
+macOS / Linux:
+
+```bash
+curl -fsSL https://opencode.ai/v2/install | bash
+```
+
+Homebrew:
+
+```bash
+brew install anomalyco/tap/opencode-v2
+```
+
+npm:
+
+```bash
+npm install -g @opencode/cli
+```
+
+Package managers are not supported on Windows. Download the standalone executable for your platform from the [official docs](https://opencode.ai/docs).
+
+## Connect to NookMux
+
+OpenCode reads `opencode.json` or `opencode.jsonc`. Put global settings in `~/.config/opencode/opencode.jsonc`, or use a file in the project root or the project's `.opencode/` directory. Add a custom provider under `providers`:
+
+```jsonc title="~/.config/opencode/opencode.jsonc"
+{
+  "$schema": "https://opencode.ai/config.json",
+  "providers": {
+    "nookmux": {
+      "name": "NookMux",
+      "env": ["NOOKMUX_API_KEY"],
+      "package": "@opencode/ai/providers/openai-compatible",
+      "settings": {
+        "baseURL": "https://your-domain.com/v1"
+      },
+      "models": {
+        "gpt-5.6": {},
+        "claude-sonnet-4-6": {}
+      }
+    }
+  }
+}
+```
+
+| Field | Description |
+| --- | --- |
+| `nookmux` | The provider ID. Models are referenced as `providerID/modelID`, for example `nookmux/gpt-5.6` |
+| `name` | Display name |
+| `env` | The environment variable that provides the credential. It must be set in the environment OpenCode starts from |
+| `package` | The runtime package, which selects the request protocol. See the table below |
+| `settings.baseURL` | NookMux site address + `/v1`. The same address works for all three protocols |
+| `models` | The models to use, keyed by model ID. Each key must match the model name configured in the NookMux channel |
+
+Values for `package` and the endpoint each one calls:
+
+| `package` | Endpoint called |
+| --- | --- |
+| `@opencode/ai/providers/openai-compatible` | `<site address>/v1/chat/completions` |
+| `@opencode/ai/providers/openai-compatible/responses` | `<site address>/v1/responses` |
+| `@opencode/ai/providers/anthropic-compatible` | `<site address>/v1/messages` |
+
+## Usage
+
+1. Create a token on the NookMux console's "Keys" page and copy the full secret (it starts with the site key prefix, default `sk-`).
+2. Export the environment variable:
+
+   ```bash
+   export NOOKMUX_API_KEY=sk-your-nookmux-token
+   ```
+
+3. Start OpenCode:
+
+   ```bash
+   cd /path/to/your/project
+   opencode
+   ```
+
+4. Use `/models` to pick a model under `NookMux`. You can also add `"model": "nookmux/gpt-5.6"` at the top level of the config file to make it the default model.
+
+## Common Issues
+
+### "No model is available for session"
+
+No model is currently selectable. Check that the provider and models in the config file are correct and the environment variable is exported, then choose a model in `/models`.
+
+### "Model unavailable: provider/model"
+
+The provider is inactive, or the model ID is missing or disabled. Check that the key in `models` matches the model ID you reference.
+
+### 401 / Invalid Token
+
+Make sure the environment variable listed in `env` is exported in the terminal that starts OpenCode, and that its value is the full NookMux token starting with the site key prefix (default `sk-`).

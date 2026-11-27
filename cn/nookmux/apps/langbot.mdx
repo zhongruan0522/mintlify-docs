@@ -12,42 +12,28 @@ title: LangBot - 即时通信机器人开发平台
 - 官网地址：[https://langbot.app/](https://langbot.app/)
 - 下载地址：[https://github.com/langbot-app/LangBot/releases](https://github.com/langbot-app/LangBot/releases)
 - 官方文档：[https://docs.langbot.app/](https://docs.langbot.app/)
-- 开源地址：[https://github.com/langbot-app/LangBot](https://github.com/langbot-app/LangBot)
+- 接入 New API 指南：[https://langbot.app/docs/zh/workshop/newapi-integration/](https://langbot.app/docs/zh/workshop/newapi-integration/)
 
 ## 接入 NookMux
 
-LangBot 支持接入本地部署的 NookMux 或任何 OpenAI 兼容的 NookMux 服务。
+LangBot 支持接入本地部署或线上的 NookMux。LangBot 预置了名为 New API 的供应商类型，通过 OpenAI 兼容接口调用 NookMux。
 
-### 使用方式
+### 接入对话模型
 
-1. 从 NookMux 中获取 API Key。
-   ![获取 API Key](/assets/nookmux/langbot/get_api_key.png)
+1. 在 NookMux 控制台「密钥」页面创建令牌并复制（以 API Key 前缀开头，默认 `sk-`）。NookMux 的接口地址是站点地址 + `/v1`：本地部署为 `http://127.0.0.1:3000/v1`，线上为 `https://your-domain.com/v1`。LangBot 运行在 Docker 中时，`127.0.0.1` 指向容器自身，需要改用宿主机 IP 或容器网络内可达的地址（可参考官方文档[「网络配置详解」](https://langbot.app/docs/zh/workshop/network-details/)）。
+2. 打开 LangBot WebUI，点击右上角的账户菜单，进入「系统设置」→「模型配置」。
+3. 点击「添加供应商」：「供应商名称」填 `NookMux`；「供应商类型」在「中转平台」分组中选择 `New API`；「请求URL」填第 1 步的接口地址；「API Key」填 NookMux 令牌；点击「保存」。
+4. 在该供应商卡片上点击「扫描模型」，勾选要使用的模型后点击「添加所选模型」。也可以点击「添加」→「手动添加」，在「添加对话模型」表单中填写「模型名称」（NookMux 中的模型 ID），按需勾选「视觉能力」「函数调用」等能力后保存。
+5. 在左侧进入「处理器」，选中要使用的流水线，在「AI 能力」页把运行器设为「内置 Agent」，「模型」选择刚添加的模型，保存。
+6. 在流水线详情页的调试面板中选择「私聊」或「群聊」并发送消息验证，也可以直接与绑定该流水线的机器人对话。部署机器人请参考官方文档「机器人（Bots）」。
 
-   若是本地部署的 NookMux 请自行配置 API 地址（可参考 [容器网络连接](https://docs.langbot.app/zh/workshop/network-details.html)），若使用第三方 NookMux 服务，可在页面上复制地址。注意，地址后需要添加 `/v1`。
+### 在知识库中使用 NookMux 嵌入模型
 
-2. 在 LangBot 中添加模型，选择使用 NookMux 供应商，填写对应的 API Key 和 API 地址。
-   ![添加 NookMux 模型](/assets/nookmux/langbot/add_newapi_model.png)
+LangBot 的知识库可以使用 NookMux 提供的嵌入模型。
 
-3. 在流水线中选择使用模型。
+1. 在「系统设置」→「模型配置」中，点击 NookMux 供应商卡片上的「添加」→「添加嵌入模型」，「模型名称」填 NookMux 中的嵌入模型 ID，保存。
+2. 在左侧进入「知识库」，点击「创建知识库」：填写知识库名称，选择一个 RAG 引擎（由已安装的插件提供），在引擎的配置表单中把嵌入模型设为刚添加的模型，设置分块大小等参数后点击「创建」。
+3. 如果所选 RAG 引擎支持文档上传，在知识库的「文档」页上传文档，等待索引完成。
+4. 回到流水线的「AI 能力」页，保持运行器为「内置 Agent」，在下方选择刚创建的知识库。
 
-   ![选择模型](/assets/nookmux/langbot/select_model.png)
-
-4. 在对话调试中对话或与绑定至流水线的机器人对话即可使用。
-
-   ![对话](/assets/nookmux/langbot/debug_chat.png)
-
-   ![微信对话](/assets/nookmux/langbot/wechat.png)
-
-    部署配置机器人请参考[部署机器人](https://docs.langbot.app/zh/deploy/platforms/readme.html)。
-
-### 使用 LangBot 知识库
-
-LangBot 支持使用 NookMux 的嵌入模型，并将其作为知识库的向量模型。
-
-1. 在 LangBot 中添加嵌入模型，选择使用 NookMux 供应商。
-   ![添加嵌入模型](/assets/nookmux/langbot/add_embedding_model.png)
-
-2. 在新建知识库时选用嵌入模型。
-   ![使用嵌入模型](/assets/nookmux/langbot/use_embedding_model.png)
-
-更多使用方式请查看 [LangBot 官方文档](https://docs.langbot.app/)。
+之后即可在「对话调试」或绑定该流水线的机器人上使用知识库对话。模型与知识库的更多用法请查看 [LangBot 官方文档](https://docs.langbot.app/)。

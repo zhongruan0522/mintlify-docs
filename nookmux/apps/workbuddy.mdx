@@ -1,0 +1,35 @@
+---
+title: WorkBuddy - AI Agent Desktop Workspace
+---
+
+<Info>
+  WorkBuddy AI is Tencent's all-scenario AI agent desktop workspace for office work, available on Windows and Mac. Describe a task in one sentence and it plans and runs the task on its own, delivering documents, spreadsheets, and slides. Custom models let it use any OpenAI-compatible model service.
+</Info>
+
+- Official Website (International): [https://www.workbuddy.ai](https://www.workbuddy.ai)
+- Official Website (China): [https://www.workbuddy.cn](https://www.workbuddy.cn)
+- Official Docs "Model Configuration": [https://www.workbuddy.ai/docs/workbuddy/From-Beginner-to-Expert-Guide/Function-Description/Model-Configuration](https://www.workbuddy.ai/docs/workbuddy/From-Beginner-to-Expert-Guide/Function-Description/Model-Configuration)
+
+## Connect to NookMux
+
+WorkBuddy custom models use the OpenAI-compatible Chat Completions API, so NookMux's OpenAI-compatible interface connects directly.
+
+### Parameters
+
+| Item | Value |
+| --- | --- |
+| API address | NookMux site address + `/v1`, for example `https://your-domain.com/v1` |
+| API Key | NookMux token (starts with the site key prefix, default `sk-`), created and copied from the "Keys" page |
+| Model name | The model ID accepted by the API, matching the model name configured in the NookMux channel |
+
+### Configuration Steps
+
+1. Create a token on the NookMux console's "Keys" page and copy it.
+2. Open the WorkBuddy desktop app and go to **Avatar > System Settings > Models**.
+3. Choose **Custom** as the provider and enter the API address, API Key, and model name from the table above.
+4. Set options such as "Tool calling" and "Image input" according to what the model actually supports, then save.
+5. Click "Test Connection". Once it passes, select the custom model in the model selector within the conversation.
+
+Leave the "Custom Protocol" toggle off. With it off, WorkBuddy normalizes the API address so that it ends with `/chat/completions`, so both `https://your-domain.com/v1` and the full `https://your-domain.com/v1/chat/completions` work.
+
+The configuration is saved in `~/.workbuddy-ai/models.json` (`%USERPROFILE%\.workbuddy-ai\models.json` on Windows). Day-to-day management can be done in the UI.

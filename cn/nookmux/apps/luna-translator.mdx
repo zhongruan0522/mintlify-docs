@@ -7,7 +7,8 @@ title: LunaTranslator - 开源 GalGame 翻译器
 </Info>
 
 - 项目地址：[https://github.com/HIllya51/LunaTranslator](https://github.com/HIllya51/LunaTranslator)
-- 项目文档：[https://docs.lunatranslator.org/zh/README.html](https://docs.lunatranslator.org/zh/README.html)
+- 项目文档：[软件下载 & 常见问题](https://docs.lunatranslator.org/zh/README.html)
+- 大模型翻译接口：[https://docs.lunatranslator.org/zh/guochandamoxing.html](https://docs.lunatranslator.org/zh/guochandamoxing.html)
 
 ## 功能支持
 
@@ -20,7 +21,7 @@ title: LunaTranslator - 开源 GalGame 翻译器
 
 ## 安装
 
-在 [LunaTranslator 文档 - 下载 & 启动 & 更新](https://docs.lunatranslator.org/zh/README.html) 下载安装。
+在 [LunaTranslator 文档 - 软件下载 & 常见问题](https://docs.lunatranslator.org/zh/README.html) 下载安装。
 
 ## 在 LunaTranslator 中接入 NookMux
 
@@ -28,17 +29,16 @@ LunaTranslator 的「大模型通用接口」使用 OpenAI 兼容协议，可直
 
 ### 配置步骤
 
-1. 在 NookMux 控制台「API Key」页面创建令牌并复制 API Key。
-2. 打开 LunaTranslator → `设置` → `翻译设置` → `大模型`，选择添加。
-3. 复制 **大模型通用接口** 模板新增接口。
-4. 在新增接口中填写：
+1. 在 NookMux 控制台「密钥」页面创建令牌并复制 API Key（以 API Key 前缀开头，默认 `sk-`）。
+2. 打开 LunaTranslator →「设置」→「翻译设置」，在大模型接口区域点击上方的「+」按钮，选择「大模型通用接口」，在弹出的窗口中为新接口命名。
+3. 启用复制出的新接口，点击它的参数设置按钮，填写：
 
-| 配置项 | 内容 |
-| --- | --- |
-| API 地址 | NookMux 站点地址 + `/v1`，例如 `https://your-domain.com/v1` |
-| API Key | NookMux 令牌（以 API Key 前缀开头，默认 `sk-`） |
-| 模型 | 点击 model 下拉框旁的刷新按钮拉取模型列表，或手动输入模型名 |
+   | 配置项 | 内容 |
+   | --- | --- |
+   | API接口地址 | NookMux 站点地址 + `/v1`，例如 `https://your-domain.com/v1`；程序会自动请求 `<地址>/chat/completions` |
+   | API Key | NookMux 令牌 |
+   | model | 点击下拉框旁的刷新按钮拉取模型列表，或直接输入模型名 |
 
-5. 打开该接口旁的开关按钮，启用接口即可开始使用。
+4. 点击「确定」保存。
 
-更多用法请查看 LunaTranslator 官方文档：[LunaTranslator 文档 - 大模型翻译接口](https://docs.lunatranslator.org/zh/guochandamoxing.html)。
+打开该接口旁的开关即可启用接口。更多用法请查看 LunaTranslator 官方文档：[大模型翻译接口](https://docs.lunatranslator.org/zh/guochandamoxing.html)。
