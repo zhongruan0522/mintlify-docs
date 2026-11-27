@@ -1,5 +1,6 @@
 ---
 title: Docker Compose 配置说明
+description: NookMux 的 docker-compose.yml 的结构与扩展方式，包括服务字段说明、外部数据库、Redis、多节点部署与常用命令。
 ---
 
 本文档说明当前 NookMux `docker-compose.yml` 的结构和常见扩展方式。根目录实际配置以 `docker-compose.yml` 为准：默认启动 NookMux 与 Redis，不内置 MySQL/PostgreSQL 服务；如需外部数据库，请设置 `SQL_DSN`。

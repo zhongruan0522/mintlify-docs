@@ -1,5 +1,6 @@
 ---
 title: Docker Compose Configuration Guide
+description: The structure and extension patterns of the NookMux docker-compose.yml file, covering service fields, external databases, Redis, multi-node deployment, and common commands.
 ---
 
 This document explains the structure of NookMux's current `docker-compose.yml` file and common extension patterns. The root configuration in the repository is the source of truth: it starts NookMux and Redis by default and does not include MySQL/PostgreSQL services. If you need an external database, set `SQL_DSN`.
