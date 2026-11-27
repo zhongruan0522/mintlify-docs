@@ -23,7 +23,7 @@ description: NookMux 常用环境变量、默认值与示例，按数据库、Re
 
 | 环境变量 | 说明 | 默认值 |
 | --- | --- | --- |
-| `TRUSTED_PROXIES` | 逗号分隔的可信代理 IP/CIDR 列表；仅当请求来自可信代理时才解析 `CF-Connecting-IP`、`X-Forwarded-For` 等头。特殊值：`private`/`local`、`cloudflare`/`cf`、`all`/`unsafe`、`none`/`disable` | `private,cloudflare` |
+| `TRUSTED_PROXIES` | 逗号分隔的可信代理 IP/CIDR 列表；仅当请求来自可信代理时才解析 `CF-Connecting-IP`、`X-Forwarded-For` 等头。位于公网地址的反向代理或 CDN 必须显式加入列表，否则它的地址会被当作客户端 IP，经它进来的所有访客共用同一份额度，日志中会给出该地址的提示。特殊值：`private`/`local`、`cloudflare`/`cf`、`all`/`unsafe`、`none`/`disable`/`off` | `private,cloudflare` |
 
 ## 数据库配置
 
@@ -87,7 +87,7 @@ description: NookMux 常用环境变量、默认值与示例，按数据库、Re
 | `GLOBAL_API_RATE_LIMIT` | 全局 API 速率限制次数（单 IP） | `180` | - |
 | `GLOBAL_API_RATE_LIMIT_DURATION` | 全局 API 速率限制时间窗口（秒） | `180` | - |
 | `GLOBAL_WEB_RATE_LIMIT_ENABLE` | 全局 Web 速率限制开关 | `true` | - |
-| `GLOBAL_WEB_RATE_LIMIT` | 全局 Web 速率限制次数（单 IP，仅计 SPA 页面与未匹配路径，不含前端构建产物） | `60` | - |
+| `GLOBAL_WEB_RATE_LIMIT` | 全局 Web 速率限制次数（单 IP，仅计 SPA 页面请求；未匹配的路径按相同次数与窗口分开计数，不含前端构建产物） | `60` | - |
 | `GLOBAL_WEB_RATE_LIMIT_DURATION` | 全局 Web 速率限制时间窗口（秒） | `180` | - |
 | `GLOBAL_STATIC_RATE_LIMIT_ENABLE` | 前端构建产物速率限制开关（入口脚本、懒加载分块等静态文件） | `false` | `GLOBAL_STATIC_RATE_LIMIT_ENABLE=true` |
 | `GLOBAL_STATIC_RATE_LIMIT` | 前端构建产物速率限制次数（单 IP） | `1000` | - |
@@ -122,7 +122,7 @@ description: NookMux 常用环境变量、默认值与示例，按数据库、Re
 </Card>
 
 <Card type="info" title="页面限流与前端构建产物限流">
-  全局 Web 限流（`GLOBAL_WEB_RATE_LIMIT`）只统计 SPA 页面请求与未匹配路径。内嵌 `dist` 中的前端构建产物（入口脚本、懒加载分块等静态文件）不占用该额度，仅在 `GLOBAL_STATIC_RATE_LIMIT_ENABLE=true` 时受独立限流器约束，默认不限流。两类限流均按经 `TRUSTED_PROXIES` 解析出的客户端 IP 计数。全局 API / Web / 静态 / 关键操作 / API Key 匿名查询 / 搜索限流器拒绝请求时返回 HTTP `429`，并附带 `Retry-After` 响应头，取完整窗口秒数（保守上界，而非精确剩余时间）。
+  全局 Web 限流（`GLOBAL_WEB_RATE_LIMIT`）按经 `TRUSTED_PROXIES` 解析出的客户端 IP 计数，三类请求各有一份计数：SPA 页面请求；`/v1`、`/api`、`/assets`、`/static` 下未匹配的路径（未注册的接口、发版后已删除的分块等），次数与窗口与页面相同但单独计数，旧标签页或其他客户端访问不存在的路径不会占用页面额度；内嵌 `dist` 中的前端构建产物（入口脚本、懒加载分块等静态文件），仅在 `GLOBAL_STATIC_RATE_LIMIT_ENABLE=true` 时受独立限流器约束，默认不限流。请求带着转发客户端 IP 的请求头、直连来源却不在 `TRUSTED_PROXIES` 里时，该请求头被忽略，经这个地址进来的所有访客共用同一份额度；日志会给出该地址的提示，每个地址至多 10 分钟一条；`TRUSTED_PROXIES=none` 时不输出该提示。配置了 Redis 时计数保存在 Redis 并按 Redis 服务端时钟计算，各实例无论时区如何都共用同一个窗口，被拒的请求不会延长窗口。全局 API / Web / 静态 / 关键操作 / API Key 匿名查询 / 搜索限流器拒绝请求时返回 HTTP `429`，并附带 `Retry-After` 响应头，取完整窗口秒数（保守上界，而非精确剩余时间）。
 </Card>
 
 <Card type="info" title="API Key 匿名查询限流">

@@ -145,7 +145,7 @@ server {
 ```
 
 <Card type="info" title="Real client IP">
-  When using a reverse proxy or CDN, configure the `TRUSTED_PROXIES` environment variable so rate limiting and logs use the real client IP. The default value is `private,cloudflare`.
+  When using a reverse proxy or CDN, configure the `TRUSTED_PROXIES` environment variable so rate limiting and logs use the real client IP. The default value is `private,cloudflare`; a reverse proxy or CDN on a public address has to be added explicitly, otherwise every visitor is counted as that address and shares one rate limit quota, and the log carries a hint naming the address.
 </Card>
 
 ## Advanced Configuration Options
@@ -225,9 +225,10 @@ For large-scale clusters, consider a centralized log management system or a sepa
 - Check the load balancer's session persistence policy.
 ### Console Returns HTTP 429 After Refreshing
 
-- The per-IP Web limit (`GLOBAL_WEB_RATE_LIMIT`, 60 requests per 180 seconds by default) counts only SPA page loads and unmatched paths. Frontend build files such as entry scripts and lazy chunks are not counted and are unlimited unless `GLOBAL_STATIC_RATE_LIMIT_ENABLE=true`.
-- When every client appears as the same IP (for example the load balancer's address), all users share one quota: add the load balancer or CDN to `TRUSTED_PROXIES` so the real client IP is used.
+- The per-IP Web limit (`GLOBAL_WEB_RATE_LIMIT`, 60 requests per 180 seconds by default) counts only SPA page loads. Unmatched paths (unregistered endpoints, chunks removed by a release) are counted separately with the same quota, and frontend build files such as entry scripts and lazy chunks are not counted and are unlimited unless `GLOBAL_STATIC_RATE_LIMIT_ENABLE=true`.
+- When every client appears as the same IP (for example the load balancer's address), all users share one quota: add the load balancer or CDN to `TRUSTED_PROXIES` so the real client IP is used. A log line such as `request from <address> carries the X-Forwarded-For header but the source address is not in TRUSTED_PROXIES` points to this case.
 - Slave nodes configured with `FRONTEND_BASE_URL` only redirect non-API requests and do not apply the Web or static limiters; the limit is enforced by the instance that serves the frontend pages.
+- With a shared Redis, the rate limit counters live in Redis and follow the Redis server clock: every node counts against the same window regardless of its own time zone, a rejected request does not extend the window, and a counter that sees no passing request expires after one window. During a rolling update the previous and the new version count separately for at most one window.
 
 ### Old Tabs Fail After a Rolling Update
 
