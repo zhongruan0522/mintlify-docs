@@ -13,6 +13,10 @@ Configurable items include:
 - Limit window length in minutes.
 - Group-based rate limit overrides.
 
+The two limits are counted separately for each user. *Maximum requests per limit window* counts every admitted request, including failed ones, and `0` means unlimited. *Maximum successful requests per limit window* counts only requests that complete with a status code below 400, so failed requests never use up this quota. A request rejected by either limit is not counted toward any limit. A limit window of `0` minutes disables both limits.
+
+Both limits use a sliding window: within the limit window leading up to the current moment, no more than the configured number of requests is counted. A request beyond either limit gets a `429` response whose body names the limit that was reached and whose `Retry-After` header gives the suggested wait in seconds (one full limit window).
+
 Group rate limit example:
 
 ```json

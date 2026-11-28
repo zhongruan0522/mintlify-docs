@@ -37,7 +37,7 @@ All AI model APIs use an API token (starting with `sk-`) created on the Console 
 
 - **Streaming**: text APIs accept the `stream` parameter and return `text/event-stream` (SSE), terminated with `data: [DONE]` (Claude and Gemini native formats follow their own event specifications).
 - **Model routing**: `model` must be a model name configured in NookMux; see the [List models](/nookmux/api/ai-model/openai/list-models) endpoint or the Console → Models page for available values.
-- **Billing and limits**: each call is billed at the model ratio and consumes token quota; exceeding rate limits returns `429`.
+- **Billing and limits**: each call is billed at the model ratio and consumes token quota; exceeding rate limits returns `429`. A `429` that comes from NookMux's own model request rate limit (see [Security & Limits](/nookmux/guide/console/settings/rate-limit-settings)) carries a `Retry-After` header giving one full limit window in seconds.
 - **Errors**: errors are returned as JSON in the form `{"error": {"message": "...", "type": "..."}}`; upstream channel errors are passed through inside it.
 
 ## Scope

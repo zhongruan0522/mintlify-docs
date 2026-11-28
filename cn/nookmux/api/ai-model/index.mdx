@@ -37,7 +37,7 @@ NookMux 的 AI 模型接口是面向终端调用方的统一入口：你以 Open
 
 - **流式输出**：文本类接口支持 `stream` 参数，响应为 `text/event-stream`（SSE），以 `data: [DONE]` 结束（Claude 与 Gemini 原生格式遵循各自的事件规范）。
 - **模型路由**：请求中的 `model` 必须是 NookMux 中已配置的模型名；可用模型以 [模型列表](/cn/nookmux/api/ai-model/openai/list-models) 接口或控制台「模型」页为准。
-- **计费与限额**：每次调用按模型倍率计费并消耗令牌额度；超出速率限制时返回 `429`。
+- **计费与限额**：每次调用按模型倍率计费并消耗令牌额度；超出速率限制时返回 `429`。由 NookMux 自身的模型请求速率限制（见[安全与限制](/cn/nookmux/guide/console/settings/rate-limit-settings)）拒绝时，响应附带 `Retry-After` 响应头，取一个完整限制周期的秒数。
 - **错误响应**：错误统一以 JSON 格式返回，结构为 `{"error": {"message": "...", "type": "..."}}`；上游渠道错误原样透传其中。
 
 ## 能力边界
